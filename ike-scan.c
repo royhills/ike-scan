@@ -299,9 +299,7 @@ main(int argc, char *argv[]) {
          case 'n':	/* --id */
             if (id_data)
                err_msg("You may only specify one identity payload with --id");
-            if (strlen(optarg) % 2) 	/* Length is odd */
-               err_msg("Length of --id argument must be even (multiple of 2).");
-            id_data=hex2data(optarg, &id_data_len);
+            id_data=hex_or_str(optarg, &id_data_len);
             break;
          case 'y':	/* --idtype */
             idtype = strtoul(optarg, (char **)NULL, 10);
@@ -2295,7 +2293,8 @@ usage(int status) {
    fprintf(stderr, "\t\t\twith --dhgroup or the default if --dhgroup is not used.\n");
    fprintf(stderr, "\n--id <id> or -n <id>\tUse <id> as the identification value.\n");
    fprintf(stderr, "\t\t\tThis option is only applicable to Aggressive Mode.\n");
-   fprintf(stderr, "\t\t\t<id> should be specified in hex, e.g. --id=deadbeef.\n");
+   fprintf(stderr, "\t\t\t<id> can be specified as a string, e.g. --id=test or as\n");
+   fprintf(stderr, "\t\t\ta hex value with a leading \"0x\", e.g. --id=0xdeadbeef.\n");
    fprintf(stderr, "\n--idtype=n or -y n\tUse identification type <n>.  Default %u (%s).\n", DEFAULT_IDTYPE, STR_OR_ID(DEFAULT_IDTYPE, id_type_name));
    fprintf(stderr, "\t\t\tThis option is only applicable to Aggressive Mode.\n");
    fprintf(stderr, "\t\t\tSee RFC 2407 4.6.2 for details of Identification types.\n");
