@@ -174,7 +174,9 @@ GSSAPI	^621b04bb09882ac1e15935fefa24aeee
 # Other things I've seen but not fully classified yet.
 # If anyone can confirm any of these, please let me know.
 Cisco IOS	^bdb41038a7ec5e5534dd004d0f91f927
-Unknown 1	^1f07f70eaa6514d3b0fa96542a500306
+# I've seen Unknown 1 from a Cisco VPN Concentrator with a trailing 500400
+# I've also seen it from an unknown device with a trailing 500306
+Unknown 1	^1f07f70eaa6514d3b0fa96542a
 # Unknown 2 was classified as Windows-2000
 Unknown 3	^edea53a3c15d45cafb11e59ea68db2aa99c1470e0000000400000303
 Unknown 4	^bedc86dabf0ab7973870b5e6c4b87d3ee824de310000001000000401
@@ -185,3 +187,4 @@ Unknown 8	^4c5647362e303a627269636b3a362e302e353732
 Unknown 9	^3499691eb82f9eaefed378f5503671debd0663b4000000040000023c
 Netscreen	^9b096d9ac3275a7d6fe8b91c583111b09efed1a0
 Safenet or Watchguard	^da8e9378
+Unknown-cisco	^e23ae9f51a46876ff93d89ba725d649d
