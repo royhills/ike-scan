@@ -1,5 +1,11 @@
 $Id$
 
+2003-08-05 Roy Hills <Roy.Hills@nta-monitor.com>
+
+	* Released version v1.4.  Tarball size 114410 bytes, Zip size 622630.
+	  tarball md5sum: d8755044a041859cde12d111973bb541
+	  zip md5sum: 7871aead615b88e3fd6a516f60ac63d0
+
 2003-07-17 Roy Hills <Roy.Hills@nta-monitor.com>
 
 	* ike-scan.c: Print any vendor ID payload in hex if it follows an SA
