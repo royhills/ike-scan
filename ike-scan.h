@@ -58,7 +58,7 @@ struct host_entry {
    unsigned timeout;		/* Timeout for this host */
    unsigned num_sent;		/* Number of packets sent */
    unsigned num_recv;		/* Number of packets received */
-   u_int32_t icookie[COOKIE_SIZE];	/* IKE Initiator cookie */
+   uint32_t icookie[COOKIE_SIZE];	/* IKE Initiator cookie */
 };
 
 struct time_list {
