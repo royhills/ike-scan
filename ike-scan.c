@@ -60,6 +60,7 @@ struct vid_pattern_list *vidlist = NULL;	/* Vendor ID pattern list */
 static int verbose=0;			/* Verbose level */
 int experimental=0;			/* Experimental flag */
 int tcp_flag=0;				/* TCP flag */
+int psk_crack_flag=0;			/* Pre-shared key cracking flag */
 /* The following variables are for psk hash cracking */
 char *g_xr;
 char *g_xi;
@@ -102,11 +103,12 @@ main(int argc, char *argv[]) {
       {"multiline", no_argument, 0, 'M'},
       {"random", no_argument, 0, 'R'},
       {"tcp", no_argument, 0, 'T'},
+      {"pskcrack", no_argument, 0, 'P'},
       {"experimental", no_argument, 0, 'X'},
       {0, 0, 0, 0}
    };
    const char *short_options =
-      "f:hs:d:r:t:i:b:w:vl:z:m:Ve:a:o::u:n:y:g:p:AG:I:qMRTX";
+      "f:hs:d:r:t:i:b:w:vl:z:m:Ve:a:o::u:n:y:g:p:AG:I:qMRTXP";
    int arg;
    char arg_str[MAXLINE];	/* Args as string for syslog */
    int options_index=0;
@@ -272,7 +274,7 @@ main(int argc, char *argv[]) {
             break;
          case 'e':	/* --vendor */
             if (strlen(optarg) % 2)	/* Length is odd */
-               err_msg("Length of --vendor argument must be even (multiple of 2).");
+               err_msg("ERROR: Length of --vendor argument must be even (multiple of 2).");
             vendor_id_flag=1;
             vid_data=hex2data(optarg, &vid_data_len);
             add_vid(0, NULL, vid_data, vid_data_len);
@@ -300,7 +302,7 @@ main(int argc, char *argv[]) {
             break;
          case 'n':	/* --id */
             if (id_data)
-               err_msg("You may only specify one identity payload with --id");
+               err_msg("ERROR: You may only specify one identity payload with --id");
             id_data=hex_or_str(optarg, &id_data_len);
             break;
          case 'y':	/* --idtype */
@@ -317,7 +319,7 @@ main(int argc, char *argv[]) {
             break;
          case 'G':	/* --gssid */
             if (strlen(optarg) % 2) {	/* Length is odd */
-               err_msg("Length of --gssid argument must be even (multiple of 2).");
+               err_msg("ERROR: Length of --gssid argument must be even (multiple of 2).");
             }
             gss_id_flag=1;
             gss_data=hex2data(optarg, &gss_data_len);
@@ -336,6 +338,9 @@ main(int argc, char *argv[]) {
             break;
          case 'T':	/* --tcp */
             tcp_flag=1;
+            break;
+         case 'P':	/* --pskcrack */
+            psk_crack_flag=1;
             break;
          case 'X':	/* --experimental */
             experimental=1;
@@ -402,13 +407,33 @@ main(int argc, char *argv[]) {
  *	Check that we have at least one entry in the list.
  */
    if (!num_hosts)
-      err_msg("No hosts to process.");
+      err_msg("ERROR: No hosts to process.");
 /*
  *	Check that the combination of specified options and arguments is
- *	legal.
+ *	valid.
  */
    if (tcp_flag && num_hosts > 1)
-      err_msg("You can only specify one target host with the --tcp option.");
+      err_msg("ERROR: You can only specify one target host with the --tcp option.");
+
+   if (*patfile != '\0' && !showbackoff_flag)
+      warn_msg("WARNING: Specifying a backoff pattern file with --patterns or -p does not\n         have any effect unless you also specify --showbackoff or -o\n");
+
+   if (id_data && exchange_type != ISAKMP_XCHG_AGGR)
+      warn_msg("WARNING: Specifying an identification payload with --id or -n does not have\n         any effect unless you also specify aggressive mode with --aggressive\n         or -A\n");
+
+   if (idtype != DEFAULT_IDTYPE && exchange_type != ISAKMP_XCHG_AGGR)
+      warn_msg("WARNING: Specifying an idtype payload with --idtype or -y does not have any\n         effect unless you also specify aggressive mode with --aggressive or -A\n");
+
+   if (dhgroup != DEFAULT_DH_GROUP && exchange_type != ISAKMP_XCHG_AGGR)
+      warn_msg("WARNING: Specifying the DH Group with --dhgroup or -g does not have any effect\n         unless you also specify aggressive mode with --aggressive or -A\n");
+
+   if (psk_crack_flag && exchange_type != ISAKMP_XCHG_AGGR) {
+      warn_msg("WARNING: The --pskcrack (-P) option is only relevant for aggressive mode.\n");
+      psk_crack_flag=0;
+   }
+
+   if (psk_crack_flag && num_hosts > 1)
+      err_msg("ERROR: You can only specify one target host with the --pskcrack (-P) option.");
 /*
  *      Create and initialise array of pointers to host entries.
  */
@@ -606,6 +631,11 @@ main(int argc, char *argv[]) {
       } else {		/* We can't send a packet yet */
          select_timeout = req_interval - loop_timediff;
       } /* End If */
+#ifdef DEBUG_TIMINGS
+      printf("int=%d, loop_t=%llu, req_int=%d, sel=%d, err=%d, cum_err=%d\n",
+             interval, loop_timediff, req_interval, select_timeout, s_err,
+             cum_err);
+#endif
       n=recvfrom_wto(sockfd, packet_in, MAXUDP, (struct sockaddr *)&sa_peer,
                      select_timeout);
       if (n != -1) {
@@ -721,11 +751,12 @@ add_host_pattern(const char *pattern, unsigned timeout, unsigned *num_hosts) {
  */
       *(cp++)='\0';	/* patcopy points to IPnet, cp points to bits */
       if (!(inet_aton(patcopy, &in_val)))
-         err_msg("%s is not a valid IP address", patcopy);
+         err_msg("ERROR: %s is not a valid IP address", patcopy);
       ipnet_val=ntohl(in_val.s_addr);	/* We need host byte order */
       numbits=strtoul(cp, (char **) NULL, 10);
       if (numbits<3 || numbits>32)
-         err_msg("Number of bits in %s must be between 3 and 32", pattern);
+         err_msg("ERROR: Number of bits in %s must be between 3 and 32",
+                 pattern);
 /*
  *	Construct 32-bit network bitmask from number of bits.
  */
@@ -738,7 +769,7 @@ add_host_pattern(const char *pattern, unsigned timeout, unsigned *num_hosts) {
  */
       network=ipnet_val & mask;
       if (network != ipnet_val)
-         warn_msg("Warning: host part of %s is non-zero", pattern);
+         warn_msg("WARNING: host part of %s is non-zero", pattern);
 /*
  *	Determine maximum and minimum host values.  We include the host
  *	and broadcast.
@@ -768,10 +799,10 @@ add_host_pattern(const char *pattern, unsigned timeout, unsigned *num_hosts) {
  */
       *(cp++)='\0';	/* patcopy points to IPstart, cp points to IPend */
       if (!(inet_aton(patcopy, &in_val)))
-         err_msg("%s is not a valid IP address", patcopy);
+         err_msg("ERROR: %s is not a valid IP address", patcopy);
       hoststart=ntohl(in_val.s_addr);	/* We need host byte order */
       if (!(inet_aton(cp, &in_val)))
-         err_msg("%s is not a valid IP address", cp);
+         err_msg("ERROR: %s is not a valid IP address", cp);
       hostend=ntohl(in_val.s_addr);	/* We need host byte order */
 /*
  *	Calculate all host addresses in the range and feed to add_host()
@@ -1318,7 +1349,7 @@ initialise_ike_packet(size_t *packet_out_len, unsigned lifetime,
             kx_data_len = 1024;	/* Group 18 - 8192 bits */
             break;
          default:
-            err_msg("Bad Diffie Hellman group: %u, should be 1,2,5,14,15,16,17 or 18", dhgroup);
+            err_msg("ERROR: Bad Diffie Hellman group: %u, should be 1,2,5,14,15,16,17 or 18", dhgroup);
             break;	/* NOTREACHED */
       }
       ke = make_ke(&ke_len, ISAKMP_NEXT_NONCE, kx_data_len);
@@ -2046,7 +2077,8 @@ add_vid_pattern(char *line) {
       char errbuf[MAXLINE];
       size_t errlen;
       errlen=regerror(result, rep, errbuf, MAXLINE);
-      warn_msg("Ignoring invalid Vendor ID pattern \"%s\": %s", pat, errbuf);
+      warn_msg("WARNING: Ignoring invalid Vendor ID pattern \"%s\": %s",
+               pat, errbuf);
       free(rep);
       /* Should we call regfree(rep) here? */
    } else {
@@ -2130,7 +2162,7 @@ decode_trans(char *str, unsigned *enc, unsigned *keylen, unsigned *hash,
             *group=val;
             break;
          default:
-            warn_msg("Ignoring extra transform specifications past 4th");
+            warn_msg("WARNING: Ignoring extra transform specifications past 4th");
             break;
       }
       if (*cp == ',')
@@ -2331,7 +2363,9 @@ usage(int status) {
    fprintf(stderr, "\t\t\tThis option is only applicable to Aggressive Mode.\n");
    fprintf(stderr, "\t\t\tSee RFC 2407 4.6.2 for details of Identification types.\n");
    fprintf(stderr, "\n--dhgroup=n or -g n\tUse Diffie Hellman Group <n>.  Default %u.\n", DEFAULT_DH_GROUP);
-   fprintf(stderr, "\t\t\tThis option is only applicable to Aggressive Mode.\n");
+   fprintf(stderr, "\t\t\tThis option is only applicable to Aggressive Mode where\n");
+   fprintf(stderr, "\t\t\tit is used to determine the size of the key exchange\n");
+   fprintf(stderr, "\t\t\tpayload.\n");
    fprintf(stderr, "\t\t\tAcceptable values are 1,2,5,14,15,16,17,18 (MODP only).\n");
    fprintf(stderr, "\n--gssid=<n> or -G <n>\tUse GSS ID <n> where <n> is a hex string.\n");
    fprintf(stderr, "\t\t\tThis uses transform attribute type 16384 as specified\n");
@@ -2343,9 +2377,13 @@ usage(int status) {
    fprintf(stderr, "\t\t\tThis option randomises the order of the hosts in the\n");
    fprintf(stderr, "\t\t\thost list, so the IKE probes are sent to the hosts in\n");
    fprintf(stderr, "\t\t\ta random order.  It uses the Knuth shuffle algorithm.\n");
-   fprintf(stderr, "\n--tcp or -T\t\tUse TCP instead of UDP (experimental).\n");
+   fprintf(stderr, "\n--tcp or -T\t\tUse TCP transport instead of UDP.\n");
+   fprintf(stderr, "\t\t\tThis allows you to test a host running IKE over TCP.\n");
+   fprintf(stderr, "\t\t\tYou won't normally need this option because the vast\n");
+   fprintf(stderr, "\t\t\tmajority of IPsec systems only support IKE over UDP.\n");
    fprintf(stderr, "\t\t\tYou can only specify a single target host if you use\n");
    fprintf(stderr, "\t\t\tthis option.\n");
+   fprintf(stderr, "\n--pskcrack or -P\tCrack aggressive mode pre-shared keys (experimental).\n");
    fprintf(stderr, "\n");
    fprintf(stderr, "Report bugs or send suggestions to %s\n", PACKAGE_BUGREPORT);
    fprintf(stderr, "See the ike-scan homepage at http://www.nta-monitor.com/ike-scan/\n");
