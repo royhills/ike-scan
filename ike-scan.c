@@ -898,7 +898,7 @@ add_host_pattern(const char *pattern, unsigned timeout, unsigned *num_hosts) {
  */
 void
 add_host(const char *name, unsigned timeout, unsigned *num_hosts) {
-   struct hostent *hp;
+   struct hostent *hp = NULL;
    struct host_entry *he;
    struct in_addr inp;
    char str[MAXLINE];
