@@ -29,7 +29,7 @@ AC_SEARCH_LIBS([socket], [socket])
 
 dnl Checks for header files.
 AC_HEADER_STDC
-AC_CHECK_HEADERS([arpa/inet.h netdb.h netinet/in.h sys/socket.h sys/time.h syslog.h unistd.h getopt.h])
+AC_CHECK_HEADERS([arpa/inet.h netdb.h netinet/in.h netinet/tcp.h sys/socket.h sys/time.h syslog.h unistd.h getopt.h signal.h])
 
 dnl Checks for typedefs, structures, and compiler characteristics.
 AC_C_CONST
