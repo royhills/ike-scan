@@ -35,3 +35,8 @@ metacharacters.
 Allow a variable number of packets in the UDP backoff pattern.  Some VPN
 servers will return different numbers of packets, but still have a unique
 pattern.
+
+Add support for Nortel Contivity PSK cracking.  This system uses a non-
+standard algorithm for calculating the hash, which is a variant of Mamro's
+method.  This support can be merged from the file: psk-crack-nortel.c
+
