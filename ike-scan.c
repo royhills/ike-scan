@@ -100,7 +100,8 @@ struct transform
 };
 struct transform trans[8];		/* Transform payload */
 struct isakmp_vid vid_hdr;		/* Vendor ID header */
-md5_byte_t vid_md5[16];			/* Vendor ID data - md5 digest */
+unsigned char vid_data[MAXLINE];	/* Binary Vendor ID data */
+int vid_data_len;			/* Vendor ID data length */
 
 const char *auth_methods[] = { /* Authentication methods from RFC 2409 Appendix A */
    "UNSPECIFIED",		/* 0 */
@@ -238,7 +239,6 @@ main(int argc, char *argv[]) {
  */
    while ((arg=getopt_long_only(argc, argv, short_options, long_options, &options_index)) != -1) {
       switch (arg) {
-         md5_state_t context;
          int i;
          case 'f':	/* --file */
             strncpy(filename, optarg, MAXLINE);
@@ -291,13 +291,16 @@ main(int argc, char *argv[]) {
             break;
          case 'e':	/* --vendor */
             strncpy(vendor_id, optarg, MAXLINE);
+            if (strlen(vendor_id) % 2) {	/* Length is odd */
+               err_msg("Length of --vendor argument must be even.");
+            }
             vendor_id_flag=1;
-            md5_init(&context);
-            md5_append(&context, (const md5_byte_t *)vendor_id, strlen(vendor_id));
-            md5_finish(&context, vid_md5);
-            printf("vid_md5: ");
-            for (i=0; i<16; i++)
-               printf("%.2x",vid_md5[i]);
+            vid_data_len=strlen(vendor_id)/2;
+            for (i=0; i<vid_data_len; i++)
+               vid_data[i]=hstr_i(&vendor_id[i*2]);
+            printf("vid_data_len=%d.  vid_data: ", vid_data_len);
+            for (i=0; i<vid_data_len; i++)
+               printf("%.2x",vid_data[i]);
             printf("\n");
             break;
          case 'a':	/* --trans */
@@ -891,9 +894,9 @@ send_packet(int s, struct host_entry *he) {
    if (vendor_id_flag) {
       memcpy(cp, &vid_hdr, sizeof(vid_hdr));
       cp += sizeof(vid_hdr);
-      memcpy(cp, &vid_md5, sizeof(vid_md5));
-      cp += sizeof(vid_md5);
-      buflen += sizeof(vid_hdr)+sizeof(vid_md5);
+      memcpy(cp, &vid_data, vid_data_len);
+      cp += vid_data_len;
+      buflen += sizeof(vid_hdr)+vid_data_len;
    } 
 /*
  *	Update the last send times for this host.
@@ -1007,7 +1010,7 @@ initialise_ike_packet(void) {
    hdr.isa_msgid = 0;                   /* MBZ for phase-1 */
    len=sizeof(hdr)+sizeof(sa_hdr)+sizeof(sa_prop);
    if (vendor_id_flag) {
-      len += (sizeof(vid_hdr) + sizeof(vid_md5));
+      len += sizeof(vid_hdr) + vid_data_len;
    }
    if (trans_flag) {
       len += sizeof(trans[0]);
@@ -1217,7 +1220,7 @@ initialise_ike_packet(void) {
  *	Vendor ID Payload (Optional)
  */
    vid_hdr.isavid_np = ISAKMP_NEXT_NONE;	/* No Next payload */
-   vid_hdr.isavid_length = htons(sizeof(vid_hdr) + sizeof(vid_md5));	/* Length of MD5 digest */
+   vid_hdr.isavid_length = htons(sizeof(vid_hdr) + vid_data_len);	/* Length of MD5 digest */
 }
 
 /*
@@ -1633,6 +1636,29 @@ check_struct_sizes() {
 }
 
 /*
+ *	Convert a two-digit hex string with to unsigned int.
+ *	E.g. "0A" would return 10.
+ *	Note that this function does no sanity checking, it's up to the
+ *	caller to ensure that *cptr points to at least two hex digits.
+ *	This function is a modified version of hstr_i at www.snippets.org.
+ */
+unsigned int hstr_i(char *cptr)
+{
+      unsigned int i;
+      unsigned int j = 0;
+      int k;
+
+      for (k=0; k<2; k++) {
+            i = *cptr++ - '0';
+            if (9 < i)
+                  i -= 7;
+            j <<= 4;
+            j |= (i & 0x0f);
+      }
+      return(j);
+}
+
+/*
  *	usage -- display usage message and exit
  */
 void
@@ -1704,7 +1730,7 @@ usage(void) {
    fprintf(stderr, "\n--auth=<n> or -m <n>\tSet auth. method to <n>, default=%d (%s).\n", DEFAULT_AUTH_METHOD, auth_methods[DEFAULT_AUTH_METHOD]);
    fprintf(stderr, "\t\t\tRFC defined values are 1 to 5.  See RFC 2409 Appendix A.\n");
    fprintf(stderr, "\n--version or -V\t\tDisplay program version and exit.\n");
-   fprintf(stderr, "\n--vendor=<v> or -e <v>\tSet vendor id string to MD5 hash of <v>.\n");
+   fprintf(stderr, "\n--vendor=<v> or -e <v>\tSet vendor id string to hex value <v>.\n");
    fprintf(stderr, "\t\t\tNote: this is currently experimental.\n");
    fprintf(stderr, "\n--trans=<t> or -a <t>\tUse custom transform <t> instead of default set.\n");
    fprintf(stderr, "\t\t\t<t> is specified as enc,hash,auth,group. e.g. 2,3,1,5.\n");
