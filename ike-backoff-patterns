@@ -65,12 +65,16 @@
 # Discovered by: Roy Hills, November 2002
 # Observed on: Cisco 2503 running IOS 11.3(11b)T2
 # Observed on: Cisco PIX (unknown model) running (unknown version)
+# Note:	I've had a report of Cisco IOS 12.2(2)T having the pattern
+#	0,10,10,10,10 which incorrectly matches Watchguard Firebox.
+#	Thanks to Adam Scott for this observation.
 Cisco IOS / PIX	0, 15, 15
 
-# Discovered by: Roy Hills, November 2002
+# 1st Pattern Discovered by: Roy Hills, November 2002
 # Observed on: Cisco VPN Concentrator 3005 running (unknown version)
 # Observed on: VPN 3000 Concentrator Version 3.6.3.Rel Oct 04 2002 16:23:00
-# Note: we've seen both 0,8,8,8 and 0,8,8 patterns for this system.
+# 2nd Pattern Discovered by: Guy Widloecher, March 2003
+# Observed on: Cisco VPN 3005 Concentrator Version 3.5.2
 Cisco VPN Concentrator	0, 8, 8, 8
 Cisco VPN Concentrator	0, 8, 8
 
@@ -106,11 +110,16 @@ Windows-2000	0, 1, 2, 4, 8, 16, 32
 # 2nd pattern discovered by: Marco Ivaldi <raptor@mediaservice.net>, Jan 2003
 # Observed on: OpenBSD 3.2
 # Observed on: FreeBSD 4.7-Stable with isakmpd-20021118 and OpenBSD 3.1
-# Note: I'm not sure which of these is correct, or if both are.  I know that
-#       OpenBSD isakmpd is highly configurable, so that could account for the
-#       differences.  Because the 2nd pattern is the same as the 1st but with
-#       more packets, the 1st pattern may have missed the last 2 packets
-#       somehow.  For now, I'm leaving both patterns in -rsh.
+# Note: OpenBSD isakmpd is highly configurable, so it's difficult to get one
+#       pattern which will match all possible backoff pattern.
+#       Hakan Olsson has informed me that the actual algorithm used by isakmpd
+#	is "5 + 2*<retrans#>" which can be found in transport.c, ca line 310.
+#	Both patterns match this algorithm: the first with the default
+#	retransmission limit of 3 and the second with retransmits set to 5.
+#	It has also been pointed out that isakmpd can run on many platforms
+#	other than FreeBSD and OpenBSD, so the inclusion of these OS names in
+#	the pattern are misleading.  However, I'm leaving the names unchanged
+#	in case someone relies on them in the program output.
 FreeBSD/OpenBSD-isakmpd	0, 7, 9, 11
 FreeBSD/OpenBSD-isakmpd	0, 7, 9, 11, 13, 15
 
