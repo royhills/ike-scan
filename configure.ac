@@ -43,6 +43,10 @@ AC_NTA_CHECK_TYPE(uint32_t, unsigned int)
 dnl Checks for library functions.
 AC_CHECK_FUNCS([malloc gethostbyname gettimeofday inet_ntoa memset select socket strerror])
 
+dnl Determine type for 3rd arg to accept()
+dnl This is normally socklen_t, but can sometimes be size_t or int.
+AC_NTA_NET_SIZE_T
+
 dnl GNU systems e.g. Linux have getopt_long_only, but many other systems
 dnl e.g. FreeBSD 4.3 and Solaris 8 do not.  For systems that don't have it,
 dnl we compile the GNU getopt sources (obtained from glibc) and link with the
