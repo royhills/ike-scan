@@ -67,6 +67,7 @@ struct time_list {
 };
 
 struct pattern_list {
+   char *name;
    int num_times;
    struct time_list *recv_times;
    struct pattern_list *next;
