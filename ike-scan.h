@@ -195,6 +195,9 @@ unsigned char* add_trans(int, int *, uint16_t, uint16_t, uint16_t, uint16_t,
                          uint16_t, uint32_t);
 unsigned char* make_vid(int *, uint8_t, unsigned char *, int);
 unsigned char* add_vid(int, int *, unsigned char *, int);
+unsigned char* make_ke(int *, uint8_t, int);
+unsigned char* make_nonce(int *, uint8_t, int);
+unsigned char* make_id(int *, uint8_t, uint8_t, unsigned char *, int);
 int Gettimeofday(struct timeval *, struct timezone *);
 void *Malloc(size_t);
 void *Realloc(void *, size_t);
