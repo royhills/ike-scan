@@ -1,5 +1,26 @@
 $Id$
 
+2005-01-13 Roy Hills <Roy.Hills@nta-monitor.com>
+
+	* README: Updated for ike-scan 1.6.7.
+	* ike-scan.h: Increased default pattern matching fuzz value from 100
+	  to 500 ms.
+	* ike-scan.c: treat ECONNRESET the same as ECONNREFUSED. Some OSes
+	  (e.g. Cygwin on Windows) return ECONNRESET from recvfrom() whereas
+	  others return ECONNREFUSED.
+
+2004-12-31 Roy Hills <Roy.Hills@nta-monitor.com>
+
+	* ike-scan.c: Allow --interval argument to be specified as either
+	  milliseconds or microseconds.  Milliseconds is the default, unless
+	  the argument ends in "u" in which case it is taken as microseconds.
+
+2004-12-22 Roy Hills <Roy.Hills@nta-monitor.com>
+
+	* ike-scan.c: Corrected pointer comparison in remove_host() so that
+	  advance_cursor() is always called when the host being removed is the
+	  current host.  This bug sometimes caused ike-scan to hang.
+
 2004-12-20 Roy Hills <Roy.Hills@nta-monitor.com>
 
 	* check-hash.c: Correct unsigned/signed char * pointers which were
@@ -16,6 +37,15 @@ $Id$
 
 	* psk-crack.c: cast argument to isspace() to unsigned char to avoid
 	  "subscript has type char" warning on some OSes e.g. HP-UX.
+
+	* psk-crack.c: Correct spelling of "fnbuf_siz" variable used for
+	  Cygwin.
+
+	* ike-scan.c, utils.c: Cast tv_sec and tv_usec timeval elements to
+	  unsigned long before printing.  This is done because different
+	  vendors use different types (signed/unsigned int/long) for these
+	  elements.  As long is the widest type, and the values cannot be
+	  negative, casting to unsigned long is safe.
 
 2004-12-19 Roy Hills <Roy.Hills@nta-monitor.com>
 
