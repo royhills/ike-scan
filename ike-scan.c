@@ -75,7 +75,7 @@
  * It is also possible to specify a single custom transform with
  * --trans=e,h,a,g where e is the Encryption Algorithm, h the Hash Algorithm,
  * a the Authentication Method and g is the DH Group.  These are specified as
- * values; see RFC 2409 * Appendix A for details of which values to use.  For
+ * values; see RFC 2409 Appendix A for details of which values to use.  For
  * example, --trans=2,3,1,5 would specify Enc=IDEA-CBC, Hash=Tiger, DH Group=5
  * (MODP 1536), Auth=1 (pre-shared key).
  * 
@@ -94,19 +94,22 @@
  * c) If you want to determine exactly which transforms a remote IKE
  *    implementation supports for fingerprinting.
  * 
- * For those hosts that respond, ike-scan records the times of the recieved
+ * For those hosts that respond, ike-scan records the times of the received
  * IKE responses.  The backoff between IKE responses varies between different
  * IKE implementations and can therefore be used as a fingerprint.  The
  * --showbackoff option is used to display the backoff times for each host
  * which responded.  Note that using the --showbackoff option will cause
  * ike-scan to wait for 60 seconds after the last received packet to ensure
- * that it has * seen all of the responses.  This 60 second wait can be
- * altered by specifying a different value (in ms, not seconds) to the
- * --showbackoff option.
+ * that it has seen all of the responses.  This 60 second wait can be
+ * altered by specifying a different value to the --showbackoff option.
  *
  * Change History:
  *
  * $Log$
+ * Revision 1.30  2003/01/03 15:35:54  rsh
+ * Changed DEFAULT_END_WAIT from ms to seconds.
+ * Added more details to the usage text.
+ *
  * Revision 1.29  2003/01/02 13:28:29  rsh
  * Wrapped libgen.h include in #ifdef HAVE_LIBGEN_H / #endif.
  *
@@ -377,7 +380,7 @@ main(int argc, char *argv[]) {
       {"fuzz", required_argument, 0, 'u'},
       {0, 0, 0, 0}
    };
-   char *short_options = "f:hr:t:i:b:w:vl:m:Ve:a:o::u:";
+   char *short_options = "f:hs:d:r:t:i:b:w:vl:m:Ve:a:o::u:";
    int arg;
    char arg_str[MAXLINE];	/* Args as string for syslog */
    int options_index=0;
@@ -476,9 +479,9 @@ main(int argc, char *argv[]) {
          case 'o':
             showbackoff_flag=1;
             if (optarg == NULL) {
-               end_wait=DEFAULT_END_WAIT;
+               end_wait=1000 * DEFAULT_END_WAIT;
             } else {
-               end_wait=atoi(optarg);
+               end_wait=1000 * atoi(optarg);
             }
             break;
          case 'u':
@@ -667,7 +670,7 @@ main(int argc, char *argv[]) {
          } else {
             struct isakmp_hdr hdr_in;
 /*
- *	The recieved cookie doesn't match any entry in the list
+ *	The received cookie doesn't match any entry in the list
  *	so just issue a message to that effect and ignore the packet.
  */
             if (verbose && n >= sizeof(hdr_in)) {
@@ -1422,35 +1425,83 @@ usage(void) {
    fprintf(stderr, "Options:\n");
    fprintf(stderr, "\n");
    fprintf(stderr, "--help or -h\t\tDisplay this usage message and exit.\n");
-   fprintf(stderr, "--file=<fn> or -f <fn>\tRead hostnames or addresses from the specified file\n");
-   fprintf(stderr, "\t\t\tinstead of from the command line. One name or address\n");
-   fprintf(stderr, "\t\t\tper line.  Use \"-\" for standard input.\n");
-   fprintf(stderr, "--sport=<p> or -s p\tSet UDP source port to <p>, default=%d, 0=random.\n", DEFAULT_SOURCE_PORT);
-   fprintf(stderr, "--dport=<p> or -d p\tSet UDP destination port to <p>, default=%d\n", DEFAULT_DEST_PORT);
-   fprintf(stderr, "--retry=<n> or -r n\tSet number of attempts per host to <n>, default=%d\n", DEFAULT_RETRY);
-   fprintf(stderr, "--timeout=<n> or -t n\tSet per host timeout to <n> ms, default=%d\n", DEFAULT_TIMEOUT);
-   fprintf(stderr, "--interval=<n> or -i <n> Set minimum packet interval to <n> ms, default=%d\n", DEFAULT_INTERVAL);
-   fprintf(stderr, "\t\t\tThis limits the outgoing bandwidth usage.\n");
-   fprintf(stderr, "\t\t\tFor default transform set: 50=58240bps, 80=36400bps\n");
-   fprintf(stderr, "\t\t\tFor custom transform: 15=59733bps, 30=35840bps\n");
-   fprintf(stderr, "--backoff=<b> or -b <b>\tSet backoff factor to <b>, default=%.2f\n", DEFAULT_BACKOFF_FACTOR);
-   fprintf(stderr, "--selectwait=<n> or -w <n> Set select wait to <n> ms, default=%d\n", DEFAULT_SELECT_TIMEOUT);
-   fprintf(stderr, "--verbose or -v\t\tDisplay verbose progress messages.\n");
-   fprintf(stderr, "\t\t\tUse more than once for greater effect.\n");
-   fprintf(stderr, "--lifetime=<s> or -l <s> Set IKE lifetime to <s> seconds, default=%d\n", DEFAULT_LIFETIME);
-   fprintf(stderr, "--auth=<n> or -m <n>\tSet auth. method to <n>, default=%d (%s)\n", DEFAULT_AUTH_METHOD, auth_methods[DEFAULT_AUTH_METHOD]);
+   fprintf(stderr, "\n--file=<fn> or -f <fn>\tRead hostnames or addresses from the specified file\n");
+   fprintf(stderr, "\t\t\tinstead of from the command line. One name or IP\n");
+   fprintf(stderr, "\t\t\taddress per line.  Use \"-\" for standard input.\n");
+   fprintf(stderr, "\n--sport=<p> or -s p\tSet UDP source port to <p>, default=%d, 0=random.\n", DEFAULT_SOURCE_PORT);
+   fprintf(stderr, "\t\t\tNote that superuser privileges are normally required\n");
+   fprintf(stderr, "\t\t\tto use non-zero source ports below 1024.\n");
+   fprintf(stderr, "\n--dport=<p> or -d p\tSet UDP destination port to <p>, default=%d.\n", DEFAULT_DEST_PORT);
+   fprintf(stderr, "\n--retry=<n> or -r n\tSet total number of attempts per host to <n>,\n");
+   fprintf(stderr, "\t\t\tdefault=%d.\n", DEFAULT_RETRY);
+   fprintf(stderr, "\n--timeout=<n> or -t n\tSet initial per host timeout to <n> ms, default=%d.\n", DEFAULT_TIMEOUT);
+   fprintf(stderr, "\t\t\tThis timeout is for the first packet sent to each host.\n");
+   fprintf(stderr, "\t\t\tsubsequent timeouts are multiplied by the backoff\n");
+   fprintf(stderr, "\t\t\tfactor which is set with --backoff.\n");
+   fprintf(stderr, "\n--interval=<n> or -i <n> Set minimum packet interval to <n> ms, default=%d.\n", DEFAULT_INTERVAL);
+   fprintf(stderr, "\t\t\tThis controls the outgoing bandwidth usage by limiting\n");
+   fprintf(stderr, "\t\t\tthe rate at which packets can be sent.  The packet\n");
+   fprintf(stderr, "\t\t\tinterval will be greater than or equal to this number\n");
+   fprintf(stderr, "\t\t\tand will be a multiple of the select wait specified\n");
+   fprintf(stderr, "\t\t\twith --selectwait.  Thus --interval=75 --selectwait=10\n");
+   fprintf(stderr, "\t\t\twill result in a packet interval of 80ms.\n");
+   fprintf(stderr, "\t\t\tThe outgoing packets have a total size of 364 bytes\n");
+   fprintf(stderr, "\t\t\t(20 bytes IP hdr + 8 bytes UDP hdr + 336 bytes data)\n");
+   fprintf(stderr, "\t\t\twhen the default transform set is used, or 112 bytes\n");
+   fprintf(stderr, "\t\t\tif a custom transform is specified.  Therefore\n");
+   fprintf(stderr, "\t\t\tfor default transform set: 50=58240bps, 80=36400bps and\n");
+   fprintf(stderr, "\t\t\tfor custom transform: 15=59733bps, 30=35840bps.\n");
+   fprintf(stderr, "\n--backoff=<b> or -b <b>\tSet timeout backoff factor to <b>, default=%.2f.\n", DEFAULT_BACKOFF_FACTOR);
+   fprintf(stderr, "\t\t\tThe per-host timeout is multiplied by this factor\n");
+   fprintf(stderr, "\t\t\tafter each timeout.  So, if the number of retrys\n");
+   fprintf(stderr, "\t\t\tis 3, the initial per-host timeout is 500ms and the\n");
+   fprintf(stderr, "\t\t\tbackoff factor is 1.5, then the first timeout will be\n");
+   fprintf(stderr, "\t\t\t500ms, the second 750ms and the third 1125ms.\n");
+   fprintf(stderr, "\n--selectwait=<n> or -w <n> Set select wait to <n> ms, default=%d.\n", DEFAULT_SELECT_TIMEOUT);
+   fprintf(stderr, "\t\t\tThis controls the timeout used in the select(2) call.\n");
+   fprintf(stderr, "\t\t\tIt defines the lower bound and granularity of the\n");
+   fprintf(stderr, "\t\t\tpacket interval set with --interval.  Smaller values\n");
+   fprintf(stderr, "\t\t\tallow more accurate and lower packet intervals;\n");
+   fprintf(stderr, "\t\t\tlarger values reduce CPU usage.  You don't need\n");
+   fprintf(stderr, "\t\t\tto change this unless you want to reduce the packet\n");
+   fprintf(stderr, "\t\t\tinterval close to or below the default selectwait time.\n");
+   fprintf(stderr, "\n--verbose or -v\t\tDisplay verbose progress messages.\n");
+   fprintf(stderr, "\t\t\tUse more than once for greater effect:\n");
+   fprintf(stderr, "\t\t\t1 - Show when hosts are removed from the list and\n");
+   fprintf(stderr, "\t\t\t    when packets with invalid cookies are received.\n");
+   fprintf(stderr, "\t\t\t2 - Show each packet sent and received.\n");
+   fprintf(stderr, "\t\t\t3 - Display the host list before scanning starts.\n");
+   fprintf(stderr, "\n--lifetime=<s> or -l <s> Set IKE lifetime to <s> seconds, default=%d.\n", DEFAULT_LIFETIME);
+   fprintf(stderr, "\t\t\tRFC 2407 specifies 28800 as the default, but some\n");
+   fprintf(stderr, "\t\t\timplementations may require different values.\n");
+   fprintf(stderr, "\n--auth=<n> or -m <n>\tSet auth. method to <n>, default=%d (%s).\n", DEFAULT_AUTH_METHOD, auth_methods[DEFAULT_AUTH_METHOD]);
    fprintf(stderr, "\t\t\tRFC defined values are 1 to 5.  See RFC 2409 Appendix A.\n");
-   fprintf(stderr, "--version or -V\t\tDisplay program version and exit.\n");
-   fprintf(stderr, "--vendor or -e\t\tSet vendor id string (experimental).\n");
-   fprintf(stderr, "--trans=<t> or -a <t>\tUse transform <t> instead of default set.\n");
-   fprintf(stderr, "\t\t\t<t> is specified as enc,hash,auth,group. e.g. 1,1,1,1\n");
-   fprintf(stderr, "\t\t\tIf this option is specified, then the IP packet size\n");
+   fprintf(stderr, "\n--version or -V\t\tDisplay program version and exit.\n");
+   fprintf(stderr, "\n--vendor=<v> or -e <v>\tSet vendor id string to MD5 hash of <v>.\n");
+   fprintf(stderr, "\t\t\tNote: this is currently experimental.\n");
+   fprintf(stderr, "\n--trans=<t> or -a <t>\tUse custom transform <t> instead of default set.\n");
+   fprintf(stderr, "\t\t\t<t> is specified as enc,hash,auth,group. e.g. 2,3,1,5.\n");
+   fprintf(stderr, "\t\t\tSee RFC 2409 Appendix A for details of which values\n");
+   fprintf(stderr, "\t\t\tto use.  For example, --trans=2,3,1,5 specifies\n");
+   fprintf(stderr, "\t\t\tEnc=IDEA-CBC, Hash=Tiger, Auth=shared key, DH Group=5\n");
+   fprintf(stderr, "\t\t\tIf this option is specified, then only the single\n");
+   fprintf(stderr, "\t\t\tcustom transform is used rather than the default set\n");
+   fprintf(stderr, "\t\t\tof 8 transforms.  As a result, the IP packet size\n");
    fprintf(stderr, "\t\t\tis 112 bytes rather than the default of 364.\n");
-   fprintf(stderr, "--showbackoff[=<n>] or -o [<n>]\tDisplay the backoff table.\n");
-   fprintf(stderr, "\t\t\tDisplay the backoff table to fingerprint host.\n");
-   fprintf(stderr, "\t\t\tThe optional argument specifies time to wait\n");
-   fprintf(stderr, "\t\t\tafter last received packet in ms, default=%d\n", DEFAULT_END_WAIT);
-   fprintf(stderr, "--fuzz=<n> or -u <n>\tSet pattern matching fuzz to <n> ms, default=%d.\n", DEFAULT_PATTERN_FUZZ);
+   fprintf(stderr, "\n--showbackoff[=<n>] or -o[<n>]\tDisplay the backoff fingerprint table.\n");
+   fprintf(stderr, "\t\t\tDisplay the backoff table to fingerprint the IKE\n");
+   fprintf(stderr, "\t\t\timplementation on the remote hosts.\n");
+   fprintf(stderr, "\t\t\tThe optional argument specifies time to wait in seconds\n");
+   fprintf(stderr, "\t\t\tafter receiving the last packet, default=%d.\n", DEFAULT_END_WAIT);
+   fprintf(stderr, "\t\t\tIf you are using the short form of the option (-o)\n");
+   fprintf(stderr, "\t\t\tthen the value must immediately follow the option\n");
+   fprintf(stderr, "\t\t\tletter with no spaces, e.g. -o25 not -o 25.\n");
+   fprintf(stderr, "\n--fuzz=<n> or -u <n>\tSet pattern matching fuzz to <n> ms, default=%d.\n", DEFAULT_PATTERN_FUZZ);
+   fprintf(stderr, "\t\t\tThis sets the maximum acceptable difference between\n");
+   fprintf(stderr, "\t\t\tthe observed backoff times and the reference times in\n");
+   fprintf(stderr, "\t\t\tthe backoff patterns file.  Larger values allow for\n");
+   fprintf(stderr, "\t\t\thigher variance but also increase the risk of\n");
+   fprintf(stderr, "\t\t\tfalse positive identifications.\n");
    fprintf(stderr, "\n");
    fprintf(stderr, "%s\n", rcsid);
    fprintf(stderr, "\n");
