@@ -25,9 +25,21 @@
 # Author: Roy Hills <Roy.Hills@nta-monitor.com>
 #
 # Format:
-# Implementation_Name<Tab>Vendor_ID
+# Implementation_Name<Tab>Vendor_ID_Pattern
 #
-# The Vendor_ID should be specified as a hex value.
+# The Vendor_ID_Pattern should be specified as a basic regular expression
+# that will match the hex value of the Vendor ID.  The Posix regular
+# expression routines "regcomp" and "regexec" are used to compile and
+# match the petterns.
+#
+# The hex value of the Vendor ID can only contain the characters [0-9a-f].
+# The regular expression match is case insensitive, so you can use either
+# upper or lower case letters [A-F] in the pattern.
+#
+# The pattern is not anchored by default.  If you want to match from the
+# beginning of the vendor ID hex value (which is often the case), you
+# should start your pattern with "^".  If you don't want to allow any
+# extra trailing data, you should end the pattern with "$".
 #
 # Each entry must be on one line.
 #
@@ -39,35 +51,37 @@
 
 # Microsoft/Cisco IPsec implementation for Win-2000 and above.
 # The first 16 bytes are the MD5 hash of "MS NT5 ISAKMPOAKLEY"
-Windows-2000	1e2b516905991c7d7c96fcbfb587e46100000002
-Windows-XP	1e2b516905991c7d7c96fcbfb587e4610000000300000000
-Windows-2003	1e2b516905991c7d7c96fcbfb587e461000000040d000014
+Windows-2000	^1e2b516905991c7d7c96fcbfb587e46100000002
+Windows-XP	^1e2b516905991c7d7c96fcbfb587e4610000000300000000
+Windows-2003	^1e2b516905991c7d7c96fcbfb587e461000000040d000014
 
 # Checkpoint Firewall-1/VPN-1
-# I suspect the first 20 bytes are an SHA1 hash of something.
+# The first 20 bytes (40 hex chars) are the same for all versions.  I suspect
+# that these first 20 bytes are an SHA1 hash of something.
 # Firewall-1 v4.0 didn't use Vendor IDs.
-Firewall-1 4.1 Base	f4ed19e0c114eb516faaac0ee37daf2807b4381f0000000100000002000000000000000018800000
-Firewall-1 4.1 SP1	f4ed19e0c114eb516faaac0ee37daf2807b4381f0000000100000003000000000000000018800000
-Firewall-1 4.1 SP2-SP6	f4ed19e0c114eb516faaac0ee37daf2807b4381f0000000100000fa2000000000000000018800000
-Firewall-1 NG Base	f4ed19e0c114eb516faaac0ee37daf2807b4381f0000000100001388000000000000000018000000
-Firewall-1 NG FP1	f4ed19e0c114eb516faaac0ee37daf2807b4381f0000000100001389000000000000000018000000
-Firewall-1 NG FP2	f4ed19e0c114eb516faaac0ee37daf2807b4381f000000010000138a000000000000000018000000
-Firewall-1 NG FP3	f4ed19e0c114eb516faaac0ee37daf2807b4381f000000010000138b000000000000000018000000
-Firewall-1 NG AI R54	f4ed19e0c114eb516faaac0ee37daf2807b4381f000000010000138c000000000000000018000000
-Firewall-1 NG AI R55	f4ed19e0c114eb516faaac0ee37daf2807b4381f000000010000138d000000000000000018800000
+Firewall-1 4.1 Base	^f4ed19e0c114eb516faaac0ee37daf2807b4381f00000001000000020000000000000000....0000
+Firewall-1 4.1 SP1	^f4ed19e0c114eb516faaac0ee37daf2807b4381f00000001000000030000000000000000....0000
+Firewall-1 4.1 SP2-SP6	^f4ed19e0c114eb516faaac0ee37daf2807b4381f0000000100000fa20000000000000000....0000
+Firewall-1 NG Base	^f4ed19e0c114eb516faaac0ee37daf2807b4381f00000001000013880000000000000000....0000
+Firewall-1 NG FP1	^f4ed19e0c114eb516faaac0ee37daf2807b4381f00000001000013890000000000000000....0000
+Firewall-1 NG FP2	^f4ed19e0c114eb516faaac0ee37daf2807b4381f000000010000138a0000000000000000....0000
+Firewall-1 NG FP3	^f4ed19e0c114eb516faaac0ee37daf2807b4381f000000010000138b0000000000000000....0000
+Firewall-1 NG AI R54	^f4ed19e0c114eb516faaac0ee37daf2807b4381f000000010000138c0000000000000000....0000
+Firewall-1 NG AI R55	^f4ed19e0c114eb516faaac0ee37daf2807b4381f000000010000138d0000000000000000....0000
+Firewall-1 Unknown Vsn	^f4ed19e0c114eb516faaac0ee37daf2807b4381f
 
 # Other things I've seen but not fully classified yet.
-XAUTH	09002689dfd6b712
-Dead Peer Detection	afcad71368a1f1c96b8696fc77570100
-Cisco Unity	12f5f28c457168a9702d9fe274cc0100
-IKE Fragmentation (unverified)	4048b7d56ebce88525e7de7f00d6c2d3c0000000
-Cisco IOS	bdb41038a7ec5e5534dd004d0f91f927
-Unknown 1	1f07f70eaa6514d3b0fa96542a500306
-Unknown 2	1e2b516905991c7d7c96fcbfb587e46100000002
-Unknown 3	edea53a3c15d45cafb11e59ea68db2aa99c1470e0000000400000303
-Unknown 4	bedc86dabf0ab7973870b5e6c4b87d3ee824de310000001000000401
-Unknown 5	ac5078c25cabb9523979978e76a3d0d2426bc9260000000400000401
-Unknown 6	9aa1f3b43472a45d5f506aeb260cf214
-Unknown 7	69b761a173cc1471dc4547d2a5e94812
-Unknown 8	4c5647362e303a627269636b3a362e302e353732
-Unknown 9	3499691eb82f9eaefed378f5503671debd0663b4000000040000023c
+XAUTH	^09002689dfd6b712
+Dead Peer Detection	^afcad71368a1f1c96b8696fc77570100
+Cisco Unity	^12f5f28c457168a9702d9fe274cc0100
+IKE Fragmentation (unverified)	^4048b7d56ebce88525e7de7f00d6c2d3c0000000
+Cisco IOS	^bdb41038a7ec5e5534dd004d0f91f927
+Unknown 1	^1f07f70eaa6514d3b0fa96542a500306
+Unknown 2	^1e2b516905991c7d7c96fcbfb587e46100000002
+Unknown 3	^edea53a3c15d45cafb11e59ea68db2aa99c1470e0000000400000303
+Unknown 4	^bedc86dabf0ab7973870b5e6c4b87d3ee824de310000001000000401
+Unknown 5	^ac5078c25cabb9523979978e76a3d0d2426bc9260000000400000401
+Unknown 6	^9aa1f3b43472a45d5f506aeb260cf214
+Unknown 7	^69b761a173cc1471dc4547d2a5e94812
+Unknown 8	^4c5647362e303a627269636b3a362e302e353732
+Unknown 9	^3499691eb82f9eaefed378f5503671debd0663b4000000040000023c
