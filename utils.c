@@ -266,7 +266,6 @@ make_message(const char *fmt, ...) {
  *
  *	Pointer to the string representation of the number.
  *
- *	This is used by the STR_OR_ID macro.
  *	I'm surprised that there is not a standard library function to do this.
  */
 char *
