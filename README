@@ -1,8 +1,26 @@
 $Id$
 
-ike-scan - Discover and fingerprint IKE hosts
+ike-scan - Discover and fingerprint IKE hosts (VPN Servers)
 
-1.  BUILDING AND INSTALLING:
+TABLE OF CONTENTS
+
+   1.  BUILDING AND INSTALLING
+   2.  OVERVIEW
+   3.  USAGE
+   4.  IMPLEMENTATION DETAILS
+      4.1.  Host Input and Memory Requirements
+      4.2.  Rate Limiting
+      4.3.  Cookie Generation and Remote Host Identification
+      4.4.  IKE Packet Details
+      4.5.  Backoff Fingerprinting
+      4.6.  Syslog
+   5.  PROGRAM OUTPUT
+   6.  EXAMPLES
+   7.  SUPPORTED PLATFORMS
+   8.  FURTHER READING AND RFCS
+   9.  CONTACT ADDRESS
+
+1.  BUILDING AND INSTALLING
 
 ike-scan uses the standard GNU autoconf and automake tools, so installation
 involves the normal unzip/untar, ./configure, make, make install process.
@@ -13,7 +31,7 @@ Solaris.  For more details see the section "SUPPORTED PLATFORMS" below.
 
 For installation instructions, see the file INSTALL.
 
-2.  OVERVIEW:
+2.  OVERVIEW
 
 ike-scan discovers IKE hosts and can also fingerprint them using the
 retransmission backoff pattern.
@@ -46,7 +64,7 @@ other defined mode is aggressive mode).  RFC 2409 section 5 specifies that
 main mode must be implemented, therefore all IKE implementations can
 be expected to support main mode.
 
-3.  USAGE:
+3.  USAGE
 
 Below is the output from "ike-scan --help".  This is intended as a guide only
 and may be slightly out-of date.  You should use ike-scan --help to display
@@ -164,7 +182,7 @@ Options:
 Report bugs or send suggestions to ike-scan@nta-monitor.com
 See the ike-scan homepage at http://www.nta-monitor.com/ike-scan/
 
-4.  IMPLEMENTATION DETAILS:
+4.  IMPLEMENTATION DETAILS
 
 4.1. Host Input and Memory Requirements
 
@@ -383,7 +401,7 @@ An example of syslog output for a single ike-scan run is:
 Jan 17 17:12:05 helium ike-scan[3157]: Starting: ike-scan 172.16.2.2
 Jan 17 17:12:05 helium ike-scan[3157]: Ending: 1 hosts scanned. 0 returned transform; 1 returned notify
 
-5.  PROGRAM OUTPUT:
+5.  PROGRAM OUTPUT
 
 The program output consists of two sections:
 
@@ -440,7 +458,7 @@ time column shows the absolute time when the packet was received
 in seconds and microseconds since the epoch; delta time shows the
 elapsed time between packets in seconds and microseconds.
 
-6.  EXAMPLES:
+6.  EXAMPLES
 
 1) ike-scan 172.16.2.2
 
@@ -457,7 +475,7 @@ This will read the target hosts from the file "hostlist.txt".
 This reads the hosts from stdin and performs both IKE detection and backoff
 fingerprinting.  The backoff wait is specified as 20 seconds.
 
-7.  SUPPORTED PLATFORMS:
+7.  SUPPORTED PLATFORMS
 
 ike-scan has been built and tested on the following platforms:
 
@@ -469,7 +487,8 @@ SPARC/Solaris 2.8 with gcc (warns "subscript has type `char'" but works OK)
 
 It should work, or be capable of working, on any Unix-like system which
 supports sockets and has the system calls malloc, gethostbyname, gettimeofday,
-inet_ntoa, memset, select, socket, and strerror.
+inet_ntoa, memset, select, socket, and strerror.  This probably includes
+Windows with Cygwin, although I've not tried this particular platform.
 
 As this is the first time I've used the GNU autoconf & automake tools, it
 may not be as portable as it could be.  If you use a platform which is
@@ -477,7 +496,7 @@ not listed above, I would be grateful if you could let me know if it compiles
 or not.  The outputs from "./configure" and "make" would be helpful in the
 cases where it doesn't work.  Mail to: ike-scan@nta-monitor.com.
 
-8.  FURTHER READING AND RFCS:
+8.  FURTHER READING AND RFCS
 
 For an in-depth coverage of IPsec including IKE, I recommend the book
 "IPsec The New Security Standard for the Internet, Intranets and Virtual
@@ -492,11 +511,20 @@ RFC 2409  The Internet Key Exchange (IKE)
 
 All of these RFCs can be obtained from: http://www.ietf.org/rfc
 
-9.  CONTACT ADDRESS:
+9.  CONTACT ADDRESS
 
-Please use the following Email address for any correspondence on ike-scan:
+Email:  ike-scan@nta-monitor.com
 
-Roy Hills <ike-scan@nta-monitor.com>
+Web:  http://www.nta-monitor.com/ike-scan/
+
+Postal address:
+
+   NTA Monitor Limited
+   14 Ashford House
+   Medway City Estate
+   Rochester
+   Kent ME2 4FA
+   UK
 
 I would like to hear from you if you have any of the following:
 
