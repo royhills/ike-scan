@@ -43,7 +43,7 @@ static const char rcsid[] = "$Id$";	/* RCS ID for ident(1) */
 #define MD5_HASH_LEN 16
 #define SHA1_HASH_LEN 20
 
-char *default_charset =
+const char *default_charset =
    "0123456789abcdefghijklmnopqrstuvwxyz"; /* default bruteforce charset */
 
 int
@@ -295,10 +295,12 @@ main (int argc, char *argv[]) {
          if (verbose)
             printf("Trying key \"%s\"\n", line);
          if (hash_type == HASH_TYPE_MD5) {
-            hmac_md5(skeyid_data, skeyid_data_len, line, strlen(line), skeyid);
+            hmac_md5(skeyid_data, skeyid_data_len, (unsigned char *) line,
+                     strlen(line), skeyid);
             hmac_md5(hash_r_data, hash_r_data_len, skeyid, hash_len, hash_r);
          } else if (hash_type == HASH_TYPE_SHA1) {
-            hmac_sha1(skeyid_data, skeyid_data_len, line, strlen(line), skeyid);
+            hmac_sha1(skeyid_data, skeyid_data_len, (unsigned char *) line,
+                      strlen(line), skeyid);
             hmac_sha1(hash_r_data, hash_r_data_len, skeyid, hash_len, hash_r);
          } else {
             err_msg("Unknown hash_type: %d\n", hash_type);
@@ -318,10 +320,12 @@ main (int argc, char *argv[]) {
          if (verbose)
             printf("Trying key \"%s\"\n", line);
          if (hash_type == HASH_TYPE_MD5) {
-            hmac_md5(skeyid_data, skeyid_data_len, line, strlen(line), skeyid);
+            hmac_md5(skeyid_data, skeyid_data_len, (unsigned char *) line,
+                     strlen(line), skeyid);
             hmac_md5(hash_r_data, hash_r_data_len, skeyid, hash_len, hash_r);
          } else if (hash_type == HASH_TYPE_SHA1) {
-            hmac_sha1(skeyid_data, skeyid_data_len, line, strlen(line), skeyid);
+            hmac_sha1(skeyid_data, skeyid_data_len, (unsigned char *) line,
+                      strlen(line), skeyid);
             hmac_sha1(hash_r_data, hash_r_data_len, skeyid, hash_len, hash_r);
          } else {
             err_msg("Unknown hash_type: %d\n", hash_type);
