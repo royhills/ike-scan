@@ -906,7 +906,10 @@ process_attr(unsigned char **cp, size_t *len) {
       NULL,
       "MD5",					/*  1 */
       "SHA1",					/*  2 */
-      "Tiger"					/*  3 */
+      "Tiger",					/*  3 */
+      "SHA2-256",				/*  4 */
+      "SHA2-384",				/*  5 */
+      "SHA2-512"				/*  6 */
    };
    static const char *auth_names[] = {		/* From RFC 2409 App. A */
       NULL,
