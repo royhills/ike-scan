@@ -102,6 +102,10 @@
 #include <arpa/inet.h>
 #endif
 
+#ifdef HAVE_REGEX_H
+#include <regex.h>	/* Posix regular expression support */
+#endif
+
 #include "md5.h"
 #include "isakmp.h"
 
