@@ -33,7 +33,7 @@
  *
  * Description:
  *
- * ike-scan - The IKE security scanner
+ * ike-scan - The IKE Scanner
  * 
  * ike-scan sends IKE main mode requests to the specified hosts and displays
  * any responses that are received.  It handles retry and retransmission with
@@ -347,6 +347,9 @@ main(int argc, char *argv[]) {
             fprintf(stderr, "You may redistribute copies of ike-scan under the terms of the GNU\n");
             fprintf(stderr, "General Public License.\n");
             fprintf(stderr, "For more information about these matters, see the file named COPYING.\n");
+            fprintf(stderr, "\n");
+/* We use rcsid here to prevent it being optimised away */
+            fprintf(stderr, "%s\n", rcsid);
             exit(0);
             break;
          case 'e':
@@ -1245,6 +1248,7 @@ dump_times(void) {
 
    p = rrlist;
 
+   printf("\nIKE Backoff Patterns:\n");
    printf("\nIP Address\tNo.\tRecv time\t\tDelta Time\n");
    do {
       if (p->recv_times != NULL && p->num_recv > 1) {
@@ -1567,8 +1571,7 @@ usage(void) {
    fprintf(stderr, "\t\t\thigher variance but also increase the risk of\n");
    fprintf(stderr, "\t\t\tfalse positive identifications.\n");
    fprintf(stderr, "\n");
-   fprintf(stderr, "%s\n", rcsid);
-   fprintf(stderr, "\n");
    fprintf(stderr, "Report bugs or send suggestions to ike-scan@nta-monitor.com\n");
+   fprintf(stderr, "See the ike-scan homepage at http://www.nta-monitor.com/ike-scan/\n");
    exit(1);
 }
