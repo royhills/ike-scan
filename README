@@ -218,6 +218,16 @@ packet rate can be raised by lowering the minimum packet interval using
 --interval=<n> which sets the minimum packet interval to n ms.  ike-scan
 uses select(2) and gettimeofday(2) to implement the rate limiting.
 
+To determine the required inter-packet interval to acheive a given bandwidth,
+you can use the following formula:
+
+interval in ms = ((packet size in bytes * 8) / bandwidth in bps) * 1000
+
+E.g. if you want to use a bandwidth of 64000 bits per second with a packet size
+of 364 bytes, you would need an interval of:
+
+((364 * 8) / 64000) * 1000 = 45.5 ms
+
 4.3. Cookie Generation and Remote Host Identification
 
 ike-scan generates unique IKE cookies for each host, and it uses these
