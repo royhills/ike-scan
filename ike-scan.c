@@ -232,6 +232,10 @@ main(int argc, char *argv[]) {
  */
    patfile[0] = '\0';
 /*
+ *	Seed random number generator.
+ */
+   srand((unsigned) time(NULL));
+/*
  *	Process options and arguments.
  */
    while ((arg=getopt_long_only(argc, argv, short_options, long_options, &options_index)) != -1) {
