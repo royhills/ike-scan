@@ -35,7 +35,7 @@
 
 static char rcsid[] = "$Id$";	/* RCS ID for ident(1) */
 
-extern int experimental_flag;
+extern int experimental_value;
 extern psk_crack psk_values;
 
 /*
@@ -211,6 +211,9 @@ make_trans(size_t *length, unsigned next, unsigned number, unsigned cipher,
 
    if (gss_id_flag)
       add_attr(0, NULL, 'V', OAKLEY_GSS_ID, gss_data_len, 0, gss_data);
+
+   if (experimental_value)	/* Nortel Contivity client */
+      add_attr(0, NULL, 'B', 32767, 0, experimental_value, NULL);
 
 /* Finalise attributes and fill in length value */
 
