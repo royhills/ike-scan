@@ -37,7 +37,6 @@
 static const char rcsid[] = "$Id$";	/* RCS ID for ident(1) */
 
 #define MAXLEN 4096
-#define HASH_TYPE_AUTO 0
 #define HASH_TYPE_MD5 1
 #define HASH_TYPE_SHA1 2
 #define MD5_HASH_LEN 16
@@ -52,19 +51,16 @@ main (int argc, char *argv[]) {
       {"help", no_argument, 0, 'h'},
       {"verbose", no_argument, 0, 'v'},
       {"version", no_argument, 0, 'V'},
-      {"md5", no_argument, 0, 'm'},
-      {"sha1", no_argument, 0, 's'},
       {"bruteforce", required_argument, 0, 'B'},
       {"charset", required_argument, 0, 'c'},
       {"dictionary", required_argument, 0, 'd'},
       {0, 0, 0, 0}
    };
-   const char *short_options = "hvVmsB:c:d:";
+   const char *short_options = "hvVB:c:d:";
    int arg;
    int options_index=0;
    int verbose=0;
-   int force_hash_type=HASH_TYPE_AUTO;
-   int hash_type;			/* Hash type: MD5 or SHA1 */
+   int hash_type=0;	/* Hash type: MD5 or SHA1 */
    size_t hash_len=0;	/* Set to 0 to avoid uninitialised warning */
    char *hash_name=NULL; /* Hash name: MD5 or SHA1 */
    unsigned brute_len=0; /* Bruteforce len.  0=dictionary attack (default) */
@@ -113,8 +109,6 @@ main (int argc, char *argv[]) {
    unsigned char *hash_r = NULL;	/* Initialised to avoid warning */
    unsigned char *expected_hash_r;
 
-   char *hash_r_hex;
-
    unsigned char *skeyid_data;
    unsigned char *hash_r_data;
 
@@ -153,16 +147,6 @@ main (int argc, char *argv[]) {
             utils_use_rcsid();
             wrappers_use_rcsid();
             exit(EXIT_SUCCESS);
-            break;
-         case 'm':      /* --md5 */
-            force_hash_type=HASH_TYPE_MD5;
-            hash_len=MD5_HASH_LEN;
-            hash_name="MD5";
-            break;
-         case 's':      /* --sha1 */
-            force_hash_type=HASH_TYPE_SHA1;
-            hash_len=SHA1_HASH_LEN;
-            hash_name="SHA1";
             break;
          case 'B':      /* --bruteforce */
             brute_len=strtoul(optarg, (char **)NULL, 10);
@@ -260,35 +244,19 @@ main (int argc, char *argv[]) {
       nr_b = hex2data(nr_b_hex, &nr_b_len);
       expected_hash_r = hex2data(expected_hash_r_hex, &expected_hash_r_len);
 /*
- *	If the hash type has not been specified, determine it from the
- *	length of the HASH_R payload.
+ *	Determine hash type.
  */
-      if (force_hash_type == HASH_TYPE_AUTO) {
-         if (expected_hash_r_len == MD5_HASH_LEN) {
-            hash_type=HASH_TYPE_MD5;
-            hash_len=MD5_HASH_LEN;
-            hash_name="MD5";
-         } else if (expected_hash_r_len == SHA1_HASH_LEN) {
-            hash_type=HASH_TYPE_SHA1;
-            hash_len=SHA1_HASH_LEN;
-            hash_name="SHA1";
-         } else {
-            err_msg("Cannot determine hash type from %u byte HASH_R",
-                    expected_hash_r_len);
-         }
+      if (expected_hash_r_len == MD5_HASH_LEN) {
+         hash_type=HASH_TYPE_MD5;
+         hash_len=MD5_HASH_LEN;
+         hash_name="MD5";
+      } else if (expected_hash_r_len == SHA1_HASH_LEN) {
+         hash_type=HASH_TYPE_SHA1;
+         hash_len=SHA1_HASH_LEN;
+         hash_name="SHA1";
       } else {
-         if (force_hash_type == HASH_TYPE_MD5) {
-            hash_type=HASH_TYPE_MD5;
-            hash_len=MD5_HASH_LEN;
-            hash_name="MD5";
-         } else if (force_hash_type == HASH_TYPE_SHA1) {
-            hash_type=HASH_TYPE_SHA1;
-            hash_len=SHA1_HASH_LEN;
-            hash_name="SHA1";
-         } else {
-            err_msg("Cannot determine hash type from specified type: %d",
-                    force_hash_type);
-         }
+         err_msg("Cannot determine hash type from %u byte HASH_R",
+                 expected_hash_r_len);
       }
 
       skeyid_data_len = ni_b_len + nr_b_len;
@@ -390,11 +358,11 @@ main (int argc, char *argv[]) {
          }
       }
       if (found) {
-         hash_r_hex = hexstring(hash_r, hash_len);
-         printf("key \"%s\" matches %s hash %s\n", line, hash_name, hash_r_hex);
-         free(hash_r_hex);
+         printf("key \"%s\" matches %s hash %s\n", line, hash_name,
+                expected_hash_r_hex);
       } else {
-         printf("no match found\n");
+         printf("no match found for %s hash %s\n", hash_name,
+                expected_hash_r_hex);
       }
    }
 /*
@@ -441,12 +409,6 @@ psk_crack_usage(int status) {
    fprintf(stderr, "\n--help or -h\t\tDisplay this usage message and exit.\n");
    fprintf(stderr, "\n--version or -V\t\tDisplay program version and exit.\n");
    fprintf(stderr, "\n--verbose or -v\t\tDisplay verbose progress messages.\n");
-   fprintf(stderr, "\n--md5 or -m\t\tForce MD5 hash type.\n");
-   fprintf(stderr, "\t\t\tNormally this is not required because the hash type\n");
-   fprintf(stderr, "\t\t\tis automatically determined from the hash length.\n");
-   fprintf(stderr, "\n--sha1 or -s\t\tForce SHA1 hash type.\n");
-   fprintf(stderr, "\t\t\tNormally this is not required because the hash type\n");
-   fprintf(stderr, "\t\t\tis automatically determined from the hash length.\n");
    fprintf(stderr, "\n--dictionary=<f> or -d <f> Set dictionary file to <f>\n");
 #ifdef __CYGWIN__
    fprintf(stderr, "\t\t\tdefault=%s in psk-crack.exe dir.\n", DICT_FILE);
