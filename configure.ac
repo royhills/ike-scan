@@ -24,8 +24,6 @@ dnl Checks for libraries.
 dnl Solaris 8 needs nsl and socket.  Linux and {Free,Open}BSD do not.
 AC_CHECK_LIB(nsl, t_open)
 AC_CHECK_LIB(socket, socket)
-dnl We only use "abs" and "floor" from the maths library
-AC_CHECK_LIB(m, floor)
 
 AC_SUBST(COMPAT_OBJS)
 AC_SUBST(COMPAT_SRCS)
