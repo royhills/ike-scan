@@ -1,7 +1,7 @@
 dnl $Id$
 dnl Process this file with autoconf to produce a configure script.
 
-AC_INIT([ike-scan], [1.6.1], [ike-scan@nta-monitor.com])
+AC_INIT([ike-scan],[1.6.1],[ike-scan@nta-monitor.com])
 AC_PREREQ(2.59)
 AC_REVISION($Revision$)
 AC_CONFIG_SRCDIR([ike-scan.c])
@@ -13,7 +13,7 @@ dnl Check for programs.
 AC_PROG_CC
  if test -n "$GCC"; then
       CFLAGS="$CFLAGS -Wall "
-dnl Uncomment the line below for testing
+dnl Uncomment the line below for testing with stricter warnings.
 dnl      CFLAGS="$CFLAGS -pedantic -Wshadow -Wpointer-arith -Wcast-qual -Wcast-align -Wwrite-strings -Wconversion -Wstrict-prototypes -Wmissing-prototypes -Wmissing-declarations -Wnested-externs "
  fi
 AC_PROG_INSTALL
@@ -72,14 +72,17 @@ dnl e.g. FreeBSD 4.3 and Solaris 8 do not.  For systems that don't have it,
 dnl use the GNU getopt sources (obtained from glibc).
 AC_CHECK_FUNC([getopt_long_only], ,
   [ AC_LIBOBJ(getopt)
-    AC_LIBOBJ(getopt1) ])
+    AC_LIBOBJ(getopt1)
+    AC_LIBSOURCE(getopt.h) ])
 
 dnl Do we have inet_aton?  Most systems do, but some e.g. Solaris don't
 dnl If we don't have it, then use Russ Allbery's implementation as a
 dnl replacement function.
 AC_CHECK_FUNC(inet_aton, , [ AC_LIBOBJ(inet_aton) ])
 
-dnl Check for OpenSSL if --with-openssl=PATH was specified
+dnl Check for OpenSSL headers and libraries if the --with-openssl=PATH
+dnl option was specified
+have_openssl="no"
 AC_ARG_WITH(openssl,
 	AC_HELP_STRING([--with-openssl=PATH],
                        [Specify path to OpenSSL installation]),
@@ -109,6 +112,7 @@ SHA1(0, 0, 0);
 [
 AC_MSG_RESULT(yes)
 AC_DEFINE(HAVE_OPENSSL, 1, [Define to 1 if you have the OpenSSL libraries and header files])
+have_openssl="yes"
 ],
 [
 AC_MSG_RESULT(no)
@@ -118,6 +122,18 @@ AC_MSG_ERROR([cannot find OpenSSL headers & libraries in $withval])
 		fi
 	]
 )
+
+dnl If we're not using OpenSSL, then use the replacement functions instead.
+if test "x$have_openssl" = "xyes"; then
+   AC_MSG_NOTICE([Using OpenSSL hash and HMAC functions.])
+else
+   AC_MSG_NOTICE([Using built in hash and HMAC functions.])
+   AC_MSG_NOTICE([Specify --with-openssl=PATH to use the OpenSSL functions instead.])
+   AC_LIBOBJ(md5)
+   AC_LIBSOURCE(md5.h)
+   AC_LIBOBJ(sha1)
+   AC_LIBSOURCE(sha1.h)
+fi
 
 AC_CONFIG_FILES([Makefile])
 AC_OUTPUT
