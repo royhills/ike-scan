@@ -95,7 +95,7 @@ struct transform trans[8];		/* Transform payload */
 struct isakmp_vid vid_hdr;		/* Vendor ID header */
 unsigned char vid_md5[16];		/* Vendor ID data - md5 digest */
 
-char *auth_methods[] = { /* Authentication methods from RFC 2409 Appendix A */
+const char *auth_methods[] = { /* Authentication methods from RFC 2409 Appendix A */
    "UNSPECIFIED",		/* 0 */
    "pre-shared key",		/* 1 */
    "DSS signatures",		/* 2 */
@@ -104,7 +104,7 @@ char *auth_methods[] = { /* Authentication methods from RFC 2409 Appendix A */
    "Revised encryption with RSA" /* 5 */
 };
 
-char *notification_msg[] = { /* Notify Message Types from RFC 2408 3.14.1 */
+const char *notification_msg[] = { /* Notify Message Types from RFC 2408 3.14.1 */
    "UNSPECIFIED",                    /* 0 */
    "INVALID-PAYLOAD-TYPE",           /* 1 */
    "DOI-NOT-SUPPORTED",              /* 2 */
@@ -138,7 +138,7 @@ char *notification_msg[] = { /* Notify Message Types from RFC 2408 3.14.1 */
    "UNEQUAL-PAYLOAD-LENGTHS"         /* 30 */
 };
 
-char *payload_name[] = {     /* Payload types from RFC 2408 3.1 */
+const char *payload_name[] = {     /* Payload types from RFC 2408 3.1 */
    "NONE",                           /* 0 */
    "Security Association",           /* 1 */
    "Proposal",                       /* 2 */
@@ -177,7 +177,7 @@ main(int argc, char *argv[]) {
       {"fuzz", required_argument, 0, 'u'},
       {0, 0, 0, 0}
    };
-   char *short_options = "f:hs:d:r:t:i:b:w:vl:m:Ve:a:o::u:";
+   const char *short_options = "f:hs:d:r:t:i:b:w:vl:m:Ve:a:o::u:";
    int arg;
    char arg_str[MAXLINE];	/* Args as string for syslog */
    int options_index=0;
@@ -848,7 +848,7 @@ recvfrom_wto(int s, char *buf, int len, struct sockaddr *saddr, int tmo) {
    fd_set readset;
    struct timeval to;
    int n;
-   int saddr_len;
+   socklen_t saddr_len;
 
    FD_ZERO(&readset);
    FD_SET(s, &readset);
@@ -1215,7 +1215,7 @@ dump_times(void) {
          while (te != NULL) {
             if (i > 1)
                timeval_diff(&(te->time), &prev_time, &diff);
-            printf("%s\t%d\t\%ld.%.6ld\t%ld.%.6ld\n", inet_ntoa(p->addr), i, (long)te->time.tv_sec, (long)te->time.tv_usec, (long)diff.tv_sec, (long)diff.tv_usec);
+            printf("%s\t%d\t%ld.%.6ld\t%ld.%.6ld\n", inet_ntoa(p->addr), i, (long)te->time.tv_sec, (long)te->time.tv_usec, (long)diff.tv_sec, (long)diff.tv_usec);
             prev_time = te->time;
             te = te->next;
             i++;
