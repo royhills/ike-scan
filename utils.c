@@ -808,7 +808,7 @@ void sig_alarm(int signo) {
 }
 
 /*
- *	str_or_id -- Return name associated with given id, or id number
+ *	id_to_name -- Return name associated with given id, or id number
  *
  *	Inputs:
  *
@@ -820,15 +820,19 @@ void sig_alarm(int signo) {
  *	A pointer to the name associated with the id if an association is
  *	found in the map, otherwise the numeric id.  Returns NULL on error.
  *
+ *	This function uses a sequential search through the map to find the
+ *	ID and associated name.  This is OK when the map is relatively small,
+ *	but could be time consuming if the map contains a large number of
+ *	entries.
  */
-char *str_or_id(int id, const id_name_map map[]) {
+char *id_to_name(int id, const id_name_map map[]) {
    int found = 0;
    int i = 0;
 
    if (map == NULL)
       return NULL;
 
-   while (map[i].id) {
+   while (map[i].id != -1) {
       if (id == map[i].id) {
          found = 1;
          break;

@@ -341,7 +341,7 @@ unsigned char *hmac_md5(const unsigned char *, size_t,
                         const unsigned char *, size_t, unsigned char *);
 unsigned char *hmac_sha1(const unsigned char *, size_t,
                          const unsigned char *, size_t, unsigned char *);
-char *str_or_id(int, const id_name_map[]);
+char *id_to_name(int, const id_name_map[]);
 /* The following functions are just to prevent rcsid being optimised away */
 void error_use_rcsid(void);
 void isakmp_use_rcsid(void);
