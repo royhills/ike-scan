@@ -42,10 +42,14 @@
 
 static char rcsid[] = "$Id$";	/* RCS ID for ident(1) */
 
-int Gettimeofday(struct timeval *tv, struct timezone *tz) {
+/*
+ * We omit the timezone arg from this wrapper since it's obsolete and we never
+ * use it.
+ */
+int Gettimeofday(struct timeval *tv) {
    int result;
 
-   result = gettimeofday(tv, tz);
+   result = gettimeofday(tv, NULL);
 
    if (result != 0)
       err_sys("gettimeofday");
