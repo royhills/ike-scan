@@ -54,9 +54,7 @@ struct host_entry *helist = NULL;	/* Dynamic array of host entries */
 struct host_entry **helistptr;		/* Array of pointers to host entries */
 struct host_entry **cursor;		/* Pointer to current list entry */
 struct pattern_list *patlist = NULL;	/* Backoff pattern list */
-#ifdef HAVE_REGEX_H
 struct vid_pattern_list *vidlist = NULL;	/* Vendor ID pattern list */
-#endif
 static int verbose=0;			/* Verbose level */
 unsigned experimental_value=0;		/* Experimental value */
 int tcp_flag=0;				/* TCP flag */
@@ -429,9 +427,7 @@ main(int argc, char *argv[]) {
 /*
  *	Load known Vendor ID patterns from the Vendor ID file.
  */
-#ifdef HAVE_REGEX_H
    load_vid_patterns(vidfile);
-#endif
 /*
  *	Check that we have at least one entry in the list.
  */
@@ -586,9 +582,7 @@ main(int argc, char *argv[]) {
       dump_list(num_hosts);
       if (showbackoff_flag)
          dump_backoff(pattern_fuzz);
-#ifdef HAVE_REGEX_H
       dump_vid();
-#else
       warn_msg("This ike-scan binary was not compiled with Posix regular expression support.");
       warn_msg("Vendor ID Fingerprinting will not be possible.");
 #endif
@@ -1727,7 +1721,6 @@ dump_backoff(unsigned pattern_fuzz) {
  *	when debugging to check that the patterns have been loaded correctly
  *	from the Vendor ID patterns file.
  */
-#ifdef HAVE_REGEX_H
 void
 dump_vid(void) {
    struct vid_pattern_list *pl;
@@ -1743,7 +1736,6 @@ dump_vid(void) {
    } /* End While */
    printf("\nTotal of %d Vendor ID pattern entries.\n\n", i-1);
 }
-#endif
 
 /*
  *	dump_times -- Display packet times for backoff fingerprinting
@@ -2129,7 +2121,6 @@ add_pattern(char *line, unsigned pattern_fuzz) {
  *
  *	None
  */
-#ifdef HAVE_REGEX_H
 void
 load_vid_patterns(const char *vidfile) {
    FILE *fp;
@@ -2176,7 +2167,6 @@ load_vid_patterns(const char *vidfile) {
    }
    free(fn);
 }
-#endif
 
 /*
  *	add_vid_pattern -- add a Vendor ID pattern to the list.
@@ -2189,7 +2179,6 @@ load_vid_patterns(const char *vidfile) {
  *
  *	None.
  */
-#ifdef HAVE_REGEX_H
 void
 add_vid_pattern(char *line) {
    char *cp;
@@ -2270,7 +2259,6 @@ add_vid_pattern(char *line) {
       pe->name = cp;
    }
 }
-#endif
 
 /*
  *	decode_trans -- Decode a custom transform specification
