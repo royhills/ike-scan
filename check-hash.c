@@ -36,6 +36,7 @@
 #include "ike-scan.h"
 #define NUM_HMAC_TESTS 1
 #define HMAC_SPEED_ITERATIONS 100000
+#define HASH_SPEED_ITERATIONS 500000
 
 int
 main(void) {
@@ -398,6 +399,62 @@ main(void) {
       printf("%u SHA1 HASH_R calculations in %.6f seconds (%.2f per sec)\n",
              HMAC_SPEED_ITERATIONS, elapsed_seconds,
              HMAC_SPEED_ITERATIONS/elapsed_seconds);
+   } while (0);
+
+   printf("\nChecking MD5 hash speed...\n");
+   do {
+      size_t hash_data_len;
+      unsigned char *hash_result;
+      struct timeval start_time;
+      struct timeval end_time;
+      struct timeval elapsed_time;
+      double elapsed_seconds;
+      char hash_speed_data[] = "12345678";
+      size_t memcpy_len;
+
+      hash_data_len = strlen(hash_speed_data);
+      memcpy_len=hash_data_len>16?16:hash_data_len;
+      Gettimeofday(&start_time);
+      for (i=0; i<HASH_SPEED_ITERATIONS; i++) {
+         hash_data_len = strlen(hash_speed_data);
+         hash_result=MD5(hash_speed_data, hash_data_len, NULL);
+         memcpy(hash_speed_data, hash_result, memcpy_len);
+      }
+      Gettimeofday(&end_time);
+      timeval_diff(&end_time, &start_time, &elapsed_time);
+      elapsed_seconds = elapsed_time.tv_sec +
+                        (elapsed_time.tv_usec / 1000000.0);
+      printf("%u MD5 calculations in %.6f seconds (%.2f per sec)\n",
+             HASH_SPEED_ITERATIONS, elapsed_seconds,
+             HASH_SPEED_ITERATIONS/elapsed_seconds);
+   } while (0);
+
+   printf("\nChecking SHA1 hash speed...\n");
+   do {
+      size_t hash_data_len;
+      unsigned char *hash_result;
+      struct timeval start_time;
+      struct timeval end_time;
+      struct timeval elapsed_time;
+      double elapsed_seconds;
+      char hash_speed_data[] = "12345678";
+      size_t memcpy_len;
+
+      hash_data_len = strlen(hash_speed_data);
+      memcpy_len=hash_data_len>20?20:hash_data_len;
+      Gettimeofday(&start_time);
+      for (i=0; i<HASH_SPEED_ITERATIONS; i++) {
+         hash_data_len = strlen(hash_speed_data);
+         hash_result=SHA1(hash_speed_data, hash_data_len, NULL);
+         memcpy(hash_speed_data, hash_result, memcpy_len);
+      }
+      Gettimeofday(&end_time);
+      timeval_diff(&end_time, &start_time, &elapsed_time);
+      elapsed_seconds = elapsed_time.tv_sec +
+                        (elapsed_time.tv_usec / 1000000.0);
+      printf("%u SHA1 calculations in %.6f seconds (%.2f per sec)\n",
+             HASH_SPEED_ITERATIONS, elapsed_seconds,
+             HASH_SPEED_ITERATIONS/elapsed_seconds);
    } while (0);
 
    if (error)
