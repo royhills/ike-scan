@@ -953,6 +953,7 @@ display_packet(int n, unsigned char *packet_in, struct host_entry *he,
    if (!bytes_left) {
       printf("%sShort or malformed ISAKMP packet returned: %d bytes\n",
              msg, n);
+      free(msg);
       return;
    }
 /*
