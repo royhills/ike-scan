@@ -470,6 +470,7 @@ main(int argc, char *argv[]) {
    if ((bind(sockfd, (struct sockaddr *)&sa_local, sizeof(sa_local))) < 0) {
       warn_msg("ERROR: Could not bind UDP socket to local port %d", source_port);
       warn_msg("You need to be root, or ike-scan must be suid root to bind to ports below 1024.");
+      warn_msg("Only one process may bind to a given port at any one time.");
       err_sys("bind");
    }
 /*
