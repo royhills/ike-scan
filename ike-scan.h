@@ -150,7 +150,7 @@ unsigned char *SHA1(const unsigned char *, size_t, unsigned char *);
 #define DEFAULT_LIFESIZE 0		/* Default lifesize in KB */
 #define DEFAULT_AUTH_METHOD 1		/* Default authentication method */
 #define DEFAULT_END_WAIT 60		/* Default time to wait at end in sec */
-#define DEFAULT_PATTERN_FUZZ 100	/* Default pattern fuzz in ms */
+#define DEFAULT_PATTERN_FUZZ 500	/* Default pattern fuzz in ms */
 #define DEFAULT_DH_GROUP 2		/* Default DH group for agg. mode */
 #define DEFAULT_IDTYPE ID_USER_FQDN	/* Default ID Type for agg. mode */
 #define DEFAULT_EXCHANGE_TYPE ISAKMP_XCHG_IDPROT	/* Main Mode */
