@@ -123,7 +123,7 @@ Overview:
 ike-scan sends IKE main mode requests to the specified hosts and displays
 any responses that are received.  It handles retry and retransmission with
 backoff to cope with packet loss.  It also limits the amount of bandwidth
-used by the IKE packets.
+used by the outbound IKE packets.
 
 IKE is the Internet Key Exchange protocol which is the key exchange and
 authentication mechanism used by IPsec.  Just about all modern VPN systems
@@ -217,9 +217,32 @@ a different value in seconds to the --showbackoff option.
 
 When all of the packets have been received, the backoff table is displayed,
 and the program attempts to match the backoff pattern against the known
-backoff patterns contained in the text file "ike-backoff-patterns".
+backoff patterns contained in the text file "ike-backoff-patterns".  Note
+that only hosts which respond with a handshake can be fingerprinted by
+backoff timings because notify messages are not repeated.
 
-If you discover IKE hosts with patterns which are not recognised by
+Note that ike-scan can also be used to fingerprint IKE hosts in other ways.
+For example:
+
+a) Some systems (such as Checkpoint Firewall-1) allow the use of any
+source port (e.g. --sport=0) whereas others (e.g. Windows 2000) only
+respond to IKE requests from source port 500 (actually, Windows 2000
+responds to requests from any port, but always sends the responses back
+to port 500 which amounts to the same thing).
+
+b) Some systems (such as Checkpoint Firewall-1) use proprietory notify
+message codes which allows them to be identified.
+
+c) Different systems support different transforms, and this support
+can be determined by trying all possible combinations with --trans.
+Note however, that the user can usually change the transform set, so this
+cannot be relied upon by itself.
+
+d) By sniffing the returned IKE packets, the IP ID and IP TTL can be
+determined.  These can be useful in fingerprinting the IP stack which
+can help to determine the IKE implementation.
+
+If you discover IKE hosts with backoff patterns which are not recognised by
 ike-scan, then you are encouraged to submit the pattern and details of
 the IKE implementation to me at ike-scan@nta-monitor.com.  Note that by
 submitting fingerprints, you are transferring copyright to me (Roy Hills)
@@ -301,6 +324,26 @@ This will read the target hosts from the file "hostlist.txt".
 
 This reads the hosts from stdin and performs both IKE detection and backoff
 fingerprinting.  The backoff wait is specified as 20 seconds.
+
+Porting:
+
+ike-scan has been tested on the following platforms:
+
+Debian Linux 2.2 (Potato) with 2.2 Kernel
+Debian Linux 3.0 (Woody) with 2.4 Kernel
+FreeBSD 4.3 (gives warning "unsigned int format, u_long arg" but works OK)
+OpenBSD 3.1
+SPARC/Solaris 2.8 with gcc (gives warn "subscript has type `char'" but works OK)
+
+It should work, or be capable of working, on any Unix-like system which
+supports sockets and has the system calls malloc, gethostbyname, gettimeofday,
+inet_ntoa, memset, select, socket, and strerror.
+
+As this is the first time I've used the GNU autoconf & automake tools, it
+may not be as portable as it could be.  If you find a platform which is
+not listed above, I would be grateful if you could let me know if it compiles
+or not.  The outputs from "./configure" and "make" would be helpful in the
+cases where it doesn't work.  Mail to ike-scan@nta-monitor.com.
 
 Roy Hills <Roy.Hills@nta-monitor.com>
 
