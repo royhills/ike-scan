@@ -117,7 +117,6 @@
 #ifdef HAVE_OPENSSL
 #include <openssl/md5.h>
 #include <openssl/sha.h>
-#include <openssl/hmac.h>
 #else
 #include "md5.h"
 #include "sha1.h"
