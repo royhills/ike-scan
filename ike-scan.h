@@ -198,3 +198,4 @@ unsigned char* add_vid(int, int *, unsigned char *, int);
 int Gettimeofday(struct timeval *, struct timezone *);
 void *Malloc(size_t);
 void *Realloc(void *, size_t);
+void decode_trans(char *, int *, int *, int *, int *, int *);
