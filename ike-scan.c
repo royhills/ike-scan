@@ -54,7 +54,7 @@ struct host_entry *rrlist = NULL;	/* Round-robin linked list of hosts */
 struct host_entry *cursor;		/* Pointer to current list entry */
 struct pattern_list *patlist = NULL;	/* Backoff pattern list */
 struct vid_pattern_list *vidlist = NULL;	/* Vendor ID pattern list */
-int verbose=0;				/* Verbose level */
+static int verbose=0;			/* Verbose level */
 int experimental=0;			/* Experimental flag */
 
 int
@@ -494,12 +494,12 @@ main(int argc, char *argv[]) {
  *	backoff factor if this is not the first packet sent to this host
  *	and send a packet.
  */
-            if (verbose && cursor->num_sent > pass_no) {
-               warn_msg("---\tPass %d complete", pass_no+1);
-               pass_no = cursor->num_sent;
-            }
+
+/* This message only works if the list is not empty */
+            if (verbose && cursor->num_sent > pass_no)
+               warn_msg("---\tPass %d of %u completed", ++pass_no, retry);
             if (cursor->num_sent >= retry) {
-               if (verbose)
+               if (verbose > 1)
                   warn_msg("---\tRemoving host entry %u (%s) - Timeout", cursor->n, inet_ntoa(cursor->addr));
                remove_host(cursor, &live_count);	/* Automatically calls advance_cursor() */
                if (first_timeout) {
@@ -508,7 +508,7 @@ main(int argc, char *argv[]) {
                   while (host_timediff >= cursor->timeout && live_count) {
                      if (cursor->live) {
                         if (verbose > 1)
-                           warn_msg("---\tRemoving host %u (%s) - Catch-Up Timeout", cursor->n, inet_ntoa(cursor->addr));
+                           warn_msg("---\tRemoving host %u (%s) - Timeout", cursor->n, inet_ntoa(cursor->addr));
                         remove_host(cursor, &live_count);
                      } else {
                         advance_cursor(live_count);
@@ -561,7 +561,7 @@ main(int argc, char *argv[]) {
                display_packet(n, packet_in, temp_cursor, &(sa_peer.sin_addr),
                               &sa_responders, &notify_responders, quiet,
                               multiline);
-               if (verbose)
+               if (verbose > 1)
                   warn_msg("---\tRemoving host entry %u (%s) - Received %d bytes", temp_cursor->n, inet_ntoa(sa_peer.sin_addr), n);
                remove_host(temp_cursor, &live_count);
             }
@@ -1069,7 +1069,8 @@ send_packet(int s, unsigned char *packet_out, size_t packet_out_len,
  *	Send the packet.
  */
    if (verbose > 1)
-      warn_msg("---\tSending packet #%u to host entry %u (%s) tmo %d", he->num_sent, he->n, inet_ntoa(he->addr), he->timeout);
+      warn_msg("---\tSending packet #%u to host entry %u (%s) tmo %d us",
+               he->num_sent, he->n, inet_ntoa(he->addr), he->timeout);
    if ((sendto(s, packet_out, packet_out_len, 0, (struct sockaddr *) &sa_peer,
        sa_peer_len)) < 0) {
       err_sys("sendto");
@@ -2405,11 +2406,12 @@ usage(int status) {
    fprintf(stderr, "\t\t\t500ms, the second 750ms and the third 1125ms.\n");
    fprintf(stderr, "\n--verbose or -v\t\tDisplay verbose progress messages.\n");
    fprintf(stderr, "\t\t\tUse more than once for greater effect:\n");
-   fprintf(stderr, "\t\t\t1 - Show when hosts are removed from the list and\n");
-   fprintf(stderr, "\t\t\t    when packets with invalid cookies are received.\n");
-   fprintf(stderr, "\t\t\t2 - Show each packet sent and received.\n");
-   fprintf(stderr, "\t\t\t3 - Display the host and backoff lists before\n");
-   fprintf(stderr, "\t\t\t    scanning starts.\n");
+   fprintf(stderr, "\t\t\t1 - Show when each pass is completed and when\n");
+   fprintf(stderr, "\t\t\t    packets with invalid cookies are received.\n");
+   fprintf(stderr, "\t\t\t2 - Show each packet sent and received and when\n");
+   fprintf(stderr, "\t\t\t    hosts are removed from the list.\n");
+   fprintf(stderr, "\t\t\t3 - Display the host, Vendor ID and backoff lists\n");
+   fprintf(stderr, "\t\t\t    before scanning starts.\n");
    fprintf(stderr, "\n--quiet or -q\t\tDon't decode the returned packet.\n");
    fprintf(stderr, "\t\t\tThis prints less protocol information so the\n");
    fprintf(stderr, "\t\t\toutput lines are shorter.\n");
