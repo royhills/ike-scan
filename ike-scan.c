@@ -770,7 +770,13 @@ display_packet(int n, char *packet_in, struct host_entry *he, struct in_addr *re
             sprintf(xchg_type, "UNKNOWN Mode (%u)", hdr_in.isa_xchg);
          }
          decode_transform(packet_in, n, sa_prop_in.isap_notrans);
-         printf("%sIKE %s Handshake returned (%d transforms)\n", ip_str, xchg_type, sa_prop_in.isap_notrans);
+         if (sa_prop_in.isap_notrans == 1) {
+            printf("%sIKE %s Handshake returned\n",
+                   ip_str, xchg_type);
+         } else {	/* More than 1 transform - shouldn't happen */
+            printf("%sIKE %s Handshake returned (%d transforms)\n",
+                   ip_str, xchg_type, sa_prop_in.isap_notrans);
+         }
       } else {
          printf("%sIKE Handshake returned (%d byte packet too short to decode)\n", ip_str, n);
       }
@@ -821,6 +827,11 @@ display_packet(int n, char *packet_in, struct host_entry *he, struct in_addr *re
 
 /*
  *	decode-transform -- Decode an IKE transform payload
+ *
+ *	On entry:
+ *	packet_in points to the start of the transform payload
+ *	n is the total packet size
+ *	ntrans is the number of transforms (almost always 1)
  */
 void
 decode_transform(char *packet_in, int n, int ntrans) {
@@ -1234,7 +1245,7 @@ dump_list(void) {
 void
 dump_backoff(void) {
    struct pattern_list *pl;
-   struct time_list *pp;
+   struct pattern_entry_list *pp;
    int i;
 
    printf("Backoff Pattern List:\n\n");
@@ -1255,11 +1266,16 @@ dump_backoff(void) {
          } else {
             printf("%ld", (long)pp->time.tv_sec);
          }
-         pp = pp->next;
+/*
+ * Display the fuzz value for this pattern entry if it is not the default.
+ */
+         if (pp->fuzz != pattern_fuzz)
+            printf("/%d", pp->fuzz);
 /*
  * Print a newline if we're at the end of this pattern, otherwise print a
  * comma and space before the next time element.
  */
+         pp = pp->next;
          if (pp == NULL) {
             printf("\n");
          } else {
@@ -1350,7 +1366,7 @@ match_pattern(struct host_entry *he) {
    while (pl != NULL) {
       if (he->num_recv == pl->num_times && pl->recv_times != NULL) {
          struct time_list *hp;
-         struct time_list *pp;
+         struct pattern_entry_list *pp;
          struct timeval diff;
          struct timeval prev_time;
          int match;
@@ -1365,7 +1381,7 @@ match_pattern(struct host_entry *he) {
          while (pp != NULL && hp != NULL) {
             if (i > 1)
                timeval_diff(&(hp->time), &prev_time, &diff);
-            if (!times_close_enough(&(pp->time), &diff)) {
+            if (!times_close_enough(&(pp->time), &diff, pp->fuzz)) {
                match = 0;
                break;
             }
@@ -1390,13 +1406,13 @@ match_pattern(struct host_entry *he) {
  *	                      of each other.  Otherwise return 0.
  */
 int
-times_close_enough(struct timeval *t1, struct timeval *t2) {
+times_close_enough(struct timeval *t1, struct timeval *t2, unsigned fuzz) {
 struct timeval diff;
 int diff_ms;
 
    timeval_diff(t1, t2, &diff);	/* diff = t1 - t2 */
    diff_ms = abs(1000*diff.tv_sec + diff.tv_usec/1000);
-   if (diff_ms <= pattern_fuzz) {
+   if (diff_ms <= fuzz) {
       return 1;
    } else {
       return 0;
@@ -1451,14 +1467,15 @@ add_pattern(char *line) {
    int tabseen;
    struct pattern_list *pe;	/* Pattern entry */
    struct pattern_list *p;	/* Temp pointer */
-   struct time_list *te;
-   struct time_list *tp;
+   struct pattern_entry_list *te;
+   struct pattern_entry_list *tp;
    char *endp;
    int i;
    long back_sec;
    long back_usec;
    char back_usec_str[7];       /* Backoff microseconds as string */
    int len;
+   unsigned fuzz;	/* Pattern matching fuzz in ms */
 /*
  *	Allocate new pattern list entry and add to tail of patlist.
  */
@@ -1528,25 +1545,33 @@ add_pattern(char *line) {
                back_usec_str[len] = '0';
             }
          }
+         while (isdigit(*endp))
+            endp++;	/* Skip any fractional digits past 6th */
          back_usec_str[len] = '\0';
          back_usec=strtol(back_usec_str, NULL, 10);
-      } else {
+      } else {	/* No fractional seconds part */
          back_usec=0;
       }
 /*
  *      If there is a "/" after the number, this represents a fuzz value
  *      in milliseconds.
- *	*NOT YET COMPLETE*
  */
+      if (*endp == '/') {
+         endp++;
+         fuzz=strtol(endp, &endp, 10);
+      } else {
+         fuzz = pattern_fuzz;
+      }
 /*
- *      Allocate and fill in new time_list structure for this backoff pattern
- *      entry and add it onto the tail of this pattern entry.
+ *      Allocate and fill in new pattern_entry_list structure for this backoff
+ *      pattern entry and add it onto the tail of this pattern entry.
  */
-      if ((te = malloc(sizeof(struct time_list))) == NULL)
+      if ((te = malloc(sizeof(struct pattern_entry_list))) == NULL)
          err_sys("malloc");
       te->next=NULL;
       te->time.tv_sec = back_sec;
       te->time.tv_usec = back_usec;
+      te->fuzz = fuzz;
       tp = pe->recv_times;
       if (tp == NULL) {
          pe->recv_times = te;
@@ -1555,10 +1580,13 @@ add_pattern(char *line) {
             tp = tp->next;
          tp->next = te;
       }
+/*
+ *	Move on to next pattern entry.
+ */
       if (*endp == ',')
          endp++;
       i++;
-   }
+   }	/* End While */
    pe->num_times=i;
 }
 

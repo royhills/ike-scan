@@ -141,10 +141,16 @@ struct time_list {
    struct time_list *next;
 };
 
+struct pattern_entry_list {
+   struct timeval time;
+   unsigned fuzz;
+   struct pattern_entry_list *next;
+};
+
 struct pattern_list {
    char *name;
    int num_times;
-   struct time_list *recv_times;
+   struct pattern_entry_list *recv_times;
    struct pattern_list *next;
 };
 
@@ -173,5 +179,5 @@ void dump_times(void);
 void add_recv_time(struct host_entry *);
 void add_pattern(char *);
 char *match_pattern(struct host_entry *);
-int times_close_enough(struct timeval *, struct timeval *);
+int times_close_enough(struct timeval *, struct timeval *, unsigned);
 void dump_backoff(void);
