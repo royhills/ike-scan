@@ -114,6 +114,10 @@ Windows-2000	0, 1, 2, 4, 8, 16, 32
 FreeBSD/OpenBSD-isakmpd	0, 7, 9, 11
 FreeBSD/OpenBSD-isakmpd	0, 7, 9, 11, 13, 15
 
-# Discovered by: Paul van Maaren, Jan 2003
+# Discovered by: Paul van Maaren, January 2003
 # Observed on: FreeBSD-4.7 STABLE with racoon-20021120a
 FreeBSD-racoon	0, 20, 20, 20, 20, 20
+
+# Discovered by: Iain Lewis, February 2003
+# Observed on: Netscreen 500
+netscreen	0, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4
