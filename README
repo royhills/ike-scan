@@ -113,10 +113,7 @@ Options:
 --interval=<n> or -i <n> Set minimum packet interval to <n> ms, default=75.
 			This controls the outgoing bandwidth usage by limiting
 			the rate at which packets can be sent.  The packet
-			interval will be greater than or equal to this number
-			and will be a multiple of the select wait specified
-			with --selectwait.  Thus --interval=75 --selectwait=10
-			will result in a packet interval of 80ms.
+			interval will be no smaller than this number.
 			The outgoing packets have a total size of 364 bytes
 			(20 bytes IP hdr + 8 bytes UDP hdr + 336 bytes data)
 			when the default transform set is used, or 112 bytes
@@ -131,15 +128,6 @@ Options:
 			backoff factor is 1.5, then the first timeout will be
 			500ms, the second 750ms and the third 1125ms.
 
---selectwait=<n> or -w <n> Set select wait to <n> ms, default=10.
-			This controls the timeout used in the select(2) call.
-			It defines the lower bound and granularity of the
-			packet interval set with --interval.  Smaller values
-			allow more accurate and lower packet intervals;
-			larger values reduce CPU usage.  You don't need
-			to change this unless you want to reduce the packet
-			interval close to or below the default selectwait time.
-
 --verbose or -v		Display verbose progress messages.
 			Use more than once for greater effect:
 			1 - Show when hosts are removed from the list and
@@ -151,23 +139,34 @@ Options:
 --lifetime=<s> or -l <s> Set IKE lifetime to <s> seconds, default=28800.
 			RFC 2407 specifies 28800 as the default, but some
 			implementations may require different values.
+			If you specify 0, then no lifetime will be specified.
+			You can use this option more than once in conjunction
+			with the --trans options to produce multiple transform
+			payloads with different lifetimes.  Each --trans option
+			will use the previously specified lifetime value.
 
 --auth=<n> or -m <n>	Set auth. method to <n>, default=1 (pre-shared key).
 			RFC defined values are 1 to 5.  See RFC 2409 Appendix A.
+			Checkpoint hybrid mode is 64221.
 
 --version or -V		Display program version and exit.
 
 --vendor=<v> or -e <v>	Set vendor id string to hex value <v>.
+			You can use this option more than once to send
+			multiple vendor ID payloads.
 
 --trans=<t> or -a <t>	Use custom transform <t> instead of default set.
-			<t> is specified as enc,hash,auth,group. e.g. 2,3,1,5.
+			<t> is specified as enc[/len],hash,auth,group.
+			Where enc is the encryption algorithm,
+			len is the key length for variable length ciphers,
+			hash is the hash algorithm, and group is the DH Group.
 			See RFC 2409 Appendix A for details of which values
-			to use.  For example, --trans=2,3,1,5 specifies
-			Enc=IDEA-CBC, Hash=Tiger, Auth=shared key, DH Group=5
-			If this option is specified, then only the single
-			custom transform is used rather than the default set
-			of 8 transforms.  As a result, the IP packet size
-			is 112 bytes rather than the default of 364.
+			to use.  For example, --trans=5,2,1,2 specifies
+			Enc=3DES-CBC, Hash=SHA1, Auth=shared key, DH Group=2
+			and --trans=7/256,1,1,5 specifies
+			Enc=AES-256, Hash=MD5, Auth=shared key, DH Group=5
+			You can use this option more than once to send
+			an arbitary number of custom transforms.
 
 --showbackoff[=<n>] or -o[<n>]	Display the backoff fingerprint table.
 			Display the backoff table to fingerprint the IKE
@@ -184,12 +183,33 @@ Options:
 			the backoff patterns file.  Larger values allow for
 			higher variance but also increase the risk of
 			false positive identifications.
+			Any per-pattern-entry fuzz specifications in the
+			patterns file will override the value set here.
 
 --patterns=<f> or -p <f> Use IKE patterns file <f>,
-			default=/usr/local/share/ike-backoff-patterns.
+			default=/usr/local/share/ike-scan/ike-backoff-patterns.
 			This specifies the name of the file containing
 			IKE backoff patterns.  This file is only used when
 			--showbackoff is specified.
+
+--aggressive or -A	Use IKE Aggressive Mode (The default is Main Mode)
+			If you specify --aggressive, then you may also
+			specify --dhgroup, --id and --idtype.  If you use
+			custom transforms with aggressive mode with the --trans
+			option, note that all transforms should have the same
+			DH Group and this should match the group specified
+			with --dhgroup or the default if --dhgroup is not used.
+
+--id <id> or -n <id>	Use <id> as the identification value.
+			This option is only applicable to Aggressive Mode.
+			<id> should be specified in hex, e.g. --id=deadbeef.
+
+--idtype=n or -y n	Use identification type <n>.  Default 3 (ID_USER_FQDN).
+			This option is only applicable to Aggressive Mode.
+			See RFC 2407 4.6.2 for details of Identification types.
+
+--dhgroup=n or -g n	Use Diffie Hellman Group <n>.  Default 2.
+			This option is only applicable to Aggressive Mode.
 
 Report bugs or send suggestions to ike-scan@nta-monitor.com
 See the ike-scan homepage at http://www.nta-monitor.com/ike-scan/
@@ -283,6 +303,18 @@ also shows the order in which they are sent:
             (t: #7 id=ike (type=enc value=1des)(type=hash value=sha1)(type=auth value=preshared)(type=group desc value=modp768)(type=lifetype value=sec)(type=lifeduration len=4 value=00007080))
             (t: #8 id=ike (type=enc value=1des)(type=hash value=md5)(type=auth value=preshared)(type=group desc value=modp768)(type=lifetype value=sec)(type=lifeduration len=4 value=00007080)))) (DF) (ttl 64, id 0, len 364)
 
+This default transform set is designed to be acceptable to most IKE
+implementations - most will accept at least one of the offered transforms.
+However, it is sometimes necessary to use a different authentication method
+(pre-shared key is the most common, but is not always supported), and
+occasionally it is necessary to specify a different cipher such as 256-bit
+AES. More rarely it may be necessary to change the lifetime.  Finally, some
+implementations require a specific "Vendor ID" string to be sent by the client
+before they will respond.  This can be specified with the --vendor option.
+
+The default transform set results in a packet data length of 336 bytes which
+when IP and UDP headers are added gives a total packet size of 364 bytes.
+
 It is possible to specify the Authentication Method with --auth
 (default is 1 - pre-shared key) and the IKE lifetime in seconds with
 --lifetime (default is 28800 seconds or 8 hours as recommended by RFC 2407).
@@ -291,17 +323,6 @@ the transfrom payloads.  If you are specifying custom transforms, you can
 you can use this option more than once to produce transform payloads with
 different lifetimes.  Each --trans option will use the previously specified
 lifetime value.
-
-This default transform set is designed to be acceptable to most IKE
-implementations - most will accept at least one of the offered transforms.
-However, it is sometimes necessary to use a different authentication method
-(pre-shared key is the most common, but is not always supported) and
-more rarely it may be necessary to change the lifetime.  Finally, some
-implementations require a specific "Vendor ID" string to be sent by the client
-before they will respond.  This can be specified with the --vendor option.
-
-The default transform set results in a packet data length of 336 bytes which
-when IP and UDP headers are added gives a total packet size of 364 bytes.
 
 It is possible to specify a custom transform set with
 --trans=e[/l],h,a,g where "e" is the Encryption Algorithm, "l" is the key
@@ -349,6 +370,23 @@ b) If you know that a particular transform will be acceptable, and you want
    to minimise bandwidth use or allow faster scanning rates; or
 c) If you want to determine exactly which transforms a remote IKE
    implementation supports for fingerprinting.
+
+The default mode used is Main Mode.  However, it is possible to specify
+Aggressive Mode with the --aggressive option.  When this is done, three
+additional payloads will be included: Key Exchange, Nonce and ID.  This will
+increase the packet size, and you may need to increase --interval to ensure
+that ike-scan doesn't try to use too much bandwidth as a result.  If you use
+Aggressive Mode, you can also use the following options:
+
+--id		Set identification value.
+--idtype	Set identificatiion type (Default 3 (ID_USER_FQDN)).
+--dhgroup	Specify Diffie-Hellman group (Default 2 - MODP 1024).
+
+If you use Aggressive Mode, then you can only use one Diffie Hellman group
+in the transform set.  If you specify custom transforms with the --trans
+option, you should ensure that they all use the same group, and that this
+group matches the DH group specified with the --dhgroup option, or the default
+of 2 if --dhgroup is not specified.
 
 IKE hosts may respond in one of two ways:
 
