@@ -59,6 +59,7 @@ struct vid_pattern_list *vidlist = NULL;	/* Vendor ID pattern list */
 #endif
 static int verbose=0;			/* Verbose level */
 int experimental=0;			/* Experimental flag */
+int tcp_flag=0;				/* TCP flag */
 /* The following variables are for psk hash cracking */
 char *g_xr;
 char *g_xi;
@@ -100,11 +101,12 @@ main(int argc, char *argv[]) {
       {"quiet", no_argument, 0, 'q'},
       {"multiline", no_argument, 0, 'M'},
       {"random", no_argument, 0, 'R'},
+      {"tcp", no_argument, 0, 'T'},
       {"experimental", no_argument, 0, 'X'},
       {0, 0, 0, 0}
    };
    const char *short_options =
-      "f:hs:d:r:t:i:b:w:vl:z:m:Ve:a:o::u:n:y:g:p:AG:I:qMRX";
+      "f:hs:d:r:t:i:b:w:vl:z:m:Ve:a:o::u:n:y:g:p:AG:I:qMRTX";
    int arg;
    char arg_str[MAXLINE];	/* Args as string for syslog */
    int options_index=0;
@@ -332,6 +334,9 @@ main(int argc, char *argv[]) {
          case 'R':      /* --random */
             random_flag=1;
             break;
+         case 'T':	/* --tcp */
+            tcp_flag=1;
+            break;
          case 'X':	/* --experimental */
             experimental=1;
             break;
@@ -399,6 +404,12 @@ main(int argc, char *argv[]) {
    if (!num_hosts)
       err_msg("No hosts to process.");
 /*
+ *	Check that the combination of specified options and arguments is
+ *	legal.
+ */
+   if (tcp_flag && num_hosts > 1)
+      err_msg("You can only specify one target host with the --tcp option.");
+/*
  *      Create and initialise array of pointers to host entries.
  */
    helistptr = Malloc(num_hosts * sizeof(struct host_entry *));
@@ -425,10 +436,19 @@ main(int argc, char *argv[]) {
       }
    }
 /*
- *	Create UDP socket and bind to local source port.
+ *	Create network socket and bind to local source port.
  */
-   if ((sockfd = socket(AF_INET, SOCK_DGRAM, 0)) < 0)
-      err_sys("socket");
+   if (tcp_flag) {
+      const int on = 1;	/* for setsockopt() */
+
+      if ((sockfd = socket(AF_INET, SOCK_STREAM, 0)) < 0)
+         err_sys("socket");
+      if ((setsockopt(sockfd, IPPROTO_TCP, TCP_NODELAY, &on, sizeof(on))) < 0)
+         err_sys("setsockopt() failed");
+   } else {
+      if ((sockfd = socket(AF_INET, SOCK_DGRAM, 0)) < 0)
+         err_sys("socket");
+   }
 
    memset(&sa_local, '\0', sizeof(sa_local));
    sa_local.sin_family = AF_INET;
@@ -436,7 +456,7 @@ main(int argc, char *argv[]) {
    sa_local.sin_port = htons(source_port);
 
    if ((bind(sockfd, (struct sockaddr *)&sa_local, sizeof(sa_local))) < 0) {
-      warn_msg("ERROR: Could not bind UDP socket to local port %u", source_port);
+      warn_msg("ERROR: Could not bind network socket to local port %u", source_port);
       if (errno == EACCES)
          warn_msg("You need to be root, or ike-scan must be suid root to bind to ports below 1024.");
       if (errno == EADDRINUSE)
@@ -992,7 +1012,7 @@ display_packet(int n, unsigned char *packet_in, struct host_entry *he,
  *	responder if different, and a tab.
  */
    msg = make_message("%s\t", inet_ntoa(he->addr));
-   if ((he->addr).s_addr != recv_addr->s_addr) {
+   if (((he->addr).s_addr != recv_addr->s_addr) && !tcp_flag) {
       cp = msg;
       msg = make_message("%s(%s) ", cp, inet_ntoa(*recv_addr));
       free(cp);
@@ -1086,7 +1106,7 @@ display_packet(int n, unsigned char *packet_in, struct host_entry *he,
  *	
  *	Inputs:
  *	
- *	s               UDP socket file descriptor
+ *	s               network socket file descriptor
  *	packet_out	IKE packet to send
  *	packet_out_len	Length of IKE packet to send
  *	he              Host entry to send to
@@ -1134,6 +1154,10 @@ send_packet(int s, unsigned char *packet_out, size_t packet_out_len,
    if (verbose > 1)
       warn_msg("---\tSending packet #%u to host entry %u (%s) tmo %d us",
                he->num_sent, he->n, inet_ntoa(he->addr), he->timeout);
+   if (tcp_flag) {
+      if ((connect(s, (struct sockaddr *) &sa_peer, sa_peer_len)) != 0)
+         err_sys("connect");
+   }
    if ((sendto(s, packet_out, packet_out_len, 0, (struct sockaddr *) &sa_peer,
        sa_peer_len)) < 0) {
       err_sys("sendto");
@@ -2318,7 +2342,10 @@ usage(int status) {
    fprintf(stderr, "\n--random or -R\t\tRandomise the host list.\n");
    fprintf(stderr, "\t\t\tThis option randomises the order of the hosts in the\n");
    fprintf(stderr, "\t\t\thost list, so the IKE probes are sent to the hosts in\n");
-   fprintf(stderr, "\t\t\ta random order.\n");
+   fprintf(stderr, "\t\t\ta random order.  It uses the Knuth shuffle algorithm.\n");
+   fprintf(stderr, "\n--tcp or -T\t\tUse TCP instead of UDP (experimental).\n");
+   fprintf(stderr, "\t\t\tYou can only specify a single target host if you use\n");
+   fprintf(stderr, "\t\t\tthis option.\n");
    fprintf(stderr, "\n");
    fprintf(stderr, "Report bugs or send suggestions to %s\n", PACKAGE_BUGREPORT);
    fprintf(stderr, "See the ike-scan homepage at http://www.nta-monitor.com/ike-scan/\n");
