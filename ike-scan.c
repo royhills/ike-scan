@@ -117,6 +117,7 @@ main(int argc, char *argv[]) {
       {"selectwait", required_argument, 0, 'w'},
       {"verbose", no_argument, 0, 'v'},
       {"lifetime", required_argument, 0, 'l'},
+      {"lifesize", required_argument, 0, 'z'},
       {"auth", required_argument, 0, 'm'},
       {"version", no_argument, 0, 'V'},
       {"vendor", required_argument, 0, 'e'},
@@ -130,7 +131,7 @@ main(int argc, char *argv[]) {
       {"aggressive", no_argument, 0, 'A'},
       {0, 0, 0, 0}
    };
-   const char *short_options = "f:hs:d:r:t:i:b:w:vl:m:Ve:a:o::u:n:y:g:p:A";
+   const char *short_options = "f:hs:d:r:t:i:b:w:vl:z:m:Ve:a:o::u:n:y:g:p:A";
    int arg;
    char arg_str[MAXLINE];	/* Args as string for syslog */
    int options_index=0;
@@ -145,6 +146,7 @@ main(int argc, char *argv[]) {
    unsigned end_wait = 1000 * DEFAULT_END_WAIT; /* Time to wait after all done in ms */
    unsigned timeout = DEFAULT_TIMEOUT;	/* Per-host timeout in ms */
    unsigned lifetime = DEFAULT_LIFETIME;	/* Lifetime in seconds */
+   unsigned lifesize = DEFAULT_LIFESIZE;	/* Lifesize in KB */
    int auth_method = DEFAULT_AUTH_METHOD;	/* Authentication method */
    int dhgroup = DEFAULT_DH_GROUP;		/* Diffie Hellman Group */
    int idtype = DEFAULT_IDTYPE;		/* IKE Identification type */
@@ -262,6 +264,9 @@ main(int argc, char *argv[]) {
          case 'l':	/* --lifetime */
             lifetime=strtoul(optarg, (char **)NULL, 10);
             break;
+         case 'z':	/* --lifesize */
+            lifesize=strtoul(optarg, (char **)NULL, 10);
+            break;
          case 'm':	/* --auth */
             auth_method=atoi(optarg);
             break;
@@ -295,7 +300,7 @@ main(int argc, char *argv[]) {
             decode_trans(trans_str, &trans_enc, &trans_keylen, &trans_hash,
                          &trans_auth, &trans_group);
             add_trans(0, NULL, trans_enc, trans_keylen, trans_hash,
-                      trans_auth, trans_group, lifetime);
+                      trans_auth, trans_group, lifetime, lifesize);
             break;
          case 'o':	/* --showbackoff */
             showbackoff_flag=1;
@@ -452,8 +457,8 @@ main(int argc, char *argv[]) {
    last_packet_time.tv_sec=0;
    last_packet_time.tv_usec=0;
    Gettimeofday(&last_recv_time, NULL);
-   initialise_ike_packet(lifetime, auth_method, dhgroup, idtype, id_data,
-                         id_data_len, vendor_id_flag, trans_flag,
+   initialise_ike_packet(lifetime, lifesize, auth_method, dhgroup, idtype,
+                         id_data, id_data_len, vendor_id_flag, trans_flag,
                          exchange_type);
 /*
  *	Check ISAKMP structure sizes.
@@ -1026,9 +1031,10 @@ timeval_diff(struct timeval *a, struct timeval *b, struct timeval *diff) {
  *	payload, and also that we know the total length for the ISAKMP header.
  */
 void
-initialise_ike_packet(unsigned lifetime, int auth_method, int dhgroup,
-                      int idtype, unsigned char *id_data, int id_data_len,
-                      int vendor_id_flag, int trans_flag, int exchange_type) {
+initialise_ike_packet(unsigned lifetime, unsigned lifesize, int auth_method,
+                      int dhgroup, int idtype, unsigned char *id_data,
+                      int id_data_len, int vendor_id_flag, int trans_flag,
+                      int exchange_type) {
    struct isakmp_hdr *hdr;
    struct isakmp_sa *sa;
    struct isakmp_proposal *prop;
@@ -1102,33 +1108,33 @@ initialise_ike_packet(unsigned lifetime, int auth_method, int dhgroup,
    if (!trans_flag) {	/* Use standard transform set if none specified */
       if (exchange_type == ISAKMP_XCHG_IDPROT) {	/* Main Mode */
          add_trans(0, NULL, OAKLEY_3DES_CBC, 0, OAKLEY_SHA, auth_method,
-                   2, lifetime);
+                   2, lifetime, lifesize);
          add_trans(0, NULL, OAKLEY_3DES_CBC, 0, OAKLEY_MD5, auth_method,
-                   2, lifetime);
+                   2, lifetime, lifesize);
          add_trans(0, NULL, OAKLEY_DES_CBC,  0, OAKLEY_SHA, auth_method,
-                   2, lifetime);
+                   2, lifetime, lifesize);
          add_trans(0, NULL, OAKLEY_DES_CBC,  0, OAKLEY_MD5, auth_method,
-                   2, lifetime);
+                   2, lifetime, lifesize);
          add_trans(0, NULL, OAKLEY_3DES_CBC, 0, OAKLEY_SHA, auth_method,
-                   1, lifetime);
+                   1, lifetime, lifesize);
          add_trans(0, NULL, OAKLEY_3DES_CBC, 0, OAKLEY_MD5, auth_method,
-                   1, lifetime);
+                   1, lifetime, lifesize);
          add_trans(0, NULL, OAKLEY_DES_CBC,  0, OAKLEY_SHA, auth_method,
-                   1, lifetime);
+                   1, lifetime, lifesize);
          add_trans(0, NULL, OAKLEY_DES_CBC,  0, OAKLEY_MD5, auth_method,
-                   1, lifetime);
+                   1, lifetime, lifesize);
       } else {	/* presumably aggressive mode */
          add_trans(0, NULL, OAKLEY_3DES_CBC, 0, OAKLEY_SHA, auth_method,
-                   dhgroup, lifetime);
+                   dhgroup, lifetime, lifesize);
          add_trans(0, NULL, OAKLEY_3DES_CBC, 0, OAKLEY_MD5, auth_method,
-                   dhgroup, lifetime);
+                   dhgroup, lifetime, lifesize);
          add_trans(0, NULL, OAKLEY_DES_CBC,  0, OAKLEY_SHA, auth_method,
-                   dhgroup, lifetime);
+                   dhgroup, lifetime, lifesize);
          add_trans(0, NULL, OAKLEY_DES_CBC,  0, OAKLEY_MD5, auth_method,
-                   dhgroup, lifetime);
+                   dhgroup, lifetime, lifesize);
       }
    }
-   transforms = add_trans(1, &trans_len, 0,  0, 0, 0, 0, 0);
+   transforms = add_trans(1, &trans_len, 0,  0, 0, 0, 0, 0, 0);
    buflen += trans_len;
 /*
  *	Proposal payload
@@ -1785,6 +1791,12 @@ usage(void) {
    fprintf(stderr, "\t\t\twith the --trans options to produce multiple transform\n");
    fprintf(stderr, "\t\t\tpayloads with different lifetimes.  Each --trans option\n");
    fprintf(stderr, "\t\t\twill use the previously specified lifetime value.\n");
+   fprintf(stderr, "\n--lifesize=<s> or -z <s> Set IKE lifesize to <s> Kilobytes, default=%d.\n", DEFAULT_LIFESIZE);
+   fprintf(stderr, "\t\t\tIf you specify 0, then no lifesize will be specified.\n");
+   fprintf(stderr, "\t\t\tYou can use this option more than once in conjunction\n");
+   fprintf(stderr, "\t\t\twith the --trans options to produce multiple transform\n");
+   fprintf(stderr, "\t\t\tpayloads with different lifesizes.  Each --trans option\n");
+   fprintf(stderr, "\t\t\twill use the previously specified lifesize value.\n");
    fprintf(stderr, "\n--auth=<n> or -m <n>\tSet auth. method to <n>, default=%d (%s).\n", DEFAULT_AUTH_METHOD, auth_methods[DEFAULT_AUTH_METHOD]);
    fprintf(stderr, "\t\t\tRFC defined values are 1 to 5.  See RFC 2409 Appendix A.\n");
    fprintf(stderr, "\t\t\tCheckpoint hybrid mode is 64221.\n");
