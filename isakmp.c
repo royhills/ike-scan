@@ -36,7 +36,7 @@
 static char rcsid[] = "$Id$";	/* RCS ID for ident(1) */
 
 extern int experimental_flag;
-extern struct psk_crack psk_values;
+extern psk_crack psk_values;
 
 /*
  *	make_isakmp_hdr -- Construct an ISAKMP Header
@@ -652,17 +652,17 @@ make_id(size_t *length, unsigned next, unsigned idtype, unsigned char *id_data,
 unsigned char*
 make_udphdr(size_t *length, int sport, int dport, unsigned udplen) {
    unsigned char *payload;
-   struct ike_udphdr *hdr;
+   ike_udphdr *hdr;
 
-   payload = Malloc(sizeof(struct ike_udphdr));
-   hdr = (struct ike_udphdr*) payload; /* Overlay UDP hdr on payload */
+   payload = Malloc(sizeof(ike_udphdr));
+   hdr = (ike_udphdr*) payload; /* Overlay UDP hdr on payload */
 
    hdr->source = htons(sport);
    hdr->dest   = htons(dport);
    hdr->len    = htons(udplen);
    hdr->check  = 0; /* should use in_cksum() */
 
-   *length = sizeof(struct ike_udphdr);
+   *length = sizeof(ike_udphdr);
 
    return payload;
 }
@@ -1028,14 +1028,14 @@ process_attr(unsigned char **cp, size_t *len) {
  *	which should be free'ed by the caller when it's no longer needed.
  */
 char *
-process_vid(unsigned char *cp, size_t len, struct vid_pattern_list *vidlist) {
+process_vid(unsigned char *cp, size_t len, vid_pattern_list *vidlist) {
    struct isakmp_vid *hdr = (struct isakmp_vid *) cp;
    char *msg;
    char *hexvid;
    char *p;
    unsigned char *vid_data;
    size_t data_len;
-   struct vid_pattern_list *ve;
+   vid_pattern_list *ve;
 
    if (len < sizeof(struct isakmp_vid) ||
         ntohs(hdr->isavid_length) < sizeof(struct isakmp_vid))

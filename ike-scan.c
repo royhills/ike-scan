@@ -50,16 +50,16 @@
 static const char rcsid[] = "$Id$";   /* RCS ID for ident(1) */
 
 /* Global variables */
-struct host_entry *helist = NULL;	/* Dynamic array of host entries */
-struct host_entry **helistptr;		/* Array of pointers to host entries */
-struct host_entry **cursor;		/* Pointer to current list entry */
-struct pattern_list *patlist = NULL;	/* Backoff pattern list */
-struct vid_pattern_list *vidlist = NULL;	/* Vendor ID pattern list */
+host_entry *helist = NULL;	/* Dynamic array of host entries */
+host_entry **helistptr;		/* Array of pointers to host entries */
+host_entry **cursor;		/* Pointer to current list entry */
+pattern_list *patlist = NULL;	/* Backoff pattern list */
+vid_pattern_list *vidlist = NULL;	/* Vendor ID pattern list */
 static int verbose=0;			/* Verbose level */
 unsigned experimental_value=0;		/* Experimental value */
 int tcp_flag=0;				/* TCP flag */
 int psk_crack_flag=0;			/* Pre-shared key cracking flag */
-struct psk_crack psk_values = {		/* Pre-shared key values */
+psk_crack psk_values = {		/* Pre-shared key values */
    NULL, 0, NULL, 0, NULL, 0, NULL, 0, NULL, 0, NULL, 0, NULL, 0, NULL, 0,
    NULL, 0
 };
@@ -135,7 +135,7 @@ main(int argc, char *argv[]) {
    unsigned char packet_in[MAXUDP];	/* Received packet */
    struct hostent *hp;
    int n;
-   struct host_entry *temp_cursor;
+   host_entry *temp_cursor;
    struct timeval diff;		/* Difference between two timevals */
    IKE_UINT64 loop_timediff;	/* Time since last packet sent in us */
    IKE_UINT64 host_timediff;	/* Time since last packet sent to this host */
@@ -488,7 +488,7 @@ main(int argc, char *argv[]) {
 /*
  *      Create and initialise array of pointers to host entries.
  */
-   helistptr = Malloc(num_hosts * sizeof(struct host_entry *));
+   helistptr = Malloc(num_hosts * sizeof(host_entry *));
    for (hostno=0; hostno<num_hosts; hostno++)
       helistptr[hostno] = &helist[hostno];
 /*
@@ -499,7 +499,7 @@ main(int argc, char *argv[]) {
       struct timeval tv;
       int i;
       int r;
-      struct host_entry *temp;
+      host_entry *temp;
 
       Gettimeofday(&tv);
       srand((unsigned) tv.tv_usec ^ (unsigned) getpid());
@@ -978,7 +978,7 @@ add_host_pattern(const char *pattern, unsigned timeout, unsigned *num_hosts) {
 void
 add_host(const char *name, unsigned timeout, unsigned *num_hosts) {
    struct hostent *hp = NULL;
-   struct host_entry *he;
+   host_entry *he;
    struct in_addr inp;
    char str[MAXLINE];
    struct timeval now;
@@ -1000,10 +1000,10 @@ add_host(const char *name, unsigned timeout, unsigned *num_hosts) {
 
    if (!num_left) {     /* No entries left, allocate some more */
       if (helist)
-         helist=Realloc(helist, ((*num_hosts) * sizeof(struct host_entry)) +
-                        REALLOC_COUNT*sizeof(struct host_entry));
+         helist=Realloc(helist, ((*num_hosts) * sizeof(host_entry)) +
+                        REALLOC_COUNT*sizeof(host_entry));
       else
-         helist=Malloc(REALLOC_COUNT*sizeof(struct host_entry));
+         helist=Malloc(REALLOC_COUNT*sizeof(host_entry));
       num_left = REALLOC_COUNT;
    }
 
@@ -1026,6 +1026,7 @@ add_host(const char *name, unsigned timeout, unsigned *num_hosts) {
    he->last_send_time.tv_sec=0;
    he->last_send_time.tv_usec=0;
    he->recv_times = NULL;
+   he->extra = NULL;
 /*
  * We cast the timeval elements to unsigned long because different vendors
  * use different types for them (int, long, unsigned int and unsigned long).
@@ -1055,7 +1056,7 @@ add_host(const char *name, unsigned timeout, unsigned *num_hosts) {
  *	function updates cursor so that it points to the next entry.
  */
 void
-remove_host(struct host_entry **he, unsigned *live_count, unsigned num_hosts) {
+remove_host(host_entry **he, unsigned *live_count, unsigned num_hosts) {
    (*he)->live = 0;
    (*live_count)--;
    if (*he == *cursor)
@@ -1104,10 +1105,10 @@ advance_cursor(unsigned live_count, unsigned num_hosts) {
  *	Returns a pointer to the host entry associated with the specified IP
  *	or NULL if no match found.
  */
-struct host_entry *
-find_host_by_cookie(struct host_entry **he, unsigned char *packet_in, int n,
+host_entry *
+find_host_by_cookie(host_entry **he, unsigned char *packet_in, int n,
                     unsigned num_hosts) {
-   struct host_entry **p;
+   host_entry **p;
    int found = 0;
    struct isakmp_hdr hdr_in;
 /*
@@ -1172,7 +1173,7 @@ find_host_by_cookie(struct host_entry **he, unsigned char *packet_in, int n,
  *	was received in the format: <IP-Address><TAB><Details>.
  */
 void
-display_packet(int n, unsigned char *packet_in, struct host_entry *he,
+display_packet(int n, unsigned char *packet_in, host_entry *he,
                struct in_addr *recv_addr, unsigned *sa_responders,
                unsigned *notify_responders, int quiet, int multiline) {
    char *cp;			/* Temp pointer */
@@ -1315,7 +1316,7 @@ display_packet(int n, unsigned char *packet_in, struct host_entry *he,
  */
 void
 send_packet(int s, unsigned char *packet_out, size_t packet_out_len,
-            struct host_entry *he, unsigned dest_port,
+            host_entry *he, unsigned dest_port,
             struct timeval *last_packet_time) {
    struct sockaddr_in sa_peer;
    NET_SIZE_T sa_peer_len;
@@ -1446,11 +1447,11 @@ recvfrom_wto(int s, unsigned char *buf, size_t len, struct sockaddr *saddr,
  *	Remove encapsulated UDP header from TCP segment.
  */
    if (tcp_flag == TCP_PROTO_ENCAP && n > 8) {
-      struct ike_udphdr *udphdr;
+      ike_udphdr *udphdr;
       unsigned char *tmpbuf;
       size_t tmpbuf_len;
 
-      udphdr = (struct ike_udphdr*) buf;
+      udphdr = (ike_udphdr*) buf;
       if (ntohs(udphdr->source) == 500 &&
           ntohs(udphdr->dest) == 500) {
          tmpbuf_len = n - 8;	/* we know that n > 8 at this point */
@@ -1735,8 +1736,8 @@ dump_list(unsigned num_hosts) {
  */
 void
 dump_backoff(unsigned pattern_fuzz) {
-   struct pattern_list *pl;
-   struct pattern_entry_list *pp;
+   pattern_list *pl;
+   pattern_entry_list *pp;
    int i;
 
    printf("Backoff Pattern List:\n\n");
@@ -1797,7 +1798,7 @@ dump_backoff(unsigned pattern_fuzz) {
  */
 void
 dump_vid(void) {
-   struct vid_pattern_list *pl;
+   vid_pattern_list *pl;
    int i;
 
    printf("Vendor ID Pattern List:\n\n");
@@ -1824,7 +1825,7 @@ dump_vid(void) {
  */
 void
 dump_times(unsigned num_hosts) {
-   struct time_list *te;
+   time_list *te;
    int i;
    int time_no;
    struct timeval prev_time;
@@ -1892,8 +1893,8 @@ dump_times(unsigned num_hosts) {
  *	Finds the first match for the backoff pattern of the host entry *he.
  */
 char *
-match_pattern(struct host_entry *he) {
-   struct pattern_list *pl;
+match_pattern(host_entry *he) {
+   pattern_list *pl;
 /*
  *	Return NULL immediately if there is no chance of matching.
  */
@@ -1907,8 +1908,8 @@ match_pattern(struct host_entry *he) {
    pl = patlist;
    while (pl != NULL) {
       if (he->num_recv == pl->num_times && pl->recv_times != NULL) {
-         struct time_list *hp;
-         struct pattern_entry_list *pp;
+         time_list *hp;
+         pattern_entry_list *pp;
          struct timeval diff;
          struct timeval prev_time;
          int match;
@@ -1956,13 +1957,13 @@ match_pattern(struct host_entry *he) {
  *	None.
  */
 void
-add_recv_time(struct host_entry *he, struct timeval *last_recv_time) {
-   struct time_list *p;		/* Temp pointer */
-   struct time_list *te;	/* New timeentry pointer */
+add_recv_time(host_entry *he, struct timeval *last_recv_time) {
+   time_list *p;		/* Temp pointer */
+   time_list *te;	/* New timeentry pointer */
 /*
  *	Allocate and initialise new time structure
  */   
-   te = Malloc(sizeof(struct time_list));
+   te = Malloc(sizeof(time_list));
    Gettimeofday(&(te->time));
    last_recv_time->tv_sec = te->time.tv_sec;
    last_recv_time->tv_usec = te->time.tv_usec;
@@ -2062,10 +2063,10 @@ add_pattern(char *line, unsigned pattern_fuzz) {
    char name[MAXLINE];
    char pat[MAXLINE];
    int tabseen;
-   struct pattern_list *pe;	/* Pattern entry */
-   struct pattern_list *p;	/* Temp pointer */
-   struct pattern_entry_list *te;
-   struct pattern_entry_list *tp;
+   pattern_list *pe;	/* Pattern entry */
+   pattern_list *p;	/* Temp pointer */
+   pattern_entry_list *te;
+   pattern_entry_list *tp;
    char *endp;
    unsigned i;
    long back_sec;
@@ -2076,7 +2077,7 @@ add_pattern(char *line, unsigned pattern_fuzz) {
 /*
  *	Allocate new pattern list entry and add to tail of patlist.
  */
-   pe = Malloc(sizeof(struct pattern_list));
+   pe = Malloc(sizeof(pattern_list));
    pe->next = NULL;
    pe->recv_times = NULL;
    p = patlist;
@@ -2161,7 +2162,7 @@ add_pattern(char *line, unsigned pattern_fuzz) {
  *      Allocate and fill in new pattern_entry_list structure for this backoff
  *      pattern entry and add it onto the tail of this pattern entry.
  */
-      te = Malloc(sizeof(struct pattern_entry_list));
+      te = Malloc(sizeof(pattern_entry_list));
       te->next=NULL;
       te->time.tv_sec = back_sec;
       te->time.tv_usec = back_usec;
@@ -2262,8 +2263,8 @@ add_vid_pattern(char *line) {
    char name[MAXLINE];
    char pat[MAXLINE];
    int tabseen;
-   struct vid_pattern_list *pe;     /* Pattern entry */
-   struct vid_pattern_list *p;      /* Temp pointer */
+   vid_pattern_list *pe;     /* Pattern entry */
+   vid_pattern_list *p;      /* Temp pointer */
    int result;
 /*
  *	Separate line from VID patterns file into name and pattern.
@@ -2305,7 +2306,7 @@ add_vid_pattern(char *line) {
 /*
  *      Allocate new pattern list entry and add to tail of vidlist.
  */
-      pe = Malloc(sizeof(struct vid_pattern_list));
+      pe = Malloc(sizeof(vid_pattern_list));
       pe->next = NULL;
       p = vidlist;
       if (p == NULL) {
