@@ -1,5 +1,5 @@
 .\" $Id$
-.TH IKE-SCAN 1 "June 17, 2003"
+.TH IKE-SCAN 1 "November 11, 2003"
 .\" Please adjust this date whenever revising the manpage.
 .SH NAME
 ike-scan \- Discover and fingerprint IKE hosts (IPsec VPN servers)
@@ -17,16 +17,18 @@ retransmission backoff pattern.
 .PP
 .B ike-scan
 does two things:
-.IP a)
+.IP 1)
 Discovery: Determine which hosts are running IKE.
 This is done by displaying those hosts which respond to the IKE requests
 sent by
 .B ike-scan.
-.IP b)
+.IP 2)
 Fingerprinting: Determine which IKE implementation the hosts are using.
-This is done by recording the times of the IKE response packets from the
-target hosts and comparing the observed retransmission backoff pattern
-against known patterns.
+There are several ways to do this: (a) Backoff fingerprinting - recording
+the times of the IKE response packets from the target hosts and comparing
+the observed retransmission backoff pattern against known patterns; (b) vendor
+id fingerprinting - matching the vendor-specific vendor IDs against known
+vendor IDs; and (c) proprietary notify message codes.
 .PP
 The retransmission backoff fingerprinting concept is discussed in more
 detail in the UDP backoff fingerprinting paper which should be included
@@ -84,10 +86,7 @@ factor which is set with --backoff.
 Set minimum packet interval to <n> ms, default=75.
 This controls the outgoing bandwidth usage by limiting
 the rate at which packets can be sent.  The packet
-interval will be greater than or equal to this number
-and will be a multiple of the select wait specified
-with --selectwait.  Thus --interval=75 --selectwait=10
-will result in a packet interval of 80ms.
+interval will be no smaller than this number.
 The outgoing packets have a total size of 364 bytes
 (20 bytes IP hdr + 8 bytes UDP hdr + 336 bytes data)
 when the default transform set is used, or 112 bytes
@@ -103,52 +102,51 @@ is 3, the initial per-host timeout is 500ms and the
 backoff factor is 1.5, then the first timeout will be
 500ms, the second 750ms and the third 1125ms.
 .TP
-.B --selectwait=<n> or -w <n>
-Set select wait to <n> ms, default=10.
-This controls the timeout used in the select(2) call.
-It defines the lower bound and granularity of the
-packet interval set with --interval.  Smaller values
-allow more accurate and lower packet intervals;
-larger values reduce CPU usage.  You don't need
-to change this unless you want to reduce the packet
-interval close to or below the default selectwait time.
-.TP
 .B --verbose or -v
 Display verbose progress messages.
 Use more than once for greater effect:
-.IP 1
-Show when hosts are removed from the list and when packets with invalid cookies are received.
-.IP 2
-Show each packet sent and received.
-.IP 3
-Display the host and backoff lists before scanning starts.
+1 - Show when hosts are removed from the list and
+when packets with invalid cookies are received;
+2 - Show each packet sent and received; and
+3 - Display the host and backoff lists before
+scanning starts.
 .TP
 .B --lifetime=<s> or -l <s>
 Set IKE lifetime to <s> seconds, default=28800.
 RFC 2407 specifies 28800 as the default, but some
 implementations may require different values.
+If you specify 0, then no lifetime will be specified.
+You can use this option more than once in conjunction
+with the --trans options to produce multiple transform
+payloads with different lifetimes.  Each --trans option
+will use the previously specified lifetime value.
 .TP
 .B --auth=<n> or -m <n>
 Set auth. method to <n>, default=1 (pre-shared key).
 RFC defined values are 1 to 5.  See RFC 2409 Appendix A.
+Checkpoint hybrid mode is 64221.
 .TP
 .B --version or -V
 Display program version and exit.
 .TP
 .B --vendor=<v> or -e <v>
-Set vendor id string to MD5 hash of <v>.
-Note: this is currently experimental.
+Set vendor id string to hex value <v>.
+You can use this option more than once to send
+multiple vendor ID payloads.
 .TP
 .B --trans=<t> or -a <t>
 Use custom transform <t> instead of default set.
-<t> is specified as enc,hash,auth,group. e.g. 2,3,1,5.
+<t> is specified as enc[/len],hash,auth,group.
+Where enc is the encryption algorithm,
+len is the key length for variable length ciphers,
+hash is the hash algorithm, and group is the DH Group.
 See RFC 2409 Appendix A for details of which values
-to use.  For example, --trans=2,3,1,5 specifies
-Enc=IDEA-CBC, Hash=Tiger, Auth=shared key, DH Group=5
-If this option is specified, then only the single
-custom transform is used rather than the default set
-of 8 transforms.  As a result, the IP packet size
-is 112 bytes rather than the default of 364.
+to use.  For example, --trans=5,2,1,2 specifies
+Enc=3DES-CBC, Hash=SHA1, Auth=shared key, DH Group=2
+and --trans=7/256,1,1,5 specifies
+Enc=AES-256, Hash=MD5, Auth=shared key, DH Group=5.
+You can use this option more than once to send
+an arbitary number of custom transforms.
 .TP
 .B --showbackoff[=<n>] or -o[<n>]
 Display the backoff fingerprint table.
@@ -167,10 +165,11 @@ the observed backoff times and the reference times in
 the backoff patterns file.  Larger values allow for
 higher variance but also increase the risk of
 false positive identifications.
+Any per-pattern-entry fuzz specifications in the
+patterns file will override the value set here.
 .TP
-.B --patterns=<f> or -p <f>
-Use IKE patterns file <f>,
-default=/usr/local/share/ike-backoff-patterns.
+.B --patterns=<f> or -p <f> Use IKE patterns file <f>,
+default=/usr/local/share/ike-scan/ike-backoff-patterns.
 This specifies the name of the file containing
 IKE backoff patterns.  This file is only used when
 --showbackoff is specified.
