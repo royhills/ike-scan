@@ -14,6 +14,9 @@
  * Revision history:
  *
  * $Log$
+ * Revision 1.2  2001/08/10 09:28:48  rsh
+ * Remove id_data from id struct.
+ *
  * Revision 1.1  2001/08/09 09:45:16  rsh
  * Initial revision
  *
@@ -162,11 +165,11 @@ struct isakmp_attribute
     u_int16_t isaat_lv;			/* Length or value */
 };
 /*
- *	This is a bodge for SA Attributes with 4-byte length.
+ *	This is a bodge for SA Attributes with 32-bit length.
  *	It is defined like this because I can't work out how to define
  *	the general case structure properly -rsh.
  */
-struct isakmp_attribute2
+struct isakmp_attribute_l32
 {
     u_int16_t isaat_af_type;   /* high order bit: AF; lower 15: rtype */
     u_int16_t isaat_l;			/* Length - MUST BE 4 BYTES */
@@ -290,7 +293,6 @@ struct isakmp_id
     u_int8_t    isaid_idtype;
     u_int8_t    isaid_doi_specific_a;
     u_int16_t   isaid_doi_specific_b;
-    u_int8_t	isaid_data[8];		/* This is actually variable len. */
 };
 
 struct isakmp_vid
