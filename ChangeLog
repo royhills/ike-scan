@@ -2,11 +2,22 @@ $Id$
 
 2003-07-10 Roy Hills <Roy.Hills@nta-monitor.com>
 
+	* Released version v1.3.  Tarball size 113350 bytes.
+	  tarball md5sum: 3fc330e97017ac93bd35fd2973d14e58
+	  Note: this is not an official release and no Windows (zip) version
+	  was produced.  It is for internal use to test the new pattern
+	  matching code.  However, it is available in the public download
+	  directory if anyone wants to use it.
+
+2003-07-10 Roy Hills <Roy.Hills@nta-monitor.com>
+
 	* ike-backoff-patterns: Added new patterns "watchguard-soho" and
 	  "sonicwall-pro".  These both use the new "/" notation to represent
 	  per-entry fuzz values.
 	* ike-scan.c: Add fact that per-pattern fuzz entries override the
 	  values specified with --fuzz to the help output.
+	* Created detached GPG sigs (.asc) for *.tar.gz and *.zip using DSA
+	  key ID 567B9F3A Roy Hills <Roy.Hills@nta-monitor.com>.
 
 2003-07-10 Roy Hills <Roy.Hills@nta-monitor.com>
 
