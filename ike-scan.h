@@ -167,11 +167,11 @@ void warn_msg(const char *, ...);
 void info_syslog(const char *, ...);
 void err_print(int, int, const char *, va_list);
 void usage(void);
-void add_host(const char *, unsigned);
+void add_host(const char *, unsigned, unsigned *);
 void send_packet(int, unsigned char*, int, struct host_entry *, int,
                  struct timeval *);
 int recvfrom_wto(int, unsigned char *, int, struct sockaddr *, int);
-void remove_host(struct host_entry *);
+void remove_host(struct host_entry *, unsigned *);
 void timeval_diff(struct timeval *, struct timeval *, struct timeval *);
 unsigned char *initialise_ike_packet(int *, unsigned, unsigned, int, int, int,
                                      unsigned char *, int, int, int, int, int,
@@ -179,9 +179,9 @@ unsigned char *initialise_ike_packet(int *, unsigned, unsigned, int, int, int,
 struct host_entry *find_host_by_cookie(struct host_entry *, unsigned char *,
                                        int);
 void display_packet(int, unsigned char *, struct host_entry *,
-                    struct in_addr *);
-void advance_cursor(void);
-void dump_list(void);
+                    struct in_addr *, unsigned *, unsigned *);
+void advance_cursor(unsigned);
+void dump_list(unsigned);
 void dump_times(int);
 void add_recv_time(struct host_entry *, struct timeval *);
 void add_pattern(char *, unsigned);
