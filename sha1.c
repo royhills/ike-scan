@@ -14,12 +14,9 @@ A million repetitions of "a"
 Modified by Roy Hills for ike-scan
 */
 
-#include <stdio.h>
-#include <string.h>
+#include "ike-scan.h"
 #include "sha1.h"
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
 /*
  * Autoconf's AC_C_BIGENDIAN check defines WORDS_BIGENDIAN
  */
@@ -28,7 +25,6 @@ Modified by Roy Hills for ike-scan
 #else
 #ifndef LITTLE_ENDIAN
 #define LITTLE_ENDIAN 1
-#endif
 #endif
 #endif
 /*
@@ -62,12 +58,12 @@ Modified by Roy Hills for ike-scan
 
 /* Hash a single 512-bit block. This is the core of the algorithm. */
 
-void SHA1Transform(unsigned long state[5], unsigned char buffer[64])
+void SHA1Transform(uint32_t state[5], unsigned char buffer[64])
 {
-unsigned long a, b, c, d, e;
+uint32_t a, b, c, d, e;
 typedef union {
     unsigned char c[64];
-    unsigned long l[16];
+    uint32_t l[16];
 } CHAR64LONG16;
 CHAR64LONG16* block;
 #ifdef SHA1HANDSOFF
@@ -155,7 +151,7 @@ unsigned int i, j;
 
 void SHA1Final(unsigned char digest[20], SHA1_CTX* context)
 {
-unsigned long i, j;
+unsigned int i;
 unsigned char finalcount[8];
 
     for (i = 0; i < 8; i++) {
@@ -172,7 +168,7 @@ unsigned char finalcount[8];
          ((context->state[i>>2] >> ((3-(i & 3)) * 8) ) & 255);
     }
     /* Wipe variables */
-    i = j = 0;
+    i = 0;
     memset(context->buffer, 0, 64);
     memset(context->state, 0, 20);
     memset(context->count, 0, 8);
