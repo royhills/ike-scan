@@ -12,6 +12,18 @@ AC_DEFUN(AC_NTA_CHECK_TYPE,
 	AC_TRY_COMPILE([
 #	include "confdefs.h"
 #	include <sys/types.h>
+#	if HAVE_ARPA_INET_H
+#	include <arpa/inet.h>
+#	endif
+#	if HAVE_NETDB_H
+#	include <netdb.h>
+#	endif
+#	if HAVE_NETINET_IN_H
+#	include <netinet/in.h>
+#	endif
+#	if SYS_SOCKET_H
+#	include <sys/socket.h>
+#	endif
 #	if STDC_HEADERS
 #	include <stdlib.h>
 #	include <stddef.h>
@@ -21,6 +33,6 @@ AC_DEFUN(AC_NTA_CHECK_TYPE,
 	ac_cv_nta_have_$1=no))
    AC_MSG_RESULT($ac_cv_nta_have_$1)
    if test $ac_cv_nta_have_$1 = no ; then
-	   AC_DEFINE($1, $2, [if we have $1])
+	   AC_DEFINE($1, $2, [Define to required type if we don't have $1])
    fi])
 
