@@ -1,5 +1,38 @@
 $Id$
 
+2003-12-11 Roy Hills <Roy.Hills@nta-monitor.com>
+
+	* ike-scan.c: Added support for Vendor ID fingerprinting using
+	  fingerprints loaded from the file "ike-vendor-ids".  Added
+	  --vidpatterns (-I) option to specify Vendor ID patterns file
+	  location if it's not the default.
+
+	* isakmp.c: Modified process_vid() to check for known Vendor ID
+	  and print entry from database if found.
+
+2003-12-10 Roy Hills <Roy.Hills@nta-monitor.com>
+
+	* ike-scan.c: Allow target hosts to be specified as IPnet/bits or
+	  IPstart-IPend as well as the traditional single host or IP address.
+	  The new function add_host_pattern() deals with these new formats.
+	  Added details to usage() to explain these additional formats.
+	  This functionallity was first requested by Chris Gripp in Jan 2003.
+
+2003-11-28 Roy Hills <Roy.Hills@nta-monitor.com>
+
+	* ike-scan.c: Removed unecessary gethostbyname() call.
+
+2003-11-23 Roy Hills <Roy.Hills@nta-monitor.com>
+
+	* ike-scan.c: Removed many global variables and made them local to
+	  main().  Only 4 global variables left now, all of which have
+	  some reason to stay global.
+
+2003-11-22 Roy Hills <Roy.Hills@nta-monitor.com>
+
+	* isakmp.c: Added support for GSS ID attribute in make_trans()
+	  function.
+
 2003-11-21 Roy Hills <Roy.Hills@nta-monitor.com>
 
 	* isakmp.c: Added support for lifesize (KB) to add_trans() and
