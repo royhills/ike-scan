@@ -8,3 +8,6 @@ that are constant.
 Write a user guide.  The README is getting too long now: a seperate document
 with proper formatting is required.
 
+Review --verbose messages and levels.  There is some inconsistancy with what
+is displayed at what level, and with the format of the messages.
+
