@@ -20,6 +20,10 @@
  * Change History:
  *
  * $Log$
+ * Revision 1.16  2002/10/28 16:24:35  rsh
+ * Only use cookie to find host in list.
+ * Removed find_host_by_ip() - not needed now.
+ *
  * Revision 1.15  2002/10/28 16:05:26  rsh
  * icookie is now md5 hash rather than random no to ensure unique.
  * added dump_list() function.
@@ -416,48 +420,27 @@ int main(int argc, char *argv[]) {
       n=recvfrom_wto(sockfd, packet_in, MAXUDP, (struct sockaddr *)&sa_peer, select_timeout);
       if (n > 0) {
 /*
- *	We've received a packet.  Try to locate the IP address of the
- *	respondant in the list.
+ *	We've received a response try to match up the packet by cookie
  */
-         temp_cursor=find_host_by_ip(cursor, &(sa_peer.sin_addr));
-         if (temp_cursor == NULL) {
-/*
- *	We've received a response, but the IP address doesn't match any host
- *	in our list.  Try to match up the packet by cookie instead in case
- *	the response is from a multi-homed system which has replied from a
- *	different interface to that which we sent to.  Some systems do this.
- */
-            temp_cursor=find_host_by_cookie(cursor, packet_in, n);
-            if (temp_cursor) {
+         temp_cursor=find_host_by_cookie(cursor, packet_in, n);
+         if (temp_cursor) {
 /*
  *	We found a cookie match for the returned packet.
  */
-               temp_cursor->num_recv++;
-               if (temp_cursor->live) {
-                  display_packet(n, packet_in, temp_cursor, &(sa_peer.sin_addr));
-               }
-               if (verbose)
-                  warn_msg("---\tRemoving host entry %d (%s) - Received %d bytes", temp_cursor->n, inet_ntoa(sa_peer.sin_addr), n);
-               remove_host(temp_cursor);
-            } else {
-/*
- *	Neither the IP address nor the cookie matches any hosts in the list,
- *	so just issue a message to that effect and ignore the packet.
- */
-               warn_msg("---\tReceived %d bytes from unknown host (%s)", n, inet_ntoa(sa_peer.sin_addr));
-            }
-         } else {
-/*
- *	The IP address of the packet reveived matches a host in the list.
- */
             temp_cursor->num_recv++;
             if (temp_cursor->live) {
-               display_packet(n, packet_in, temp_cursor, NULL);
-               if (verbose)
-                  warn_msg("---\tRemoving host entry %d (%s) - Received %d bytes", temp_cursor->n, inet_ntoa(sa_peer.sin_addr), n);
-               remove_host(temp_cursor);
-            } /* End If */
-         } /* End If */
+               display_packet(n, packet_in, temp_cursor, &(sa_peer.sin_addr));
+            }
+            if (verbose)
+               warn_msg("---\tRemoving host entry %d (%s) - Received %d bytes", temp_cursor->n, inet_ntoa(sa_peer.sin_addr), n);
+            remove_host(temp_cursor);
+         } else {
+/*
+ *	The recieved cookie doesn't match any entry in the list
+ *	so just issue a message to that effect and ignore the packet.
+ */
+            warn_msg("---\tReceived %d bytes from %s with unknown cookie", n, inet_ntoa(sa_peer.sin_addr));
+         }
       } /* End If */
    } /* End While */
 
@@ -544,39 +527,6 @@ void advance_cursor(void) {
 }
 
 /*
- *	find_host_by_ip	-- Find a host in the list by IP address
- *
- *	he points to current position in list.  Search runs backwards
- *	starting from this point.
- *
- *	addr points to the IP address to find in the list.
- *
- *	Returns a pointer to the host entry associated with the specified IP
- *	or NULL if no match found.
- */
-struct host_entry *find_host_by_ip(struct host_entry *he,struct in_addr *addr) {
-   struct host_entry *p;
-   int found;
-
-   p = he;
-   found = 0;
-
-   do {
-      if (p->addr.s_addr == addr->s_addr) {
-         found = 1;
-      } else {
-         p = p->prev;
-      }
-   } while (!found && p != he);
-
-   if (found) {
-      return p;
-   } else {
-      return NULL;
-   }
-}
-
-/*
  *	find_host_by_cookie	-- Find a host in the list by cookie
  *
  *	he points to current position in list.  Search runs backwards
@@ -640,7 +590,7 @@ void display_packet(int n, char *packet_in, struct host_entry *he, struct in_add
  */
    cp = ip_str;
    cp += sprintf(cp, "%s\t", inet_ntoa(he->addr));
-   if (recv_addr)
+   if ((he->addr).s_addr != recv_addr->s_addr)
       cp += sprintf(cp, "(%s) ", inet_ntoa(*recv_addr));
    *cp = '\0';
 /*
