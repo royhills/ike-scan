@@ -37,7 +37,8 @@
 #
 # The numbers in the backoff pattern can be decimal numbers e.g. 1.5 for
 # one and a half seconds.  ike-scan uses strtod(3) to convert the ascii
-# representation to a floating point number.
+# representation to a floating point number which is then converted into a
+# timeval struct.
 #
 # Lines beginning with '#' and blank lines are ignored.
 #
