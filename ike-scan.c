@@ -1,30 +1,32 @@
 /*
- *  The IKE security scanner is copyright (C) Roy Hills, NTA Monitor Ltd.
- *  This program is free software; you can redistribute it and/or modify
- *  it under the terms of the GNU General Public License as published
- *  by the Free Software Foundation; Version 2.  This guarantees your
- *  right to use, modify, and redistribute this software under certain
- *  conditions.  If this license is unacceptable to you, I may be
- *  willing to negotiate alternative licenses (contact
- *  Roy.Hills@nta-monitor.com).
+ * The IKE Scanner (ike-scan) is Copyright (C) 2003 Roy Hills, NTA Monitor Ltd.
  *
- *  You are encouraged to send comments, improvements or suggestions to
- *  me at Roy.Hills@nta-monitor.com.
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
+ * as published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
- *  This program is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- *  General Public License for more details:
- *  http://www.gnu.org/copyleft/gpl.html
+ * If this license is unacceptable to you, I may be willing to negotiate
+ * alternative licenses (contact ike-scan@nta-monitor.com).
+ *
+ * You are encouraged to send comments, improvements or suggestions to
+ * me at ike-scan@nta-monitor.com.
  *
  * $Id$
  *
- * ike-scan -- Scan for IKE hosts
+ * ike-scan -- The IKE Scanner
  *
- * Copyright (C) Roy Hills, NTA Monitor Ltd
- *
- * Author: Roy Hills
- * Date: 11 September 2002
+ * Author:	Roy Hills
+ * Date:	11 September 2002
  *
  * Usage:
  *    ike-scan [options] [host...]
@@ -102,131 +104,6 @@
  * ike-scan to wait for 60 seconds after the last received packet to ensure
  * that it has seen all of the responses.  This 60 second wait can be
  * altered by specifying a different value to the --showbackoff option.
- *
- * Change History:
- *
- * $Log$
- * Revision 1.32  2003/01/04 17:49:05  rsh
- * Added support for matching backoff patterns against patterns file.
- *
- * Revision 1.31  2003/01/04 12:59:27  rsh
- * Wrote body of add_pattern function.
- *
- * Revision 1.30  2003/01/03 15:35:54  rsh
- * Changed DEFAULT_END_WAIT from ms to seconds.
- * Added more details to the usage text.
- *
- * Revision 1.29  2003/01/02 13:28:29  rsh
- * Wrapped libgen.h include in #ifdef HAVE_LIBGEN_H / #endif.
- *
- * Revision 1.28  2002/12/31 21:09:47  rsh
- * Changes to allow compilation on FreeBSD and OpenBSD as well as Linux.
- *
- * Revision 1.27  2002/12/31 15:14:38  rsh
- * Changed function definitions so return type is on a line by itself.
- * Added contents of README file as initial program comments.
- *
- * Revision 1.26  2002/12/31 09:29:42  rsh
- * Added initial support for backoff pattern matching.  This is not working yet.
- *
- * Revision 1.25  2002/11/21 17:59:28  rsh
- * Changed --endwait to --showbackoff.
- *
- * Revision 1.24  2002/11/21 13:49:56  rsh
- * Added GPL and gethostbyname() call.
- *
- * Revision 1.23  2002/11/18 16:20:30  rsh
- * Added endwait option and associated code.
- *
- * Revision 1.22  2002/11/18 12:20:25  rsh
- * Changed timeval_diff() definition to return difference as timeval not int.
- *
- * Revision 1.21  2002/11/18 11:02:45  rsh
- * Added initial backoff fingerprinting support.
- *
- * Revision 1.20  2002/11/15 17:47:37  rsh
- * Added initial syslog support.
- * Minor comment changes.
- *
- * Revision 1.19  2002/10/31 14:45:50  rsh
- * Only display "unknown cookie" message if verbose >= 1
- * Check for he == NULL in find_host_by_cookie to avoid SIGSEGV if it is.
- *
- * Revision 1.18  2002/10/29 09:02:04  rsh
- * Added printing of cookie data in "unknown cookie" message.
- *
- * Revision 1.17  2002/10/28 16:55:32  rsh
- * Added support for --trans option to specify single custom transform.
- *
- * Revision 1.16  2002/10/28 16:24:35  rsh
- * Only use cookie to find host in list.
- * Removed find_host_by_ip() - not needed now.
- *
- * Revision 1.15  2002/10/28 16:05:26  rsh
- * icookie is now md5 hash rather than random no to ensure unique.
- * added dump_list() function.
- *
- * Revision 1.14  2002/10/25 08:55:51  rsh
- * Added vendor id support.  Not fully tested yet.
- *
- * Revision 1.13  2002/10/24 15:19:04  rsh
- * Added "---\t" to wanr messages.
- * Added placeholder function to decode transforms.
- *
- * Revision 1.12  2002/09/20 17:10:01  rsh
- * Added find_host_by_cookie() function and related code to find the host
- * entry if the received IP doesn't match.  Modified display_packet to display
- * both host entry IP and received IP in these cases.
- * Added advance_cursor() function to tidy up main loop.
- *
- * Revision 1.11  2002/09/17 09:00:00  rsh
- * Minor change to usage() display.
- * Removed trans_in from display_packet().
- *
- * Revision 1.10  2002/09/16 14:26:30  rsh
- * Changed timeval_diff computation method from floating point to integer.
- * Modified main loop so that timing is more exact.
- *
- * Revision 1.9  2002/09/16 12:15:39  rsh
- * Don't remove host entries from the list, mark them as not live instead.
- * This allows us to identify responses that come in after the host has been
- * marked as not live.
- * Treat connection refused as timeout because we can't determine which host
- * connection refused relates to.
- * Moved recvfrom_wto to end of main loop so it always gets run once per loop.
- *
- * Revision 1.8  2002/09/16 08:41:27  rsh
- * Changed non-printable characters to spaces for Firewall-1 4.x notify messages.
- *
- * Revision 1.7  2002/09/15 14:08:13  rsh
- * removed exchange_type array as this was not used.
- * Don't set name member of host entry - this is not used as has been removed.
- * Update cursor in remove_host to avoid having to do it before calling the
- * function.
- *
- * Revision 1.6  2002/09/13 15:01:51  rsh
- * Added support for changing authentication method.
- *
- * Revision 1.5  2002/09/13 12:30:59  rsh
- * Added checks that returned packet is long enough before copying.
- * Added lifetime argument.
- *
- * Revision 1.4  2002/09/13 10:04:46  rsh
- * Tidied up VERSION string.
- *
- * Revision 1.3  2002/09/13 10:03:38  rsh
- * Added VERSION (moved from ike-scan.h).
- *
- * Revision 1.2  2002/09/13 09:58:22  rsh
- * Added names for ISAKMP codes.
- * Added --selectwait option.
- * Added dh group 1 which increased number of transforms from 4 to 8
- * Added rcsid[]
- * Improved display for notification message types.
- *
- * Revision 1.1  2002/09/12 17:57:53  rsh
- * Initial revision
- *
  */
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -259,7 +136,7 @@
 #include "md5.h"
 #include "ike-scan.h"
 
-#define VERSION "ike-scan $Revision$ $Date$ <Roy.Hills@nta-monitor.com>"
+#define VERSION "ike-scan v1.0"
 #define MAX_PAYLOAD 13	/* Maximum defined payload number */
 static char rcsid[] = "$Id$";   /* RCS ID for ident(1) */
 
@@ -465,6 +342,11 @@ main(int argc, char *argv[]) {
             break;
          case 'V':
             fprintf(stderr, "%s\n", VERSION);
+            fprintf(stderr, "Copyright (C) 2003 Roy Hills, NTA Monitor Ltd.\n");
+            fprintf(stderr, "ike-scan comes with NO WARRANTY to the extent permitted by law.\n");
+            fprintf(stderr, "You may redistribute copies of ike-scan under the terms of the GNU\n");
+            fprintf(stderr, "General Public License.\n");
+            fprintf(stderr, "For more information about these matters, see the file named COPYING.\n");
             exit(0);
             break;
          case 'e':
@@ -557,7 +439,7 @@ main(int argc, char *argv[]) {
          line_no=0;
          while (fgets(line, MAXLINE, fp)) {
             line_no++;
-            if (line[0] != '#')
+            if (line[0] != '#' && line[0] != '\n') /* Not comment or empty */
                add_pattern(line);
          }
          fclose(fp);
@@ -568,9 +450,6 @@ main(int argc, char *argv[]) {
  */
    if (!num_hosts)
       err_msg("No hosts to process.");
-#ifdef SYSLOG
-   info_syslog("%d hosts in list", num_hosts);
-#endif
 /*
  *	Create UDP socket and bind to local source port.
  */
@@ -599,6 +478,13 @@ main(int argc, char *argv[]) {
       err_sys("gettimeofday");
    }
    initialise_ike_packet();
+/*
+ *	Display initial message.
+ */
+#ifdef SYSLOG
+   info_syslog("%d hosts in list", num_hosts);
+#endif
+   printf("Starting %s with %d hosts (http://www.nta-monitor.com/ike-scan/)\n", VERSION, num_hosts);
 /*
  *	Display the list if verbose setting is 3 or more.
  */
@@ -1375,9 +1261,9 @@ dump_times(void) {
             i++;
          } /* End While te != NULL */
          if ((patname=match_pattern(p)) != NULL) {
-            printf("%s\tPattern: %s\n", inet_ntoa(p->addr), patname);
+            printf("%s\tImplementation guess: %s\n", inet_ntoa(p->addr), patname);
          } else {
-            printf("%s\tPattern: %s\n", inet_ntoa(p->addr), "UNKNOWN");
+            printf("%s\tImplementation guess: %s\n", inet_ntoa(p->addr), "UNKNOWN");
          }
          printf("\n");
       } /* End If */
@@ -1600,9 +1486,16 @@ usage(void) {
    fprintf(stderr, "\t\t\tinstead of from the command line. One name or IP\n");
    fprintf(stderr, "\t\t\taddress per line.  Use \"-\" for standard input.\n");
    fprintf(stderr, "\n--sport=<p> or -s p\tSet UDP source port to <p>, default=%d, 0=random.\n", DEFAULT_SOURCE_PORT);
+   fprintf(stderr, "\t\t\tSome IKE implementations require the client to use\n");
+   fprintf(stderr, "\t\t\tUDP source port 500 and will not talk to other ports.\n");
    fprintf(stderr, "\t\t\tNote that superuser privileges are normally required\n");
-   fprintf(stderr, "\t\t\tto use non-zero source ports below 1024.\n");
+   fprintf(stderr, "\t\t\tto use non-zero source ports below 1024.  Also only\n");
+   fprintf(stderr, "\t\t\tone process on a system may bind to a given source port\n");
+   fprintf(stderr, "\t\t\tat any one time.\n");
    fprintf(stderr, "\n--dport=<p> or -d p\tSet UDP destination port to <p>, default=%d.\n", DEFAULT_DEST_PORT);
+   fprintf(stderr, "\t\t\tUDP port 500 is the assigned port number for ISAKMP\n");
+   fprintf(stderr, "\t\t\tand this is the port used by most if not all IKE\n");
+   fprintf(stderr, "\t\t\timplementations.\n");
    fprintf(stderr, "\n--retry=<n> or -r n\tSet total number of attempts per host to <n>,\n");
    fprintf(stderr, "\t\t\tdefault=%d.\n", DEFAULT_RETRY);
    fprintf(stderr, "\n--timeout=<n> or -t n\tSet initial per host timeout to <n> ms, default=%d.\n", DEFAULT_TIMEOUT);
@@ -1676,5 +1569,6 @@ usage(void) {
    fprintf(stderr, "\n");
    fprintf(stderr, "%s\n", rcsid);
    fprintf(stderr, "\n");
+   fprintf(stderr, "Report bugs or send suggestions to ike-scan@nta-monitor.com\n");
    exit(1);
 }

@@ -1,25 +1,29 @@
 /*
- *  The IKE security scanner is copyright (C) Roy Hills, NTA Monitor Ltd.
- *  This program is free software; you can redistribute it and/or modify
- *  it under the terms of the GNU General Public License as published
- *  by the Free Software Foundation; Version 2.  This guarantees your
- *  right to use, modify, and redistribute this software under certain
- *  conditions.  If this license is unacceptable to you, I may be
- *  willing to negotiate alternative licenses (contact
- *  Roy.Hills@nta-monitor.com).
+ * The IKE Scanner (ike-scan) is Copyright (C) 2003 Roy Hills, NTA Monitor Ltd.
  *
- *  You are encouraged to send comments, improvements or suggestions to
- *  me at Roy.Hills@nta-monitor.com.
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
+ * as published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
- *  This program is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- *  General Public License for more details:
- *  http://www.gnu.org/copyleft/gpl.html
+ * If this license is unacceptable to you, I may be willing to negotiate
+ * alternative licenses (contact ike-scan@nta-monitor.com).
+ *
+ * You are encouraged to send comments, improvements or suggestions to
+ * me at ike-scan@nta-monitor.com.
  *
  * $Id$
  *
- * isakmp.h	-- Definitions for ISAKMP packet
+ * isakmp.h	-- Definitions for ISAKMP packet structures
  *
  * Author:	Roy Hills
  * Date:	31 July 2001
@@ -28,33 +32,6 @@
  *
  * Many of the types used come from <sys/types.h> which needs to be
  * included before this include file.
- *
- * Revision history:
- *
- * $Log$
- * Revision 1.7  2003/01/02 12:32:35  rsh
- * Changed all occurrances of u_int{8,16,32}_t to uint8,16,32}_t as
- * the latter is more portable.
- *
- * Revision 1.6  2002/11/26 16:55:03  rsh
- * Minor comment change.
- *
- * Revision 1.5  2002/11/21 13:52:33  rsh
- * Added GPL.
- *
- * Revision 1.4  2002/10/25 08:54:48  rsh
- * Changed vendor ID header definition.
- *
- * Revision 1.3  2002/09/04 10:07:33  rsh
- * Added notification payload.
- *
- * Revision 1.2  2001/08/10 09:28:48  rsh
- * Remove id_data from id struct.
- *
- * Revision 1.1  2001/08/09 09:45:16  rsh
- * Initial revision
- *
- *
  */
 
 /*
