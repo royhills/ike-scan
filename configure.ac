@@ -3,7 +3,7 @@ dnl Process this file with autoconf to produce a configure script.
 
 AC_INIT([ike-scan], [1.6.1], [ike-scan@nta-monitor.com])
 AC_PREREQ(2.59)
-AC_REVISION($Id$)
+AC_REVISION($Revision$)
 AC_CONFIG_SRCDIR([ike-scan.c])
 AM_INIT_AUTOMAKE(1.8)	dnl Require Automake 1.8 or later
 
