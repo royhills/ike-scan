@@ -632,6 +632,41 @@ make_id(size_t *length, unsigned next, unsigned idtype, unsigned char *id_data,
 }
 
 /*
+ *      make_udphdr -- Construct a UDP header for encapsulated IKE
+ *
+ *      Inputs:
+ *
+ *      length  (output) length of UDP header
+ *      sport           UDP source port
+ *      dport           UDP destination port
+ *      udplen          UDP length
+ *
+ *      Returns:
+ *
+ *      Pointer to constructed UDP header
+ *
+ *      This constructs a UDP header which is used for IKE
+ *      encapsulated within TCP.
+ */
+unsigned char*
+make_udphdr(size_t *length, int sport, int dport, unsigned udplen) {
+   unsigned char *payload;
+   struct ike_udphdr *hdr;
+
+   payload = Malloc(sizeof(struct ike_udphdr));
+   hdr = (struct ike_udphdr*) payload; /* Overlay UDP hdr on payload */
+
+   hdr->source = htons(sport);
+   hdr->dest   = htons(dport);
+   hdr->len    = htons(udplen);
+   hdr->check  = 0; /* should use in_cksum() */
+
+   *length = sizeof(struct ike_udphdr);
+
+   return payload;
+}
+
+/*
  *	skip_payload -- Skip an ISAMKP payload
  *
  *	Inputs:
@@ -1259,6 +1294,69 @@ print_payload(unsigned char *cp, unsigned payload, int dir) {
             break;
          default:
             printf("UNKNOWN PAYLOAD TYPE: %d\n", payload);
+            break;
+      }
+      free(hexdata);
+   } else {	/* ISAKMP Header */
+      hexdata = hexstring((unsigned char *)ihdr->isa_icookie, 8);
+      printf("cky_i_hex=\"%s\"\n", hexdata);
+      free(hexdata);
+      hexdata = hexstring((unsigned char *)ihdr->isa_rcookie, 8);
+      printf("cky_r_hex=\"%s\"\n", hexdata);
+      free(hexdata);
+   }
+}
+
+/*
+ *	add_psk_crack_payload -- Add an ISAKMP payload to PSK crack structure
+ *
+ *	Inputs:
+ *
+ *	cp	Pointer to start of ISAKMP payload
+ *	payload	Numeric value of this payload type, 0 = ISAKMP header
+ *	dir	Direction: 'I' for initiator or 'R' for responder
+ *
+ *	Returns:
+ *
+ *	None
+ *
+ *	This function is used for debugging.  It trusts the length in the
+ *	generic ISAKMP header, and so could misbehave with corrupted packets.
+ *
+ *	THIS FUNCTION IS NOT USED YET
+ */
+void
+add_psk_crack_payload(unsigned char *cp, unsigned payload, int dir) {
+   struct isakmp_generic *hdr = (struct isakmp_generic *) cp;
+   struct isakmp_hdr *ihdr = (struct isakmp_hdr *) cp;
+   char *hexdata;
+   unsigned char *data;
+   size_t data_len;
+
+   if (payload) {	/* Some other payload */
+      data = cp + sizeof(struct isakmp_generic);  /* Points to start of data */
+      data_len = ntohs(hdr->isag_length);
+      data_len -= sizeof(struct isakmp_generic);
+      hexdata = hexstring(data, data_len);
+      switch (payload) {
+         case ISAKMP_NEXT_SA:
+            printf("sa%c_b_hex=\"%s\"\n", (dir=='I')?'i':'r', hexdata);
+            break;
+         case ISAKMP_NEXT_KE:
+            printf("g_x%c_hex=\"%s\"\n", (dir=='I')?'i':'r', hexdata);
+            break;
+         case ISAKMP_NEXT_ID:
+            printf("idi%c_b_hex=\"%s\"\n", (dir=='I')?'i':'r', hexdata);
+            break;
+         case ISAKMP_NEXT_HASH:
+            printf("expected_hash_%c_hex=\"%s\"\n", (dir=='I')?'i':'r', hexdata);
+            break;
+         case ISAKMP_NEXT_NONCE:
+            printf("n%c_b_hex=\"%s\"\n", (dir=='I')?'i':'r', hexdata);
+            break;
+         default:
+            warn_msg("add_psk_crack_payload: UNKNOWN PAYLOAD TYPE: %d\n",
+                     payload);
             break;
       }
       free(hexdata);
