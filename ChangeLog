@@ -1,5 +1,11 @@
 $Id$
 
+2004-01-16 Roy Hills <Roy.Hills@nta-monitor.com>
+
+	* Released v1.6  Tarball size: 141847, Zip size: 648717.
+	  tarball md5sum: 5cdc5633a2a7484805d76b3952b8cef6
+	  Zip md5sum: 86c417529af55b2e201e77f2f617dc95
+
 2004-01-13 Roy Hills <Roy.Hills@nta-monitor.com>
 
 	* Makefile.am: Added new shell-script-based tests check-run1,
