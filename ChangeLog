@@ -1,5 +1,17 @@
 $Id$
 
+2003-11-21 Roy Hills <Roy.Hills@nta-monitor.com>
+
+	* isakmp.c: Added support for lifesize (KB) to add_trans() and
+	  make_trans() functions.
+
+	* ike-scan.h: Modified function definitions for add_trans(),
+	  make_trans(), and initialise_ike_packet() to take lifesize
+	  argument.
+
+	* ike-scan.c: Added support for --lifesize (-z) option.  Default
+	  is not to include this attribute.
+
 2003-11-18 Roy Hills <Roy.Hills@nta-monitor.com>
 
 	* isakmp.c: Wrote ISAKMP packet parsing routines: skip_payload,
