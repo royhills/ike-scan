@@ -84,10 +84,11 @@ main(int argc, char *argv[]) {
       {"aggressive", no_argument, 0, 'A'},
       {"gssid", required_argument, 0, 'G'},
       {"vidpatterns", required_argument, 0, 'I'},
+      {"quiet", no_argument, 0, 'q'},
       {"experimental", no_argument, 0, 'X'},
       {0, 0, 0, 0}
    };
-   const char *short_options = "f:hs:d:r:t:i:b:w:vl:z:m:Ve:a:o::u:n:y:g:p:AG:I:X";
+   const char *short_options = "f:hs:d:r:t:i:b:w:vl:z:m:Ve:a:o::u:n:y:g:p:AG:I:qX";
    int arg;
    char arg_str[MAXLINE];	/* Args as string for syslog */
    int options_index=0;
@@ -150,6 +151,7 @@ main(int argc, char *argv[]) {
    unsigned notify_responders = 0;	/* Number of hosts giving notify msg */
    unsigned num_hosts = 0;		/* Number of entries in the list */
    unsigned live_count;			/* Number of entries awaiting reply */
+   int quiet=0;			/* Only print the basic info if nonzero */
 /*
  *	Open syslog channel and log arguments if required.
  *	We must be careful here to avoid overflowing the arg_str buffer
@@ -315,6 +317,9 @@ main(int argc, char *argv[]) {
             break;
          case 'I':	/* --vidpatterns */
             strncpy(vidfile, optarg, MAXLINE);
+            break;
+         case 'q':	/* --quiet */
+            quiet=1;
             break;
          case 'X':	/* --experimental */
             experimental=1;
@@ -548,7 +553,7 @@ main(int argc, char *argv[]) {
                warn_msg("---\tReceived packet #%u from %s",temp_cursor->num_recv ,inet_ntoa(sa_peer.sin_addr));
             if (temp_cursor->live) {
                display_packet(n, packet_in, temp_cursor, &(sa_peer.sin_addr),
-                              &sa_responders, &notify_responders);
+                              &sa_responders, &notify_responders, quiet);
                if (verbose)
                   warn_msg("---\tRemoving host entry %u (%s) - Received %d bytes", temp_cursor->n, inet_ntoa(sa_peer.sin_addr), n);
                remove_host(temp_cursor, &live_count);
@@ -882,6 +887,7 @@ find_host_by_cookie(struct host_entry *he, unsigned char *packet_in, int n) {
  *	recv_addr       IP address that the packet was received from
  *	sa_responders	Number of hosts responding with SA
  *	notify_responders	Number of hosts responding with NOTIFY
+ *	quiet		Only display basic info if nonzero
  *	
  *	Returns:
  *	
@@ -893,7 +899,7 @@ find_host_by_cookie(struct host_entry *he, unsigned char *packet_in, int n) {
 void
 display_packet(int n, unsigned char *packet_in, struct host_entry *he,
                struct in_addr *recv_addr, unsigned *sa_responders,
-               unsigned *notify_responders) {
+               unsigned *notify_responders, int quiet) {
    char *cp;			/* Temp pointer */
    size_t bytes_left;		/* Remaining buffer size */
    int next;			/* Next Payload */
@@ -903,26 +909,24 @@ display_packet(int n, unsigned char *packet_in, struct host_entry *he,
    unsigned char *pkt_ptr;
    static const char *payload_name[] = { /* Payload types from RFC 2408 3.1 */
       NULL,                             /* 0 */
-      "Security Association",           /* 1 */
+      "SecurityAssociation",		/* 1 */
       "Proposal",                       /* 2 */
       "Transform",                      /* 3 */
-      "Key Exchange",                   /* 4 */
+      "KeyExchange",			/* 4 */
       "Identification",                 /* 5 */
       "Certificate",                    /* 6 */
-      "Certificate Request",            /* 7 */
+      "CertificateRequest",		/* 7 */
       "Hash",                           /* 8 */
       "Signature",                      /* 9 */
       "Nonce",                          /* 10 */
       "Notification",                   /* 11 */
       "Delete",                         /* 12 */
-      "Vendor ID"                       /* 13 */
+      "VendorID"			/* 13 */
    };
 
 /*
- *	Set ip_str to the IP address of the host entry, plus the address of the
- *	responder if different, and a tab.  The maximum length of this string
- *	is host_IP (15) + TAB (1) + "(" (1) + resp_IP (15) + ") " (2) = 34
- *	plus one extra for the terminating NULL.
+ *	Set msg to the IP address of the host entry, plus the address of the
+ *	responder if different, and a tab.
  */
    msg = make_message("%s\t", inet_ntoa(he->addr));
    if ((he->addr).s_addr != recv_addr->s_addr) {
@@ -948,7 +952,7 @@ display_packet(int n, unsigned char *packet_in, struct host_entry *he,
    switch (next) {
       case ISAKMP_NEXT_SA:	/* SA */
          (*sa_responders)++;
-         cp = process_sa(pkt_ptr, bytes_left, type);
+         cp = process_sa(pkt_ptr, bytes_left, type, quiet);
          break;
       case ISAKMP_NEXT_N:	/* Notify */
          (*notify_responders)++;
@@ -965,17 +969,38 @@ display_packet(int n, unsigned char *packet_in, struct host_entry *he,
    free(msg2);	/* Free old message (IP address) */
    free(cp);	/* Free 1st payload message */
 /*
- *	Process any other interesting payloads.
+ *	Process any other interesting payloads if quiet is not in effect.
  */
-   while (bytes_left) {
-      if (next == ISAKMP_NEXT_VID) {
-         msg2=msg;
-         cp = process_vid(pkt_ptr, bytes_left, vidlist);
-         msg=make_message("%s %s", msg, cp);
-         free(msg2);	/* Free old message */
-         free(cp);	/* Free VID payload message */
+   if (!quiet) {
+      while (bytes_left) {
+         if (next == ISAKMP_NEXT_VID) {
+            msg2=msg;
+            cp = process_vid(pkt_ptr, bytes_left, vidlist);
+            msg=make_message("%s %s", msg2, cp);
+            free(msg2);	/* Free old message */
+            free(cp);	/* Free VID payload message */
+         } else if (next == ISAKMP_NEXT_ID ) {
+            msg2=msg;
+            cp = process_id(pkt_ptr, bytes_left);
+            msg=make_message("%s %s", msg2, cp);
+            free(msg2);	/* Free old message */
+            free(cp);	/* Free ID payload message */
+         } else {
+            msg2=msg;
+            if (bytes_left >= sizeof(struct isakmp_generic)) {
+                struct isakmp_generic *hdr = (struct isakmp_generic *) pkt_ptr;
+                cp=make_message("%s(%u bytes)", STR_OR_ID(next, payload_name),
+                                ntohs(hdr->isag_length) -
+                                sizeof(struct isakmp_generic));
+            } else {
+                cp=make_message("%s)", STR_OR_ID(next, payload_name));
+            }
+            msg=make_message("%s %s", msg2, cp);
+            free(msg2);	/* Free old message */
+            free(cp);	/* Free generic payload message */
+         }
+         pkt_ptr = skip_payload(pkt_ptr, &bytes_left, &next);
       }
-      pkt_ptr = skip_payload(pkt_ptr, &bytes_left, &next);
    }
 /*
  *	Print the message.
@@ -1178,6 +1203,7 @@ initialise_ike_packet(size_t *packet_out_len, unsigned lifetime,
    size_t nonce_data_len=20;
    size_t ke_len;
    size_t kx_data_len;
+   unsigned no_trans=0;	/* Number of transforms */
 
    *packet_out_len = 0;
 /*
@@ -1252,6 +1278,7 @@ initialise_ike_packet(size_t *packet_out_len, unsigned lifetime,
                    1, lifetime, lifesize, gss_id_flag, gss_data, gss_data_len);
          add_trans(0, NULL, OAKLEY_DES_CBC,  0, OAKLEY_MD5, auth_method,
                    1, lifetime, lifesize, gss_id_flag, gss_data, gss_data_len);
+         no_trans=8;
       } else {	/* presumably aggressive mode */
          add_trans(0, NULL, OAKLEY_3DES_CBC, 0, OAKLEY_SHA, auth_method,
                    dhgroup, lifetime, lifesize, gss_id_flag, gss_data, gss_data_len);
@@ -1261,18 +1288,17 @@ initialise_ike_packet(size_t *packet_out_len, unsigned lifetime,
                    dhgroup, lifetime, lifesize, gss_id_flag, gss_data, gss_data_len);
          add_trans(0, NULL, OAKLEY_DES_CBC,  0, OAKLEY_MD5, auth_method,
                    dhgroup, lifetime, lifesize, gss_id_flag, gss_data, gss_data_len);
+         no_trans=4;
       }
+   } else {	/* Custom transforms */
+      no_trans = trans_flag;
    }
    transforms = add_trans(1, &trans_len, 0,  0, 0, 0, 0, 0, 0, 0, NULL, 0);
    *packet_out_len += trans_len;
 /*
  *	Proposal payload
  */
-   if (trans_flag) {
-      prop = make_prop(trans_len+sizeof(struct isakmp_proposal), trans_flag);
-   } else {
-      prop = make_prop(trans_len+sizeof(struct isakmp_proposal), 8);
-   }
+   prop = make_prop(trans_len+sizeof(struct isakmp_proposal), no_trans);
    *packet_out_len += sizeof(struct isakmp_proposal);
 /*
  *	SA Header
@@ -1432,21 +1458,18 @@ dump_backoff(unsigned pattern_fuzz) {
 void
 dump_vid(void) {
    struct vid_pattern_list *pl;
-   unsigned char *vid_data;
+   char *vid_data;
    int i;
-   int j;
 
    printf("Vendor ID Pattern List:\n\n");
    printf("Entry\tName\tSize\tVendor ID Data\n");
    pl = vidlist;
    i=1;
    while (pl != NULL) {
-      printf("%d\t%s\t%d\t", i, pl->name, pl->len);
-      i++;
-      vid_data = pl->data;
-      for (j=0; j<pl->len; j++)
-         printf("%.2x", (unsigned char) *vid_data++);
-      printf("\n");
+      printf("%d\t%s\t%d\t", i++, pl->name, pl->len);
+      vid_data = hexstring(pl->data, pl->len);
+      printf("%s\n", vid_data);
+      free(vid_data);
       pl = pl->next;
    } /* End While */
    printf("\nTotal of %d Vendor ID pattern entries.\n\n", i-1);
@@ -2160,6 +2183,165 @@ numstr(int num) {
 }
 
 /*
+ *	printable -- Convert string to printable form using C-style escapes
+ *
+ *	Inputs:
+ *
+ *	string	Pointer to input string.
+ *	size	Size of input string.  0 means that string is null-terminated.
+ *
+ *	Returns:
+ *
+ *	Pointer to the printable string.
+ *
+ *	Any non-printable characters are replaced by C-Style escapes, e.g.
+ *	"\n" for newline.  As a result, the returned string may be longer than
+ *	the one supplied.
+ *
+ *	This function makes two passes through the input string: one to
+ *	determine the required output length, then a second to perform the
+ *	conversion.
+ *
+ *	The pointer returned points to malloc'ed storage which should be
+ *	free'ed by the caller when it's no longer needed.
+ */
+char *
+printable(unsigned char *string, size_t size) {
+   char *result;
+   char *r;
+   unsigned char *cp;
+   size_t outlen;
+   int i;
+/*
+ *	If the input string is NULL, return an empty string.
+ */
+   if (string == NULL) {
+      result = Malloc(1);
+      result[0] = '\0';
+      return result;
+   }
+/*
+ *	Determine required size of output string.
+ */
+   if (!size)
+      size = strlen((char *) string);
+
+   outlen = size;
+   cp = string;
+   for (i=0; i<size; i++) {
+      switch (*cp) {
+         case '\b':
+         case '\f':
+         case '\n':
+         case '\r':
+         case '\t':
+         case '\v':
+            outlen++;
+            break;
+         default:
+            if(!isprint(*cp))
+               outlen += 3;
+      }
+      cp++;
+   }
+   outlen++;	/* One more for the ending NULL */
+
+   result = Malloc(outlen);
+
+   cp = string;
+   r = result;
+   for (i=0; i<size; i++) {
+      switch (*cp) {
+         case '\b':
+            *r++ = '\\';
+            *r++ = 'b';
+            break;
+         case '\f':
+            *r++ = '\\';
+            *r++ = 'f';
+            break;
+         case '\n':
+            *r++ = '\\';
+            *r++ = 'n';
+            break;
+         case '\r':
+            *r++ = '\\';
+            *r++ = 'r';
+            break;
+         case '\t':
+            *r++ = '\\';
+            *r++ = 't';
+            break;
+         case '\v':
+            *r++ = '\\';
+            *r++ = 'v';
+            break;
+         default:
+            if (isprint(*cp)) {
+               *r++ = *cp;	/* Printable character */
+            } else {
+               *r++ = '\\';
+               sprintf(r, "%.3o", *cp);
+               r += 3;
+            }
+            break;
+      }
+      cp++;
+   }
+   *r = '\0';
+
+   return result;
+}
+
+/*
+ *	hexstring -- Convert data to printable hex string form
+ *
+ *	Inputs:
+ *
+ *	string	Pointer to input data.
+ *	size	Size of input data.
+ *
+ *	Returns:
+ *
+ *	Pointer to the printable hex string.
+ *
+ *	Each byte in the input data will be represented by two hex digits
+ *	in the output string.  Therefore the output string will be twice
+ *	as long as the input data plus one extra byte for the trailing NULL.
+ *
+ *	The pointer returned points to malloc'ed storage which should be
+ *	free'ed by the caller when it's no longer needed.
+ */
+char *
+hexstring(unsigned char *data, size_t size) {
+   char *result;
+   char *r;
+   unsigned char *cp;
+   int i;
+/*
+ *	If the input data is NULL, return an empty string.
+ */
+   if (data == NULL) {
+      result = Malloc(1);
+      result[0] = '\0';
+      return result;
+   }
+/*
+ *	Create and return hex string.
+ */
+   result = Malloc(2*size + 1);
+   cp = data;
+   r = result;
+   for (i=0; i<size; i++) {
+      sprintf(r, "%.2x", *cp++);
+      r += 2;
+   }
+   *r = '\0';
+
+   return result;
+}
+
+/*
  *	usage -- display usage message and exit
  *
  *      Inputs:
@@ -2256,6 +2438,9 @@ usage(void) {
    fprintf(stderr, "\t\t\t2 - Show each packet sent and received.\n");
    fprintf(stderr, "\t\t\t3 - Display the host and backoff lists before\n");
    fprintf(stderr, "\t\t\t    scanning starts.\n");
+   fprintf(stderr, "\n--quiet or -q\t\tDon't decode the returned packet.\n");
+   fprintf(stderr, "\t\t\tThis prints less protocol information so the\n");
+   fprintf(stderr, "\t\t\toutput lines are shorter.\n");
    fprintf(stderr, "\n--lifetime=<s> or -l <s> Set IKE lifetime to <s> seconds, default=%d.\n", DEFAULT_LIFETIME);
    fprintf(stderr, "\t\t\tRFC 2407 specifies 28800 as the default, but some\n");
    fprintf(stderr, "\t\t\timplementations may require different values.\n");
