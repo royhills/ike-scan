@@ -1729,6 +1729,8 @@ usage(void) {
    fprintf(stderr, "\t\t\tthe backoff patterns file.  Larger values allow for\n");
    fprintf(stderr, "\t\t\thigher variance but also increase the risk of\n");
    fprintf(stderr, "\t\t\tfalse positive identifications.\n");
+   fprintf(stderr, "\t\t\tAny per-pattern-entry fuzz specifications in the\n");
+   fprintf(stderr, "\t\t\tpatterns file will override the value set here.\n");
 #ifdef __CYGWIN__
    fprintf(stderr, "\n--patterns=<f> or -p <f> Use IKE patterns file <f>,\n");
    fprintf(stderr, "\t\t\tdefault=%s in ike-scan.exe dir.\n", PATTERNS_FILE);
