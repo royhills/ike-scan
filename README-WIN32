@@ -41,7 +41,7 @@ Windows NT Server 3.51
 Windows 98 SE
 Windows NT Workstation 4.0 SP6a
 Windows 2000 Server SP1
-Windows XP Professional
+Windows XP Professional SP1
 
 I suspect that it will also run on any Intel-based Windows-32 platform.  I
 doubt that it will run on Windows 3.1 even with win32s.
