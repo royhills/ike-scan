@@ -1,12 +1,42 @@
 $Id$
 
+2003-07-10 Roy Hills <Roy.Hills@nta-monitor.com>
+
+	* ike-backoff-patterns: Added new patterns "watchguard-soho" and
+	  "sonicwall-pro".  These both use the new "/" notation to represent
+	  per-entry fuzz values.
+	* ike-scan.c: Add fact that per-pattern fuzz entries override the
+	  values specified with --fuzz to the help output.
+
+2003-07-10 Roy Hills <Roy.Hills@nta-monitor.com>
+
+	* ike-scan.c: Added check_struct_sizes() to check the size of the
+	  ISAKMP structure sizes.
+	* ike-scan.h: Added definition of check_struct_sizes().
+
+2003-07-04 Roy Hills <Roy.Hills@nta-monitor.com>
+
+	* ike-scan.c: Added support for per-pattern-entry fuzz specification
+	  in the patterns file.
+	* ike-scan.h: New structure to support per-pattern-entry fuzz.
+
+2003-06-27 Roy Hills <Roy.Hills@nta-monitor.com>
+
+	* ike-scan.c: Improved backoff pattern display in dump_backoff().
+	  Use integer arithmetic in add_pattern() to avoid rounding errors.
+	* ike-scan.h: Remove math.h include.  Not needed now that we use
+	  integer aritmetic in add_pattern().
+	* configure.ac: Removed check for maths library.  Not needed now that
+	  we use integer aritmetic in add_pattern().
+
 2003-06-17 Roy Hills <Roy.Hills@nta-monitor.com>
 
-	* ike-scan.1: Created man page ike-scan.1.
-
+	* ike-scan.1: Created man page ike-scan.1.  This is required by some
+	  Linux distributions e.g. Debian.
 	* Makefile.am: Added support for new man page.
-
 	* NEWS: Added info for v1.0, v1.1 and v1.2.
+	* Makefile.am: Changed location of "ike-backoff-patterns" from
+	  $datadir to $pkgdatadir.
 
 2003-06-11 Roy Hills <Roy.Hills@nta-monitor.com>
 
