@@ -20,6 +20,10 @@
  * Change History:
  *
  * $Log$
+ * Revision 1.11  2002/09/17 09:00:00  rsh
+ * Minor change to usage() display.
+ * Removed trans_in from display_packet().
+ *
  * Revision 1.10  2002/09/16 14:26:30  rsh
  * Changed timeval_diff computation method from floating point to integer.
  * Modified main loop so that timing is more exact.
@@ -511,7 +515,6 @@ void display_packet(int n, char *packet_in, struct host_entry *he) {
    struct isakmp_sa sa_hdr_in;
    struct isakmp_proposal sa_prop_in;
    struct isakmp_notification notification_in;
-   struct transform trans_in;
    int msg_len;                 /* Size of notification message in bytes */
    int msg_type;                /* Notification message type */
    char msg_in[MAXLINE];        /* Notification message */
@@ -547,13 +550,15 @@ void display_packet(int n, char *packet_in, struct host_entry *he) {
 /*
  *	1st payload is SA -- IKE handshake
  */
-      if (n >= sizeof(hdr_in) + sizeof(sa_hdr_in) + sizeof(sa_prop_in) + sizeof(trans_in)) {
+      if (n >= sizeof(hdr_in) + sizeof(sa_hdr_in) + sizeof(sa_prop_in)) {
          packet_in += sizeof(hdr_in);
          memcpy(&sa_hdr_in, packet_in, sizeof(sa_hdr_in));
          packet_in += sizeof(sa_hdr_in);
          memcpy(&sa_prop_in, packet_in, sizeof(sa_prop_in));
-         packet_in += sizeof(sa_prop_in);
-         memcpy(&trans_in, packet_in, sizeof(trans_in));
+/*
+ *	Should decode the transform payloads here, but I've not written that
+ *	bit yet.
+ */
          printf("%s\tIKE Handshake returned (%d transforms)\n", ip, sa_prop_in.isap_notrans);
       } else {
          printf("%s\tIKE Handshake returned (%d byte packet too short to decode)\n", ip, n);
@@ -933,7 +938,7 @@ void usage(void) {
    fprintf(stderr, "--timeout=<n> or -t n\tSet per host timeout to <n> ms, default=%d\n", DEFAULT_TIMEOUT);
    fprintf(stderr, "--interval=<n> or -i <n> Set packet interval to <n> ms, default=%d\n", DEFAULT_INTERVAL);
    fprintf(stderr, "--backoff=<b> or -b <b>\tSet backoff factor to <b>, default=%.2f\n", DEFAULT_BACKOFF_FACTOR);
-   fprintf(stderr, "--selectwait=<n> or -w <b> Set select wait to <n> ms, default=%d\n", DEFAULT_SELECT_TIMEOUT);
+   fprintf(stderr, "--selectwait=<n> or -w <n> Set select wait to <n> ms, default=%d\n", DEFAULT_SELECT_TIMEOUT);
    fprintf(stderr, "--random=<n> or -a <n>\tSet random seed to <n>.  Default is based on time\n");
    fprintf(stderr, "--verbose or -v\t\tDisplay verbose progress messages.\n");
    fprintf(stderr, "--lifetime=<s> or -l <s> Set IKE lifetime to <s> seconds, default=%d\n", DEFAULT_LIFETIME);
