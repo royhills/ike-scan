@@ -195,16 +195,24 @@ main(int argc, char *argv[]) {
    unsigned long loop_timediff;
    unsigned long host_timediff;
    unsigned long end_timediff=0;
+   int arg_str_space;		/* Used to avoid buffer overruns when copying */
 /*
- *	Open syslog channel and log arguments if required
+ *	Open syslog channel and log arguments if required.
+ *	We must be careful here to avoid overflowing the arg_str buffer
+ *	which could result in a buffer overflow vulnerability.
  */
 #ifdef SYSLOG
    openlog("ike-scan", LOG_PID, SYSLOG_FACILITY);
    arg_str[0] = '\0';
+   arg_str_space = MAXLINE;	/* Amount of space in the arg_str buffer */
    for (arg=0; arg<argc; arg++) {
-      strcat(arg_str, argv[arg]);
-      if (arg < (argc-1)) {
-         strcat(arg_str, " ");
+      arg_str_space -= strlen(argv[arg]);
+      if (arg_str_space > 0) {
+         strncat(arg_str, argv[arg], arg_str_space);
+         if (arg < (argc-1)) {
+            strcat(arg_str, " ");
+            arg_str_space--;
+         }
       }
    }
    info_syslog("Starting: %s", arg_str);
