@@ -56,16 +56,9 @@ unsigned num_hosts = 0;			/* Number of entries in the list */
 unsigned transform_responders = 0;	/* Number of hosts giving handshake */
 unsigned notify_responders = 0;		/* Number of hosts giving notify msg */
 unsigned live_count;			/* Number of entries awaiting reply */
-unsigned retry = DEFAULT_RETRY;		/* Number of retries */
 unsigned timeout = DEFAULT_TIMEOUT;	/* Per-host timeout */
-unsigned interval = DEFAULT_INTERVAL;	/* Interval between packets */
-unsigned select_timeout;		/* Select timeout */
-double backoff_factor = DEFAULT_BACKOFF_FACTOR;	/* Backoff factor */
-int source_port = DEFAULT_SOURCE_PORT;	/* UDP source port */
-int dest_port = DEFAULT_DEST_PORT;	/* UDP destination port */
 unsigned lifetime = DEFAULT_LIFETIME;	/* Lifetime in seconds */
 int auth_method = DEFAULT_AUTH_METHOD;	/* Authentication method */
-unsigned end_wait = DEFAULT_END_WAIT;	/* Time to wait after all done in ms */
 unsigned pattern_fuzz = DEFAULT_PATTERN_FUZZ; /* Pattern matching fuzz in ms */
 int dhgroup = DEFAULT_DH_GROUP;		/* Diffie Hellman Group */
 int idtype = DEFAULT_IDTYPE;		/* IKE Identification type */
@@ -75,7 +68,6 @@ uint32_t kx_data[48];		/* Key exchange data.  48 is largest needed */
 int kx_data_len;		/* Key exchange data len in 32bit longwords */
 int verbose=0;
 int vendor_id_flag = 0;			/* Indicates if VID to be used */
-char trans_str[MAXLINE];		/* Custom transform string */
 int trans_flag = 0;			/* Indicates custom transform */
 int showbackoff_flag = 0;		/* Display backoff table? */
 int patterns_loaded = 0;		/* Indicates if backoff patterns loaded */
@@ -83,7 +75,6 @@ int trans_enc;				/* Custom transform encrypt */
 int trans_hash;				/* Custom transform hash */
 int trans_auth;				/* Custom transform auth */
 int trans_group;			/* Custom transform DH group */
-struct timeval last_packet_time;	/* Time last packet was sent */
 struct timeval last_recv_time;		/* Time last packet was received */
 struct isakmp_hdr hdr;			/* ISAKMP Header */
 struct isakmp_sa sa_hdr;		/* SA Header */
@@ -195,6 +186,13 @@ main(int argc, char *argv[]) {
    char filename[MAXLINE];
    int filename_flag=0;
    int sockfd;			/* UDP socket file descriptor */
+   int source_port = DEFAULT_SOURCE_PORT;	/* UDP source port */
+   int dest_port = DEFAULT_DEST_PORT;	/* UDP destination port */
+   unsigned retry = DEFAULT_RETRY;	/* Number of retries */
+   unsigned interval = DEFAULT_INTERVAL;	/* Interval between packets */
+   double backoff_factor = DEFAULT_BACKOFF_FACTOR;	/* Backoff factor */
+   unsigned end_wait = 1000 * DEFAULT_END_WAIT; /* Time to wait after all done in ms */
+   char trans_str[MAXLINE];		/* Custom transform string */
    struct sockaddr_in sa_local;
    struct sockaddr_in sa_peer;
    struct timeval now;
@@ -207,10 +205,12 @@ main(int argc, char *argv[]) {
    uint64_t host_timediff;	/* Time since last packet sent to this host */
    unsigned long end_timediff=0; /* Time since last packet received in ms */
    int req_interval;		/* Requested per-packet interval */
+   unsigned select_timeout;	/* Select timeout */
    int cum_err=0;		/* Cumulative timing error */
    static int reset_cum_err;
    struct timeval start_time;	/* Program start time */
    struct timeval end_time;	/* Program end time */
+   struct timeval last_packet_time; /* Time last packet was sent */
    struct timeval elapsed_time;	/* Elapsed time as timeval */
    double elapsed_seconds;	/* Elapsed time in seconds */
    int arg_str_space;		/* Used to avoid buffer overruns when copying */
@@ -568,7 +568,7 @@ main(int argc, char *argv[]) {
             } else {	/* Retry limit not reached for this host */
                if (cursor->num_sent)
                   cursor->timeout *= backoff_factor;
-               send_packet(sockfd, cursor);
+               send_packet(sockfd, cursor, dest_port, &last_packet_time);
                advance_cursor();
             }
          } else {	/* We can't send a packet to this host yet */
@@ -649,7 +649,11 @@ main(int argc, char *argv[]) {
 }
 
 /*
- *	add_host -- Add a host name and associated address to the list
+ *	add_host -- Add a new host to the list.
+ *
+ *	Inputs:
+ *
+ *	name = The Name or IP address of the host.
  */
 void
 add_host(char *name) {
@@ -702,6 +706,11 @@ add_host(char *name) {
 /*
  * 	remove_host -- Remove the specified host from the list
  *
+ *	inputs:
+ *
+ *	he = Pointer to host entry to remove.
+ *
+ *
  *	If the host being removed is the one pointed to by the cursor, this
  *	function updates cursor so that it points to the next entry.
  */
@@ -715,6 +724,10 @@ remove_host(struct host_entry *he) {
 
 /*
  *	advance_cursor -- Advance the cursor to point at next live entry
+ *
+ *	Inputs:
+ *
+ *	None.
  *
  *	Does nothing if there are no live entries in the list.
  */
@@ -730,10 +743,14 @@ advance_cursor(void) {
 /*
  *	find_host_by_cookie	-- Find a host in the list by cookie
  *
- *	he points to current position in list.  Search runs backwards
- *	starting from this point.
+ *	Inputs:
  *
- *	packet points to the received packet containing the cookie.
+ *	he =	Pointer to current position in list.  Search runs backwards
+ *		starting from this point.
+ *
+ *	packet = points to the received packet containing the cookie.
+ *
+ *	n =	Size of the received packet in bytes.
  *
  *	Returns a pointer to the host entry associated with the specified IP
  *	or NULL if no match found.
@@ -784,9 +801,24 @@ find_host_by_cookie(struct host_entry *he, char *packet_in, int n) {
 
 /*
  *	display_packet -- Display received IKE packet
+ *
+ *	Inputs:
+ *	
+ *	n               The length of the received packet in bytes
+ *	packet_in       The received packet
+ *	he              The host entry corresponding to the received packet
+ *	recv_addr       IP address that the packet was received from
+ *	
+ *	Returns:
+ *	
+ *	None.
+ *	
+ *	This should check the received packet and display details of what
+ *	was received in the format: <IP-Address><TAB><Details>.
  */
 void
-display_packet(int n, char *packet_in, struct host_entry *he, struct in_addr *recv_addr) {
+display_packet(int n, char *packet_in, struct host_entry *he,
+               struct in_addr *recv_addr) {
    struct isakmp_hdr hdr_in;
    struct isakmp_sa sa_hdr_in;
    struct isakmp_proposal sa_prop_in;
@@ -945,9 +977,25 @@ decode_transform(char *packet_in, int n, int ntrans) {
 
 /*
  *	send_packet -- Construct and send a packet to the specified host
+ *	
+ *	Inputs:
+ *	
+ *	s               UDP socket file descriptor
+ *	he              Host entry to send to
+ *	dest_port       Destination UDP port
+ *	last_packet_time        Time when last packet was sent
+ *	
+ *	Returns:
+ *	
+ *	None.
+ *	
+ *	This must construct an appropriate packet and send it to the host
+ *	identified by "he" and UDP port "dest_port" using the socket "s".
+ *	It must also update the "last_send_time" field for this host entry.
  */
 void
-send_packet(int s, struct host_entry *he) {
+send_packet(int s, struct host_entry *he, int dest_port,
+            struct timeval *last_packet_time) {
    struct sockaddr_in sa_peer;
    char buf[MAXUDP];
    int buflen;
@@ -996,11 +1044,11 @@ send_packet(int s, struct host_entry *he) {
 /*
  *	Update the last send times for this host.
  */
-   if ((gettimeofday(&last_packet_time, NULL)) != 0) {
+   if ((gettimeofday(last_packet_time, NULL)) != 0) {
       err_sys("gettimeofday");
    }
-   he->last_send_time.tv_sec  = last_packet_time.tv_sec;
-   he->last_send_time.tv_usec = last_packet_time.tv_usec;
+   he->last_send_time.tv_sec  = last_packet_time->tv_sec;
+   he->last_send_time.tv_usec = last_packet_time->tv_usec;
    he->num_sent++;
 /*
  *	Send the packet.
@@ -1014,6 +1062,14 @@ send_packet(int s, struct host_entry *he) {
 
 /*
  *	recvfrom_wto -- Receive packet with timeout
+ *
+ *      Inputs:
+ *
+ *      s       = Socket file descriptor.
+ *      buf     = Buffer to receive data read from socket.
+ *      len     = Size of buffer.
+ *      saddr   = Socket structure.
+ *      tmo     = Select timeout in us.
  *
  *	Returns number of characters received, or -1 for timeout.
  */
@@ -1051,9 +1107,14 @@ recvfrom_wto(int s, char *buf, int len, struct sockaddr *saddr, int tmo) {
 }
 
 /*
- *	Calculates the difference between two timevals and returns this
- *	difference in a third timeval.
- *	diff = a - b.
+ *	timeval_diff -- Calculates the difference between two timevals
+ *	and returns this difference in a third timeval.
+ *
+ *	Inputs:
+ *
+ *	a       = First timeval
+ *	b       = Second timeval
+ *	diff    = Difference between timevals (a - b).
  */
 void
 timeval_diff(struct timeval *a, struct timeval *b, struct timeval *diff) {
@@ -1320,6 +1381,10 @@ initialise_ike_packet(void) {
 
 /*
  *	dump_list -- Display contents of host list for debugging
+ *
+ *      Inputs:
+ *
+ *      None.
  */
 void
 dump_list(void) {
@@ -1698,7 +1763,7 @@ add_pattern(char *line) {
  *	There are several places in the ike-scan code where we copy structs
  *	to character arrays and vice versa.  E.g. send_packet().
  *
- *	Although this is not condoned in C in practice it is OK in practice
+ *	Although this is not condoned in C, it is OK in practice
  *	providing that the sizes of the fields is correct and there is no
  *	padding between fields (e.g. for alignment purposes).  This function
  *	checks for both of these problems.
@@ -1735,6 +1800,7 @@ check_struct_sizes() {
  *	E.g. "0A" would return 10.
  *	Note that this function does no sanity checking, it's up to the
  *	caller to ensure that *cptr points to at least two hex digits.
+ *
  *	This function is a modified version of hstr_i at www.snippets.org.
  */
 unsigned int hstr_i(char *cptr)
@@ -1755,6 +1821,10 @@ unsigned int hstr_i(char *cptr)
 
 /*
  *	usage -- display usage message and exit
+ *
+ *      Inputs:
+ *
+ *      None.
  */
 void
 usage(void) {
