@@ -596,6 +596,10 @@ make_id(size_t *length, uint8_t next, uint8_t idtype, unsigned char *id_data,
    hdr->isaid_np = next;		/* Next payload type */
    hdr->isaid_length = htons(sizeof(struct isakmp_id)+id_data_len);
    hdr->isaid_idtype = idtype;
+/*
+ *	RFC 2407 4.6.2: "During Phase I negotiations, the ID port and protocol
+ *	fields MUST be set to zero or to UDP port 500"
+ */
    hdr->isaid_doi_specific_a = 17;		/* Protocol: UDP */
    hdr->isaid_doi_specific_b = htons(500);	/* Port: 500 */
 
@@ -709,12 +713,10 @@ process_isakmp_hdr(unsigned char *cp, size_t *len, int *next, int *type) {
  *	which should be free'ed by the caller when it's no longer needed.
  */
 char *
-process_sa(unsigned char *cp, size_t len, int type) {
+process_sa(unsigned char *cp, size_t len, int type, int quiet) {
    struct isakmp_sa *sa_hdr = (struct isakmp_sa *) cp;
    struct isakmp_proposal *prop_hdr =
       (struct isakmp_proposal *) (cp + sizeof(struct isakmp_sa));
-   struct isakmp_transform *trans_hdr =
-      (struct isakmp_transform *) (cp + sizeof(struct isakmp_sa) + sizeof(struct isakmp_proposal));
    char *msg;
    char *msg2;
    char *msg3;
@@ -749,17 +751,15 @@ process_sa(unsigned char *cp, size_t len, int type) {
       msg = make_message("%s (%d transforms)", msg2, prop_hdr->isap_notrans);
       free(msg2);
    }
-
-   if (experimental) {
 /*
- *	****	EXPERIMENTAL AREA	****
+ *	If quiet is not in effect, add the transform details to the message.
  */
+   if (!quiet) {
+      int firstloop=1;
 
-/*      msg2 = msg;
-      msg = make_message("%s (transnum=%u, transid=%u)", msg2,
-                         trans_hdr->isat_transnum, trans_hdr->isat_transid);
-      free(msg2); */
-
+      msg2 = msg;
+      msg = make_message("%s SA=(", msg2);
+      free(msg2);
       attr_ptr = (cp + sizeof(struct isakmp_sa) + sizeof(struct isakmp_proposal) +
                   sizeof(struct isakmp_transform));
       safelen -= sizeof(struct isakmp_sa) + sizeof(struct isakmp_proposal) +
@@ -768,13 +768,18 @@ process_sa(unsigned char *cp, size_t len, int type) {
       while (safelen) {
          msg2 = msg;
          msg3 = process_attr(&attr_ptr, &safelen);
-         msg = make_message("%s %s", msg2, msg3);
+         if (firstloop) {	/* Don't need leading space for 1st attr */
+            msg = make_message("%s%s", msg2, msg3);
+            firstloop=0;
+         } else {
+            msg = make_message("%s %s", msg2, msg3);
+         }
          free(msg2);
          free(msg3);
       }
-/*
- *	****	EXPERIMENTAL AREA	****
- */
+      msg2 = msg;
+      msg = make_message("%s)", msg2);
+      free(msg2);
    }
 
    return msg;
@@ -911,18 +916,8 @@ process_attr(unsigned char **cp, size_t *len) {
          break;
       }
    } else {
-      char *p;
-      int i;
-      unsigned char *ucp;
-
-      attr_value_str = Malloc(2*value_len + 1);	/* 2 chars/byte + end NULL */
-      p = attr_value_str;
-      ucp = (*cp) + sizeof (struct isakmp_attribute);
-      for (i=0; i<value_len; i++) {
-         sprintf(p, "%.2x", *ucp++);
-         p += 2;
-      }
-      *p = '\0';
+      attr_value_str = hexstring((*cp) + sizeof (struct isakmp_attribute),
+                                 value_len);
    }
 
    if (attr_type == 'B')
@@ -968,10 +963,8 @@ process_vid(unsigned char *cp, size_t len, struct vid_pattern_list *vidlist) {
    char *msg;
    char *p;
    unsigned char *vid_data;
-   unsigned char *ucp;
    size_t data_len;
    size_t checklen;
-   int i;
 
    if (len < sizeof(struct isakmp_vid) ||
         ntohs(hdr->isavid_length) < sizeof(struct isakmp_vid))
@@ -980,15 +973,7 @@ process_vid(unsigned char *cp, size_t len, struct vid_pattern_list *vidlist) {
    vid_data = cp + sizeof(struct isakmp_vid);  /* Points to start of VID data */
    data_len = ntohs(hdr->isavid_length) < len ? ntohs(hdr->isavid_length) : len;
 
-   msg = Malloc(2*data_len + 1);	/* 2 hex chars/byte + end NULL */
-   p = msg;
-   ucp=vid_data;
-   for (i=0; i<data_len; i++) {
-      sprintf(p, "%.2x", (unsigned char) *ucp++);
-      p += 2;
-   }
-   *p = '\0';
-
+   msg = hexstring(vid_data, data_len);
    p = msg;
    msg=make_message("VID=%s", p);
    free(p);
@@ -1032,7 +1017,7 @@ process_notify(unsigned char *cp, size_t len) {
    int msg_type;
    size_t msg_len;
    unsigned char *msg_data;
-   unsigned char *notify_msg;
+   char *notify_msg;
 
    if (len < sizeof(struct isakmp_notification) ||
         ntohs(hdr->isan_length) < sizeof(struct isakmp_notification))
@@ -1046,23 +1031,95 @@ process_notify(unsigned char *cp, size_t len) {
       msg=make_message("Notify message %d (%s)", msg_type,
                        notification_msg[msg_type]);
    } else if (msg_type == 9101) {	/* Firewall-1 4.x/NG Base msg */
-      unsigned char *p;
-      notify_msg = Malloc(msg_len + 1);	/* Allow extra byte for NULL */
-      memcpy(notify_msg, msg_data, msg_len);
-      *(notify_msg+msg_len) = '\0';	/* Ensure string is null terminated */
-/*
- *      Replace any non-printable characters with "."
- */
-      for (p=notify_msg; *p != '\0'; p++) {
-         if (!isprint(*p))
-            *p='.';
-      }
+      notify_msg = printable(msg_data, msg_len);
       msg=make_message("Notify message %d [Checkpoint Firewall-1 4.x or NG Base] (%s)",
                        msg_type, notify_msg);
       free(notify_msg);
    } else {
       msg=make_message("Notify message %d (UNKNOWN MESSAGE TYPE)", msg_type);
    }
+
+   return msg;
+}
+
+/*
+ *	process_id -- Process identification Payload
+ *
+ *	Inputs:
+ *
+ *	cp	Pointer to start of identification payload
+ *	len	Packet length remaining
+ *
+ *	Returns:
+ *
+ *	Pointer to identification description string.
+ *
+ *	The description string pointer returned points to malloc'ed storage
+ *	which should be free'ed by the caller when it's no longer needed.
+ */
+char *
+process_id(unsigned char *cp, size_t len) {
+   struct isakmp_id *hdr = (struct isakmp_id *) cp;
+   int idtype;
+   char *msg;
+   char *msg2;
+   unsigned char *id_data;
+   size_t data_len;
+   static const char *id_names[] = {	/* From RFC 2407 4.6.2.1 */
+      NULL,				/*  0 */
+      "ID_IPV4_ADDR",			/*  1 */
+      "ID_FQDN",			/*  2 */
+      "ID_USER_FQDN",			/*  3 */
+      "ID_IPV4_ADDR_SUBNET",		/*  4 */
+      "ID_IPV6_ADDR",			/*  5 */
+      "ID_IPV6_ADDR_SUBNET",		/*  6 */
+      "ID_IPV4_ADDR_RANGE",		/*  7 */
+      "ID_IPV6_ADDR_RANGE",		/*  8 */
+      "ID_DER_ASN1_DN",			/*  9 */
+      "ID_DER_ASN1_GN",			/* 10 */
+      "ID_KEY_ID",			/* 11 */
+   };
+
+   if (len < sizeof(struct isakmp_id) ||
+        ntohs(hdr->isaid_length) < sizeof(struct isakmp_id))
+      return make_message("ID (packet too short to decode)");
+
+   id_data = cp + sizeof(struct isakmp_id);  /* Points to start of ID data */
+   data_len = ntohs(hdr->isaid_length) < len ? ntohs(hdr->isaid_length) : len;
+   idtype = hdr->isaid_idtype;
+
+   switch(idtype) {
+      char *id;
+
+      case ID_IPV4_ADDR:
+      case ID_IPV4_ADDR_SUBNET:
+      case ID_IPV6_ADDR:
+      case ID_IPV6_ADDR_SUBNET:
+      case ID_IPV4_ADDR_RANGE:
+      case ID_IPV6_ADDR_RANGE:
+      case ID_DER_ASN1_DN:
+      case ID_DER_ASN1_GN:
+         msg=make_message("Decode not supported for this type");
+         break;
+      case ID_FQDN:
+      case ID_USER_FQDN:
+         id = printable(id_data, data_len);
+         msg=make_message("Value=%s", id);
+         free(id);
+         break;
+      case ID_KEY_ID:
+         id = hexstring(id_data, data_len);
+         msg = make_message("Value=%s", id);
+         free(id);
+         break;
+      default:
+         msg = make_message("Unknown ID Type");
+         break;
+   }
+
+   msg2=msg;
+   msg=make_message("ID(Type=%s, %s)", STR_OR_ID(idtype,id_names), msg2);
+   free(msg2);
 
    return msg;
 }
