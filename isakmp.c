@@ -966,7 +966,6 @@ process_vid(unsigned char *cp, size_t len, struct vid_pattern_list *vidlist) {
    char *p;
    unsigned char *vid_data;
    size_t data_len;
-   size_t checklen;
 
    if (len < sizeof(struct isakmp_vid) ||
         ntohs(hdr->isavid_length) < sizeof(struct isakmp_vid))
@@ -974,6 +973,7 @@ process_vid(unsigned char *cp, size_t len, struct vid_pattern_list *vidlist) {
 
    vid_data = cp + sizeof(struct isakmp_vid);  /* Points to start of VID data */
    data_len = ntohs(hdr->isavid_length) < len ? ntohs(hdr->isavid_length) : len;
+   data_len -= sizeof(struct isakmp_vid);
 
    msg = hexstring(vid_data, data_len);
    p = msg;
@@ -984,8 +984,7 @@ process_vid(unsigned char *cp, size_t len, struct vid_pattern_list *vidlist) {
  */
    ve = vidlist;
    while(ve != NULL) {
-      checklen = (data_len<ve->len)?data_len:ve->len;
-      if (!(memcmp(vid_data, ve->data, checklen))) {
+      if (data_len >= ve->len && !(memcmp(vid_data, ve->data, ve->len))) {
          p=msg;
          msg=make_message("%s (%s)", p, ve->name);
          free(p);
@@ -1088,6 +1087,7 @@ process_id(unsigned char *cp, size_t len) {
 
    id_data = cp + sizeof(struct isakmp_id);  /* Points to start of ID data */
    data_len = ntohs(hdr->isaid_length) < len ? ntohs(hdr->isaid_length) : len;
+   data_len -= sizeof(struct isakmp_id);
    idtype = hdr->isaid_idtype;
 
    switch(idtype) {
