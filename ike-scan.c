@@ -71,10 +71,6 @@ int vendor_id_flag = 0;			/* Indicates if VID to be used */
 int trans_flag = 0;			/* Indicates custom transform */
 int showbackoff_flag = 0;		/* Display backoff table? */
 int patterns_loaded = 0;		/* Indicates if backoff patterns loaded */
-int trans_enc;				/* Custom transform encrypt */
-int trans_hash;				/* Custom transform hash */
-int trans_auth;				/* Custom transform auth */
-int trans_group;			/* Custom transform DH group */
 struct timeval last_recv_time;		/* Time last packet was received */
 unsigned char *vid_data;		/* Binary Vendor ID data */
 int vid_data_len;			/* Vendor ID data length */
@@ -242,6 +238,11 @@ main(int argc, char *argv[]) {
    while ((arg=getopt_long_only(argc, argv, short_options, long_options, &options_index)) != -1) {
       switch (arg) {
          int i;
+         int trans_enc;		/* Custom transform cipher */
+         int trans_keylen;	/* Custom transform cipher key length */
+         int trans_hash;	/* Custom transform hash */
+         int trans_auth;	/* Custom transform auth */
+         int trans_group;	/* Custom transform DH group */
          case 'f':	/* --file */
             strncpy(filename, optarg, MAXLINE);
             filename_flag=1;
@@ -306,6 +307,9 @@ main(int argc, char *argv[]) {
             strncpy(trans_str, optarg, MAXLINE);
             trans_flag=1;
             sscanf(trans_str, "%d,%d,%d,%d", &trans_enc, &trans_hash, &trans_auth, &trans_group);
+            trans_keylen = 0;
+            add_trans(0, NULL, trans_enc, trans_keylen, trans_hash,
+                      trans_auth, trans_group, lifetime);
             break;
          case 'o':	/* --showbackoff */
             showbackoff_flag=1;
@@ -1108,22 +1112,24 @@ initialise_ike_packet(void) {
 /*
  *	Transform payloads
  */
-   add_trans(0, NULL, OAKLEY_3DES_CBC, 0, OAKLEY_SHA, auth_method,
-                     2, lifetime);
-   add_trans(0, NULL, OAKLEY_3DES_CBC, 0, OAKLEY_MD5, auth_method,
-                     2, lifetime);
-   add_trans(0, NULL, OAKLEY_DES_CBC,  0, OAKLEY_SHA, auth_method,
-                     2, lifetime);
-   add_trans(0, NULL, OAKLEY_DES_CBC,  0, OAKLEY_MD5, auth_method,
-                     2, lifetime);
-   add_trans(0, NULL, OAKLEY_3DES_CBC, 0, OAKLEY_SHA, auth_method,
-                     1, lifetime);
-   add_trans(0, NULL, OAKLEY_3DES_CBC, 0, OAKLEY_MD5, auth_method,
-                     1, lifetime);
-   add_trans(0, NULL, OAKLEY_DES_CBC,  0, OAKLEY_SHA, auth_method,
-                     1, lifetime);
-   add_trans(0, NULL, OAKLEY_DES_CBC,  0, OAKLEY_MD5, auth_method,
-                     1, lifetime);
+   if (!trans_flag) {	/* Use standard transform set if none specified */
+      add_trans(0, NULL, OAKLEY_3DES_CBC, 0, OAKLEY_SHA, auth_method,
+                        2, lifetime);
+      add_trans(0, NULL, OAKLEY_3DES_CBC, 0, OAKLEY_MD5, auth_method,
+                        2, lifetime);
+      add_trans(0, NULL, OAKLEY_DES_CBC,  0, OAKLEY_SHA, auth_method,
+                        2, lifetime);
+      add_trans(0, NULL, OAKLEY_DES_CBC,  0, OAKLEY_MD5, auth_method,
+                        2, lifetime);
+      add_trans(0, NULL, OAKLEY_3DES_CBC, 0, OAKLEY_SHA, auth_method,
+                        1, lifetime);
+      add_trans(0, NULL, OAKLEY_3DES_CBC, 0, OAKLEY_MD5, auth_method,
+                        1, lifetime);
+      add_trans(0, NULL, OAKLEY_DES_CBC,  0, OAKLEY_SHA, auth_method,
+                        1, lifetime);
+      add_trans(0, NULL, OAKLEY_DES_CBC,  0, OAKLEY_MD5, auth_method,
+                        1, lifetime);
+   }
    transforms = add_trans(1, &trans_len, 0,  0, 0, 0, 0, 0);
    buflen += trans_len;
 /*
