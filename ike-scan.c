@@ -163,6 +163,7 @@ int vendor_id_flag = 0;			/* Indicates if VID to be used */
 char trans_str[MAXLINE];		/* Custom transform string */
 int trans_flag = 0;			/* Indicates custom transform */
 int showbackoff_flag = 0;		/* Display backoff table? */
+int patterns_loaded = 0;		/* Indicates if backoff patterns loaded */
 int trans_enc;				/* Custom transform encrypt */
 int trans_hash;				/* Custom transform hash */
 int trans_auth;				/* Custom transform auth */
@@ -436,8 +437,9 @@ main(int argc, char *argv[]) {
 
       sprintf(patfile, "%s/%s", DATADIR, PATTERNS_FILE);
       if ((fp = fopen(patfile, "r")) == NULL) {
+         warn_msg("WARNING: Cannot open IKE backoff patterns file.  ike-scan will still display");
+         warn_msg("the backoff patterns, but it will not be able to identify the fingerprints.");
          warn_sys("fopen: %s", patfile);
-         warn_msg("Cannot open IKE backoff patterns file.  Will not be able to identify fingerprints.");
       } else {
          line_no=0;
          while (fgets(line, MAXLINE, fp)) {
@@ -446,6 +448,7 @@ main(int argc, char *argv[]) {
                add_pattern(line);
          }
          fclose(fp);
+         patterns_loaded=1;
       }
    }
 /*
@@ -465,8 +468,9 @@ main(int argc, char *argv[]) {
    sa_local.sin_port = htons(source_port);
 
    if ((bind(sockfd, (struct sockaddr *)&sa_local, sizeof(sa_local))) < 0) {
-      perror("bind");
-      exit(1);
+      warn_msg("ERROR: Could not bind UDP socket to local port %d", source_port);
+      warn_msg("You need to be root, or ike-scan must be suid root to bind to ports below 1024.");
+      err_sys("bind");
    }
 /*
  *	Set current host pointer (cursor) to start of list, zero
@@ -489,10 +493,12 @@ main(int argc, char *argv[]) {
 #endif
    printf("Starting %s with %d hosts (http://www.nta-monitor.com/ike-scan/)\n", VERSION, num_hosts);
 /*
- *	Display the list if verbose setting is 3 or more.
+ *	Display the lists if verbose setting is 3 or more.
  */
    if (verbose > 2)
       dump_list();
+   if (verbose > 2 && showbackoff_flag)
+      dump_backoff();
 /*
  *	Main loop: send packets to all hosts in order until a response
  *	has been received or the host has exhausted it's retry limit.
@@ -1218,7 +1224,7 @@ initialise_ike_packet(void) {
 }
 
 /*
- *	dump_list -- Display contents of list for debugging
+ *	dump_list -- Display contents of host list for debugging
  */
 void
 dump_list(void) {
@@ -1226,12 +1232,40 @@ dump_list(void) {
 
    p = rrlist;
 
+   printf("Host List:\n\n");
    printf("Entry\tIP Address\tCookie\n");
    do {
       printf("%d\t%s\t%0x%0x\n", p->n, inet_ntoa(p->addr), htonl(p->icookie[0]), htonl(p->icookie[1]));
       p = p->next;
    } while (p != rrlist);
-   printf("\nTotal of %d entries\n\n", num_hosts);
+   printf("\nTotal of %d host entries.\n\n", num_hosts);
+}
+
+/*
+ *	dump_backoff -- Display contents of backoff list for debugging
+ */
+void
+dump_backoff(void) {
+   struct pattern_list *pl;
+   struct time_list *pp;
+   int i;
+
+   printf("Backoff Pattern List:\n\n");
+   printf("Entry\tName\tCount\tBackoff Pattern\n");
+   pl = patlist;
+   i=1;
+   while (pl != NULL) {
+      printf("%d\t%s\t%d\t", i, pl->name, pl->num_times);
+      pp = pl->recv_times;
+      while (pp != NULL) {
+         printf("%ld.%.6ld, ", (long)pp->time.tv_sec, (long)pp->time.tv_usec);
+         pp = pp->next;
+      }
+      pl = pl->next;
+      printf("\n");
+      i++;
+   } /* End While */
+   printf("\nTotal of %d backoff pattern entries.\n\n", i-1);
 }
 
 /*
@@ -1245,6 +1279,7 @@ dump_times(void) {
    struct timeval prev_time;
    struct timeval diff;
    char *patname;
+   int unknown_patterns = 0;
 
    p = rrlist;
 
@@ -1267,12 +1302,24 @@ dump_times(void) {
          if ((patname=match_pattern(p)) != NULL) {
             printf("%s\tImplementation guess: %s\n", inet_ntoa(p->addr), patname);
          } else {
-            printf("%s\tImplementation guess: %s\n", inet_ntoa(p->addr), "UNKNOWN");
+            if (patterns_loaded) {
+               printf("%s\tImplementation guess: %s\n", inet_ntoa(p->addr), "UNKNOWN");
+            } else {
+               printf("%s\tImplementation guess: %s\n", inet_ntoa(p->addr), "UNKNOWN - No patterns available");
+            }
+            unknown_patterns++;
          }
          printf("\n");
       } /* End If */
       p = p->next;
    } while (p != rrlist);
+   if (unknown_patterns && patterns_loaded) {
+      printf("Some IKE implementations found have unknown backoff fingerprints\n");
+      printf("If you know the implementation name, and the pattern is reproducible, you\n");
+      printf("are encouraged to submit the pattern and implementation details for\n");
+      printf("inclusion in future versions of ike-scan.  See:\n");
+      printf("http://www.nta-monitor.com/ike-scan/submit.htm\n");
+   }
 }
 
 /*
@@ -1538,7 +1585,8 @@ usage(void) {
    fprintf(stderr, "\t\t\t1 - Show when hosts are removed from the list and\n");
    fprintf(stderr, "\t\t\t    when packets with invalid cookies are received.\n");
    fprintf(stderr, "\t\t\t2 - Show each packet sent and received.\n");
-   fprintf(stderr, "\t\t\t3 - Display the host list before scanning starts.\n");
+   fprintf(stderr, "\t\t\t3 - Display the host and backoff lists before\n");
+   fprintf(stderr, "\t\t\t    scanning starts.\n");
    fprintf(stderr, "\n--lifetime=<s> or -l <s> Set IKE lifetime to <s> seconds, default=%d.\n", DEFAULT_LIFETIME);
    fprintf(stderr, "\t\t\tRFC 2407 specifies 28800 as the default, but some\n");
    fprintf(stderr, "\t\t\timplementations may require different values.\n");
