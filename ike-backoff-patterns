@@ -65,7 +65,10 @@ Cisco IOS / PIX	0, 15, 15
 
 # Discovered by: Roy Hills, November 2002
 # Observed on: Cisco VPN Concentrator 3005 running (unknown version)
-Cisco VPN Concentrator	0, 8, 8
+# Observed on: VPN 3000 Concentrator Version 3.6.3.Rel Oct 04 2002 16:23:00
+# Note: original pattern was 0, 8, 8 but I think that this was incorrect
+#       because I've never been able to reproduce it.
+Cisco VPN Concentrator	0, 8, 8, 8
 
 # Discovered by: Roy Hills, December 2002
 # Observed on: Checkpoint Firewall-1 4.0 SP7 on Windows NT Workstation 4.0 SP6a
