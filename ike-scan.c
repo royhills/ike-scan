@@ -46,7 +46,7 @@
 
 #include "ike-scan.h"
 
-#define VERSION "ike-scan v1.1"
+#define VERSION "ike-scan v1.2"
 #define MAX_PAYLOAD 13	/* Maximum defined payload number */
 static char rcsid[] = "$Id$";   /* RCS ID for ident(1) */
 
