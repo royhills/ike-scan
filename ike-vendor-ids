@@ -174,7 +174,7 @@ GSSAPI	^621b04bb09882ac1e15935fefa24aeee
 
 # Other things I've seen but not fully classified yet.
 # If anyone can confirm any of these, please let me know.
-Cisco IOS	^bdb41038a7ec5e5534dd004d0f91f927
+Maybe Cisco IOS	^bdb41038a7ec5e5534dd004d0f91f927
 # I've seen Unknown 1 from a Cisco VPN Concentrator with a trailing 500400
 # I've also seen it from an unknown device with a trailing 500306
 Unknown 1	^1f07f70eaa6514d3b0fa96542a
@@ -194,3 +194,7 @@ Netscreen	^9b096d9ac3275a7d6fe8b91c583111b09efed1a0
 # version number.
 Safenet or Watchguard	^da8e9378
 Unknown-cisco	^e23ae9f51a46876ff93d89ba725d649d
+# The "Maybe Netscreen" Vendor ID has been observed to be followed by 16
+# additional hex digits (8 bytes) which appear to be two 4-byte values.
+# An example is: 92d27a9ecb31d99246986d3453d0c3d57a222a610000000700000500
+Maybe Netscreen	^92d27a9ecb31d99246986d3453d0c3d57a222a61
