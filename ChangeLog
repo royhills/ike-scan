@@ -1,5 +1,32 @@
 $Id$
 
+2004-10-29 Roy Hills <Roy.Hills@nta-monitor.com>
+
+	* Internal release of 1.6.4.  NTA Monitor internal use only.
+
+2004-10-05 Roy Hills <Roy.Hills@nta-monitor.com>
+
+	* ike-scan.c: Added --nodns (-N) option.
+	  Added "ERROR:" to error messages that were missing this prefix.
+	  Corrected buffer length calculation that could result in a segv with
+	  long argument lists.
+
+2004-09-28 Roy Hills <Roy.Hills@nta-monitor.com>
+
+	* psk-crack.c: Added bruteforce support.  New options:
+	  --bruteforce and --charset.
+
+	* ike-scan.c: Added missing "=" to help text for --id option.
+
+2004-09-20 Roy Hills <Roy.Hills@nta-monitor.com>
+
+	* isakmp.c: Added additional authentication method names and group
+	  names from http://www.iana.org/assignments/ipsec-registry
+
+2004-09-20 Roy Hills <Roy.Hills@nta-monitor.com>
+
+	* isakmp.c: Added SHA2 algorithms to auth_names[].
+
 2004-07-19 Roy Hills <Roy.Hills@nta-monitor.com>
 
 	* psk-crack.c: New program to crack Aggressive Mode Pre-Shared Keys
