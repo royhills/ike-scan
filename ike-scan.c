@@ -58,7 +58,7 @@ struct pattern_list *patlist = NULL;	/* Backoff pattern list */
 struct vid_pattern_list *vidlist = NULL;	/* Vendor ID pattern list */
 #endif
 static int verbose=0;			/* Verbose level */
-int experimental_flag=0;		/* Experimental flag */
+unsigned experimental_value=0;		/* Experimental value */
 int tcp_flag=0;				/* TCP flag */
 int psk_crack_flag=0;			/* Pre-shared key cracking flag */
 struct psk_crack psk_values = {		/* Pre-shared key values */
@@ -100,11 +100,11 @@ main(int argc, char *argv[]) {
       {"tcp", optional_argument, 0, 'T'},
       {"pskcrack", no_argument, 0, 'P'},
       {"tcptimeout", required_argument, 0, 'O'},
-      {"experimental", no_argument, 0, 'X'},
+      {"experimental", required_argument, 0, 'X'},
       {0, 0, 0, 0}
    };
    const char *short_options =
-      "f:hs:d:r:t:i:b:w:vl:z:m:Ve:a:o::u:n:y:g:p:AG:I:qMRT::PO:X";
+      "f:hs:d:r:t:i:b:w:vl:z:m:Ve:a:o::u:n:y:g:p:AG:I:qMRT::PO:X:";
    int arg;
    char arg_str[MAXLINE];	/* Args as string for syslog */
    int options_index=0;
@@ -351,7 +351,7 @@ main(int argc, char *argv[]) {
             tcp_connect_timeout = strtoul(optarg, (char **)NULL, 10);
             break;
          case 'X':	/* --experimental */
-            experimental_flag=1;
+            experimental_value = strtoul(optarg, (char **)NULL, 10);
             break;
          default:	/* Unknown option */
             usage(EXIT_FAILURE);
@@ -1538,7 +1538,11 @@ initialise_ike_packet(size_t *packet_out_len, unsigned lifetime,
  *	ISAKMP Header
  */
    *packet_out_len += sizeof(struct isakmp_hdr);
-   hdr = make_isakmp_hdr(exchange_type, ISAKMP_NEXT_SA, *packet_out_len);
+   if (experimental_value) {
+      hdr = make_isakmp_hdr(exchange_type, ISAKMP_NEXT_SA, experimental_value);
+   } else {
+      hdr = make_isakmp_hdr(exchange_type, ISAKMP_NEXT_SA, *packet_out_len);
+   }
 /*
  *	Allocate packet and copy payloads into packet.
  */
