@@ -807,23 +807,73 @@ process_attr(unsigned char **cp, size_t *len) {
    size_t value_len;
    size_t size;
    static const char *attr_classes[] = {	/* From RFC 2409 App. A */
-      "UNSPECIFIED",				/* 0 */
-      "Enc",					/* 1 */
-      "Hash",					/* 2 */
-      "Auth",					/* 3 */
-      "Group",					/* 4 */
-      "Group Type",				/* 5 */
-      "Group Prime/Irreducible Polynomial",	/* 6 */
-      "Group Generator One",			/* 7 */
-      "Group Generator Two",			/* 8 */
-      "Group Curve A",				/* 9 */
-      "Group Curve B",				/* 10 */
+      NULL,					/*  0 */
+      "Enc",					/*  1 */
+      "Hash",					/*  2 */
+      "Auth",					/*  3 */
+      "Group",					/*  4 */
+      "GroupType",				/*  5 */
+      "GroupPrime/IrreduciblePolynomial",	/*  6 */
+      "GroupGeneratorOne",			/*  7 */
+      "GroupGeneratorTwo",			/*  8 */
+      "GroupCurve A",				/*  9 */
+      "GroupCurve B",				/* 10 */
       "LifeType",				/* 11 */
       "LifeDuration",				/* 12 */
       "PRF",					/* 13 */
       "KeyLength",				/* 14 */
-      "Field Size",				/* 15 */
-      "Group Order"				/* 16 */
+      "FieldSize",				/* 15 */
+      "GroupOrder"				/* 16 */
+   };
+   static const char *enc_names[] = {		/* From RFC 2409 App. A */
+      NULL,					/* and RFC 3602 */
+      "DES",					/*  1 */
+      "IDEA",					/*  2 */
+      "Blowfish",				/*  3 */
+      "RC5",					/*  4 */
+      "3DES",					/*  5 */
+      "CAST",					/*  6 */
+      "AES"					/*  7 */
+   };
+   static const char *hash_names[] = {		/* From RFC 2409 App. A */
+      NULL,
+      "MD5",					/*  1 */
+      "SHA1",					/*  2 */
+      "Tiger"					/*  3 */
+   };
+   static const char *auth_names[] = {		/* From RFC 2409 App. A */
+      NULL,
+      "PSK",					/*  1 */
+      "DSS",					/*  2 */
+      "RSA_Sig",				/*  3 */
+      "RSA_Enc",				/*  4 */
+      "RSA_RevEnc"				/*  5 */
+   };
+   static const char *dh_names[] = {		/* From RFC 2409 App. A */
+      NULL,					/* and RFC 3526 */
+      "1:modp768",				/*  1 */
+      "2:modp1024",				/*  2 */
+      "3:ec2n155",				/*  3 */
+      "4:ec2n185",				/*  4 */
+      "5:modp1536",				/*  5 */
+      NULL,					/*  6 */
+      NULL,					/*  7 */
+      NULL,					/*  8 */
+      NULL,					/*  9 */
+      NULL,					/* 10 */
+      NULL,					/* 11 */
+      NULL,					/* 12 */
+      NULL,					/* 13 */
+      "14:modp2048",				/* 14 */
+      "15:modp3072",				/* 15 */
+      "16:modp4096",				/* 16 */
+      "17:modp6144",				/* 17 */
+      "18:modp8192"				/* 18 */
+   };
+   static const char *life_names[] = {		/* From RFC 2409 App. A */
+      NULL,
+      "Seconds",				/*  1 */
+      "Kilobytes"				/*  2 */
    };
 
    if (ntohs(attr_hdr->isaat_af_type) & 0x8000) {	/* Basic attribute */
@@ -837,13 +887,29 @@ process_attr(unsigned char **cp, size_t *len) {
       value_len = ntohs (attr_hdr->isaat_lv);
    }
 
-   if (attr_class <= MAX_ATTR)
-      attr_class_str = make_message("%s", attr_classes[attr_class]);
-   else
-      attr_class_str = make_message("%u", attr_class);
+   attr_class_str = make_message("%s", STR_OR_ID(attr_class, attr_classes));
 
    if (attr_type == 'B') {
-      attr_value_str = make_message("%u", attr_value);
+      switch (attr_class) {
+      case 1:		/* Encryption Algorithm */
+         attr_value_str = make_message("%s", STR_OR_ID(attr_value, enc_names));
+         break;
+      case 2:		/* Hash Algorithm */
+         attr_value_str = make_message("%s", STR_OR_ID(attr_value, hash_names));
+         break;
+      case 3:		/* Authentication Method */
+         attr_value_str = make_message("%s", STR_OR_ID(attr_value, auth_names));
+         break;
+      case 4:		/* Group Desription */
+         attr_value_str = make_message("%s", STR_OR_ID(attr_value, dh_names));
+         break;
+      case 11:		/* Life Type */
+         attr_value_str = make_message("%s", STR_OR_ID(attr_value, life_names));
+         break;
+      default:
+         attr_value_str = make_message("%u", attr_value);
+         break;
+      }
    } else {
       char *p;
       int i;
@@ -862,7 +928,7 @@ process_attr(unsigned char **cp, size_t *len) {
    if (attr_type == 'B')
       msg = make_message("%s=%s", attr_class_str, attr_value_str);
    else
-      msg = make_message("%s(%u)=%s", attr_class_str, value_len,
+      msg = make_message("%s(%u)=0x%s", attr_class_str, value_len,
                          attr_value_str);
 
    free(attr_class_str);
