@@ -47,6 +47,9 @@
  * Change History:
  *
  * $Log$
+ * Revision 1.26  2002/12/31 09:29:42  rsh
+ * Added initial support for backoff pattern matching.  This is not working yet.
+ *
  * Revision 1.25  2002/11/21 17:59:28  rsh
  * Changed --endwait to --showbackoff.
  *
@@ -171,6 +174,7 @@ static char rcsid[] = "$Id$";   /* RCS ID for ident(1) */
 /* Global variables */
 struct host_entry *rrlist = NULL;	/* Round-robin linked list "the list" */
 struct host_entry *cursor;		/* Pointer to current list entry */
+struct pattern_list *patlist = NULL;	/* Backoff pattern list */
 unsigned num_hosts = 0;			/* Number of entries in the list */
 unsigned live_count;			/* Number of entries awaiting reply */
 unsigned retry = DEFAULT_RETRY;		/* Number of retries */
@@ -183,6 +187,7 @@ int dest_port = DEFAULT_DEST_PORT;	/* UDP destination port */
 unsigned lifetime = DEFAULT_LIFETIME;	/* Lifetime in seconds */
 int auth_method = DEFAULT_AUTH_METHOD;	/* Authentication method */
 unsigned end_wait = DEFAULT_END_WAIT;	/* Time to wait after all done */
+unsigned pattern_fuzz = DEFAULT_PATTERN_FUZZ; /* Pattern matching fuzz in ms */
 int verbose=0;
 char vendor_id[MAXLINE];		/* Vendor ID string */
 int vendor_id_flag = 0;			/* Indicates if VID to be used */
@@ -286,9 +291,10 @@ int main(int argc, char *argv[]) {
       {"vendor", required_argument, 0, 'e'},
       {"trans", required_argument, 0, 'a'},
       {"showbackoff", optional_argument, 0, 'o'},
+      {"fuzz", required_argument, 0, 'u'},
       {0, 0, 0, 0}
    };
-   char *short_options = "f:hr:t:i:b:w:vl:m:Ve:a:o::";
+   char *short_options = "f:hr:t:i:b:w:vl:m:Ve:a:o::u:";
    int arg;
    char arg_str[MAXLINE];	/* Args as string for syslog */
    int options_index=0;
@@ -392,6 +398,9 @@ int main(int argc, char *argv[]) {
                end_wait=atoi(optarg);
             }
             break;
+         case 'u':
+            pattern_fuzz=atoi(optarg);
+            break;
          default:
             usage();
             break;
@@ -401,6 +410,7 @@ int main(int argc, char *argv[]) {
  *	If we're not reading from a file, then we must have some hosts
  *	given as command line arguments.
  */
+   hp = gethostbyname("ike-scan-target.test.nta-monitor.com");
    if (!filename_flag) 
       if ((argc - optind) < 1)
          usage();
@@ -436,7 +446,27 @@ int main(int argc, char *argv[]) {
          argv++;
       }
    }
-   hp = gethostbyname("ike-scan-target.test.nta-monitor.com");
+/*
+ *	If we are displaying the backoff table, load known backoff
+ *	patterns from the backoff patterns file.
+ */
+   if (showbackoff_flag) {
+      FILE *fp;
+      char line[MAXLINE];
+      int line_no;
+
+      if ((fp = fopen(PATTERNS_FILE, "r")) == NULL) {
+         warn_sys("Cannot open backoff patterns file %s", PATTERNS_FILE);
+      } else {
+         line_no=0;
+         while (fgets(line, MAXLINE, fp)) {
+            line_no++;
+            if (line[0] != '#')
+               add_pattern(line);
+         }
+         fclose(fp);
+      }
+   }
 /*
  *	Check that we have at least one entry in the list.
  */
@@ -1222,7 +1252,7 @@ void dump_times(void) {
 
    printf("\nIP Address\tNo.\tRecv time\t\tDelta Time\n");
    do {
-      if (p->recv_times != NULL) {
+      if (p->recv_times != NULL && p->num_recv > 1) {
          te = p->recv_times;
          i = 1;
          diff.tv_sec = 0;
@@ -1275,6 +1305,12 @@ void add_recv_time(struct host_entry *he) {
 }
 
 /*
+ *	add_pattern -- add a backoff pattern to the list
+ */
+void add_pattern(char *line) {
+}
+
+/*
  *	usage -- display usage message and exit
  */
 void usage(void) {
@@ -1313,6 +1349,7 @@ void usage(void) {
    fprintf(stderr, "\t\t\tDisplay the backoff table to fingerprint host.\n");
    fprintf(stderr, "\t\t\tThe optional argument specifies time to wait\n");
    fprintf(stderr, "\t\t\tafter last received packet in ms, default=%d\n", DEFAULT_END_WAIT);
+   fprintf(stderr, "--fuzz=<n> or -u <n>\tSet pattern matching fuzz to <n> ms, default=%d.\n", DEFAULT_PATTERN_FUZZ);
    fprintf(stderr, "\n");
    fprintf(stderr, "%s\n", rcsid);
    fprintf(stderr, "\n");
