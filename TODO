@@ -11,3 +11,6 @@ with proper formatting is required.
 Review --verbose messages and levels.  There is some inconsistancy with what
 is displayed at what level, and with the format of the messages.
 
+Perform Vendor ID Fingerprinting.  Have a database of known vendor IDs, and
+match received Vendor IDs against this.
+
