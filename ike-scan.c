@@ -306,7 +306,7 @@ main(int argc, char *argv[]) {
             break;
          case 'a':	/* --trans */
             strncpy(trans_str, optarg, MAXLINE);
-            trans_flag=1;
+            trans_flag++;
             decode_trans(trans_str, &trans_enc, &trans_keylen, &trans_hash,
                          &trans_auth, &trans_group);
             add_trans(0, NULL, trans_enc, trans_keylen, trans_hash,
@@ -1136,7 +1136,11 @@ initialise_ike_packet(void) {
 /*
  *	Proposal payload
  */
-   prop = make_prop(trans_len+sizeof(struct isakmp_proposal), 8);
+   if (trans_flag) {
+      prop = make_prop(trans_len+sizeof(struct isakmp_proposal), trans_flag);
+   } else {
+      prop = make_prop(trans_len+sizeof(struct isakmp_proposal), 8);
+   }
    buflen += sizeof(struct isakmp_proposal);
 /*
  *	SA Header
@@ -1725,20 +1729,30 @@ usage(void) {
    fprintf(stderr, "\n--lifetime=<s> or -l <s> Set IKE lifetime to <s> seconds, default=%d.\n", DEFAULT_LIFETIME);
    fprintf(stderr, "\t\t\tRFC 2407 specifies 28800 as the default, but some\n");
    fprintf(stderr, "\t\t\timplementations may require different values.\n");
+   fprintf(stderr, "\t\t\tIf you specify 0, then no lifetime will be specified.\n");
+   fprintf(stderr, "\t\t\tYou can use this option more than once in conjunction\n");
+   fprintf(stderr, "\t\t\twith the --trans options to produce multiple transform\n");
+   fprintf(stderr, "\t\t\tpayloads with different lifetimes.  Each --trans option\n");
+   fprintf(stderr, "\t\t\twill use the previously specified lifetime value.\n");
    fprintf(stderr, "\n--auth=<n> or -m <n>\tSet auth. method to <n>, default=%d (%s).\n", DEFAULT_AUTH_METHOD, auth_methods[DEFAULT_AUTH_METHOD]);
    fprintf(stderr, "\t\t\tRFC defined values are 1 to 5.  See RFC 2409 Appendix A.\n");
    fprintf(stderr, "\t\t\tCheckpoint hybrid mode is 64221.\n");
    fprintf(stderr, "\n--version or -V\t\tDisplay program version and exit.\n");
    fprintf(stderr, "\n--vendor=<v> or -e <v>\tSet vendor id string to hex value <v>.\n");
+   fprintf(stderr, "\t\t\tYou can use this option more than once to send\n");
+   fprintf(stderr, "\t\t\tmultiple vendor ID payloads.\n");
    fprintf(stderr, "\n--trans=<t> or -a <t>\tUse custom transform <t> instead of default set.\n");
-   fprintf(stderr, "\t\t\t<t> is specified as enc,hash,auth,group. e.g. 2,3,1,5.\n");
+   fprintf(stderr, "\t\t\t<t> is specified as enc[/len],hash,auth,group.\n");
+   fprintf(stderr, "\t\t\tWhere enc is the encryption algorithm,\n");
+   fprintf(stderr, "\t\t\tlen is the key length for variable length ciphers,\n");
+   fprintf(stderr, "\t\t\thash is the hash algorithm, and group is the DH Group.\n");
    fprintf(stderr, "\t\t\tSee RFC 2409 Appendix A for details of which values\n");
-   fprintf(stderr, "\t\t\tto use.  For example, --trans=2,3,1,5 specifies\n");
-   fprintf(stderr, "\t\t\tEnc=IDEA-CBC, Hash=Tiger, Auth=shared key, DH Group=5\n");
-   fprintf(stderr, "\t\t\tIf this option is specified, then only the single\n");
-   fprintf(stderr, "\t\t\tcustom transform is used rather than the default set\n");
-   fprintf(stderr, "\t\t\tof 8 transforms.  As a result, the IP packet size\n");
-   fprintf(stderr, "\t\t\tis 112 bytes rather than the default of 364.\n");
+   fprintf(stderr, "\t\t\tto use.  For example, --trans=5,2,1,2 specifies\n");
+   fprintf(stderr, "\t\t\tEnc=3DES-CBC, Hash=SHA1, Auth=shared key, DH Group=2\n");
+   fprintf(stderr, "\t\t\tand --trans=7/256,1,1,5 specifies\n");
+   fprintf(stderr, "\t\t\tEnc=AES-256, Hash=MD5, Auth=shared key, DH Group=5\n");
+   fprintf(stderr, "\t\t\tYou can use this option more than once to send\n");
+   fprintf(stderr, "\t\t\tan arbitary number of custom transforms.\n");
    fprintf(stderr, "\n--showbackoff[=<n>] or -o[<n>]\tDisplay the backoff fingerprint table.\n");
    fprintf(stderr, "\t\t\tDisplay the backoff table to fingerprint the IKE\n");
    fprintf(stderr, "\t\t\timplementation on the remote hosts.\n");
