@@ -1,5 +1,59 @@
 $Id$
 
+2005-02-14 Roy Hills <Roy.Hills@nta-monitor.com>
+
+	* psk-crack.1: Updated psk-crack manpage to reflect current usage.  The
+	  manpage had fallen behind, and had become inaccurate.
+
+2005-02-09 Roy Hills <Roy.Hills@nta-monitor.com>
+
+	* ike-scan.c: Match ip range and slash notation using regular
+	  expressions rather than single character matches in
+	  add_host_pattern().  This fixes the bug which caused hostnames with
+	  hyphens to fail because they were wrongly interpreted as IP ranges.
+	  Thanks to Volker Stolz for reporting this bug.
+
+2005-01-27 Roy Hills <Roy.Hills@nta-monitor.com>
+
+	* configure.ac: Make lack of Posix regular expression support a fatal
+	  error.  Previously, it was optional, and we used conditional
+	  compilation based on HAVE_REGEX_H.  However, this never worked, and
+	  I've not found a system which lacks Posix regex support.
+
+	* ike-scan.h, ike-scan.c, isakmp.c: Remove HAVE_REGEX_H conditional
+	  compilation.  Note that we still use it to conditionally include
+	  <regex.h> in ike-scan.h though.
+
+2005-01-25 Roy Hills <Roy.Hills@nta-monitor.com>
+
+	* ike-scan.c: Add SO_BROADCAST option to UDP socket to allow sending
+	  to the broadcast address.
+
+2005-01-20 Roy Hills <Roy.Hills@nta-monitor.com>
+
+	* utils.c: Added new id_to_name() function to replace the more
+	  limited STR_OR_ID macro.  This allows the use of sparse maps where
+	  the IDs are not contiguous.  For example, the authentication methods
+	  map, where RFC-defined IDs are 1 to 5, but there are proprietary and
+	  draft methods around 64,000.
+
+	* ike-scan.c, isakmp.c: Use new id_to_name() function rather than
+	  STR_OR_ID macro.  Change the various id to name maps from char *
+	  arrays to id_name_map arrays.
+
+	* ike-scan.h: Remove STR_OR_ID macro, and add id_to_name() prototype.
+
+2005-01-16 Roy Hills <Roy.Hills@nta-monitor.com>
+
+	* configure.ac: Incremented version number to 1.7.1 in preparation
+	  for post 1.7 changes.
+
+2005-01-14 Roy Hills <Roy.Hills@nta-monitor.com>
+
+	* Released v1.7  Tarball size: 1350170, Zip size: 2010303.
+	  tarball md5sum: c06c6a3d78ba9b93c0abf79b3a3d2a11
+	  Zip md5sum: 4e8c37775d541318e9841f17d22d492e
+
 2005-01-13 Roy Hills <Roy.Hills@nta-monitor.com>
 
 	* README: Updated for ike-scan 1.6.7.
