@@ -2,7 +2,7 @@ dnl $Id$
 dnl Process this file with autoconf to produce a configure script.
 
 AC_INIT(ike-scan.c)
-AM_INIT_AUTOMAKE(ike-scan, 1.1, nodefine)
+AM_INIT_AUTOMAKE(ike-scan, 1.2, nodefine)
 
 AM_CONFIG_HEADER(config.h)
 
