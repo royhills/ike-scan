@@ -383,9 +383,26 @@ main(int argc, char *argv[]) {
       FILE *fp;
       char line[MAXLINE];
       int line_no;
+#ifdef __CYGWIN__
+      char fnbuf[MAXLINE];
+      int fnbuf_siz;
+      int i;
+#endif
 
-      if (patfile[0] == '\0') {
-         sprintf(patfile, "%s/%s", DATADIR, PATTERNS_FILE);
+      if (patfile[0] == '\0') {	/* If patterns file not specified */
+#ifdef __CYGWIN__
+         if ((fnbuf_siz=GetModuleFileName(GetModuleHandle(0), fnbuf, MAXLINE)) == 0) {
+            err_msg("Call to GetModuleFileName failed");
+         }
+         for (i=fnbuf_siz-1; i>=0 && fnbuf[i] != '/' && fnbuf[i] != '\\'; i--)
+            ;
+         if (i >= 0) {
+            fnbuf[i] = '\0';
+         }
+         sprintf(patfile, "%s\\%s", fnbuf, PATTERNS_FILE);
+#else
+         sprintf(patfile, "%s/%s", IKEDATADIR, PATTERNS_FILE);
+#endif
       }
 
       if ((fp = fopen(patfile, "r")) == NULL) {
@@ -1585,7 +1602,13 @@ usage(void) {
    fprintf(stderr, "\t\t\tthe backoff patterns file.  Larger values allow for\n");
    fprintf(stderr, "\t\t\thigher variance but also increase the risk of\n");
    fprintf(stderr, "\t\t\tfalse positive identifications.\n");
-   fprintf(stderr, "\n--patterns=<f> or -p <f> Use IKE patterns file <f>, default=%s/%s.\n", DATADIR, PATTERNS_FILE);
+#ifdef __CYGWIN__
+   fprintf(stderr, "\n--patterns=<f> or -p <f> Use IKE patterns file <f>,\n");
+   fprintf(stderr, "\t\t\tdefault=%s in ike-scan.exe dir.\n", PATTERNS_FILE);
+#else
+   fprintf(stderr, "\n--patterns=<f> or -p <f> Use IKE patterns file <f>,\n");
+   fprintf(stderr, "\t\t\tdefault=%s/%s.\n", IKEDATADIR, PATTERNS_FILE);
+#endif
    fprintf(stderr, "\t\t\tThis specifies the name of the file containing\n");
    fprintf(stderr, "\t\t\tIKE backoff patterns.  This file is only used when\n");
    fprintf(stderr, "\t\t\t--showbackoff is specified.\n");
