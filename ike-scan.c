@@ -20,6 +20,10 @@
  * Change History:
  *
  * $Log$
+ * Revision 1.13  2002/10/24 15:19:04  rsh
+ * Added "---\t" to wanr messages.
+ * Added placeholder function to decode transforms.
+ *
  * Revision 1.12  2002/09/20 17:10:01  rsh
  * Added find_host_by_cookie() function and related code to find the host
  * entry if the received IP doesn't match.  Modified display_packet to display
@@ -380,7 +384,7 @@ int main(int argc, char *argv[]) {
  */
             if (cursor->num_sent >= retry) {
                if (verbose)
-                  warn_msg("Removing host entry %d (%s) - Timeout", cursor->n, inet_ntoa(cursor->addr));
+                  warn_msg("---\tRemoving host entry %d (%s) - Timeout", cursor->n, inet_ntoa(cursor->addr));
                remove_host(cursor);
             } else {	/* Retry limit not reached for this host */
                if (cursor->num_sent) {
@@ -417,14 +421,14 @@ int main(int argc, char *argv[]) {
                   display_packet(n, packet_in, temp_cursor, &(sa_peer.sin_addr));
                }
                if (verbose)
-                  warn_msg("Removing host entry %d (%s) - Received %d bytes", temp_cursor->n, inet_ntoa(sa_peer.sin_addr), n);
+                  warn_msg("---\tRemoving host entry %d (%s) - Received %d bytes", temp_cursor->n, inet_ntoa(sa_peer.sin_addr), n);
                remove_host(temp_cursor);
             } else {
 /*
  *	Neither the IP address nor the cookie matches any hosts in the list,
  *	so just issue a message to that effect and ignore the packet.
  */
-               warn_msg("Received %d bytes from unknown host (%s)", n, inet_ntoa(sa_peer.sin_addr));
+               warn_msg("---\tReceived %d bytes from unknown host (%s)", n, inet_ntoa(sa_peer.sin_addr));
             }
          } else {
 /*
@@ -434,7 +438,7 @@ int main(int argc, char *argv[]) {
             if (temp_cursor->live) {
                display_packet(n, packet_in, temp_cursor, NULL);
                if (verbose)
-                  warn_msg("Removing host entry %d (%s) - Received %d bytes", temp_cursor->n, inet_ntoa(sa_peer.sin_addr), n);
+                  warn_msg("---\tRemoving host entry %d (%s) - Received %d bytes", temp_cursor->n, inet_ntoa(sa_peer.sin_addr), n);
                remove_host(temp_cursor);
             } /* End If */
          } /* End If */
@@ -644,10 +648,8 @@ void display_packet(int n, char *packet_in, struct host_entry *he, struct in_add
          memcpy(&sa_hdr_in, packet_in, sizeof(sa_hdr_in));
          packet_in += sizeof(sa_hdr_in);
          memcpy(&sa_prop_in, packet_in, sizeof(sa_prop_in));
-/*
- *	Should decode the transform payloads here, but I've not written that
- *	bit yet.
- */
+         packet_in += sizeof(sa_prop_in);
+         decode_transform(packet_in, n, sa_prop_in.isap_notrans);
          printf("%sIKE Handshake returned (%d transforms)\n", ip_str, sa_prop_in.isap_notrans);
       } else {
          printf("%sIKE Handshake returned (%d byte packet too short to decode)\n", ip_str, n);
@@ -694,6 +696,17 @@ void display_packet(int n, char *packet_in, struct host_entry *he, struct in_add
          printf("%sUnknown IKE packet returned payload %d (UNDEFINED)\n", ip_str, hdr_in.isa_np);
       }
    }
+}
+
+/*
+ *	decode-transform -- Decode an IKE transform payload
+ */
+void decode_transform(char *packet_in, int n, int ntrans) {
+   if (ntrans <=0)
+      return;	/* Nothing to do if no transforms */
+/*
+ *	Body of function has not been written yet.
+ */
 }
 
 /*
@@ -744,7 +757,7 @@ void send_packet(int s, struct host_entry *he) {
  *	Send the packet.
  */
    if (verbose)
-      warn_msg("Sending packet #%d to host entry %d (%s) tmo %d", he->num_sent, he->n, inet_ntoa(he->addr), he->timeout);
+      warn_msg("---\tSending packet #%d to host entry %d (%s) tmo %d", he->num_sent, he->n, inet_ntoa(he->addr), he->timeout);
    if ((sendto(s, buf, buflen, 0, (struct sockaddr *) &sa_peer, sa_peer_len)) < 0) {
       err_sys("sendto");
    }
