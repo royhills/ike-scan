@@ -598,7 +598,6 @@ main(int argc, char *argv[]) {
  *	since the last packet was received and we have received at least one
  *	transform response.
  */
-   warn_msg("interval=%u microseconds", interval);
    reset_cum_err = 1;
    req_interval = interval;
    while (live_count ||
