@@ -541,6 +541,7 @@ main(int argc, char *argv[]) {
  *	Display the backoff times if --showbackoff option was specified
  *	and we have at least one system returning a handshake.
  */
+   printf("\n");	/* Ensure we have a blank line */
    if (showbackoff_flag && transform_responders) {
       dump_times();
    }
@@ -752,15 +753,6 @@ display_packet(int n, char *packet_in, struct host_entry *he, struct in_addr *re
          } else {
             sprintf(xchg_type, "UNKNOWN Mode (%u)", hdr_in.isa_xchg);
          }
-#ifdef PRINT_VENDOR_ID
-/*
- *	Do we have any additional payloads?  If so, then we probably have
- *	vendor_id.
- */
-         if (sa_hdr_in.isasa_np != ISAKMP_NEXT_NONE) {
-            printf("%ssa_hdr_in.isasa_np=%d\n", ip_str, sa_hdr_in.isasa_np);
-         }
-#endif
          decode_transform(packet_in, n, sa_prop_in.isap_notrans);
          printf("%sIKE %s Handshake returned (%d transforms)\n", ip_str, xchg_type, sa_prop_in.isap_notrans);
       } else {
@@ -1258,7 +1250,7 @@ dump_times(void) {
 
    p = rrlist;
 
-   printf("\nIKE Backoff Patterns:\n");
+   printf("IKE Backoff Patterns:\n");
    printf("\nIP Address\tNo.\tRecv time\t\tDelta Time\n");
    do {
       if (p->recv_times != NULL && p->num_recv > 1) {
