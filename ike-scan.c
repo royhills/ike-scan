@@ -376,7 +376,7 @@ main(int argc, char *argv[]) {
    if (filename_flag) {	/* Populate list from file */
       FILE *fp;
       char line[MAXLINE];
-      char host[MAXLINE];
+      char *cp;
 
       if ((strcmp(filename, "-")) == 0) {	/* Filename "-" means stdin */
          fp = stdin;
@@ -388,9 +388,10 @@ main(int argc, char *argv[]) {
 
       print_times();	/* XXXXX */
       while (fgets(line, MAXLINE, fp)) {
-         if ((sscanf(line, "%s", host)) == 1) {
-            add_host_pattern(host, timeout, &num_hosts);
-         }
+         for (cp = line; !isspace(*cp) && *cp != '\0'; cp++)
+            ;
+         *cp = '\0';
+         add_host_pattern(line, timeout, &num_hosts);
       }
       print_times();	/* XXXXX */
       if (fp != stdin)
