@@ -845,6 +845,45 @@ char *id_to_name(int id, const id_name_map map[]) {
       return numstr(id);
 }
 
+/*
+ *	name_to_id -- Return id associated with given name
+ *
+ *	Inputs:
+ *
+ *	name		The name to find in the map
+ *	id_name_map	Pointer to the id-to-name map
+ *
+ *	Returns:
+ *
+ *	A the id associated with the name if an association is 	found in the
+ *	map, otherwise -1.
+ *
+ *	This function uses a sequential search through the map to find the
+ *	ID and associated name.  This is OK when the map is relatively small,
+ *	but could be time consuming if the map contains a large number of
+ *	entries.
+ */
+int name_to_id(char *name, const id_name_map map[]) {
+   int found = 0;
+   int i = 0;
+
+   if (map == NULL)
+      return -1;
+
+   while (map[i].id != -1) {
+      if ((strncmp(name,map[i].name,MAXLINE)) == 0) {
+         found = 1;
+         break;
+      }
+      i++;
+   }
+
+   if (found)
+      return map[i].id;
+   else
+      return -1;
+}
+
 void utils_use_rcsid(void) {
    fprintf(stderr, "%s\n", rcsid);	/* Use rcsid to stop compiler optimising away */
 }
