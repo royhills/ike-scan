@@ -4,7 +4,9 @@ $Id$
 
 	* ike-scan.c: Fixed bug which could cause select() to be passed a
 	  negative timeout when collecting backoff fingerprints.
-	* Released v1.5.1.
+	* Released v1.5.1.  Tarball size: 122595, Zip size: 632736.
+	  tarball md5sum: 6425534104fd9f6f644c6f7286ed40e1
+	  Zip md5sum: 52cf28982532030b2e7faf26dde8fb1d
 
 2003-11-13 Roy Hills <Roy.Hills@nta-monitor.com>
 
