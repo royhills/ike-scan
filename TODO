@@ -10,3 +10,5 @@ patterns.
 
 Add support for aggressive mode in addition to main mode.  Much of this is
 already written in fw1-ike-userguess and just needs to be merged into ike-scan.
+
+Port to windows as command line client.
