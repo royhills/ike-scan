@@ -203,8 +203,8 @@ main(int argc, char *argv[]) {
    struct host_entry *temp_cursor;
    struct hostent *hp;
    struct timeval diff;		/* Difference between two timevals */
-   unsigned long loop_timediff;	/* Time since last packet sent in ms */
-   unsigned long host_timediff; /* Time since last packet sent to this host */
+   uint64_t loop_timediff;	/* Time since last packet sent in us */
+   uint64_t host_timediff;	/* Time since last packet sent to this host */
    unsigned long end_timediff=0; /* Time since last packet received in ms */
    int req_interval;		/* Requested per-packet interval */
    int cum_err=0;		/* Cumulative timing error */
@@ -492,6 +492,7 @@ main(int argc, char *argv[]) {
  *	since the last packet was received and we have received at least one
  *	transform response.
  */
+   interval *= 1000;	/* Convert from ms to us */
    reset_cum_err = 1;
    req_interval = interval;
    while (live_count ||
@@ -505,19 +506,19 @@ main(int argc, char *argv[]) {
       timeval_diff(&now, &last_recv_time, &diff);
       end_timediff = 1000*diff.tv_sec + diff.tv_usec/1000;
 /*
- *	If the last packet was sent more than interval ms ago, then we can
+ *	If the last packet was sent more than interval us ago, then we can
  *	potentially send a packet to the current host.
  */
       timeval_diff(&now, &last_packet_time, &diff);
-      loop_timediff = 1000*diff.tv_sec + diff.tv_usec/1000;
+      loop_timediff = 1000000*diff.tv_sec + diff.tv_usec;
       if (loop_timediff >= req_interval) {
 /*
  *	If the last packet to this host was sent more than the current
- *	timeout for this host ms ago, then we can potentially send a packet
+ *	timeout for this host us ago, then we can potentially send a packet
  *	to it.
  */
          timeval_diff(&now, &(cursor->last_send_time), &diff);
-         host_timediff = 1000*diff.tv_sec + diff.tv_usec/1000;
+         host_timediff = 1000000*diff.tv_sec + diff.tv_usec;
          if (host_timediff >= cursor->timeout && cursor->live) {
             if (reset_cum_err) {
                cum_err = 0;
@@ -548,7 +549,7 @@ main(int argc, char *argv[]) {
                remove_host(cursor);	/* Automatically calls advance_cursor() */
                if (first_timeout) {
                   timeval_diff(&now, &(cursor->last_send_time), &diff);
-                  host_timediff = 1000*diff.tv_sec + diff.tv_usec/1000;
+                  host_timediff = 1000000*diff.tv_sec + diff.tv_usec;
                   while (host_timediff >= cursor->timeout && live_count) {
                      if (cursor->live) {
                         if (verbose > 1)
@@ -558,7 +559,7 @@ main(int argc, char *argv[]) {
                         advance_cursor();
                      }
                      timeval_diff(&now, &(cursor->last_send_time), &diff);
-                     host_timediff = 1000*diff.tv_sec + diff.tv_usec/1000;
+                     host_timediff = 1000000*diff.tv_sec + diff.tv_usec;
                   }
                   first_timeout=0;
                }
@@ -674,7 +675,7 @@ add_host(char *name) {
    he->n = num_hosts;
    memcpy(&(he->addr), hp->h_addr_list[0], sizeof(struct in_addr));
    he->live = 1;
-   he->timeout = timeout;
+   he->timeout = timeout * 1000;	/* Convert from ms to us */
    he->num_sent = 0;
    he->num_recv = 0;
    he->last_send_time.tv_sec=0;
@@ -1025,8 +1026,8 @@ recvfrom_wto(int s, char *buf, int len, struct sockaddr *saddr, int tmo) {
 
    FD_ZERO(&readset);
    FD_SET(s, &readset);
-   to.tv_sec  = tmo/1000;
-   to.tv_usec = (tmo - 1000*to.tv_sec) * 1000;
+   to.tv_sec  = tmo/1000000;
+   to.tv_usec = (tmo - 1000000*to.tv_sec);
    n = select(s+1, &readset, NULL, NULL, &to);
    if (n < 0) {
       err_sys("select");
@@ -1631,7 +1632,7 @@ add_pattern(char *line) {
 /*
  *      If there is a "." after the integer part, then there are fractional
  *      seconds to convert.  Convert the fractional seconds into a string
- *      representation of milliseconds by zero-extending to 6 digits and
+ *      representation of microseconds by zero-extending to 6 digits and
  *      then convert to long.
  */
       if (*endp == '.') {
