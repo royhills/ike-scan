@@ -64,6 +64,9 @@ psk_crack psk_values = {		/* Pre-shared key values */
    NULL, 0
 };
 int no_dns_flag=0;			/* No DNS flag */
+char *header_length=NULL;		/* ISAKMP header length modifier */
+int mbz_value=0;			/* Value for MBZ fields */
+int header_version=0x10;		/* ISAKMP header version */
 
 int
 main(int argc, char *argv[]) {
@@ -102,11 +105,14 @@ main(int argc, char *argv[]) {
       {"nodns", no_argument, 0, 'N'},
       {"noncelen", required_argument, 0, 'c'},
       {"bandwidth", required_argument, 0, 'B'},
+      {"headerlen", required_argument, 0, 'L'},
+      {"mbz", required_argument, 0, 'Z'},
+      {"headerver", required_argument, 0, 'E'},
       {"experimental", required_argument, 0, 'X'},
       {0, 0, 0, 0}
    };
    const char *short_options =
-      "f:hs:d:r:t:i:b:w:vl:z:m:Ve:a:o::u:n:y:g:p:AG:I:qMRT::P::O:Nc:B:X:";
+      "f:hs:d:r:t:i:b:w:vl:z:m:Ve:a:o::u:n:y:g:p:AG:I:qMRT::P::O:Nc:B:L:Z:E:X:";
    int arg;
    char arg_str[MAXLINE];	/* Args as string for syslog */
    int options_index=0;
@@ -387,6 +393,16 @@ main(int argc, char *argv[]) {
             } else {
                bandwidth=strtoul(bandwidth_str, (char **)NULL, 10);
             }
+            break;
+         case 'L':	/* --headerlen */
+            header_length = Malloc(strlen(optarg) + 1);
+            strcpy(header_length, optarg);
+            break;
+         case 'Z':	/* --mbz */
+            mbz_value = strtoul(optarg, (char **)NULL, 0);
+            break;
+         case 'E':	/* --headerver */
+            header_version = strtoul(optarg, (char **)NULL, 0);
             break;
          case 'X':	/* --experimental */
             experimental_value = strtoul(optarg, (char **)NULL, 10);
@@ -1651,9 +1667,21 @@ initialise_ike_packet(size_t *packet_out_len, unsigned lifetime,
  *	ISAKMP Header
  */
    *packet_out_len += sizeof(struct isakmp_hdr);
-   if (experimental_value) {
-      hdr = make_isakmp_hdr(exchange_type, ISAKMP_NEXT_SA, experimental_value);
-   } else {
+   if (header_length) {	/* Manually specify header length */
+      unsigned fake_header_len;
+      char *cp;
+
+      fake_header_len = *packet_out_len;
+      cp = header_length;
+      if (*cp == '+') {
+         fake_header_len += strtoul(++cp, (char **)NULL, 0);
+      } else if (*cp == '-') {
+         fake_header_len -= strtoul(++cp, (char **)NULL, 0);
+      } else {
+         fake_header_len = strtoul(cp, (char **)NULL, 0);
+      }
+      hdr = make_isakmp_hdr(exchange_type, ISAKMP_NEXT_SA, fake_header_len);
+   } else {		/* Use correct header length */
       hdr = make_isakmp_hdr(exchange_type, ISAKMP_NEXT_SA, *packet_out_len);
    }
 /*
@@ -2673,6 +2701,30 @@ usage(int status) {
    fprintf(stderr, "\t\t\tlength may cause fragmentation, or exceed the maximum\n");
    fprintf(stderr, "\t\t\tIP packet size.\n");
    fprintf(stderr, "\t\t\tThis option is only applicable to IKE aggressive mode.\n");
+   fprintf(stderr, "\n--headerlen=<n> or -L <n> Set the length in the ISAKMP header to <n> bytes.\n");
+   fprintf(stderr, "\t\t\tYou can use this option to manually specify the value\n");
+   fprintf(stderr, "\t\t\tto be used for the ISAKMP header length.\n");
+   fprintf(stderr, "\t\t\tBy default, ike-scan will fill in the correct value.\n");
+   fprintf(stderr, "\t\t\tUse this option to manually specify an incorrect\n");
+   fprintf(stderr, "\t\t\tlength.\n");
+   fprintf(stderr, "\t\t\t<n> can be specified as \"+n\" which sets the length\n");
+   fprintf(stderr, "\t\t\tto n bytes more than it should be, \"-n\" which sets\n");
+   fprintf(stderr, "\t\t\tit to n bytes less, or \"n\" which sets it to exactly\n");
+   fprintf(stderr, "\t\t\tbytes.\n");
+   fprintf(stderr, "\t\t\tChanging the header length to an incorrect value can\n");
+   fprintf(stderr, "\t\t\tsometimes disrupt VPN servers.\n");
+   fprintf(stderr, "\n--mbz=<n> or -Z <n>\tUse the value <n> for reserved (MBZ) fields, default=0.\n");
+   fprintf(stderr, "\t\t\tSpecifying this option makes the outgoing packet\n");
+   fprintf(stderr, "\t\t\tnon-RFC compliant, and should only be used if you want\n");
+   fprintf(stderr, "\t\t\tto see how a VPN server will respond to invalid packets.\n");
+   fprintf(stderr, "\t\t\tThe value of <n> should be in the range 0-255.\n");
+   fprintf(stderr, "\n--headerver=<n> or -E <n> Specify the ISAKMP header version.\n");
+   fprintf(stderr, "\t\t\tThe default is 0x10 (16) which corresponds to v1.0.\n");
+   fprintf(stderr, "\t\t\tSpecifying a non-default value will make the outgoing\n");
+   fprintf(stderr, "\t\t\tpacket non-RFC compliant, and should only be used if\n");
+   fprintf(stderr, "\t\t\tyou want to see how the VPN server reacts to strange\n");
+   fprintf(stderr, "\t\t\tversions.\n");
+   fprintf(stderr, "\t\t\tThe value should be in the range 0-255.\n");
    fprintf(stderr, "\n");
    fprintf(stderr, "Report bugs or send suggestions to %s\n", PACKAGE_BUGREPORT);
    fprintf(stderr, "See the ike-scan homepage at http://www.nta-monitor.com/ike-scan/\n");
