@@ -985,11 +985,17 @@ add_host(const char *name, unsigned timeout, unsigned *num_hosts) {
    static int num_left=0;       /* Number of free entries left */
 
    if (no_dns_flag) {
-      if (!(inet_aton(name, &inp)))
-         err_msg("ERROR: inet_aton failed for \"%s\"", name);
+      if (!(inet_aton(name, &inp))) {
+         warn_msg("WARNING: inet_aton failed for \"%s\" - target ignored",
+                  name);
+         return;
+      }
    } else {
-      if ((hp = gethostbyname(name)) == NULL)
-         err_sys("ERROR: gethostbyname failed for \"%s\"", name);
+      if ((hp = gethostbyname(name)) == NULL) {
+         warn_sys("WARNING: gethostbyname failed for \"%s\" - target ignored",
+                  name);
+         return;
+      }
    }
 
    if (!num_left) {     /* No entries left, allocate some more */
