@@ -36,40 +36,6 @@ static char rcsid[] = "$Id$";	/* RCS ID for ident(1) */
 
 extern int experimental;
 
-const char *notification_msg[] = { /* Notify Message Types from RFC 2408 3.14.1 */
-   "UNSPECIFIED",                    /* 0 */
-   "INVALID-PAYLOAD-TYPE",           /* 1 */
-   "DOI-NOT-SUPPORTED",              /* 2 */
-   "SITUATION-NOT-SUPPORTED",        /* 3 */
-   "INVALID-COOKIE",                 /* 4 */
-   "INVALID-MAJOR-VERSION",          /* 5 */
-   "INVALID-MINOR-VERSION",          /* 6 */
-   "INVALID-EXCHANGE-TYPE",          /* 7 */
-   "INVALID-FLAGS",                  /* 8 */
-   "INVALID-MESSAGE-ID",             /* 9 */
-   "INVALID-PROTOCOL-ID",            /* 10 */
-   "INVALID-SPI",                    /* 11 */
-   "INVALID-TRANSFORM-ID",           /* 12 */
-   "ATTRIBUTES-NOT-SUPPORTED",       /* 13 */
-   "NO-PROPOSAL-CHOSEN",             /* 14 */
-   "BAD-PROPOSAL-SYNTAX",            /* 15 */
-   "PAYLOAD-MALFORMED",              /* 16 */
-   "INVALID-KEY-INFORMATION",        /* 17 */
-   "INVALID-ID-INFORMATION",         /* 18 */
-   "INVALID-CERT-ENCODING",          /* 19 */
-   "INVALID-CERTIFICATE",            /* 20 */
-   "CERT-TYPE-UNSUPPORTED",          /* 21 */
-   "INVALID-CERT-AUTHORITY",         /* 22 */
-   "INVALID-HASH-INFORMATION",       /* 23 */
-   "AUTHENTICATION-FAILED",          /* 24 */
-   "INVALID-SIGNATURE",              /* 25 */
-   "ADDRESS-NOTIFICATION",           /* 26 */
-   "NOTIFY-SA-LIFETIME",             /* 27 */
-   "CERTIFICATE-UNAVAILABLE",        /* 28 */
-   "UNSUPPORTED-EXCHANGE-TYPE",      /* 29 */
-   "UNEQUAL-PAYLOAD-LENGTHS"         /* 30 */
-};
-
 /*
  *	make_isakmp_hdr -- Construct an ISAKMP Header
  *
@@ -1019,6 +985,39 @@ process_notify(unsigned char *cp, size_t len) {
    size_t msg_len;
    unsigned char *msg_data;
    char *notify_msg;
+   static const char *notification_msg[] = { /* From RFC 2408 3.14.1 */
+      "UNSPECIFIED",                    /* 0 */
+      "INVALID-PAYLOAD-TYPE",           /* 1 */
+      "DOI-NOT-SUPPORTED",              /* 2 */
+      "SITUATION-NOT-SUPPORTED",        /* 3 */
+      "INVALID-COOKIE",                 /* 4 */
+      "INVALID-MAJOR-VERSION",          /* 5 */
+      "INVALID-MINOR-VERSION",          /* 6 */
+      "INVALID-EXCHANGE-TYPE",          /* 7 */
+      "INVALID-FLAGS",                  /* 8 */
+      "INVALID-MESSAGE-ID",             /* 9 */
+      "INVALID-PROTOCOL-ID",            /* 10 */
+      "INVALID-SPI",                    /* 11 */
+      "INVALID-TRANSFORM-ID",           /* 12 */
+      "ATTRIBUTES-NOT-SUPPORTED",       /* 13 */
+      "NO-PROPOSAL-CHOSEN",             /* 14 */
+      "BAD-PROPOSAL-SYNTAX",            /* 15 */
+      "PAYLOAD-MALFORMED",              /* 16 */
+      "INVALID-KEY-INFORMATION",        /* 17 */
+      "INVALID-ID-INFORMATION",         /* 18 */
+      "INVALID-CERT-ENCODING",          /* 19 */
+      "INVALID-CERTIFICATE",            /* 20 */
+      "CERT-TYPE-UNSUPPORTED",          /* 21 */
+      "INVALID-CERT-AUTHORITY",         /* 22 */
+      "INVALID-HASH-INFORMATION",       /* 23 */
+      "AUTHENTICATION-FAILED",          /* 24 */
+      "INVALID-SIGNATURE",              /* 25 */
+      "ADDRESS-NOTIFICATION",           /* 26 */
+      "NOTIFY-SA-LIFETIME",             /* 27 */
+      "CERTIFICATE-UNAVAILABLE",        /* 28 */
+      "UNSUPPORTED-EXCHANGE-TYPE",      /* 29 */
+      "UNEQUAL-PAYLOAD-LENGTHS"         /* 30 */
+   };
 
    if (len < sizeof(struct isakmp_notification) ||
         ntohs(hdr->isan_length) < sizeof(struct isakmp_notification))
@@ -1028,16 +1027,14 @@ process_notify(unsigned char *cp, size_t len) {
    msg_len = ntohs(hdr->isan_length) - sizeof(struct isakmp_notification);
    msg_data = cp + sizeof(struct isakmp_notification);
 
-   if (msg_type < 31) {			/* RFC Defined Message Types */
-      msg=make_message("Notify message %d (%s)", msg_type,
-                       notification_msg[msg_type]);
-   } else if (msg_type == 9101) {	/* Firewall-1 4.x/NG Base msg */
+   if (msg_type == 9101) {	/* Firewall-1 4.x/NG Base message type */
       notify_msg = printable(msg_data, msg_len);
-      msg=make_message("Notify message %d [Checkpoint Firewall-1 4.x or NG Base] (%s)",
+      msg=make_message("Notify message %d (Firewall-1) Message=\"%s\"",
                        msg_type, notify_msg);
       free(notify_msg);
-   } else {
-      msg=make_message("Notify message %d (UNKNOWN MESSAGE TYPE)", msg_type);
+   } else {			/* All other Message Types */
+      msg=make_message("Notify message %d (%s)", msg_type,
+                       STR_OR_ID(msg_type, notification_msg));
    }
 
    return msg;
