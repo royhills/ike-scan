@@ -22,8 +22,6 @@ used though).
 Use Token Bucket algorithm for packet transmission to allow higher output
 rates, esp. when minimum select() wait is relatively large.
 
-Add option to grab and attempt to crack PSK in aggressive mode hash.
-
 Allow --trans options to be specified as inclusive ranges.  This would add
 a host entry for each transform attribute in the range, which could be used
 to determine which attributes a server supports.
@@ -33,3 +31,7 @@ Suggested by Max Kosmach.  This would require a more complex structure to
 hold the vendor IDs as the current one only contains the pattern to match
 which cannot simply be used as the outgoing VendorID as it may contain
 metacharacters.
+
+Allow a variable number of packets in the UDP backoff pattern.  Some VPN
+servers will return different numbers of packets, but still have a unique
+pattern.
