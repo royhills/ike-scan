@@ -82,10 +82,10 @@ main(int argc, char *argv[]) {
       {"patterns", required_argument, 0, 'p'},
       {"aggressive", no_argument, 0, 'A'},
       {"gssid", required_argument, 0, 'G'},
-      {"showvendor", no_argument, 0, 'I'},
+      {"vidpatterns", required_argument, 0, 'I'},
       {0, 0, 0, 0}
    };
-   const char *short_options = "f:hs:d:r:t:i:b:w:vl:z:m:Ve:a:o::u:n:y:g:p:AG:I";
+   const char *short_options = "f:hs:d:r:t:i:b:w:vl:z:m:Ve:a:o::u:n:y:g:p:AG:I:";
    int arg;
    char arg_str[MAXLINE];	/* Args as string for syslog */
    int options_index=0;
@@ -140,9 +140,6 @@ main(int argc, char *argv[]) {
    int gss_id_flag = 0;		/* Indicates if GSSID to be used */
    int trans_flag = 0;		/* Indicates custom transform */
    int showbackoff_flag = 0;	/* Display backoff table? */
-   int showvendor_flag = 0;	/* Display Vendor ID names? */
-   int patterns_loaded = 0;	/* Indicates if backoff patterns loaded */
-   int vid_patterns_loaded = 0;	/* Indicates if Vendor ID patterns loaded */
    struct timeval last_recv_time;	/* Time last packet was received */
    unsigned char *cp;
    unsigned char *packet_out;	/* IKE packet to send */
@@ -314,8 +311,8 @@ main(int argc, char *argv[]) {
             for (i=0; i<gss_data_len; i++)
                *cp++=hstr_i(&optarg[i*2]);
             break;
-         case 'I':	/* --showvendor */
-            showvendor_flag=1;
+         case 'I':	/* --vidpatterns */
+            strncpy(vidfile, optarg, MAXLINE);
             break;
          default:	/* Unknown option */
             usage();
@@ -366,91 +363,12 @@ main(int argc, char *argv[]) {
  *	patterns from the backoff patterns file.
  */
    if (showbackoff_flag) {
-      FILE *fp;
-      char line[MAXLINE];
-      int line_no;
-#ifdef __CYGWIN__
-      char fnbuf[MAXLINE];
-      int fnbuf_siz;
-      int i;
-#endif
-
-      if (patfile[0] == '\0') {	/* If patterns file not specified */
-#ifdef __CYGWIN__
-         if ((fnbuf_siz=GetModuleFileName(GetModuleHandle(0), fnbuf, MAXLINE)) == 0) {
-            err_msg("Call to GetModuleFileName failed");
-         }
-         for (i=fnbuf_siz-1; i>=0 && fnbuf[i] != '/' && fnbuf[i] != '\\'; i--)
-            ;
-         if (i >= 0) {
-            fnbuf[i] = '\0';
-         }
-         sprintf(patfile, "%s\\%s", fnbuf, PATTERNS_FILE);
-#else
-         sprintf(patfile, "%s/%s", IKEDATADIR, PATTERNS_FILE);
-#endif
-      }
-
-      if ((fp = fopen(patfile, "r")) == NULL) {
-         warn_msg("WARNING: Cannot open IKE backoff patterns file.  ike-scan will still display");
-         warn_msg("the backoff patterns, but it will not be able to identify the fingerprints.");
-         warn_sys("fopen: %s", patfile);
-      } else {
-         line_no=0;
-         while (fgets(line, MAXLINE, fp)) {
-            line_no++;
-            if (line[0] != '#' && line[0] != '\n') /* Not comment or empty */
-               add_pattern(line, pattern_fuzz);
-         }
-         fclose(fp);
-         patterns_loaded=1;
-      }
+      load_backoff_patterns(patfile, pattern_fuzz);
    }
 /*
- *	If we are displaying Vendor ID names, load known Vendor ID
- *	patterns from the Vendor ID file.
+ *	Load known Vendor ID patterns from the Vendor ID file.
  */
-   if (showvendor_flag) {
-      FILE *fp;
-      char line[MAXLINE];
-      int line_no;
-#ifdef __CYGWIN__
-      char fnbuf[MAXLINE];
-      int fnbuf_siz;
-      int i;
-#endif
-
-      if (vidfile[0] == '\0') {	/* If patterns file not specified */
-#ifdef __CYGWIN__
-         if ((fnbuf_siz=GetModuleFileName(GetModuleHandle(0), fnbuf, MAXLINE)) == 0) {
-            err_msg("Call to GetModuleFileName failed");
-         }
-         for (i=fnbuf_siz-1; i>=0 && fnbuf[i] != '/' && fnbuf[i] != '\\'; i--)
-            ;
-         if (i >= 0) {
-            fnbuf[i] = '\0';
-         }
-         sprintf(vidfile, "%s\\%s", fnbuf, VID_FILE);
-#else
-         sprintf(vidfile, "%s/%s", IKEDATADIR, VID_FILE);
-#endif
-      }
-
-      if ((fp = fopen(vidfile, "r")) == NULL) {
-         warn_msg("WARNING: Cannot open Vendor ID patterns file.  ike-scan will not be able");
-         warn_msg("to display Vendor ID names.");
-         warn_sys("fopen: %s", vidfile);
-      } else {
-         line_no=0;
-         while (fgets(line, MAXLINE, fp)) {
-            line_no++;
-            if (line[0] != '#' && line[0] != '\n') /* Not comment or empty */
-               add_vid_pattern(line);
-         }
-         fclose(fp);
-         vid_patterns_loaded=1;
-      }
-   }
+   load_vid_patterns(vidfile);
 /*
  *	Check that we have at least one entry in the list.
  */
@@ -503,7 +421,7 @@ main(int argc, char *argv[]) {
       dump_list(num_hosts);
    if (verbose > 2 && showbackoff_flag)
       dump_backoff(pattern_fuzz);
-   if (verbose > 2 && showvendor_flag)
+   if (verbose > 2)
       dump_vid();
 /*
  *	Main loop: send packets to all hosts in order until a response
@@ -649,7 +567,7 @@ main(int argc, char *argv[]) {
  */
    printf("\n");	/* Ensure we have a blank line */
    if (showbackoff_flag && sa_responders) {
-      dump_times(patterns_loaded);
+      dump_times();
    }
 
    close(sockfd);
@@ -1539,14 +1457,14 @@ dump_vid(void) {
  *
  *	Inputs:
  *
- *	patterns_loaded	Have backoff patterns been loaded from patterns file?
+ *	None.
  *
  *	Returns:
  *
  *	None.
  */
 void
-dump_times(int patterns_loaded) {
+dump_times(void) {
    struct host_entry *p;
    struct time_list *te;
    int i;
@@ -1576,7 +1494,7 @@ dump_times(int patterns_loaded) {
          if ((patname=match_pattern(p)) != NULL) {
             printf("%s\tImplementation guess: %s\n", inet_ntoa(p->addr), patname);
          } else {
-            if (patterns_loaded) {
+            if (patlist) {
                printf("%s\tImplementation guess: %s\n", inet_ntoa(p->addr), "UNKNOWN");
             } else {
                printf("%s\tImplementation guess: %s\n", inet_ntoa(p->addr), "UNKNOWN - No patterns available");
@@ -1587,7 +1505,7 @@ dump_times(int patterns_loaded) {
       } /* End If */
       p = p->next;
    } while (p != rrlist);
-   if (unknown_patterns && patterns_loaded) {
+   if (unknown_patterns && patlist) {
       printf("Some IKE implementations found have unknown backoff fingerprints\n");
       printf("If you know the implementation name, and the pattern is reproducible, you\n");
       printf("are encouraged to submit the pattern and implementation details for\n");
@@ -1727,6 +1645,52 @@ add_recv_time(struct host_entry *he, struct timeval *last_recv_time) {
  *	Increment num_received for this host
  */
    he->num_recv++;
+}
+
+void
+load_backoff_patterns(char *patfile, unsigned pattern_fuzz) {
+   FILE *fp;
+   char line[MAXLINE];
+   int line_no;
+   char *fn;
+#ifdef __CYGWIN__
+   char fnbuf[MAXLINE];
+   int fnbuf_siz;
+   int i;
+#endif
+
+   if (*patfile == '\0') {	/* If patterns file not specified */
+#ifdef __CYGWIN__
+      if ((fnbuf_siz=GetModuleFileName(GetModuleHandle(0), fnbuf, MAXLINE)) == 0) {
+         err_msg("Call to GetModuleFileName failed");
+      }
+      for (i=fnbuf_siz-1; i>=0 && fnbuf[i] != '/' && fnbuf[i] != '\\'; i--)
+         ;
+      if (i >= 0) {
+         fnbuf[i] = '\0';
+      }
+      fn = make_message("%s\\%s", fnbuf, PATTERNS_FILE);
+#else
+      fn = make_message("%s/%s", IKEDATADIR, PATTERNS_FILE);
+#endif
+   } else {
+      fn = make_message("%s", patfile);
+   }
+
+   if ((fp = fopen(fn, "r")) == NULL) {
+      warn_msg("WARNING: Cannot open IKE backoff patterns file.  ike-scan will still display");
+      warn_msg("the backoff patterns, but it will not be able to identify the fingerprints.");
+      warn_sys("fopen: %s", patfile);
+   } else {
+      line_no=0;
+      while (fgets(line, MAXLINE, fp)) {
+         line_no++;
+         if (line[0] != '#' && line[0] != '\n') /* Not comment or empty */
+            add_pattern(line, pattern_fuzz);
+      }
+      fclose(fp);
+   }
+   free(fn);
 }
 
 /*
@@ -1869,6 +1833,53 @@ add_pattern(char *line, unsigned pattern_fuzz) {
       i++;
    }	/* End While */
    pe->num_times=i;
+}
+
+void
+load_vid_patterns(char *vidfile) {
+   FILE *fp;
+   char line[MAXLINE];
+   int line_no;
+   char *fn;
+#ifdef __CYGWIN__
+   char fnbuf[MAXLINE];
+   int fnbuf_siz;
+   int i;
+#endif
+
+   if (*vidfile == '\0') {	/* If patterns file not specified */
+#ifdef __CYGWIN__
+      if ((fnbuf_siz=GetModuleFileName(GetModuleHandle(0), fnbuf, MAXLINE)) == 0) {
+         err_msg("Call to GetModuleFileName failed");
+      }
+      for (i=fnbuf_siz-1; i>=0 && fnbuf[i] != '/' && fnbuf[i] != '\\'; i--)
+         ;
+      if (i >= 0) {
+         fnbuf[i] = '\0';
+      }
+      fn = make_message("%s\\%s", fnbuf, VID_FILE);
+#else
+      fn = make_message("%s/%s", IKEDATADIR, VID_FILE);
+#endif
+   } else {
+      fn = make_message("%s", vidfile);
+   }
+
+   if ((fp = fopen(fn, "r")) == NULL) {
+      warn_msg("WARNING: Cannot open Vendor ID patterns file.  ike-scan will still display");
+      warn_msg("the raw Vendor ID data in hex, but it will not be able to display the");
+      warn_msg("associated Vendor ID names.");
+      warn_sys("fopen: %s", vidfile);
+   } else {
+      line_no=0;
+      while (fgets(line, MAXLINE, fp)) {
+         line_no++;
+         if (line[0] != '#' && line[0] != '\n') /* Not comment or empty */
+            add_vid_pattern(line);
+      }
+      fclose(fp);
+   }
+   free(fn);
 }
 
 /*
@@ -2282,6 +2293,16 @@ usage(void) {
    fprintf(stderr, "\t\t\tThis specifies the name of the file containing\n");
    fprintf(stderr, "\t\t\tIKE backoff patterns.  This file is only used when\n");
    fprintf(stderr, "\t\t\t--showbackoff is specified.\n");
+#ifdef __CYGWIN__
+   fprintf(stderr, "\n--vidpatterns=<f> or -I <f> Use Vendor ID patterns file <f>,\n");
+   fprintf(stderr, "\t\t\tdefault=%s in ike-scan.exe dir.\n", VID_FILE);
+#else
+   fprintf(stderr, "\n--vidpatterns=<f> or -I <f> Use Vendor ID patterns file <f>,\n");
+   fprintf(stderr, "\t\t\tdefault=%s/%s.\n", IKEDATADIR, VID_FILE);
+#endif
+   fprintf(stderr, "\t\t\tThis specifies the name of the file containing\n");
+   fprintf(stderr, "\t\t\tVendor ID patterns.  These patterns are used for\n");
+   fprintf(stderr, "\t\t\tVendor ID fingerprinting.\n");
    fprintf(stderr, "\n--aggressive or -A\tUse IKE Aggressive Mode (The default is Main Mode)\n");
    fprintf(stderr, "\t\t\tIf you specify --aggressive, then you may also\n");
    fprintf(stderr, "\t\t\tspecify --dhgroup, --id and --idtype.  If you use\n");
