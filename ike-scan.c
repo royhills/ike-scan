@@ -20,6 +20,14 @@
  * Change History:
  *
  * $Log$
+ * Revision 1.9  2002/09/16 12:15:39  rsh
+ * Don't remove host entries from the list, mark them as not live instead.
+ * This allows us to identify responses that come in after the host has been
+ * marked as not live.
+ * Treat connection refused as timeout because we can't determine which host
+ * connection refused relates to.
+ * Moved recvfrom_wto to end of main loop so it always gets run once per loop.
+ *
  * Revision 1.8  2002/09/16 08:41:27  rsh
  * Changed non-printable characters to spaces for Firewall-1 4.x notify messages.
  *
@@ -75,6 +83,7 @@ static char rcsid[] = "$Id$";   /* RCS ID for ident(1) */
 struct host_entry *rrlist = NULL;	/* Round-robin linked list "the list" */
 struct host_entry *cursor;		/* Pointer to current list entry */
 unsigned num_hosts = 0;			/* Number of entries in the list */
+unsigned live_count;			/* Number of entries awaiting reply */
 unsigned retry = DEFAULT_RETRY;		/* Number of retries */
 unsigned timeout = DEFAULT_TIMEOUT;	/* Per-host timeout */
 unsigned interval = DEFAULT_INTERVAL;	/* Interval between packets */
@@ -318,6 +327,7 @@ int main(int argc, char *argv[]) {
  *	Set current host pointer (cursor) to start of list, zero
  *	last packet sent time and initialise static IKE header fields.
  */
+   live_count = num_hosts;
    cursor = rrlist;
    last_packet_time.tv_sec=0;
    last_packet_time.tv_usec=0;
@@ -327,7 +337,7 @@ int main(int argc, char *argv[]) {
  *	has been received or the host has exhausted it's retry limit.
  *	The loop exits when all hosts have either responded or timed out.
  */
-   while (num_hosts) {
+   while (live_count) {
 /*
  *	Obtain current time and calculate deltas since last packet and
  *	last packet to this host.
@@ -365,25 +375,31 @@ int main(int argc, char *argv[]) {
                send_packet(sockfd, cursor);
             }
          } else {	/* We can't send a packet to this host yet */
-            cursor = cursor->next;
-         }
-      } else {	/* We can't send another packet yet */
-         if ((n=recvfrom_wto(sockfd, packet_in, MAXUDP, (struct sockaddr *)&sa_peer, select_timeout)) > 0) {
-            if ((temp_cursor=find_host_by_ip(cursor, &(sa_peer.sin_addr))) == NULL) {
-               warn_msg("Received %d bytes from unknown host (%s) - unexpected!", n, inet_ntoa(sa_peer.sin_addr));
-            } else {	/* Received a packet from a host in our list */
+            if (live_count) {
+               do {
+                  cursor = cursor->next;
+               } while (!cursor->live);
+            } /* End If */
+         } /* End If */
+      } /* End If */
+      n=recvfrom_wto(sockfd, packet_in, MAXUDP, (struct sockaddr *)&sa_peer, select_timeout);
+      if (n != -1) {
+         temp_cursor=find_host_by_ip(cursor, &(sa_peer.sin_addr));
+      }
+      if (n > 0) {
+         if (temp_cursor == NULL) {
+            warn_msg("Received %d bytes from unknown host (%s) - unexpected!", n, inet_ntoa(sa_peer.sin_addr));
+         } else {	/* Received a packet from a host in our list */
+            temp_cursor->num_recv++;
+            if (temp_cursor->live) {
                display_packet(n, packet_in, temp_cursor);
                if (verbose)
                   warn_msg("Removing host entry %d (%s) - Received %d bytes", temp_cursor->n, inet_ntoa(sa_peer.sin_addr), n);
-               remove_host(cursor);
-            }
-         } else if (n == -2) {	/* Connection refused - remove entry */
-            if (verbose)
-               warn_msg("Removing host entry %d (%s) - Connection refused", cursor->n, inet_ntoa(cursor->addr));
-            remove_host(cursor);
-         }
-      }
-   }	/* End While */
+               remove_host(temp_cursor);
+            } /* End If */
+         } /* End If */
+      } /* End If */
+   } /* End While */
 
    close(sockfd);
    return(0);
@@ -406,6 +422,7 @@ void add_host(char *name) {
 
    he->n = num_hosts;
    memcpy(&(he->addr), hp->h_addr_list[0], sizeof(struct in_addr));
+   he->live = 1;
    he->timeout = timeout;
    he->num_sent = 0;
    he->num_recv = 0;
@@ -430,20 +447,18 @@ void add_host(char *name) {
  * 	remove_host -- Remove the specified host from the list
  *
  *	Updates cursor so that it points to the next entry or NULL if the
- *	list is empty after the removal.  Sets rrlist to NULL if the list
- *	becomes empty.
+ *	list is empty after the removal.
  */
 void remove_host(struct host_entry *he) {
-   if (num_hosts > 1) {	/* List has more than one entry */
-      cursor = cursor->next;
-      he->prev->next = he->next;
-      he->next->prev = he->prev;
-   } else {		/* Last entry is being removed */
+   he->live = 0;
+   live_count--;
+   if (live_count) {
+      do {
+         cursor = cursor->next;
+      } while (!cursor->live);
+   } else {
       cursor = NULL;
-      rrlist = NULL;
    }
-   free(he);
-   num_hosts--;
 }
 
 /*
@@ -635,8 +650,7 @@ void send_packet(int s, struct host_entry *he) {
 /*
  *	recvfrom_wto -- Receive packet with timeout
  *
- *	Returns number of characters received, or -1 for timeout or
- *	-2 for connection refused.
+ *	Returns number of characters received, or -1 for timeout.
  */
 int recvfrom_wto(int s, char *buf, int len, struct sockaddr *saddr, int tmo) {
    fd_set readset;
@@ -657,7 +671,12 @@ int recvfrom_wto(int s, char *buf, int len, struct sockaddr *saddr, int tmo) {
    saddr_len = sizeof(struct sockaddr);
    if ((n = recvfrom(s, buf, len, 0, saddr, &saddr_len)) < 0) {
       if (errno == ECONNREFUSED) {
-         return -2;
+/*
+ *	Treat connection refused as timeout.
+ *	It would be nice to remove the associated host, but we can't because
+ *	we cannot tell which host the connection refused relates to.
+ */
+         return -1;
       } else {
          err_sys("recvfrom");
       }
