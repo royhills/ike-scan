@@ -6,13 +6,13 @@
 # Author: Roy Hills
 # Date: 13 January 2004
 #
-# This shell script runs ike-scan against a port on localhost (127.0.0.1)
+# This shell script runs ike-scan against a port on localhost (127.0.0.1),
 # which is unlikely to be listening, and checks that it reports correctly.
 #
 TMPFILE=/tmp/ike-scan-test.$$.tmp
 #
 echo "Checking ike-scan --sport=0 --dport=33434 127.0.0.1 ..."
-$srcdir/ike-scan --sport=0 --dport=33434 127.0.0.1 >$TMPFILE 2>&1
+$srcdir/ike-scan --nodns --retry=1 --sport=0 --dport=33434 127.0.0.1 >$TMPFILE 2>&1
 if test $? -ne 0; then
    rm -f $TMPFILE
    echo "FAILED"
