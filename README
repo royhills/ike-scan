@@ -228,7 +228,7 @@ b) If you know that a particular transform will be acceptable, and you want
 c) If you want to determine exactly which transforms a remote IKE
    implementation supports for fingerprinting.
 
-For those hosts that respond, ike-scan records the times of the recieved
+For those hosts that respond, ike-scan records the times of the received
 IKE responses.  The backoff between IKE responses varies between different
 IKE implementations and can therefore be used as a fingerprint.  The
 --showbackoff option is used to display the backoff times for each host
@@ -252,7 +252,7 @@ respond to IKE requests from source port 500 (actually, Windows 2000
 responds to requests from any port, but always sends the responses back
 to port 500 which amounts to the same thing).
 
-b) Some systems (such as Checkpoint Firewall-1) use proprietory notify
+b) Some systems (such as Checkpoint Firewall-1) use proprietary notify
 message codes which allows them to be identified.
 
 c) Different systems support different transforms, and this support
@@ -298,7 +298,7 @@ the RFC-defined error message "NO-PROPOSAL-CHOSEN" (see RFC 2408 section
 but the response has come from the IP address 10.1.215.130 rather than the
 address which the request was sent to (presumably this is a multi-homed
 system).  Notify message 9101 is not defined by RFC 2408, but it is known
-to be a Checkpoint proprietory notify code (therefore the system is probably
+to be a Checkpoint proprietary notify code (therefore the system is probably
 Firewall-1) and the program displays the text included in the notify message.
 
 Some examples of the IKE backoff pattern section are:
