@@ -169,15 +169,16 @@ char *cpystr(char *string);
 void usage(void);
 void add_host(char *, unsigned);
 void send_packet(int, struct host_entry *, int, struct timeval *);
-int recvfrom_wto(int, char *, int, struct sockaddr *, int);
+int recvfrom_wto(int, unsigned char *, int, struct sockaddr *, int);
 void remove_host(struct host_entry *);
 void timeval_diff(struct timeval *, struct timeval *, struct timeval *);
 void initialise_ike_packet(unsigned, int, int, int, unsigned char *, int,
                            int, int, int);
-struct host_entry *find_host_by_cookie(struct host_entry *, char *, int);
-void display_packet(int, char *, struct host_entry *, struct in_addr *);
+struct host_entry *find_host_by_cookie(struct host_entry *, unsigned char *,
+                                       int);
+void display_packet(int, unsigned char *, struct host_entry *,
+                    struct in_addr *);
 void advance_cursor(void);
-void decode_transform(char *, int, int);
 void dump_list(void);
 void dump_times(int);
 void add_recv_time(struct host_entry *);
