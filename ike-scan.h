@@ -94,7 +94,7 @@
 struct host_entry {
    struct host_entry *prev;	/* Previous pointer */
    struct host_entry *next;	/* Next pointer */
-   int n;			/* Ordinal number for this entry */
+   unsigned n;			/* Ordinal number for this entry */
    struct in_addr addr;		/* Host IP address */
    u_char live;			/* Set when awaiting response */
    struct timeval last_send_time; /* Time when last packet sent to this addr */
