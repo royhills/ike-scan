@@ -177,7 +177,6 @@ main(int argc, char *argv[]) {
    unsigned interval = DEFAULT_INTERVAL;	/* Interval between packets */
    double backoff_factor = DEFAULT_BACKOFF_FACTOR;	/* Backoff factor */
    unsigned end_wait = 1000 * DEFAULT_END_WAIT; /* Time to wait after all done in ms */
-   char trans_str[MAXLINE];		/* Custom transform string */
    struct sockaddr_in sa_local;
    struct sockaddr_in sa_peer;
    struct timeval now;
@@ -243,6 +242,7 @@ main(int argc, char *argv[]) {
          int trans_hash;	/* Custom transform hash */
          int trans_auth;	/* Custom transform auth */
          int trans_group;	/* Custom transform DH group */
+         char trans_str[MAXLINE];	/* Custom transform string */
          case 'f':	/* --file */
             strncpy(filename, optarg, MAXLINE);
             filename_flag=1;
@@ -307,8 +307,8 @@ main(int argc, char *argv[]) {
          case 'a':	/* --trans */
             strncpy(trans_str, optarg, MAXLINE);
             trans_flag=1;
-            sscanf(trans_str, "%d,%d,%d,%d", &trans_enc, &trans_hash, &trans_auth, &trans_group);
-            trans_keylen = 0;
+            decode_trans(trans_str, &trans_enc, &trans_keylen, &trans_hash,
+                         &trans_auth, &trans_group);
             add_trans(0, NULL, trans_enc, trans_keylen, trans_hash,
                       trans_auth, trans_group, lifetime);
             break;
@@ -1605,6 +1605,62 @@ unsigned int hstr_i(char *cptr)
             j |= (i & 0x0f);
       }
       return j;
+}
+
+/*
+ *	decode_trans -- Decode a custom transform specification
+ *
+ *	Inputs:
+ *
+ *	str	Input transform specification
+ *	enc	Output cipher algorithm
+ *	keylen	Output cipher key length
+ *	hash	Output hash algorithm
+ *	auth	Output authentication method
+ *	group	Output DG Group
+ *
+ *	Returns: None
+ *
+ */
+void
+decode_trans(char *str, int *enc, int *keylen, int *hash, int *auth,
+             int *group) {
+   char *cp;
+   int pos;	/* 1=enc, 2=hash, 3=auth, 4=group */
+   int val;
+   int len;
+
+   cp = str;
+   pos = 1;
+   len = 0;
+   while (*cp != '\0') {
+      val = strtol(cp, &cp, 10);
+      if (*cp == '/' && pos == 1) {	/* Keylength */
+         cp++;
+         len = strtol(cp, &cp, 10);
+      }
+      switch(pos) {
+         case 1:
+            *enc=val;
+            *keylen=len;
+            break;
+         case 2:
+            *hash=val;
+            break;
+         case 3:
+            *auth=val;
+            break;
+         case 4:
+            *group=val;
+            break;
+         default:
+            warn_msg("Ignoring extra transform specifications past 4th");
+            break;
+      }
+      if (*cp == ',')
+         cp++;		/* Move on to next entry */
+      pos++;
+   }
 }
 
 /*
