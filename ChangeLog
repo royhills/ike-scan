@@ -1,5 +1,24 @@
 $Id$
 
+2004-11-18 Roy Hills <Roy.Hills@nta-monitor.com>
+
+	* utils.c: printable() should quote the backslash itself to make
+	  "\\n" (backslash, en) distinguishable from "\n" (newline).
+	  This fix contributed by Pavel Kankovsky <kan(at)dcit.cz>
+
+	* psk-crack.c: Changed loop counters from 32-bit to 64-bit integers
+	  to cope with very large iteration counts, e.g. when brute-forcing
+	  8-character passwords with 36-element character set.
+
+	* ike-scan.c: Change 64-bit unsigned integer types from the fixed-
+	  width uint64_t type to the "at least 64-bit" type UINT64 which is
+	  determined by autoconf.
+
+	* configure.ac: Determine 64-bit integer type and snprintf format
+	  string using code from postgresql autoconf.  Previously we used
+	  the fixed-width 64-bit types, but we never need exactly 64-bits,
+	  only at least 64-bits.
+
 2004-10-29 Roy Hills <Roy.Hills@nta-monitor.com>
 
 	* Internal release of 1.6.4.  NTA Monitor internal use only.
