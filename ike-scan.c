@@ -2523,8 +2523,9 @@ usage(int status) {
    fprintf(stderr, "\t\t\tletter with no spaces, e.g. -T2 not -T 2.\n");
    fprintf(stderr, "\t\t\tYou can only specify a single target host if you use\n");
    fprintf(stderr, "\t\t\tthis option.\n");
-   fprintf(stderr, "\n--pskcrack or -P\tCrack aggressive mode pre-shared keys (experimental).\n");
-   fprintf(stderr, "\n--tcptimeout=n or -O n\tSet TCP connect timeout to n seconds\n");
+   fprintf(stderr, "\n--pskcrack or -P\tCrack aggressive mode pre-shared keys.\n");
+   fprintf(stderr, "\n--tcptimeout=n or -O n\tSet TCP connect timeout to n seconds.\n");
+   fprintf(stderr, "\t\t\tDefault is %u seconds.\n", DEFAULT_TCP_CONNECT_TIMEOUT);
    fprintf(stderr, "\t\t\tThis is only applicable to TCP transport mode.\n");
    fprintf(stderr, "\n--nodns or -N\t\tDo not use DNS to resolve names.\n");
    fprintf(stderr, "\t\t\tIf you use this option, then all hosts must be\n");
