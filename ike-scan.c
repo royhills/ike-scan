@@ -123,11 +123,22 @@ main(int argc, char *argv[]) {
       {"mbz", required_argument, 0, 'Z'},
       {"headerver", required_argument, 0, 'E'},
       {"certreq", required_argument, 0, 'C'},
+      {"doi", required_argument, 0, 'D'},
+      {"situation", required_argument, 0, 'S'},
+      {"protocol", required_argument, 0, 'j'},
+      {"transid", required_argument, 0, 'k'},
       {"experimental", required_argument, 0, 'X'},
       {0, 0, 0, 0}
    };
+/*
+ * available short option characters:
+ *
+ * lower:	-----------------------x--
+ * UPPER:	-----F-H-JK-----Q---U-W-Y-
+ */
    const char *short_options =
-      "f:hs:d:r:t:i:b:w:vl:z:m:Ve:a:o::u:n:y:g:p:AG:I:qMRT::P::O:Nc:B:L:Z:E:C:X:";
+      "f:hs:d:r:t:i:b:w:vl:z:m:Ve:a:o::u:n:y:g:p:AG:I:qMRT::P::O:Nc:B:"
+      "L:Z:E:C:D:S:j:k:X:";
    int arg;
    char arg_str[MAXLINE];	/* Args as string for syslog */
    int options_index=0;
@@ -160,7 +171,11 @@ main(int argc, char *argv[]) {
       NULL,		/* ISAKMP header length modifier */
       NULL,		/* Cert req. data */
       0,			/* cd_data_len */
-      DEFAULT_HEADER_VERSION		/* header_version */
+      DEFAULT_HEADER_VERSION,		/* header_version */
+      DEFAULT_DOI,		/* SA DOI */
+      DEFAULT_SITUATION,	/* SA Situation */
+      DEFAULT_PROTOCOL,		/* Proposal Protocol ID */
+      DEFAULT_TRANS_ID		/* Transform ID */
    };
    unsigned pattern_fuzz = DEFAULT_PATTERN_FUZZ; /* Pattern matching fuzz in ms */
    unsigned tcp_connect_timeout = DEFAULT_TCP_CONNECT_TIMEOUT;
@@ -332,7 +347,8 @@ main(int argc, char *argv[]) {
             add_trans(0, NULL, trans_enc, trans_keylen, trans_hash,
                       trans_auth, trans_group, ike_params.lifetime,
                       ike_params.lifesize, ike_params.gss_id_flag,
-                      ike_params.gss_data, ike_params.gss_data_len);
+                      ike_params.gss_data, ike_params.gss_data_len,
+                      ike_params.trans_id);
             break;
          case 'o':	/* --showbackoff */
             showbackoff_flag=1;
@@ -430,6 +446,18 @@ main(int argc, char *argv[]) {
             if (strlen(optarg) % 2)	/* Length is odd */
                err_msg("ERROR: Length of --certreq argument must be even (multiple of 2).");
             ike_params.cr_data=hex2data(optarg, &(ike_params.cr_data_len));
+            break;
+         case 'D':	/* --doi */
+            ike_params.doi = strtoul(optarg, (char **)NULL, 0);
+            break;
+         case 'S':	/* --situation */
+            ike_params.situation = strtoul(optarg, (char **)NULL, 0);
+            break;
+         case 'j':	/* --protocol */
+            ike_params.protocol = strtoul(optarg, (char **)NULL, 0);
+            break;
+         case 'k':	/* --transid */
+            ike_params.trans_id = strtoul(optarg, (char **)NULL, 0);
             break;
          case 'X':	/* --experimental */
             experimental_value = strtoul(optarg, (char **)NULL, 10);
@@ -1631,46 +1659,54 @@ initialise_ike_packet(size_t *packet_out_len, ike_packet_params *params) {
       if (params->exchange_type == ISAKMP_XCHG_IDPROT) {	/* Main Mode */
          add_trans(0, NULL, OAKLEY_3DES_CBC, 0, OAKLEY_SHA,
                    params->auth_method, 2, params->lifetime, params->lifesize,
-                   params->gss_id_flag, params->gss_data, params->gss_data_len);
+                   params->gss_id_flag, params->gss_data, params->gss_data_len,
+                   params->trans_id);
          add_trans(0, NULL, OAKLEY_3DES_CBC, 0, OAKLEY_MD5,
                    params->auth_method, 2, params->lifetime, params->lifesize,
-                   params->gss_id_flag, params->gss_data, params->gss_data_len);
+                   params->gss_id_flag, params->gss_data, params->gss_data_len,
+                   params->trans_id);
          add_trans(0, NULL, OAKLEY_DES_CBC,  0, OAKLEY_SHA,
                    params->auth_method, 2, params->lifetime, params->lifesize,
-                   params->gss_id_flag, params->gss_data, params->gss_data_len);
+                   params->gss_id_flag, params->gss_data, params->gss_data_len,
+                   params->trans_id);
          add_trans(0, NULL, OAKLEY_DES_CBC,  0, OAKLEY_MD5,
                    params->auth_method, 2, params->lifetime, params->lifesize,
-                   params->gss_id_flag, params->gss_data, params->gss_data_len);
+                   params->gss_id_flag, params->gss_data, params->gss_data_len,
+                   params->trans_id);
          add_trans(0, NULL, OAKLEY_3DES_CBC, 0, OAKLEY_SHA,
                    params->auth_method, 1, params->lifetime, params->lifesize,
-                   params->gss_id_flag, params->gss_data, params->gss_data_len);
+                   params->gss_id_flag, params->gss_data, params->gss_data_len,
+                   params->trans_id);
          add_trans(0, NULL, OAKLEY_3DES_CBC, 0, OAKLEY_MD5,
                    params->auth_method, 1, params->lifetime, params->lifesize,
-                   params->gss_id_flag, params->gss_data, params->gss_data_len);
+                   params->gss_id_flag, params->gss_data, params->gss_data_len,
+                   params->trans_id);
          add_trans(0, NULL, OAKLEY_DES_CBC,  0, OAKLEY_SHA,
                    params->auth_method, 1, params->lifetime, params->lifesize,
-                   params->gss_id_flag, params->gss_data, params->gss_data_len);
+                   params->gss_id_flag, params->gss_data, params->gss_data_len,
+                   params->trans_id);
          add_trans(0, NULL, OAKLEY_DES_CBC,  0, OAKLEY_MD5,
                    params->auth_method, 1, params->lifetime, params->lifesize,
-                   params->gss_id_flag, params->gss_data, params->gss_data_len);
+                   params->gss_id_flag, params->gss_data, params->gss_data_len,
+                   params->trans_id);
          no_trans=8;
       } else {	/* presumably aggressive mode */
          add_trans(0, NULL, OAKLEY_3DES_CBC, 0, OAKLEY_SHA,
                    params->auth_method, params->dhgroup, params->lifetime,
                    params->lifesize, params->gss_id_flag, params->gss_data,
-                   params->gss_data_len);
+                   params->gss_data_len, params->trans_id);
          add_trans(0, NULL, OAKLEY_3DES_CBC, 0, OAKLEY_MD5,
                    params->auth_method, params->dhgroup, params->lifetime,
                    params->lifesize, params->gss_id_flag, params->gss_data,
-                   params->gss_data_len);
+                   params->gss_data_len, params->trans_id);
          add_trans(0, NULL, OAKLEY_DES_CBC,  0, OAKLEY_SHA,
                    params->auth_method, params->dhgroup, params->lifetime,
                    params->lifesize, params->gss_id_flag, params->gss_data,
-                   params->gss_data_len);
+                   params->gss_data_len, params->trans_id);
          add_trans(0, NULL, OAKLEY_DES_CBC,  0, OAKLEY_MD5,
                    params->auth_method, params->dhgroup, params->lifetime,
                    params->lifesize, params->gss_id_flag, params->gss_data,
-                   params->gss_data_len);
+                   params->gss_data_len, params->trans_id);
          no_trans=4;
       }
       if (params->gss_data)
@@ -1678,19 +1714,21 @@ initialise_ike_packet(size_t *packet_out_len, ike_packet_params *params) {
    } else {	/* Custom transforms */
       no_trans = params->trans_flag;
    }
-   transforms = add_trans(1, &trans_len, 0,  0, 0, 0, 0, 0, 0, 0, NULL, 0);
+   transforms = add_trans(1, &trans_len, 0,  0, 0, 0, 0, 0, 0, 0, NULL, 0, 0);
    *packet_out_len += trans_len;
 /*
  *	Proposal payload
  */
-   prop = make_prop(trans_len+sizeof(struct isakmp_proposal), no_trans);
+   prop = make_prop(trans_len+sizeof(struct isakmp_proposal), no_trans,
+                    params->protocol);
    *packet_out_len += sizeof(struct isakmp_proposal);
 /*
  *	SA Header
  */
    sa = make_sa_hdr(next_payload, trans_len+
                     sizeof(struct isakmp_proposal)+
-                    sizeof(struct isakmp_sa));
+                    sizeof(struct isakmp_sa),
+                    params->doi, params->situation);
    *packet_out_len += sizeof(struct isakmp_sa);
    next_payload = ISAKMP_NEXT_SA;
 /*
@@ -2498,7 +2536,18 @@ usage(int status) {
       {11, "ID_KEY_ID"},
       {-1, NULL}
    };
-
+   static const id_name_map doi_map[] = {
+      {0, "ISAKMP"},
+      {1, "IPsec"},
+      {-1, NULL}
+   };
+   static const id_name_map protocol_map[] = {
+      {1, "PROTO_ISAKMP"},
+      {2, "PROTO_IPSEC_AH"},
+      {3, "PROTO_IPSEC_ESP"},
+      {4, "PROTO_IPSEC_COMP"},
+      {-1, NULL}
+   };
 
    fprintf(stderr, "Usage: ike-scan [options] [hosts...]\n");
    fprintf(stderr, "\n");
@@ -2762,7 +2811,26 @@ usage(int status) {
    fprintf(stderr, "\t\t\tyou want to see how the VPN server reacts to strange\n");
    fprintf(stderr, "\t\t\tversions.\n");
    fprintf(stderr, "\t\t\tThe value should be in the range 0-255.\n");
-   fprintf(stderr, "\n--certreq=<c> or -C <c> Add a CertificateRequest payload.\n");
+   fprintf(stderr, "\n--certreq=<c> or -C <c> Add the CertificateRequest payload <c>.\n");
+   fprintf(stderr, "\t\t\t<c> should be specified as a hex value.\n");
+   fprintf(stderr, "\t\t\tThe first byte of the hex value will be interpreted as\n");
+   fprintf(stderr, "\t\t\tthe certificate type; the remaining bytes as the\n");
+   fprintf(stderr, "\t\t\tcertificate authority as described in RFC 2408 3.10.\n");
+   fprintf(stderr, "\t\t\tThe certificate types are listed in RFC 2408 sec 3.9.\n");
+   fprintf(stderr, "\t\t\tRFC 2048 states \"The Certificate Request payload MUST\n");
+   fprintf(stderr, "\t\t\tbe accepted at any point during the exchange\"\n");
+   fprintf(stderr, "\n--doi=<d> or -D <d>\tSet the SA DOI to <d>, default %u (%s).\n", DEFAULT_DOI, id_to_name(DEFAULT_DOI, doi_map));
+   fprintf(stderr, "\n--situation=<s> or -S <s> Set the SA Situation to <d>, default %u.\n", DEFAULT_SITUATION);
+   fprintf(stderr, "\t\t\tThe meaning of the situation depends on the DOI, and\n");
+   fprintf(stderr, "\t\t\tis detailed in the appropriate DOI document.  For the\n");
+   fprintf(stderr, "\t\t\tdefault DOI of %u (%s), the default Situation of %u\n", DEFAULT_DOI, id_to_name(DEFAULT_DOI, doi_map), DEFAULT_SITUATION);
+   fprintf(stderr, "\t\t\trepresents SIT_IDENTITY_ONLY.\n");
+   fprintf(stderr, "\n--protocol=<p> or -j <p> Set the Proposal protocol ID to <p>, default %u.\n", DEFAULT_PROTOCOL);
+   fprintf(stderr, "\t\t\tThe meaning of the proposal protocol ID depends on\n");
+   fprintf(stderr, "\t\t\tthe DOI, and is detailed in the appropriate DOI\n");
+   fprintf(stderr, "\t\t\tdocument.  For the default DOI of %u (%s), the default\n", DEFAULT_DOI, id_to_name(DEFAULT_DOI, doi_map));
+   fprintf(stderr, "\t\t\tproposal protocol id of %u represents %s\n", DEFAULT_PROTOCOL, id_to_name(DEFAULT_PROTOCOL, protocol_map));
+   fprintf(stderr, "\n--transid=<t> or -k <t> Set the Transform ID to <t>, default %u.\n", DEFAULT_TRANS_ID);
    fprintf(stderr, "\n");
    fprintf(stderr, "Report bugs or send suggestions to %s\n", PACKAGE_BUGREPORT);
    fprintf(stderr, "See the ike-scan homepage at http://www.nta-monitor.com/ike-scan/\n");
