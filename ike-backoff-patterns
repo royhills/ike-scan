@@ -19,7 +19,7 @@
 #
 # $Id$
 #
-# backoff-patterns -- Backoff patterns file for ike-scan
+# ike-backoff-patterns -- Backoff patterns file for ike-scan
 #
 # Author: Roy Hills <Roy.Hills@nta-monitor.com>
 #
