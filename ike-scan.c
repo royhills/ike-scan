@@ -74,7 +74,6 @@ int id_data_len;
 uint32_t kx_data[48];		/* Key exchange data.  48 is largest needed */
 int kx_data_len;		/* Key exchange data len in 32bit longwords */
 int verbose=0;
-char vendor_id[MAXLINE];		/* Vendor ID string */
 int vendor_id_flag = 0;			/* Indicates if VID to be used */
 char trans_str[MAXLINE];		/* Custom transform string */
 int trans_flag = 0;			/* Indicates custom transform */
@@ -100,7 +99,7 @@ struct transform
 };
 struct transform trans[8];		/* Transform payload */
 struct isakmp_vid vid_hdr;		/* Vendor ID header */
-unsigned char vid_data[MAXLINE];	/* Binary Vendor ID data */
+unsigned char *vid_data;		/* Binary Vendor ID data */
 int vid_data_len;			/* Vendor ID data length */
 
 const char *auth_methods[] = { /* Authentication methods from RFC 2409 Appendix A */
@@ -209,6 +208,7 @@ main(int argc, char *argv[]) {
    unsigned long end_timediff=0; /* Time since last packet received in ms */
    int arg_str_space;		/* Used to avoid buffer overruns when copying */
    char patfile[MAXLINE];	/* IKE Backoff pattern file name */
+   unsigned char *cp;
 /*
  *	Open syslog channel and log arguments if required.
  *	We must be careful here to avoid overflowing the arg_str buffer
@@ -290,14 +290,16 @@ main(int argc, char *argv[]) {
             exit(0);
             break;
          case 'e':	/* --vendor */
-            strncpy(vendor_id, optarg, MAXLINE);
-            if (strlen(vendor_id) % 2) {	/* Length is odd */
+            if (strlen(optarg) % 2) {	/* Length is odd */
                err_msg("Length of --vendor argument must be even (multiple of 2).");
             }
             vendor_id_flag=1;
-            vid_data_len=strlen(vendor_id)/2;
+            vid_data_len=strlen(optarg)/2;
+            if ((vid_data = malloc(vid_data_len)) == NULL)
+               err_sys("malloc");
+            cp = vid_data;
             for (i=0; i<vid_data_len; i++)
-               vid_data[i]=hstr_i(&vendor_id[i*2]);
+               *cp++=hstr_i(&optarg[i*2]);
             break;
          case 'a':	/* --trans */
             strncpy(trans_str, optarg, MAXLINE);
@@ -913,7 +915,7 @@ send_packet(int s, struct host_entry *he) {
    if (vendor_id_flag) {
       memcpy(cp, &vid_hdr, sizeof(vid_hdr));
       cp += sizeof(vid_hdr);
-      memcpy(cp, &vid_data, vid_data_len);
+      memcpy(cp, vid_data, vid_data_len);
       cp += vid_data_len;
       buflen += sizeof(vid_hdr)+vid_data_len;
    } 
