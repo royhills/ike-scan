@@ -101,11 +101,12 @@ main(int argc, char *argv[]) {
       {"tcptimeout", required_argument, 0, 'O'},
       {"nodns", no_argument, 0, 'N'},
       {"noncelen", required_argument, 0, 'c'},
+      {"bandwidth", required_argument, 0, 'B'},
       {"experimental", required_argument, 0, 'X'},
       {0, 0, 0, 0}
    };
    const char *short_options =
-      "f:hs:d:r:t:i:b:w:vl:z:m:Ve:a:o::u:n:y:g:p:AG:I:qMRT::P::O:Nc:X:";
+      "f:hs:d:r:t:i:b:w:vl:z:m:Ve:a:o::u:n:y:g:p:AG:I:qMRT::P::O:Nc:B:X:";
    int arg;
    char arg_str[MAXLINE];	/* Args as string for syslog */
    int options_index=0;
@@ -175,6 +176,7 @@ main(int argc, char *argv[]) {
    int quiet=0;			/* Only print the basic info if nonzero */
    int multiline=0;		/* Split decodes across lines if nonzero */
    int hostno;
+   unsigned bandwidth=0;	/* Bandwidth in bits per sec, or zero */
 /*
  *	Open syslog channel and log arguments if required.
  *	We must be careful here to avoid overflowing the arg_str buffer
@@ -223,6 +225,8 @@ main(int argc, char *argv[]) {
          char trans_str[MAXLINE];	/* Custom transform string */
          char interval_str[MAXLINE];	/* --interval argument */
          size_t interval_len;	/* --interval argument length */
+         char bandwidth_str[MAXLINE];	/* --bandwidth argument */
+         size_t bandwidth_len;	/* --bandwidth argument length */
          case 'f':	/* --file */
             strncpy(filename, optarg, MAXLINE);
             filename_flag=1;
@@ -373,6 +377,17 @@ main(int argc, char *argv[]) {
          case 'c':	/* --noncelen */
             nonce_data_len = strtoul(optarg, (char **)NULL, 10);
             break;
+         case 'B':	/* --bandwidth */
+            strncpy(bandwidth_str, optarg, MAXLINE);
+            bandwidth_len=strlen(bandwidth_str);
+            if (bandwidth_str[bandwidth_len-1] == 'M') {
+               bandwidth=1000000 * strtoul(bandwidth_str, (char **)NULL, 10);
+            } else if (bandwidth_str[bandwidth_len-1] == 'K') {
+               bandwidth=1000 * strtoul(bandwidth_str, (char **)NULL, 10);
+            } else {
+               bandwidth=strtoul(bandwidth_str, (char **)NULL, 10);
+            }
+            break;
          case 'X':	/* --experimental */
             experimental_value = strtoul(optarg, (char **)NULL, 10);
             break;
@@ -467,6 +482,9 @@ main(int argc, char *argv[]) {
 
    if (psk_crack_flag && num_hosts > 1)
       err_msg("ERROR: You can only specify one target host with the --pskcrack (-P) option.");
+
+   if (bandwidth && interval != 1000 * DEFAULT_INTERVAL)
+      err_msg("ERROR: You cannot specify both --bandwidth and --interval.");
 /*
  *      Create and initialise array of pointers to host entries.
  */
@@ -580,6 +598,19 @@ main(int argc, char *argv[]) {
                                     trans_flag, exchange_type, gss_id_flag,
                                     gss_data, gss_data_len, nonce_data_len);
 /*
+ *	If the --bandwidth option was used, calculate the required interval
+ *	to achieve the required outgoing bandwidth.
+ */
+   if (bandwidth) {
+      double float_interval;
+
+      float_interval = (((packet_out_len + PACKET_OVERHEAD) * 8) /
+                       (double) bandwidth) * 1000000;
+      interval = (unsigned) float_interval;
+      warn_msg("DEBUG: pkt len: %u bytes, bandwith: %u bps, int=%u us",
+               packet_out_len+PACKET_OVERHEAD, bandwidth, interval);
+   }
+/*
  *	Display initial message.
  */
    printf("Starting %s with %u hosts (http://www.nta-monitor.com/ike-scan/)\n", PACKAGE_STRING, num_hosts);
@@ -591,8 +622,6 @@ main(int argc, char *argv[]) {
       if (showbackoff_flag)
          dump_backoff(pattern_fuzz);
       dump_vid();
-      warn_msg("This ike-scan binary was not compiled with Posix regular expression support.");
-      warn_msg("Vendor ID Fingerprinting will not be possible.");
    }
 /*
  *	Main loop: send packets to all hosts in order until a response
@@ -2448,6 +2477,13 @@ usage(int status) {
    fprintf(stderr, "\t\t\tfor custom transform: 15=59733bps, 30=35840bps.\n");
    fprintf(stderr, "\t\t\tThe interval specified is in milliseconds by default,\n");
    fprintf(stderr, "\t\t\tor in microseconds if \"u\" is appended to the value.\n");
+   fprintf(stderr, "\n--bandwidth=<n> or -B <n> Set desired outbound bandwidth to <n>.\n");
+   fprintf(stderr, "\t\t\tThe value is in bits per second by default.  If you\n");
+   fprintf(stderr, "\t\t\tappend \"K\" to the value, then the units are kilobits\n");
+   fprintf(stderr, "\t\t\tper sec; and if you append \"M\" to the value, the\n");
+   fprintf(stderr, "\t\t\tunits are megabits per second.\n");
+   fprintf(stderr, "\t\t\tThe \"K\" and \"M\" suffixes represent the decimal, not\n");
+   fprintf(stderr, "\t\t\tbinary, multiples.  So 64K is 64000, not 65536.\n");
    fprintf(stderr, "\n--backoff=<b> or -b <b>\tSet timeout backoff factor to <b>, default=%.2f.\n", DEFAULT_BACKOFF_FACTOR);
    fprintf(stderr, "\t\t\tThe per-host timeout is multiplied by this factor\n");
    fprintf(stderr, "\t\t\tafter each timeout.  So, if the number of retrys\n");
