@@ -9,6 +9,10 @@ ike-scan v1.6:
   more than one.  Previously, it would only display the first Vendor ID and
   ignore the others.
 
+* Added support for ISAKMP lifetime size transform attribute with the
+  --lifesize (-z) option.  Default is 0 which means don't include the
+  lifetime size attribute.
+
 ike-scan v1.5.1:
 
 * Fixed a bug which could cause a negative value to be passed to select()
