@@ -122,6 +122,21 @@ const char *payload_name[] = {     /* Payload types from RFC 2408 3.1 */
    "Vendor ID"                       /* 13 */
 };
 
+const char *id_type_name[] ={	/* ID Type names from RFC 2407 4.6.2.1 */
+   "RESERVED",               /* 0 */
+   "ID_IPV4_ADDR",           /* 1 */
+   "ID_FQDN",                /* 2 */
+   "ID_USER_FQDN",           /* 3 */
+   "ID_IPV4_ADDR_SUBNET",    /* 4 */
+   "ID_IPV6_ADDR",           /* 5 */
+   "ID_IPV6_ADDR_SUBNET",    /* 6 */
+   "ID_IPV4_ADDR_RANGE",     /* 7 */
+   "ID_IPV6_ADDR_RANGE",     /* 8 */
+   "ID_DER_ASN1_DN",         /* 9 */
+   "ID_DER_ASN1_GN",         /* 10 */
+   "ID_KEY_ID"               /* 11 */
+};
+
 int
 main(int argc, char *argv[]) {
    struct option long_options[] = {
@@ -1883,6 +1898,21 @@ usage(void) {
    fprintf(stderr, "\t\t\tThis specifies the name of the file containing\n");
    fprintf(stderr, "\t\t\tIKE backoff patterns.  This file is only used when\n");
    fprintf(stderr, "\t\t\t--showbackoff is specified.\n");
+   fprintf(stderr, "\n--aggressive or -A\tUse IKE Aggressive Mode (The default is Main Mode)\n");
+   fprintf(stderr, "\t\t\tIf you specify --aggressive, then you may also\n");
+   fprintf(stderr, "\t\t\tspecify --dhgroup, --id and --idtype.  If you use\n");
+   fprintf(stderr, "\t\t\tcustom transforms with aggressive mode with the --trans\n");
+   fprintf(stderr, "\t\t\toption, note that all transforms should have the same\n");
+   fprintf(stderr, "\t\t\tDH Group and this should match the group specified\n");
+   fprintf(stderr, "\t\t\twith --dhgroup or the default if --dhgroup is not used.\n");
+   fprintf(stderr, "\n--id <id> or -n <id>\tUse <id> as the identification value.\n");
+   fprintf(stderr, "\t\t\tThis option is only applicable to Aggressive Mode.\n");
+   fprintf(stderr, "\t\t\t<id> should be specified in hex, e.g. --id=deadbeef.\n");
+   fprintf(stderr, "\n--idtype=n or -y n\tUse identification type <n>.  Default %d (%s).\n", DEFAULT_IDTYPE, id_type_name[DEFAULT_IDTYPE]);
+   fprintf(stderr, "\t\t\tThis option is only applicable to Aggressive Mode.\n");
+   fprintf(stderr, "\t\t\tSee RFC 2407 4.6.2 for details of Identification types.\n");
+   fprintf(stderr, "\n--dhgroup=n or -g n\tUse Diffie Hellman Group <n>.  Default %d.\n", DEFAULT_DH_GROUP);
+   fprintf(stderr, "\t\t\tThis option is only applicable to Aggressive Mode.\n");
    fprintf(stderr, "\n");
    fprintf(stderr, "Report bugs or send suggestions to %s\n", PACKAGE_BUGREPORT);
    fprintf(stderr, "See the ike-scan homepage at http://www.nta-monitor.com/ike-scan/\n");
