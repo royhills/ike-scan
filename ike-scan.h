@@ -151,7 +151,7 @@ unsigned char *SHA1(const unsigned char *, size_t, unsigned char *);
 #define PATTERNS_FILE "ike-backoff-patterns" /* Backoff patterns filename */
 #define VID_FILE "ike-vendor-ids"	/* Vendor ID patterns filename */
 #define REALLOC_COUNT	1000		/* Entries to realloc at once */
-#define TCP_CONNECT_TIMEOUT 10		/* TCP connect timeout in seconds */
+#define DEFAULT_TCP_CONNECT_TIMEOUT 10	/* TCP connect timeout in seconds */
 #define TCP_PROTO_RAW 1			/* Raw IKE over TCP (Checkpoint) */
 #define TCP_PROTO_ENCAP 2		/* Encapsulated IKE over TCP (cisco) */
 #undef DEBUG_TIMINGS			/* Define to 1 to debug timing code */
