@@ -1,10 +1,40 @@
 $Id$
 
+2003-06-11 Roy Hills <Roy.Hills@nta-monitor.com>
+
+	* ike-backoff-patterns: Minor comment changes.
+
+2003-05-10 Roy Hills <Roy.Hills@nta-monitor.com>
+
+	* configure.ac: Added package name and version to AC_INIT.
+
+	* ike-scan.c: Use PACKAGE_STRING and PACKAGE_BUGREPORT symbols rather
+	  than hard-coded strings.
+
+2003-05-09 Roy Hills <Roy.Hills@nta-monitor.com>
+
+	* configure.ac, acinclude.m4: Wrote macro AC_NTA_NET_SIZE_T to
+	  determine the best type to use for the 3rd argument to accept().
+	  This is normally socklen_t, but is sometimes int or size_t.
+	  This change allows the program to compile on HP Tru64 Unix.
+
+2003-05-08 Roy Hills <Roy.Hills@nta-monitor.com>
+
+	* configure.ac: Renamed configure.in to configure.ac to comply with
+	  new autoconf naming scheme and ran autoupdate to update from
+	  autoconf 2.13 to 2.53.  No C code changes.
+
+2003-02-21 Roy Hills <Roy.Hills@nta-monitor.com>
+
+	* error.c: Changed "syslog(level, buf)" to "syslog(level, "%s", buf)"
+	  to fix syslog format string vulnerability.
+
 2003-02-18 Roy Hills <Roy.Hills@nta-monitor.com>
 
 	* Released version v1.1.  Tarball size 91606 bytes, Zip size 578034.
 	  tarball md5sum: b87fe14043c43c2897cf309c364574b7
 	  zip md5sum: 59db0f1f170aaf50dfb2c05f4f950d00
+	* Corrected typo in README-WIN32: know -> known.
 
 2003-02-03 Roy Hills <Roy.Hills@nta-monitor.com>
 
