@@ -30,15 +30,17 @@
 # (and version if applicable).  Backoff_Pattern is the observed IKE
 # retransmission backoff pattern for this implementation.
 #
-# The backoff pattern is specified as a comma-separated list of backoffs
-# in seconds.  The first number is always zero and represents the first
-# packet received.  For example, "0, 2, 2, 2" means that a total of four
-# packets are sent with a delay of two seconds between each one.
+# The backoff pattern is specified as a comma-separated list of backoff
+# times in seconds.  The first number is always zero and represents the first
+# packet received.  Subsequent numbers represent the expected delay in
+# seconds after the previous packet.  For example, "0, 2, 2, 2" means that a
+# total of four packets are sent with a delay of two seconds between each one.
 #
 # The numbers in the backoff pattern can be decimal numbers e.g. 1.5 for
-# one and a half seconds.  ike-scan uses strtod(3) to convert the ASCII
-# representation to a floating point number which is then converted into a
-# timeval struct.
+# one and a half seconds.  You can specify up to a maximum of 6 digits
+# after the decimal point (microsecond resolution), although anything
+# beyond millisecond resolution is not really practical.  ike-scan uses
+# a timeval struct to store the backoff pattern entries.
 #
 # Lines beginning with '#' and blank lines are ignored.
 #
