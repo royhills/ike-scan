@@ -715,6 +715,8 @@ display_packet(int n, char *packet_in, struct host_entry *he, struct in_addr *re
    struct isakmp_sa sa_hdr_in;
    struct isakmp_proposal sa_prop_in;
    struct isakmp_notification notification_in;
+   struct isakmp_vid vid_hdr_in;
+   int vid_data_len_in;
    int msg_len;                 /* Size of notification message in bytes */
    int msg_type;                /* Notification message type */
    char msg_in[MAXLINE];        /* Notification message */
@@ -729,6 +731,8 @@ display_packet(int n, char *packet_in, struct host_entry *he, struct in_addr *re
    if ((he->addr).s_addr != recv_addr->s_addr)
       cp += sprintf(cp, "(%s) ", inet_ntoa(*recv_addr));
    *cp = '\0';
+
+   cp = packet_in;	/* Save original start of packet. Shouldn't need this */
 /*
  *	Check that the received packet is at least as big as the ISAKMP
  *	header before we try to copy it into an ISAKMP header struct.
@@ -773,12 +777,31 @@ display_packet(int n, char *packet_in, struct host_entry *he, struct in_addr *re
          }
          decode_transform(packet_in, n, sa_prop_in.isap_notrans);
          if (sa_prop_in.isap_notrans == 1) {
-            printf("%sIKE %s Handshake returned\n",
+            printf("%sIKE %s Handshake returned.",
                    ip_str, xchg_type);
          } else {	/* More than 1 transform - shouldn't happen */
-            printf("%sIKE %s Handshake returned (%d transforms)\n",
+            printf("%sIKE %s Handshake returned (%d transforms).",
                    ip_str, xchg_type, sa_prop_in.isap_notrans);
          }
+/*
+ *	If the payload after SA is VID, print the associated data as hex.
+ *	We should really check the packet size before copying rather than
+ *	just trusting the length fields.
+ */
+         if (sa_hdr_in.isasa_np == ISAKMP_NEXT_VID) {
+            int i;
+
+            cp += sizeof(hdr_in) + ntohs(sa_hdr_in.isasa_length);
+            memcpy(&vid_hdr_in, cp, sizeof(vid_hdr_in));
+            cp += sizeof(vid_hdr_in);	/* cp now points at VID data */
+            vid_data_len_in=ntohs(vid_hdr_in.isavid_length) - sizeof(vid_hdr_in);
+            printf(" VID Data=");
+            for (i=0; i<vid_data_len_in; i++) {
+               printf("%.2x", (unsigned char) *cp);
+               cp++;
+            }
+         }
+         printf("\n");
       } else {
          printf("%sIKE Handshake returned (%d byte packet too short to decode)\n", ip_str, n);
       }
@@ -1216,7 +1239,7 @@ initialise_ike_packet(void) {
  *	Vendor ID Payload (Optional)
  */
    vid_hdr.isavid_np = ISAKMP_NEXT_NONE;	/* No Next payload */
-   vid_hdr.isavid_length = htons(sizeof(vid_hdr) + vid_data_len);	/* Length of MD5 digest */
+   vid_hdr.isavid_length = htons(sizeof(vid_hdr) + vid_data_len);	/* Length of VID data */
 }
 
 /*
