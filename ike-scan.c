@@ -2368,10 +2368,10 @@ decode_trans(char *str, unsigned *enc, unsigned *keylen, unsigned *hash,
    pos = 1;
    len = 0;
    while (*cp != '\0') {
-      val = strtoul(cp, &cp, 10);
+      val = strtoul(cp, &cp, 0);
       if (*cp == '/' && pos == 1) {	/* Keylength */
          cp++;
-         len = strtoul(cp, &cp, 10);
+         len = strtoul(cp, &cp, 0);
       }
       switch(pos) {
          case 1:
@@ -2490,6 +2490,8 @@ usage(int status) {
    fprintf(stderr, "\t\t\tfor custom transform: 15=59733bps, 30=35840bps.\n");
    fprintf(stderr, "\t\t\tThe interval specified is in milliseconds by default,\n");
    fprintf(stderr, "\t\t\tor in microseconds if \"u\" is appended to the value.\n");
+   fprintf(stderr, "\t\t\tIf you want to use up to a given bandwidth, then it is\n");
+   fprintf(stderr, "\t\t\teasier to use the --bandwidth option instead.\n");
    fprintf(stderr, "\n--bandwidth=<n> or -B <n> Set desired outbound bandwidth to <n>.\n");
    fprintf(stderr, "\t\t\tThe value is in bits per second by default.  If you\n");
    fprintf(stderr, "\t\t\tappend \"K\" to the value, then the units are kilobits\n");
@@ -2497,6 +2499,9 @@ usage(int status) {
    fprintf(stderr, "\t\t\tunits are megabits per second.\n");
    fprintf(stderr, "\t\t\tThe \"K\" and \"M\" suffixes represent the decimal, not\n");
    fprintf(stderr, "\t\t\tbinary, multiples.  So 64K is 64000, not 65536.\n");
+   fprintf(stderr, "\t\t\tYou cannot specify both --interval and --bandwidth\n");
+   fprintf(stderr, "\t\t\tbecause they are just different ways to change the\n");
+   fprintf(stderr, "\t\t\tsame parameter.\n");
    fprintf(stderr, "\n--backoff=<b> or -b <b>\tSet timeout backoff factor to <b>, default=%.2f.\n", DEFAULT_BACKOFF_FACTOR);
    fprintf(stderr, "\t\t\tThe per-host timeout is multiplied by this factor\n");
    fprintf(stderr, "\t\t\tafter each timeout.  So, if the number of retrys\n");
@@ -2608,6 +2613,9 @@ usage(int status) {
    fprintf(stderr, "\t\t\tThis option is only applicable to Aggressive Mode where\n");
    fprintf(stderr, "\t\t\tit is used to determine the size of the key exchange\n");
    fprintf(stderr, "\t\t\tpayload.\n");
+   fprintf(stderr, "\t\t\tIf you use Aggressive Mode with custom transforms, then\n");
+   fprintf(stderr, "\t\t\tyou will normally need to use the --dhgroup option\n");
+   fprintf(stderr, "\t\t\tunless you are using the default DH group.\n");
    fprintf(stderr, "\t\t\tAcceptable values are 1,2,5,14,15,16,17,18 (MODP only).\n");
    fprintf(stderr, "\n--gssid=<n> or -G <n>\tUse GSS ID <n> where <n> is a hex string.\n");
    fprintf(stderr, "\t\t\tThis uses transform attribute type 16384 as specified\n");
@@ -2651,6 +2659,19 @@ usage(int status) {
    fprintf(stderr, "\t\t\tIf you use this option, then all hosts must be\n");
    fprintf(stderr, "\t\t\tspecified as IP addresses.\n");
    fprintf(stderr, "\n--noncelen=<n> or -c <n> Set the nonce length to <n> bytes. Default=%u\n", DEFAULT_NONCE_LEN);
+   fprintf(stderr, "\t\t\tThis option controls the length of the nonce payload\n");
+   fprintf(stderr, "\t\t\tthat is sent in an aggressive mode request. Normally,\n");
+   fprintf(stderr, "\t\t\tthere is no need to use this option unless you want to\n");
+   fprintf(stderr, "\t\t\treduce the nonce size to speed up pre-shared key\n");
+   fprintf(stderr, "\t\t\tcracking, or if you want to see how a particular\n");
+   fprintf(stderr, "\t\t\tserver handles different length nonce payloads.\n");
+   fprintf(stderr, "\t\t\tRFC 2409 states that the length of nonce payload\n");
+   fprintf(stderr, "\t\t\tmust be between 8 and 256 bytes, but ike-scan does\n");
+   fprintf(stderr, "\t\t\tnot enforce this.\n");
+   fprintf(stderr, "\t\t\tSpecifying a large nonce length will increase the\n");
+   fprintf(stderr, "\t\t\tsize of the packet sent by ike-scan. A very large nonce\n");
+   fprintf(stderr, "\t\t\tlength may cause fragmentation, or exceed the maximum\n");
+   fprintf(stderr, "\t\t\tIP packet size.\n");
    fprintf(stderr, "\t\t\tThis option is only applicable to IKE aggressive mode.\n");
    fprintf(stderr, "\n");
    fprintf(stderr, "Report bugs or send suggestions to %s\n", PACKAGE_BUGREPORT);
