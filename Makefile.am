@@ -3,11 +3,12 @@
 CPPFLAGS = -DIKEDATADIR=\"$(pkgdatadir)\" @CPPFLAGS@
 pkgdata_DATA = ike-backoff-patterns ike-vendor-ids
 bin_PROGRAMS = ike-scan
-check_PROGRAMS = check-sizes
+check_PROGRAMS = check-sizes check-hash
 check_SCRIPTS = check-run1 check-run2 check-run3
 man_MANS = ike-scan.1
 ike_scan_SOURCES = ike-scan.c ike-scan.h error.c md5.c md5.h isakmp.c isakmp.h wrappers.c utils.c
 check_sizes_SOURCES = check-sizes.c error.c ike-scan.h
+check_hash = check-hash.c error.c ike-scan.h
 ike_scan_LDADD = @COMPAT_OBJS@
 ike_scan_DEPENDENCIES = @COMPAT_OBJS@
 TESTS = $(check_PROGRAMS) $(check_SCRIPTS)
