@@ -401,7 +401,7 @@ main(int argc, char *argv[]) {
 /*
  *	Display initial message.
  */
-   printf("Starting %s with %d hosts (http://www.nta-monitor.com/ike-scan/)\n", VERSION, num_hosts);
+   printf("Starting %s with %u hosts (http://www.nta-monitor.com/ike-scan/)\n", VERSION, num_hosts);
 /*
  *	Display the lists if verbose setting is 3 or more.
  */
@@ -450,7 +450,7 @@ main(int argc, char *argv[]) {
  */
             if (cursor->num_sent >= retry) {
                if (verbose)
-                  warn_msg("---\tRemoving host entry %d (%s) - Timeout", cursor->n, inet_ntoa(cursor->addr));
+                  warn_msg("---\tRemoving host entry %u (%s) - Timeout", cursor->n, inet_ntoa(cursor->addr));
                remove_host(cursor);
             } else {	/* Retry limit not reached for this host */
                if (cursor->num_sent) {
@@ -475,11 +475,11 @@ main(int argc, char *argv[]) {
  */
             add_recv_time(temp_cursor);
             if (verbose > 1)
-               warn_msg("---\tReceived packet #%d from %s",temp_cursor->num_recv ,inet_ntoa(sa_peer.sin_addr));
+               warn_msg("---\tReceived packet #%u from %s",temp_cursor->num_recv ,inet_ntoa(sa_peer.sin_addr));
             if (temp_cursor->live) {
                display_packet(n, packet_in, temp_cursor, &(sa_peer.sin_addr));
                if (verbose)
-                  warn_msg("---\tRemoving host entry %d (%s) - Received %d bytes", temp_cursor->n, inet_ntoa(sa_peer.sin_addr), n);
+                  warn_msg("---\tRemoving host entry %u (%s) - Received %d bytes", temp_cursor->n, inet_ntoa(sa_peer.sin_addr), n);
                remove_host(temp_cursor);
             }
          } else {
@@ -503,7 +503,7 @@ main(int argc, char *argv[]) {
 
    close(sockfd);
 #ifdef SYSLOG
-   info_syslog("Ending: %d hosts scanned. %d returned transform; %d returned notify", num_hosts, transform_responders, notify_responders);
+   info_syslog("Ending: %u hosts scanned. %u returned transform; %u returned notify", num_hosts, transform_responders, notify_responders);
 #endif
    return(0);
 }
@@ -541,7 +541,7 @@ add_host(char *name) {
    he->last_send_time.tv_sec=0;
    he->last_send_time.tv_usec=0;
    he->recv_times = NULL;
-   sprintf(str, "%lu %lu %d %s", now.tv_sec, now.tv_usec, num_hosts, inet_ntoa(he->addr));
+   sprintf(str, "%lu %lu %u %s", now.tv_sec, now.tv_usec, num_hosts, inet_ntoa(he->addr));
    MD5Init(&context);
    MD5Update(&context, str, strlen(str));
    MD5Final(&cookie_md5,&context);
@@ -823,7 +823,7 @@ send_packet(int s, struct host_entry *he) {
  *	Send the packet.
  */
    if (verbose > 1)
-      warn_msg("---\tSending packet #%d to host entry %d (%s) tmo %d", he->num_sent, he->n, inet_ntoa(he->addr), he->timeout);
+      warn_msg("---\tSending packet #%u to host entry %u (%s) tmo %d", he->num_sent, he->n, inet_ntoa(he->addr), he->timeout);
    if ((sendto(s, buf, buflen, 0, (struct sockaddr *) &sa_peer, sa_peer_len)) < 0) {
       err_sys("sendto");
    }
@@ -1147,10 +1147,10 @@ dump_list(void) {
    printf("Host List:\n\n");
    printf("Entry\tIP Address\tCookie\n");
    do {
-      printf("%d\t%s\t%0x%0x\n", p->n, inet_ntoa(p->addr), htonl(p->icookie[0]), htonl(p->icookie[1]));
+      printf("%u\t%s\t%0x%0x\n", p->n, inet_ntoa(p->addr), htonl(p->icookie[0]), htonl(p->icookie[1]));
       p = p->next;
    } while (p != rrlist);
-   printf("\nTotal of %d host entries.\n\n", num_hosts);
+   printf("\nTotal of %u host entries.\n\n", num_hosts);
 }
 
 /*
