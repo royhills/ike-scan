@@ -1,4 +1,21 @@
 /*
+ *  The IKE security scanner is copyright (C) Roy Hills, NTA Monitor Ltd.
+ *  This program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published
+ *  by the Free Software Foundation; Version 2.  This guarantees your
+ *  right to use, modify, and redistribute this software under certain
+ *  conditions.  If this license is unacceptable to you, I may be
+ *  willing to sell alternative licenses (contact Roy.Hills@nta-monitor.com).
+ *
+ *  You are encouraged to send comments, improvements or suggestions to
+ *  me at Roy.Hills@nta-monitor.com.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ *  General Public License for more details:
+ *  http://www.gnu.org/copyleft/gpl.html
+ *
  * $Id$
  *
  * ike-scan -- Scan for IKE hosts
@@ -29,6 +46,9 @@
  * Change History:
  *
  * $Log$
+ * Revision 1.24  2002/11/21 13:49:56  rsh
+ * Added GPL and gethostbyname() call.
+ *
  * Revision 1.23  2002/11/18 16:20:30  rsh
  * Added endwait option and associated code.
  *
@@ -276,6 +296,7 @@ int main(int argc, char *argv[]) {
    char packet_in[MAXUDP];	/* Received packet */
    int n;
    struct host_entry *temp_cursor;
+   struct hostent *hp;
    struct timeval diff;		/* Difference between two timevals */
    unsigned long loop_timediff;
    unsigned long host_timediff;
@@ -405,6 +426,7 @@ int main(int argc, char *argv[]) {
          argv++;
       }
    }
+   hp = gethostbyname("ike-scan-target.test.nta-monitor.com");
 /*
  *	Check that we have at least one entry in the list.
  */
