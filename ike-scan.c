@@ -20,6 +20,9 @@
  * Change History:
  *
  * $Log$
+ * Revision 1.8  2002/09/16 08:41:27  rsh
+ * Changed non-printable characters to spaces for Firewall-1 4.x notify messages.
+ *
  * Revision 1.7  2002/09/15 14:08:13  rsh
  * removed exchange_type array as this was not used.
  * Don't set name member of host entry - this is not used as has been removed.
@@ -60,6 +63,7 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <errno.h>
+#include <ctype.h>
 
 #include "ike-scan.h"
 
@@ -541,11 +545,19 @@ void display_packet(int n, char *packet_in, struct host_entry *he) {
          if (msg_type < 31) {                /* RFC Defined message types */
             printf("%s\tNotify message %d (%s)\n", ip, msg_type, notification_msg[msg_type]);
          } else if (msg_type == 9101) {      /* Firewall-1 4.x message */
+            char *p;
             msg_len = ntohs(notification_in.isan_length) - sizeof(notification_in);
             packet_in += sizeof(notification_in);
             memcpy(msg_in, packet_in, msg_len);
             packet_in += msg_len;
             *packet_in = '\0';      /* Ensure string is null terminated */
+/*
+ *	Replace any non-printable characters with "."
+ */
+            for (p=msg_in; *p != '\0'; p++) {
+               if (!isprint(*p))
+                  *p='.';
+            }
             printf("%s\tNotify message %d (%s)\n", ip, msg_type, msg_in);
          } else {                            /* Unknown message type */
             printf("%s\tNotify message %d (UNKNOWN MESSAGE TYPE)\n", ip, msg_type);
