@@ -151,7 +151,6 @@ main(int argc, char *argv[]) {
    unsigned char packet_in[MAXUDP];	/* Received packet */
    int n;
    struct host_entry *temp_cursor;
-   struct hostent *hp;
    struct timeval diff;		/* Difference between two timevals */
    uint64_t loop_timediff;	/* Time since last packet sent in us */
    uint64_t host_timediff;	/* Time since last packet sent to this host */
@@ -359,7 +358,6 @@ main(int argc, char *argv[]) {
  *	If we're not reading from a file, then we must have some hosts
  *	given as command line arguments.
  */
-   hp = gethostbyname("ike-scan-target.test.nta-monitor.com");
    if (!filename_flag) 
       if ((argc - optind) < 1)
          usage();
