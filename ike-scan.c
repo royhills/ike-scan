@@ -382,14 +382,14 @@ main(int argc, char *argv[]) {
 
       while (fgets(line, MAXLINE, fp)) {
          if ((sscanf(line, "%s", host)) == 1) {
-            add_host(host, timeout, &num_hosts);
+            add_host_pattern(host, timeout, &num_hosts);
          }
       }
       fclose(fp);
    } else {		/* Populate list from command line arguments */
       argv=&argv[optind];
       while (*argv) {
-         add_host(*argv, timeout, &num_hosts);
+         add_host_pattern(*argv, timeout, &num_hosts);
          argv++;
       }
    }
@@ -659,13 +659,127 @@ main(int argc, char *argv[]) {
 }
 
 /*
+ *	add_host_pattern -- Add one or more new host to the list.
+ *
+ *	Inputs:
+ *
+ *	pattern	= The host pattern to add.
+ *	timeout	= Per-host timeout in ms.
+ *	num_hosts = The number of entries in the host list.
+ *
+ *	Returns: None
+ *
+ *	This adds one or more new hosts to the list.  The pattern argument
+ *	can either be a single host or IP address, in which case one host
+ *	will be added to the list, or it can specify a number of hosts with
+ *	the IPnet/bits or IPstart-IPend formats.
+ *
+ *	The timeout and num_hosts arguments are passed unchanged to add_host().
+ */
+void
+add_host_pattern(const char *pattern, unsigned timeout, unsigned *num_hosts) {
+   char *patcopy;
+   struct in_addr in_val;
+   int numbits;
+   char *cp;
+   uint32_t ipnet_val;
+   uint32_t network;
+   uint32_t mask;
+   unsigned long hoststart;
+   unsigned long hostend;
+   int i;
+/*
+ *	Make a copy of pattern because we don't want to modify our argument.
+ */
+   patcopy=Malloc(strlen(pattern)+1);
+   strcpy(patcopy, pattern);
+
+   if        ((cp=strchr(patcopy, '/'))) {	/* IPnet/bits */
+/*
+ *	Get IPnet and bits as integers.  Perform basic error checking.
+ */
+      *(cp++)='\0';	/* patcopy points to IPnet, cp points to bits */
+      if (!(inet_aton(patcopy, &in_val)))
+         err_msg("%s is not a valid IP address", patcopy);
+      ipnet_val=ntohl(in_val.s_addr);	/* We need host byte order */
+      numbits=strtol(cp, (char **) NULL, 10);
+      if (numbits<3 || numbits>32)
+         err_msg("Number of bits in %s must be between 3 and 32", pattern);
+/*
+ *	Construct 32-bit network bitmask from number of bits.
+ */
+      mask=0;
+      for (i=0; i<numbits; i++)
+         mask += 1 << i;
+      mask = mask << (32-i);
+/*
+ *	Mask off the network.  Warn if the host bits were non-zero.
+ */
+      network=ipnet_val & mask;
+      if (network != ipnet_val)
+         warn_msg("Warning: host part of %s is non-zero", pattern);
+/*
+ *	Determine maximum and minimum host values.  We include the host
+ *	and broadcast.
+ */
+      hoststart=0;
+      hostend=(1<<(32-numbits))-1;
+/*
+ *	Calculate all host addresses in the range and feed to add_host()
+ *	in dotted-quad format.
+ */
+      for (i=hoststart; i<=hostend; i++) {
+         uint32_t hostip;
+         int b1, b2, b3, b4;
+         char ipstr[16];
+
+         hostip = network+i;
+         b1 = (hostip & 0xff000000) >> 24;
+         b2 = (hostip & 0x00ff0000) >> 16;
+         b3 = (hostip & 0x0000ff00) >> 8;
+         b4 = (hostip & 0x000000ff);
+         sprintf(ipstr, "%d.%d.%d.%d", b1,b2,b3,b4);
+         add_host(ipstr, timeout, num_hosts);
+      }
+   } else if ((cp=strchr(patcopy, '-'))) {	/* IPstart-IPend */
+/*
+ *	Get IPstart and IPend as integers.
+ */
+      *(cp++)='\0';	/* patcopy points to IPstart, cp points to IPend */
+      if (!(inet_aton(patcopy, &in_val)))
+         err_msg("%s is not a valid IP address", patcopy);
+      hoststart=ntohl(in_val.s_addr);	/* We need host byte order */
+      if (!(inet_aton(cp, &in_val)))
+         err_msg("%s is not a valid IP address", cp);
+      hostend=ntohl(in_val.s_addr);	/* We need host byte order */
+/*
+ *	Calculate all host addresses in the range and feed to add_host()
+ *	in dotted-quad format.
+ */
+      for (i=hoststart; i<=hostend; i++) {
+         int b1, b2, b3, b4;
+         char ipstr[16];
+
+         b1 = (i & 0xff000000) >> 24;
+         b2 = (i & 0x00ff0000) >> 16;
+         b3 = (i & 0x0000ff00) >> 8;
+         b4 = (i & 0x000000ff);
+         sprintf(ipstr, "%d.%d.%d.%d", b1,b2,b3,b4);
+         add_host(ipstr, timeout, num_hosts);
+      }
+   } else {				/* Single host */
+      add_host(patcopy, timeout, num_hosts);
+   }
+}
+
+/*
  *	add_host -- Add a new host to the list.
  *
  *	Inputs:
  *
  *	name	= The Name or IP address of the host.
  *	timeout	= Per-host timeout in ms.
- *	num_hosts	The number of entries in the host list.
+ *	num_hosts = The number of entries in the host list.
  *
  *	Returns: None
  */
@@ -1769,12 +1883,25 @@ make_message(const char *fmt, ...) {
  *      Inputs:
  *
  *      None.
+ *
+ *	Returns:
+ *
+ *	None.
  */
 void
 usage(void) {
    fprintf(stderr, "Usage: ike-scan [options] [hosts...]\n");
    fprintf(stderr, "\n");
-   fprintf(stderr, "Hosts are specified on the command line unless the --file option is specified.\n");
+   fprintf(stderr, "Target hosts must be specified on the command line unless the --file option is\n");
+   fprintf(stderr, "given, in which case the targets are read from the specified file instead.\n");
+   fprintf(stderr, "\n");
+   fprintf(stderr, "The target hosts can be specified as IP addresses or hostnames.  You can also\n");
+   fprintf(stderr, "specify IPnetwork/bits (e.g. 192.168.1.0/24) to specify all hosts in the given\n");
+   fprintf(stderr, "network (network and broadcast addresses included), and IPstart-IPend\n");
+   fprintf(stderr, "(e.g. 192.168.1.3-192.168.1.27) to specify all hosts in the inclusive range.\n");
+   fprintf(stderr, "\n");
+   fprintf(stderr, "These different options for specifying target hosts may be used both on the\n");
+   fprintf(stderr, "command line, and also in the file specified with the --file option.\n");
    fprintf(stderr, "\n");
    fprintf(stderr, "Options:\n");
    fprintf(stderr, "\n");
