@@ -113,7 +113,7 @@ regexec(0, 0, 0, 0, 0)]])],
 [ac_nta_posic_regex=no])
 AC_MSG_RESULT([$ac_nta_posix_regex])
 if test $ac_nta_posix_regex = no; then
-   AC_MSG_WARN([You don't seem to have posix regular expression support])
+   AC_MSG_ERROR([You don't seem to have posix regular expression support])
 else
    AC_DEFINE(HAVE_REGEX_H, 1, [Define to 1 if you have posix regex support])
 fi
