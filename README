@@ -193,14 +193,19 @@ aware of the scanning.  It is possible to use ike-scan to determine if
 a given implementation will log these scanning attempts if you have access
 to the system logs.
 
-By default, the main mode packets sent contain one proposal which contains
-8 transforms.  These 8 transforms represent all possible combinations of:
+The main mode packets sent contain an ISAKMP header and an SA payload.  The SA
+payload contains a single proposal, and the proposal can contain a variable
+number of transforms as detailed below.
+
+By default, the SA proposal contains 8 transforms.  These 8 transforms
+represent all possible combinations of:
 a) Encryption Algorithm: DES-CBC and 3DES-CBC;
 b) Hash Algorithm: MD5 and SHA; and
 c) DH Group: 1 (MODP 768) and 2 (MODP 1024).
 
 An example tcpdump output of the main mode packet sent by ike-scan using
-the default transform set is shown below:
+the default transform set is shown below.  This shows the 8 transforms and
+also shows the order in which they are sent:
 
 16:57:16.024536 192.168.124.8.500 > 172.16.2.2.500:  [udp sum ok]isakmp 1.0 msgid 00000000: phase 1 I ident:
     (sa: doi=ipsec situation=identity
@@ -266,15 +271,17 @@ An example tcpdump output for a "handshake" response is:
         (p: #1 protoid=isakmp transform=1
             (t: #1 id=ike (type=enc value=3des)(type=hash value=sha1)(type=auth value=preshared)(type=group desc value=modp1024)(type=lifetype value=sec)(type=lifeduration len=4 value=00007080)))) (ttl 126, id 37891, len 112)
 
-This shows that the IKE host has chosen the 3DES/SHA1 transform from our
-proposed set.
+This shows that the IKE host has responded with an ISAKMP header and an SA
+payload containing a single proposal.  This proposal contains a single
+transform representing the transform chosen from the proposal sent by ike-scan.
 
 An example tcpdump output for a "notify" response is:
 
 17:12:55.038554 161.30.89.22.500 > 194.164.37.1.500:  [udp sum ok]isakmp 1.0 msgid 00000000: phase 1 R inf:
     (n: doi=0 proto=1 type=NO-PROPOSAL-CHOSEN) (ttl 52, id 39577, len 68)
 
-This shows that the IKE host has responded with the notify message
+This shows that the IKE host has responded with an ISAKMP header and a
+notify payload.  The notify payload is an informational message with the type
 "NO-PROPOSAL-CHOSEN".
 
 For those hosts that respond, ike-scan records the times of the received
