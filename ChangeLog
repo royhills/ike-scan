@@ -1,5 +1,19 @@
 $Id$
 
+2003-11-18 Roy Hills <Roy.Hills@nta-monitor.com>
+
+	* isakmp.c: Wrote ISAKMP packet parsing routines: skip_payload,
+	  process_isakmp_hdr, process_sa, process_vid, process_notify.
+	  These are used by the new display_packet() routine in ike-scan.c
+
+	* ike-scan.c: Re-wrote display_packet() function to parse ISAKMP
+	  packet in a flexible way using functions in isakmp.c.  This
+	  allows us to display multiple Vendor ID payloads (previously we
+	  could only display the first), and also to detect and print
+	  vendor ID payloads anwhere in the packet (previously it had to be
+	  immediately after the SA payload, which may not be the case with
+	  aggressive mode).
+
 2003-11-14 Roy Hills <Roy.Hills@nta-monitor.com>
 
 	* ike-scan.c: Fixed bug which could cause select() to be passed a
