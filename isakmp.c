@@ -55,7 +55,7 @@ extern int experimental;
  *	before the packet is sent.
  */
 struct isakmp_hdr*
-make_isakmp_hdr(uint8_t xchg, uint8_t next, uint32_t length) {
+make_isakmp_hdr(unsigned xchg, unsigned next, unsigned length) {
    struct isakmp_hdr* hdr;
 
    hdr = Malloc(sizeof(struct isakmp_hdr));
@@ -90,7 +90,7 @@ make_isakmp_hdr(uint8_t xchg, uint8_t next, uint32_t length) {
  *	This constructs an SA header.  It fills in the static values.
  */
 struct isakmp_sa*
-make_sa_hdr(uint8_t next, uint32_t length) {
+make_sa_hdr(unsigned next, unsigned length) {
    struct isakmp_sa* hdr;
 
    hdr = Malloc(sizeof(struct isakmp_sa));
@@ -121,7 +121,7 @@ make_sa_hdr(uint8_t next, uint32_t length) {
  *	are only allowed to have one proposal anyway.
  */
 struct isakmp_proposal*
-make_prop(uint32_t length, uint8_t notrans) {
+make_prop(unsigned length, unsigned notrans) {
    struct isakmp_proposal* hdr;
 
    hdr = Malloc(sizeof(struct isakmp_proposal));
@@ -161,9 +161,9 @@ make_prop(uint32_t length, uint8_t notrans) {
  *	Most of the values are defined in RFC 2409 Appendix A.
  */
 unsigned char*
-make_trans(size_t *length, uint8_t next, uint8_t number, uint16_t cipher,
-           uint16_t keylen, uint16_t hash, uint16_t auth, uint16_t group,
-           uint32_t lifetime, uint32_t lifesize, int gss_id_flag,
+make_trans(size_t *length, unsigned next, unsigned number, unsigned cipher,
+           unsigned keylen, unsigned hash, unsigned auth, unsigned group,
+           unsigned lifetime, unsigned lifesize, int gss_id_flag,
            unsigned char *gss_data, size_t gss_data_len) {
 
    struct isakmp_transform* hdr;	/* Transform header */
@@ -259,15 +259,15 @@ make_trans(size_t *length, uint8_t next, uint8_t number, uint16_t cipher,
  */
 unsigned char*
 add_trans(int finished, size_t *length,
-          uint16_t cipher, uint16_t keylen, uint16_t hash, uint16_t auth,
-          uint16_t group, uint32_t lifetime, uint32_t lifesize,
+          unsigned cipher, unsigned keylen, unsigned hash, unsigned auth,
+          unsigned group, unsigned lifetime, unsigned lifesize,
           int gss_id_flag, unsigned char *gss_data, size_t gss_data_len) {
 
    static int first_transform = 1;
    static unsigned char *trans_start=NULL;	/* Start of set of transforms */
    static size_t cur_offset;			/* Start of current transform */
    static size_t end_offset;			/* End of transforms */
-   static int trans_no=1;
+   static unsigned trans_no=1;
    unsigned char *trans;			/* Transform payload */
    size_t len;					/* Transform length */
 /*
@@ -327,7 +327,7 @@ add_trans(int finished, size_t *length,
  *	then b_value is ignored.
  */
 unsigned char *
-make_attr(size_t *outlen, char type, unsigned class, size_t length,
+make_attr(size_t *outlen, int type, unsigned class, size_t length,
           unsigned b_value, void *v_value) {
    struct isakmp_attribute *hdr;
    unsigned char *cp;
@@ -379,7 +379,7 @@ make_attr(size_t *outlen, char type, unsigned class, size_t length,
  *	list.
  */
 unsigned char *
-add_attr(int finished, size_t *outlen, char type, unsigned class, size_t length,
+add_attr(int finished, size_t *outlen, int type, unsigned class, size_t length,
          unsigned b_value, void *v_value) {
 
    static int first_attr=1;
@@ -431,7 +431,7 @@ add_attr(int finished, size_t *outlen, char type, unsigned class, size_t length,
  *	The next pointer value must be filled in later.
  */
 unsigned char*
-make_vid(size_t *length, uint8_t next, unsigned char *vid_data,
+make_vid(size_t *length, unsigned next, unsigned char *vid_data,
          size_t vid_data_len) {
    unsigned char *payload;
    struct isakmp_vid* hdr;
@@ -524,11 +524,11 @@ add_vid(int finished, size_t *length, unsigned char *vid_data,
  *	Diffie Hellman public value.  However, we just use random data.
  */
 unsigned char*
-make_ke(size_t *length, uint8_t next, size_t kx_data_len) {
+make_ke(size_t *length, unsigned next, size_t kx_data_len) {
    unsigned char *payload;
    struct isakmp_kx* hdr;
    unsigned char *kx_data;
-   int i;
+   unsigned i;
 
    if (kx_data_len % 4)
       err_msg("Key exchange data length %d is not a multiple of 4",
@@ -572,11 +572,11 @@ make_ke(size_t *length, uint8_t next, size_t kx_data_len) {
  *	restriction.
  */
 unsigned char*
-make_nonce(size_t *length, uint8_t next, size_t nonce_len) {
+make_nonce(size_t *length, unsigned next, size_t nonce_len) {
    unsigned char *payload;
    struct isakmp_nonce* hdr;
    unsigned char *cp;
-   int i;
+   unsigned i;
 
    payload = Malloc(sizeof(struct isakmp_nonce)+nonce_len);
    hdr = (struct isakmp_nonce*) payload;  /* Overlay nonce struct on payload */
@@ -606,7 +606,7 @@ make_nonce(size_t *length, uint8_t next, size_t nonce_len) {
  *
  */
 unsigned char*
-make_id(size_t *length, uint8_t next, uint8_t idtype, unsigned char *id_data,
+make_id(size_t *length, unsigned next, unsigned idtype, unsigned char *id_data,
         size_t id_data_len) {
    unsigned char *payload;
    struct isakmp_id* hdr;
@@ -645,7 +645,7 @@ make_id(size_t *length, uint8_t next, uint8_t idtype, unsigned char *id_data,
  *	Pointer to start of next payload, or NULL if no next payload.
  */
 unsigned char *
-skip_payload(unsigned char *cp, size_t *len, int *next) {
+skip_payload(unsigned char *cp, size_t *len, unsigned *next) {
    struct isakmp_generic *hdr = (struct isakmp_generic *) cp;
 /*
  *	Signal no more payloads by setting length to zero if:
@@ -689,7 +689,8 @@ skip_payload(unsigned char *cp, size_t *len, int *next) {
  *	Pointer to start of next payload, or NULL if no next payload.
  */
 unsigned char *
-process_isakmp_hdr(unsigned char *cp, size_t *len, int *next, int *type) {
+process_isakmp_hdr(unsigned char *cp, size_t *len, unsigned *next,
+                   unsigned *type) {
    struct isakmp_hdr *hdr = (struct isakmp_hdr *) cp;
 /*
  *	Signal no more payloads by setting length to zero if:
@@ -737,7 +738,8 @@ process_isakmp_hdr(unsigned char *cp, size_t *len, int *next, int *type) {
  *	which should be free'ed by the caller when it's no longer needed.
  */
 char *
-process_sa(unsigned char *cp, size_t len, int type, int quiet, int multiline) {
+process_sa(unsigned char *cp, size_t len, unsigned type, int quiet,
+           int multiline) {
    struct isakmp_sa *sa_hdr = (struct isakmp_sa *) cp;
    struct isakmp_proposal *prop_hdr =
       (struct isakmp_proposal *) (cp + sizeof(struct isakmp_sa));
@@ -1037,7 +1039,7 @@ char *
 process_notify(unsigned char *cp, size_t len) {
    struct isakmp_notification *hdr = (struct isakmp_notification *) cp;
    char *msg;
-   int msg_type;
+   unsigned msg_type;
    size_t msg_len;
    unsigned char *msg_data;
    char *notify_msg;
@@ -1085,11 +1087,11 @@ process_notify(unsigned char *cp, size_t len) {
 
    if (msg_type == 9101) {	/* Firewall-1 4.x/NG Base message type */
       notify_msg = printable(msg_data, msg_len);
-      msg=make_message("Notify message %d (Firewall-1) Message=\"%s\"",
+      msg=make_message("Notify message %u (Firewall-1) Message=\"%s\"",
                        msg_type, notify_msg);
       free(notify_msg);
    } else {			/* All other Message Types */
-      msg=make_message("Notify message %d (%s)", msg_type,
+      msg=make_message("Notify message %u (%s)", msg_type,
                        STR_OR_ID(msg_type, notification_msg));
    }
 
@@ -1114,7 +1116,7 @@ process_notify(unsigned char *cp, size_t len) {
 char *
 process_id(unsigned char *cp, size_t len) {
    struct isakmp_id *hdr = (struct isakmp_id *) cp;
-   int idtype;
+   unsigned idtype;
    char *msg;
    char *msg2;
    unsigned char *id_data;
