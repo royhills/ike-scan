@@ -490,7 +490,7 @@ main(int argc, char *argv[]) {
  */
             if (verbose && n >= sizeof(hdr_in)) {
                memcpy(&hdr_in, packet_in, sizeof(hdr_in));
-               warn_msg("---\tIgnoring %d bytes from %s with unknown cookie %0x%0x", n, inet_ntoa(sa_peer.sin_addr),hdr_in.isa_icookie[0], hdr_in.isa_icookie[1]);
+               warn_msg("---\tIgnoring %d bytes from %s with unknown cookie %.8x%.8x", n, inet_ntoa(sa_peer.sin_addr), htonl(hdr_in.isa_icookie[0]), htonl(hdr_in.isa_icookie[1]));
             }
          }
       } /* End If */
@@ -1156,7 +1156,7 @@ dump_list(void) {
    printf("Host List:\n\n");
    printf("Entry\tIP Address\tCookie\n");
    do {
-      printf("%u\t%s\t%0x%0x\n", p->n, inet_ntoa(p->addr), htonl(p->icookie[0]), htonl(p->icookie[1]));
+      printf("%u\t%s\t%.8x%.8x\n", p->n, inet_ntoa(p->addr), htonl(p->icookie[0]), htonl(p->icookie[1]));
       p = p->next;
    } while (p != rrlist);
    printf("\nTotal of %u host entries.\n\n", num_hosts);
