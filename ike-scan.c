@@ -54,6 +54,7 @@ struct host_entry *cursor;		/* Pointer to current list entry */
 struct pattern_list *patlist = NULL;	/* Backoff pattern list */
 struct vid_pattern_list *vidlist = NULL;	/* Vendor ID pattern list */
 int verbose=0;				/* Verbose level */
+int experimental=0;			/* Experimental flag */
 
 int
 main(int argc, char *argv[]) {
@@ -83,9 +84,10 @@ main(int argc, char *argv[]) {
       {"aggressive", no_argument, 0, 'A'},
       {"gssid", required_argument, 0, 'G'},
       {"vidpatterns", required_argument, 0, 'I'},
+      {"experimental", no_argument, 0, 'X'},
       {0, 0, 0, 0}
    };
-   const char *short_options = "f:hs:d:r:t:i:b:w:vl:z:m:Ve:a:o::u:n:y:g:p:AG:I:";
+   const char *short_options = "f:hs:d:r:t:i:b:w:vl:z:m:Ve:a:o::u:n:y:g:p:AG:I:X";
    int arg;
    char arg_str[MAXLINE];	/* Args as string for syslog */
    int options_index=0;
@@ -314,6 +316,9 @@ main(int argc, char *argv[]) {
          case 'I':	/* --vidpatterns */
             strncpy(vidfile, optarg, MAXLINE);
             break;
+         case 'X':	/* --experimental */
+            experimental=1;
+            break;
          default:	/* Unknown option */
             usage();
             break;
@@ -417,12 +422,12 @@ main(int argc, char *argv[]) {
 /*
  *	Display the lists if verbose setting is 3 or more.
  */
-   if (verbose > 2)
+   if (verbose > 2) {
       dump_list(num_hosts);
-   if (verbose > 2 && showbackoff_flag)
-      dump_backoff(pattern_fuzz);
-   if (verbose > 2)
+      if (showbackoff_flag)
+         dump_backoff(pattern_fuzz);
       dump_vid();
+   }
 /*
  *	Main loop: send packets to all hosts in order until a response
  *	has been received or the host has exhausted it's retry limit.
