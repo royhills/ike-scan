@@ -6,7 +6,7 @@ dnl
 dnl	Although there is a standard macro AC_CHECK_TYPE, we can't always
 dnl	use this because it doesn't include enough header files.
 dnl
-AC_DEFUN(AC_NTA_CHECK_TYPE,
+AC_DEFUN([AC_NTA_CHECK_TYPE],
    [AC_MSG_CHECKING([for $1 using $CC])
    AC_CACHE_VAL(ac_cv_nta_have_$1,
 	AC_TRY_COMPILE([
@@ -41,7 +41,7 @@ dnl
 dnl	This type is normally socklen_t but is sometimes size_t or int instead.
 dnl	We try, in order: socklen_t, int, size_t until we find one that compiles
 dnl
-AC_DEFUN(AC_NTA_NET_SIZE_T,
+AC_DEFUN([AC_NTA_NET_SIZE_T],
    [AC_MSG_CHECKING([for socklen_t or equivalent using $CC])
    ac_nta_net_size_t=no
    AC_TRY_COMPILE([
