@@ -1109,21 +1109,21 @@ display_packet(int n, unsigned char *packet_in, struct host_entry *he,
    char *msg;			/* Message to display */
    char *msg2;
    unsigned char *pkt_ptr;
-   static const char *payload_name[] = { /* Payload types from RFC 2408 3.1 */
-      NULL,                             /* 0 */
-      "SecurityAssociation",		/* 1 */
-      "Proposal",                       /* 2 */
-      "Transform",                      /* 3 */
-      "KeyExchange",			/* 4 */
-      "Identification",                 /* 5 */
-      "Certificate",                    /* 6 */
-      "CertificateRequest",		/* 7 */
-      "Hash",                           /* 8 */
-      "Signature",                      /* 9 */
-      "Nonce",                          /* 10 */
-      "Notification",                   /* 11 */
-      "Delete",                         /* 12 */
-      "VendorID"			/* 13 */
+   static const id_name_map payload_map[] = { /* Payload types RFC 2408 3.1 */
+      {1, "SecurityAssociation"},
+      {2, "Proposal"},
+      {3, "Transform"},
+      {4, "KeyExchange"},
+      {5, "Identification"},
+      {6, "Certificate"},
+      {7, "CertificateRequest"},
+      {8, "Hash"},
+      {9, "Signature"},
+      {10, "Nonce"},
+      {11, "Notification"},
+      {12, "Delete"},
+      {13, "VendorID"},
+      {-1, NULL}
    };
 
 /*
@@ -1167,7 +1167,7 @@ display_packet(int n, unsigned char *packet_in, struct host_entry *he,
          break;
       default:
          cp=make_message("Unknown IKE payload returned: %s",
-                         STR_OR_ID(next, payload_name));
+                         id_to_name(next, payload_map));
          break;
    }
    pkt_ptr = skip_payload(pkt_ptr, &bytes_left, &next);
@@ -1200,11 +1200,11 @@ display_packet(int n, unsigned char *packet_in, struct host_entry *he,
             msg2=msg;
             if (bytes_left >= sizeof(struct isakmp_generic)) {
                 struct isakmp_generic *hdr = (struct isakmp_generic *) pkt_ptr;
-                cp=make_message("%s(%u bytes)", STR_OR_ID(next, payload_name),
+                cp=make_message("%s(%u bytes)", id_to_name(next, payload_map),
                                 ntohs(hdr->isag_length) -
                                 sizeof(struct isakmp_generic));
             } else {
-                cp=make_message("%s)", STR_OR_ID(next, payload_name));
+                cp=make_message("%s)", id_to_name(next, payload_map));
             }
             msg=make_message("%s%s%s", msg2, multiline?"\n\t":" ", cp);
             free(msg2);	/* Free old message */
@@ -2338,27 +2338,27 @@ decode_trans(char *str, unsigned *enc, unsigned *keylen, unsigned *hash,
 void
 usage(int status) {
 
-   static const char *auth_methods[] = { /* Auth methods from RFC 2409 App. A */
-      NULL,			/* 0 */
-      "pre-shared key",		/* 1 */
-      "DSS signatures",		/* 2 */
-      "RSA signatures",		/* 3 */
-      "Encryption with RSA",	/* 4 */
-      "Revised encryption with RSA" /* 5 */
+   static const id_name_map auth_map[] = { /* Auth methods RFC 2409 App. A */
+      {1, "pre-shared key"},
+      {2, "DSS signatures"},
+      {3, "RSA signatures"},
+      {4, "Encryption with RSA"},
+      {5, "Revised encryption with RSA"},
+      {-1, NULL}
    };
-   static const char *id_type_name[] ={	/* ID Type names from RFC 2407 4.6.2.1 */
-      NULL,	                /* 0 */
-      "ID_IPV4_ADDR",           /* 1 */
-      "ID_FQDN",                /* 2 */
-      "ID_USER_FQDN",           /* 3 */
-      "ID_IPV4_ADDR_SUBNET",    /* 4 */
-      "ID_IPV6_ADDR",           /* 5 */
-      "ID_IPV6_ADDR_SUBNET",    /* 6 */
-      "ID_IPV4_ADDR_RANGE",     /* 7 */
-      "ID_IPV6_ADDR_RANGE",     /* 8 */
-      "ID_DER_ASN1_DN",         /* 9 */
-      "ID_DER_ASN1_GN",         /* 10 */
-      "ID_KEY_ID"               /* 11 */
+   static const id_name_map id_type_map[] ={ /* ID Type names RFC 2407 4.6.2.1 */
+      {1, "ID_IPV4_ADDR"},
+      {2, "ID_FQDN"},
+      {3, "ID_USER_FQDN"},
+      {4, "ID_IPV4_ADDR_SUBNET"},
+      {5, "ID_IPV6_ADDR"},
+      {6, "ID_IPV6_ADDR_SUBNET"},
+      {7, "ID_IPV4_ADDR_RANGE"},
+      {8, "ID_IPV6_ADDR_RANGE"},
+      {9, "ID_DER_ASN1_DN"},
+      {10, "ID_DER_ASN1_GN"},
+      {11, "ID_KEY_ID"},
+      {-1, NULL}
    };
 
 
@@ -2453,7 +2453,7 @@ usage(int status) {
    fprintf(stderr, "\t\t\twith the --trans options to produce multiple transform\n");
    fprintf(stderr, "\t\t\tpayloads with different lifesizes.  Each --trans option\n");
    fprintf(stderr, "\t\t\twill use the previously specified lifesize value.\n");
-   fprintf(stderr, "\n--auth=<n> or -m <n>\tSet auth. method to <n>, default=%u (%s).\n", DEFAULT_AUTH_METHOD, STR_OR_ID(DEFAULT_AUTH_METHOD, auth_methods));
+   fprintf(stderr, "\n--auth=<n> or -m <n>\tSet auth. method to <n>, default=%u (%s).\n", DEFAULT_AUTH_METHOD, id_to_name(DEFAULT_AUTH_METHOD, auth_map));
    fprintf(stderr, "\t\t\tRFC defined values are 1 to 5.  See RFC 2409 Appendix A.\n");
    fprintf(stderr, "\t\t\tCheckpoint hybrid mode is 64221.\n");
    fprintf(stderr, "\t\t\tGSS (Windows \"Kerberos\") is 65001.\n");
@@ -2521,7 +2521,7 @@ usage(int status) {
    fprintf(stderr, "\t\t\tThis option is only applicable to Aggressive Mode.\n");
    fprintf(stderr, "\t\t\t<id> can be specified as a string, e.g. --id=test or as\n");
    fprintf(stderr, "\t\t\ta hex value with a leading \"0x\", e.g. --id=0xdeadbeef.\n");
-   fprintf(stderr, "\n--idtype=<n> or -y <n>\tUse identification type <n>.  Default %u (%s).\n", DEFAULT_IDTYPE, STR_OR_ID(DEFAULT_IDTYPE, id_type_name));
+   fprintf(stderr, "\n--idtype=<n> or -y <n>\tUse identification type <n>.  Default %u (%s).\n", DEFAULT_IDTYPE, id_to_name(DEFAULT_IDTYPE, id_type_map));
    fprintf(stderr, "\t\t\tThis option is only applicable to Aggressive Mode.\n");
    fprintf(stderr, "\t\t\tSee RFC 2407 4.6.2 for details of Identification types.\n");
    fprintf(stderr, "\n--dhgroup=<n> or -g <n>\tUse Diffie Hellman Group <n>.  Default %u.\n", DEFAULT_DH_GROUP);
