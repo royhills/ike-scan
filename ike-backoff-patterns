@@ -101,7 +101,19 @@ Watchguard Firebox	0, 10, 10, 10, 10, 10
 # Observed on: Windows 2000 Server SP1
 Windows-2000	0, 1, 2, 4, 8, 16, 32
 
-# Discovered by: Thomas Walpuski, Jan 2003
+# 1st pattern Discovered by: Thomas Walpuski, Jan 2003
 # Observed on: Various OpenBSD systems running isakmpd
-OpenBSD-isakmpd:	0, 7, 9, 11
+# 2nd pattern discovered by: Marco Ivaldi <raptor@mediaservice.net>, Jan 2003
+# Observed on: OpenBSD 3.2
+# Observed on: FreeBSD 4.7-Stable with isakmpd-20021118 and OpenBSD 3.1
+# Note: I'm not sure which of these is correct, or if both are.  I know that
+#       OpenBSD isakmpd is highly configurable, so that could account for the
+#       differences.  Because the 2nd pattern is the same as the 1st but with
+#       more packets, the 1st pattern may have missed the last 2 packets
+#       somehow.  For now, I'm leaving both patterns in -rsh.
+FreeBSD/OpenBSD-isakmpd	0, 7, 9, 11
+FreeBSD/OpenBSD-isakmpd	0, 7, 9, 11, 13, 15
 
+# Discovered by: Paul van Maaren, Jan 2003
+# Observed on: FreeBSD-4.7 STABLE with racoon-20021120a
+FreeBSD-racoon	0, 20, 20, 20, 20, 20
