@@ -5,6 +5,9 @@ release.  For more details please read the ChangeLog file.
 
 ike-scan v1.7:
 
+* Improved "make check" tests, so they now check more areas including Pre-
+  Shared Key cracking, HMAC and Hash speeds, and HMAC and Hash test vectors.
+
 * Added --nodns (-N) option to prevent DNS lookups.  With this option,
   target hosts are not processed with gethostbyname(), which can avoid
   delays when the system running ike-scan does not have functioning DNS.
