@@ -155,6 +155,7 @@ unsigned char *SHA1(const unsigned char *, size_t, unsigned char *);
 #define DEFAULT_IDTYPE ID_USER_FQDN	/* Default ID Type for agg. mode */
 #define DEFAULT_EXCHANGE_TYPE ISAKMP_XCHG_IDPROT	/* Main Mode */
 #define DEFAULT_NONCE_LEN 20		/* Default Nonce length in bytes */
+#define DEFAULT_HEADER_VERSION 0x10	/* Default ISAKMP header version */
 #define SYSLOG 1			/* Use syslog if defined */
 #define SYSLOG_FACILITY LOG_USER	/* Syslog facility to use */
 #define PATTERNS_FILE "ike-backoff-patterns" /* Backoff patterns filename */
@@ -263,6 +264,32 @@ typedef struct {		/* Used for encapsulated IKE */
   uint16_t     check;
 } ike_udphdr;
 
+/*
+ * If you change the ordering of the members in this struct, then you must
+ * also change the initialisation of ike_params in main() in ike-scan.c to
+ * confirm to the new order.
+ */
+typedef struct {	/* IKE Packet Parameters */
+   unsigned lifetime;
+   unsigned lifesize;
+   unsigned auth_method;
+   unsigned dhgroup;
+   unsigned idtype;
+   unsigned char *id_data;
+   size_t id_data_len;
+   int vendor_id_flag;
+   int trans_flag;
+   unsigned exchange_type;
+   int gss_id_flag;
+   unsigned char *gss_data;
+   size_t gss_data_len;
+   size_t nonce_data_len;
+   char *header_length;
+   unsigned char *cr_data;
+   size_t cr_data_len;
+   int header_version;
+} ike_packet_params;
+
 /* Functions */
 
 void err_sys(const char *, ...);
@@ -280,10 +307,7 @@ void send_packet(int, unsigned char *, size_t, host_entry *, unsigned,
 int recvfrom_wto(int, unsigned char *, size_t, struct sockaddr *, int);
 void remove_host(host_entry **, unsigned *, unsigned);
 void timeval_diff(struct timeval *, struct timeval *, struct timeval *);
-unsigned char *initialise_ike_packet(size_t *, unsigned, unsigned, unsigned,
-                                     unsigned, unsigned, unsigned char *,
-                                     size_t, int, int, unsigned, int,
-                                     unsigned char *, size_t, size_t);
+unsigned char *initialise_ike_packet(size_t *, ike_packet_params *);
 host_entry *find_host_by_cookie(host_entry **, unsigned char *,
                                        int, unsigned);
 void display_packet(int, unsigned char *, host_entry *,
@@ -303,7 +327,7 @@ void dump_vid(void);
 unsigned int hstr_i(const char *);
 unsigned char* hex2data(const char *, size_t *);
 unsigned char* hex_or_str(const char *, size_t *);
-struct isakmp_hdr* make_isakmp_hdr(unsigned, unsigned, unsigned);
+struct isakmp_hdr* make_isakmp_hdr(unsigned, unsigned, unsigned, int);
 struct isakmp_sa* make_sa_hdr(unsigned, unsigned);
 struct isakmp_proposal* make_prop(unsigned, unsigned);
 unsigned char* make_trans(size_t *, unsigned, unsigned, unsigned,
