@@ -425,7 +425,12 @@ main(int argc, char *argv[]) {
       dump_list(num_hosts);
       if (showbackoff_flag)
          dump_backoff(pattern_fuzz);
+#ifdef HAVE_REGEX_H
       dump_vid();
+#else
+      warn_msg("This ike-scan binary was not compiled with Posix regular expression support.");
+      warn_msg("Vendor ID Fingerprinting will not be possible.");
+#endif
    }
 /*
  *	Main loop: send packets to all hosts in order until a response
@@ -1984,13 +1989,13 @@ add_vid_pattern(char *line) {
    *pp = '\0';
 /*
  *      Process and store the Vendor ID pattern.
- *	The pattern in the file is a Posix basic regular expression which is
+ *	The pattern in the file is a Posix extended regular expression which is
  *	compiled with "regcomp".  A pointer to this compiled pattern is
  *	stored in pe->regex.  We also store the text pattern in pe->pattern
  *	for dump_vid().
  */
    rep = Malloc(sizeof(regex_t));
-   if ((result=regcomp(rep, pat, REG_ICASE|REG_NOSUB))) {
+   if ((result=regcomp(rep, pat, REG_EXTENDED|REG_ICASE|REG_NOSUB))) {
       char errbuf[MAXLINE];
       size_t errlen;
       errlen=regerror(result, rep, errbuf, MAXLINE);
