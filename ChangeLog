@@ -1,5 +1,84 @@
 $Id$
 
+2004-01-13 Roy Hills <Roy.Hills@nta-monitor.com>
+
+	* Makefile.am: Added new shell-script-based tests check-run1,
+	  check-run2, and check-run3.
+
+	* ike-scan.1: Updated man page OPTIONS section and added FILES
+	  section.
+
+2004-01-10 Roy Hills <Roy.Hills@nta-monitor.com>
+
+	* iks-scan.c, isakmp.c: Added regular expression support for
+	  Vendor ID pattern matching.  Patterns in ike-vendor-ids
+	  are now Posix basic regular expressions which are compiled
+	  with "regcomp" and matched against the hex representation
+	  of the Vendor ID data with "regexec".
+
+	* configure.ac: Added check for Posix regular expression
+	  support.
+
+2003-12-30 Roy Hills <Roy.Hills@nta-monitor.com>
+
+	* isakmp.c: Added transform attribute generation functions make_attr()
+	  and add_attr().  Use these functions in make_trans() to improve
+	  readability and allow for future flexibility.
+
+	* ike-scan.c: Free various bits of malloc'ed storage when they are
+	  no longer used.  The pointers involved are: vid_data, patcopy,
+	  id_data, gss_data, hdr, sa, prop, transforms, ke, nonce, id and vid.
+	  These are all used only at initialisation time.  We don't save much
+	  memory by free'ing these, but it's better to be neat & tidy.
+
+	* check-sizes.c: New test program which checks the sizes of structures
+	  and types.  This is referenced by the TESTS target in Makefile.am,
+	  so it gets run by "make check".
+
+	* ike-scan.c: check_struct_sizes() is now obsolete and has been
+	  removed.
+
+2003-12-29 Roy Hills <Roy.Hills@nta-monitor.com>
+
+	* isakmp.c: Fixed bug which caused the data length for ID and VID
+	  payloads to be 8 bytes more than it really was (we were not
+	  subtracting the length of the header structure).
+
+	* isakmp.c: Only check the returned VID against a candidate pattern if
+	  the VID data length is >= the candidate pattern length.
+
+	* isakmp.c: Moved notification_msg[] from global to process_notify()
+	  function.  Use STR_OR_ID macro to display appropriate string from
+	  notification_msg[] which avoids a hard-coded constant.  Changed
+	  format of "Firewall-1" 9101 notify message.
+
+2003-12-24 Roy Hills <Roy.Hills@nta-monitor.com>
+
+	* ike-scan.c: Modified error message if bind() fails to be more
+	  specific depending on the value of errno.
+
+	* ike-scan.c: Added --quiet option to prevent packet decode and thus
+	  shorten the output if required and --multiline option to split the
+	  decode over multiple lines (one line per payload).
+
+	* ike-scan.c: Improved protocol decode.  SA and ID payloads are now
+	  decoded.  For SA, the various transform attributes are shown.
+
+	* ike-scan.c: Added utility functions printable() and hexstring() to
+	  provide escaped-printable and hex representations of data.
+
+	* isakmp.c: New process_id() function to process ID payload. Improved
+	  process_sa() function to decode transforms.  Transform decoding is
+	  no longer experimental.
+
+2003-12-19 Roy Hills <Roy.Hills@nta-monitor.com>
+
+	* isakmp.c: Added experimental support for displaying transform
+	  attributes.  This code is only enabled if the --experimental option is
+	  specified.  New attribute parseing function process_attr(),
+	  new macro STR_OR_ID, and new function numstr() as well as additional
+	  code in process_sa() function.
+
 2003-12-11 Roy Hills <Roy.Hills@nta-monitor.com>
 
 	* ike-scan.c: Added support for Vendor ID fingerprinting using
