@@ -27,8 +27,8 @@
 # Format:
 # Implementation_Name<Tab>Vendor_ID_Pattern
 #
-# The Vendor_ID_Pattern should be specified as a basic regular expression
-# that will match the hex value of the Vendor ID.  The Posix regular
+# The Vendor_ID_Pattern should be specified as a Posix extended regular
+# expression that will match the hex value of the Vendor ID.  The Posix regular
 # expression routines "regcomp" and "regexec" are used to compile and
 # match the petterns.
 #
