@@ -117,6 +117,7 @@ main(int argc, char *argv[]) {
    struct sockaddr_in sa_peer;
    struct timeval now;
    unsigned char packet_in[MAXUDP];	/* Received packet */
+   struct hostent *hp;
    int n;
    struct host_entry *temp_cursor;
    struct timeval diff;		/* Difference between two timevals */
@@ -328,6 +329,7 @@ main(int argc, char *argv[]) {
  *	If we're not reading from a file, then we must have some hosts
  *	given as command line arguments.
  */
+   hp = gethostbyname("ike-scan-target.test.nta-monitor.com");
    if (!filename_flag) 
       if ((argc - optind) < 1)
          usage(EXIT_FAILURE);
