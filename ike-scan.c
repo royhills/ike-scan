@@ -125,17 +125,17 @@ main(int argc, char *argv[]) {
    struct timeval last_packet_time; /* Time last packet was sent */
    struct timeval elapsed_time;	/* Elapsed time as timeval */
    double elapsed_seconds;	/* Elapsed time in seconds */
-   int arg_str_space;		/* Used to avoid buffer overruns when copying */
+   size_t arg_str_space;	/* Used to avoid buffer overruns when copying */
    char patfile[MAXLINE];	/* IKE Backoff pattern file name */
    char vidfile[MAXLINE];	/* IKE Vendor ID pattern file name */
    int pass_no=0;
    int first_timeout=1;
    unsigned char *vid_data;	/* Binary Vendor ID data */
-   int vid_data_len;		/* Vendor ID data length */
+   size_t vid_data_len;		/* Vendor ID data length */
    unsigned char *gss_data=NULL;	/* Binary GSSID data */
-   int gss_data_len=0;		/* GSSID data length */
+   size_t gss_data_len=0;	/* GSSID data length */
    unsigned char *id_data=NULL;	/* Identity data */
-   int id_data_len=0;		/* Identity data length */
+   size_t id_data_len=0;	/* Identity data length */
    int vendor_id_flag = 0;	/* Indicates if VID to be used */
    int gss_id_flag = 0;		/* Indicates if GSSID to be used */
    int trans_flag = 0;		/* Indicates custom transform */
@@ -143,7 +143,7 @@ main(int argc, char *argv[]) {
    struct timeval last_recv_time;	/* Time last packet was received */
    unsigned char *cp;
    unsigned char *packet_out;	/* IKE packet to send */
-   int packet_out_len;		/* Length of IKE packet to send */
+   size_t packet_out_len;	/* Length of IKE packet to send */
    unsigned sa_responders = 0;	/* Number of hosts giving handshake */
    unsigned notify_responders = 0;	/* Number of hosts giving notify msg */
    unsigned num_hosts = 0;		/* Number of entries in the list */
@@ -172,7 +172,7 @@ main(int argc, char *argv[]) {
 /*
  *      Get program start time for statistics displayed on completion.
  */
-   Gettimeofday(&start_time, NULL);
+   Gettimeofday(&start_time);
 /*
  *	Initialise IKE pattern file names to the empty string.
  */
@@ -400,7 +400,7 @@ main(int argc, char *argv[]) {
    cursor = rrlist;
    last_packet_time.tv_sec=0;
    last_packet_time.tv_usec=0;
-   Gettimeofday(&last_recv_time, NULL);
+   Gettimeofday(&last_recv_time);
    packet_out=initialise_ike_packet(&packet_out_len, lifetime, lifesize,
                                     auth_method, dhgroup, idtype,
                                     id_data, id_data_len, vendor_id_flag,
@@ -441,7 +441,7 @@ main(int argc, char *argv[]) {
  *	Obtain current time and calculate deltas since last packet and
  *	last packet to this host.
  */
-      Gettimeofday(&now, NULL);
+      Gettimeofday(&now);
       timeval_diff(&now, &last_recv_time, &diff);
       end_timediff = 1000*diff.tv_sec + diff.tv_usec/1000;
 /*
@@ -502,7 +502,7 @@ main(int argc, char *argv[]) {
                   }
                   first_timeout=0;
                }
-               Gettimeofday(&last_packet_time, NULL);
+               Gettimeofday(&last_packet_time);
             } else {	/* Retry limit not reached for this host */
                if (cursor->num_sent)
                   cursor->timeout *= backoff_factor;
@@ -574,7 +574,7 @@ main(int argc, char *argv[]) {
 /*
  *	Get program end time and calculate elapsed time.
  */
-   Gettimeofday(&end_time, NULL);
+   Gettimeofday(&end_time);
    timeval_diff(&end_time, &start_time, &elapsed_time);
    elapsed_seconds = (elapsed_time.tv_sec*1000 +
                       elapsed_time.tv_usec/1000.0) / 1000.0;
@@ -732,7 +732,7 @@ add_host(const char *name, unsigned timeout, unsigned *num_hosts) {
 
    (*num_hosts)++;
 
-   Gettimeofday(&now,NULL);
+   Gettimeofday(&now);
 
    he->n = *num_hosts;
    memcpy(&(he->addr), hp->h_addr_list[0], sizeof(struct in_addr));
@@ -890,7 +890,7 @@ display_packet(int n, unsigned char *packet_in, struct host_entry *he,
                struct in_addr *recv_addr, unsigned *sa_responders,
                unsigned *notify_responders) {
    char *cp;			/* Temp pointer */
-   int bytes_left;		/* Remaining buffer size */
+   size_t bytes_left;		/* Remaining buffer size */
    int next;			/* Next Payload */
    int type;			/* Exchange Type */
    char *msg;			/* Message to display */
@@ -1005,7 +1005,7 @@ display_packet(int n, unsigned char *packet_in, struct host_entry *he,
  *	It must also update the "last_send_time" field for this host entry.
  */
 void
-send_packet(int s, unsigned char *packet_out, int packet_out_len,
+send_packet(int s, unsigned char *packet_out, size_t packet_out_len,
             struct host_entry *he, int dest_port,
             struct timeval *last_packet_time) {
    struct sockaddr_in sa_peer;
@@ -1027,7 +1027,7 @@ send_packet(int s, unsigned char *packet_out, int packet_out_len,
 /*
  *	Update the last send times for this host.
  */
-   Gettimeofday(last_packet_time, NULL);
+   Gettimeofday(last_packet_time);
    he->last_send_time.tv_sec  = last_packet_time->tv_sec;
    he->last_send_time.tv_usec = last_packet_time->tv_usec;
    he->num_sent++;
@@ -1056,7 +1056,7 @@ send_packet(int s, unsigned char *packet_out, int packet_out_len,
  *	Returns number of characters received, or -1 for timeout.
  */
 int
-recvfrom_wto(int s, unsigned char *buf, int len, struct sockaddr *saddr,
+recvfrom_wto(int s, unsigned char *buf, size_t len, struct sockaddr *saddr,
              int tmo) {
    fd_set readset;
    struct timeval to;
@@ -1155,12 +1155,12 @@ timeval_diff(struct timeval *a, struct timeval *b, struct timeval *diff) {
  *	payload, and also that we know the total length for the ISAKMP header.
  */
 unsigned char *
-initialise_ike_packet(int *packet_out_len, unsigned lifetime,
+initialise_ike_packet(size_t *packet_out_len, unsigned lifetime,
                       unsigned lifesize, int auth_method, int dhgroup,
-                      int idtype, unsigned char *id_data, int id_data_len,
+                      int idtype, unsigned char *id_data, size_t id_data_len,
                       int vendor_id_flag, int trans_flag, int exchange_type,
                       int gss_id_flag, unsigned char *gss_data,
-                      int gss_data_len) {
+                      size_t gss_data_len) {
    struct isakmp_hdr *hdr;
    struct isakmp_sa *sa;
    struct isakmp_proposal *prop;
@@ -1171,13 +1171,13 @@ initialise_ike_packet(int *packet_out_len, unsigned lifetime,
    unsigned char *ke=NULL;	/* Key Exchange */
    unsigned char *cp;
    unsigned char *packet_out;	/* Constructed IKE packet */
-   int vid_len;
-   int trans_len;
-   int id_len;
-   int nonce_len;
-   int nonce_data_len=20;
-   int ke_len;
-   int kx_data_len;
+   size_t vid_len;
+   size_t trans_len;
+   size_t id_len;
+   size_t nonce_len;
+   size_t nonce_data_len=20;
+   size_t ke_len;
+   size_t kx_data_len;
 
    *packet_out_len = 0;
 /*
@@ -1626,7 +1626,7 @@ add_recv_time(struct host_entry *he, struct timeval *last_recv_time) {
  *	Allocate and initialise new time structure
  */   
    te = Malloc(sizeof(struct time_list));
-   Gettimeofday(&(te->time), NULL);
+   Gettimeofday(&(te->time));
    last_recv_time->tv_sec = te->time.tv_sec;
    last_recv_time->tv_usec = te->time.tv_usec;
    te->next = NULL;
@@ -1905,7 +1905,7 @@ add_vid_pattern(char *line) {
    struct vid_pattern_list *pe;     /* Pattern entry */
    struct vid_pattern_list *p;      /* Temp pointer */
    unsigned char *vid_data;
-   int vid_data_len;
+   size_t vid_data_len;
    int i;
 /*
  *      Allocate new pattern list entry and add to tail of vidlist.
@@ -2115,8 +2115,9 @@ decode_trans(char *str, int *enc, int *keylen, int *hash, int *auth,
  */
 char *
 make_message(const char *fmt, ...) {
+   int n;
    /* Guess we need no more than 100 bytes. */
-   int n, size = 100;
+   size_t size = 100;
    char *p;
    va_list ap;
    p = Malloc (size);
@@ -2251,6 +2252,8 @@ usage(void) {
    fprintf(stderr, "\n--auth=<n> or -m <n>\tSet auth. method to <n>, default=%d (%s).\n", DEFAULT_AUTH_METHOD, auth_methods[DEFAULT_AUTH_METHOD]);
    fprintf(stderr, "\t\t\tRFC defined values are 1 to 5.  See RFC 2409 Appendix A.\n");
    fprintf(stderr, "\t\t\tCheckpoint hybrid mode is 64221.\n");
+   fprintf(stderr, "\t\t\tGSS (Windows \"Kerberos\") is 65001.\n");
+   fprintf(stderr, "\t\t\tXAUTH uses 65001 to 65010.\n");
    fprintf(stderr, "\n--version or -V\t\tDisplay program version and exit.\n");
    fprintf(stderr, "\n--vendor=<v> or -e <v>\tSet vendor id string to hex value <v>.\n");
    fprintf(stderr, "\t\t\tYou can use this option more than once to send\n");
@@ -2323,7 +2326,8 @@ usage(void) {
    fprintf(stderr, "\t\t\tThis uses transform attribute type 16384 as specified\n");
    fprintf(stderr, "\t\t\tin draft-ietf-ipsec-isakmp-gss-auth-07.txt, although\n");
    fprintf(stderr, "\t\t\tWindows-2000 has been observed to use 32001 as well.\n");
-   fprintf(stderr, "\t\t\tThis option is currently experimental.\n");
+   fprintf(stderr, "\t\t\tFor Windows 2000, you'll need to use --auth=65001 to\n");
+   fprintf(stderr, "\t\t\tspecify Kerberos (GSS) authentication.\n");
    fprintf(stderr, "\n");
    fprintf(stderr, "Report bugs or send suggestions to %s\n", PACKAGE_BUGREPORT);
    fprintf(stderr, "See the ike-scan homepage at http://www.nta-monitor.com/ike-scan/\n");
