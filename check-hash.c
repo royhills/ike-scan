@@ -110,7 +110,7 @@ main(void) {
        "effcdf6ae5eb2fa2d27416d5f184df9c259a7c79"}
    };
 
-   unsigned const char **testp;
+   const char **testp;
    const char **resultp;
    int i;
 
@@ -123,14 +123,15 @@ main(void) {
 #endif
 
    printf("\nChecking MD5 hash function...\n");
-   testp=(unsigned const char **) md5_tests;
+   testp=md5_tests;
    resultp=md5_results;
    while (*testp != NULL) {
       const char *expected;
       char *actual;
       printf("\"%s\"\t", *testp);
       expected=*resultp;
-      actual=hexstring(MD5(*testp, strlen(*testp), NULL), 16);
+      actual=hexstring(MD5((const unsigned char *) *testp, strlen(*testp),
+                       NULL), 16);
       if (strcmp(actual, expected)) {
          error++;
          printf("FAIL (expected %s, got %s)\n", expected, actual);
@@ -142,14 +143,15 @@ main(void) {
    }
 
    printf("\nChecking SHA1 hash function...\n");
-   testp=(unsigned const char **) sha1_tests;
+   testp=sha1_tests;
    resultp=sha1_results;
    while (*testp != NULL) {
       const char *expected;
       char *actual;
       printf("\"%s\"\t", *testp);
       expected=*resultp;
-      actual=hexstring(SHA1(*testp, strlen(*testp), NULL), 20);
+      actual=hexstring(SHA1((const unsigned char *) *testp, strlen(*testp),
+                       NULL), 20);
       if (strcmp(actual, expected)) {
          error++;
          printf("FAIL (expected %s, got %s)\n", expected, actual);
@@ -245,7 +247,7 @@ main(void) {
 
       unsigned char *cp;
 
-      char *psk = "abc123";	/* The correct pre-shared key */
+      unsigned char *psk = "abc123";	/* The correct pre-shared key */
       size_t psk_len = 6;
 
       struct timeval start_time;
@@ -409,14 +411,13 @@ main(void) {
       struct timeval end_time;
       struct timeval elapsed_time;
       double elapsed_seconds;
-      char hash_speed_data[] = "12345678";
+      unsigned char hash_speed_data[] = "12345678";
       size_t memcpy_len;
 
-      hash_data_len = strlen(hash_speed_data);
+      hash_data_len = strlen(hash_speed_data);	/* Printable at this point */
       memcpy_len=hash_data_len>16?16:hash_data_len;
       Gettimeofday(&start_time);
       for (i=0; i<HASH_SPEED_ITERATIONS; i++) {
-         hash_data_len = strlen(hash_speed_data);
          hash_result=MD5(hash_speed_data, hash_data_len, NULL);
          memcpy(hash_speed_data, hash_result, memcpy_len);
       }
@@ -440,11 +441,10 @@ main(void) {
       char hash_speed_data[] = "12345678";
       size_t memcpy_len;
 
-      hash_data_len = strlen(hash_speed_data);
+      hash_data_len = strlen(hash_speed_data);	/* Printable at this point */
       memcpy_len=hash_data_len>20?20:hash_data_len;
       Gettimeofday(&start_time);
       for (i=0; i<HASH_SPEED_ITERATIONS; i++) {
-         hash_data_len = strlen(hash_speed_data);
          hash_result=SHA1(hash_speed_data, hash_data_len, NULL);
          memcpy(hash_speed_data, hash_result, memcpy_len);
       }
