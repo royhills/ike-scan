@@ -1,10 +1,44 @@
 $Id$
 
+2004-12-09 Roy Hills <Roy.Hills@nta-monitor.com>
+
+	* psk-crack.c: Remove options to manually specify hash type (MD5 or
+	  SHA1), as these are never needed.
+
+2004-12-08 Roy Hills <Roy.Hills@nta-monitor.com>
+
+	* psk-crack.c: Changed syntax for dictionary cracking.  Now dictionary
+	  cracking does not need the dictionary file to be specified as an
+	  argument.  It's possible to use a dictionary file other than the
+	  default with the --dictionary option.
+
+	* psk-crack.c: Support cracking multiple hashes if the PSK parameters
+	  file has more than one line.
+
+2004-12-05 Roy Hills <Roy.Hills@nta-monitor.com>
+
+	* ike-scan.c: Minor changes to usage() to improve description of
+	  --pskcrack and --tcptimeout options.
+
+	* check-run-1, check-run-2: Add --nodns --retry=1 to reduce delay.
+
+	* check-psk-crack-2: Add dictionary cracking tests.
+
+2004-11-29 Roy Hills <Roy.Hills@nta-monitor.com>
+
+	* ike-scan.c: Added optional filename argument to --pskcrack (-P)
+	  option to allow the PSK data to be written to a file for later
+	  cracking with psk-crack.
+
 2004-11-19 Roy Hills <Roy.Hills@nta-monitor.com>
 
 	* sha1.c: define SHA1HANDSOFF to 1 to prevent the SHA1 functions from
 	  modifying the input buffer.  If this is not defined, then pre-shared
 	  key cracking for SHA1 hashes using this SHA1 function fails.
+
+	* Wrote two new tests for "make check": check-psk-crack-1 which tests
+	  psk-crack --help and --version, and check-psk-crack-2 which tests
+	  psk-crack bruteforce for both MD5 and SHA1 hashes.
 
 2004-11-18 Roy Hills <Roy.Hills@nta-monitor.com>
 
