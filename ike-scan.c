@@ -215,6 +215,8 @@ main(int argc, char *argv[]) {
    double elapsed_seconds;	/* Elapsed time in seconds */
    int arg_str_space;		/* Used to avoid buffer overruns when copying */
    char patfile[MAXLINE];	/* IKE Backoff pattern file name */
+   int pass_no=0;
+   int first_timeout=1;
    unsigned char *cp;
 /*
  *	Open syslog channel and log arguments if required.
@@ -536,10 +538,30 @@ main(int argc, char *argv[]) {
  *	backoff factor if this is not the first packet sent to this host
  *	and send a packet.
  */
+            if (verbose && cursor->num_sent > pass_no) {
+               warn_msg("---\tPass %d complete", pass_no+1);
+               pass_no = cursor->num_sent;
+            }
             if (cursor->num_sent >= retry) {
                if (verbose)
                   warn_msg("---\tRemoving host entry %u (%s) - Timeout", cursor->n, inet_ntoa(cursor->addr));
                remove_host(cursor);	/* Automatically calls advance_cursor() */
+               if (first_timeout) {
+                  timeval_diff(&now, &(cursor->last_send_time), &diff);
+                  host_timediff = 1000*diff.tv_sec + diff.tv_usec/1000;
+                  while (host_timediff >= cursor->timeout && live_count) {
+                     if (cursor->live) {
+                        if (verbose > 1)
+                           warn_msg("---\tRemoving host %u (%s) - Catch-Up Timeout", cursor->n, inet_ntoa(cursor->addr));
+                        remove_host(cursor);
+                     } else {
+                        advance_cursor();
+                     }
+                     timeval_diff(&now, &(cursor->last_send_time), &diff);
+                     host_timediff = 1000*diff.tv_sec + diff.tv_usec/1000;
+                  }
+                  first_timeout=0;
+               }
                if ((gettimeofday(&last_packet_time, NULL)) != 0)
                   err_sys("gettimeofday");
             } else {	/* Retry limit not reached for this host */
