@@ -1,5 +1,5 @@
 /*
- * The IKE Scanner (ike-scan) is Copyright (C) 2003-2004 Roy Hills,
+ * The IKE Scanner (ike-scan) is Copyright (C) 2003-2005 Roy Hills,
  * NTA Monitor Ltd.
  *
  * This program is free software; you can redistribute it and/or
@@ -135,7 +135,7 @@ main (int argc, char *argv[]) {
             break;
          case 'V':      /* --version */
             fprintf(stderr, "psk-crack (%s)\n\n", PACKAGE_STRING);
-            fprintf(stderr, "Copyright (C) 2003-2004 Roy Hills, NTA Monitor Ltd.\n");
+            fprintf(stderr, "Copyright (C) 2003-2005 Roy Hills, NTA Monitor Ltd.\n");
             fprintf(stderr, "ike-scan comes with NO WARRANTY to the extent permitted by law.\n");
             fprintf(stderr, "You may redistribute copies of ike-scan under the terms of the GNU\n");
             fprintf(stderr, "General Public License.\n");

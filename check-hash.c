@@ -1,5 +1,5 @@
 /*
- * The IKE Scanner (ike-scan) is Copyright (C) 2003-2004 Roy Hills,
+ * The IKE Scanner (ike-scan) is Copyright (C) 2003-2005 Roy Hills,
  * NTA Monitor Ltd.
  *
  * This program is free software; you can redistribute it and/or
