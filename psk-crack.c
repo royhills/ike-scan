@@ -334,7 +334,8 @@ main (int argc, char *argv[]) {
          rewind(dictionary_file);
          while (fgets(line, MAXLINE, dictionary_file)) {
             char *line_p;
-            for (line_p = line; !isspace(*line_p) && *line_p != '\0'; line_p++)
+            for (line_p = line; !isspace((unsigned char)*line_p) &&
+                 *line_p != '\0'; line_p++)
                ;
             *line_p = '\0';
             if (verbose)
