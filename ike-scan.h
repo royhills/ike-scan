@@ -112,6 +112,8 @@
 #define DEFAULT_AUTH_METHOD 1		/* Default authentication method */
 #define DEFAULT_END_WAIT 60		/* Default time to wait at end in sec */
 #define DEFAULT_PATTERN_FUZZ 100	/* Default pattern fuzz in ms */
+#define DEFAULT_DH_GROUP 2		/* Default DH group for agg. mode */
+#define DEFAULT_IDTYPE ID_USER_FQDN	/* Default ID Type for agg. mode */
 #define SYSLOG 1			/* Use syslog if defined */
 #define SYSLOG_FACILITY LOG_USER	/* Syslog facility to use */
 #define PATTERNS_FILE "ike-backoff-patterns" /* Backoff patterns filename */
