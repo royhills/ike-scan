@@ -5,7 +5,8 @@
  *  by the Free Software Foundation; Version 2.  This guarantees your
  *  right to use, modify, and redistribute this software under certain
  *  conditions.  If this license is unacceptable to you, I may be
- *  willing to sell alternative licenses (contact Roy.Hills@nta-monitor.com).
+ *  willing to negotiate alternative licenses (contact
+ *  Roy.Hills@nta-monitor.com).
  *
  *  You are encouraged to send comments, improvements or suggestions to
  *  me at Roy.Hills@nta-monitor.com.
@@ -31,6 +32,9 @@
  * Revision history:
  *
  * $Log$
+ * Revision 1.6  2002/11/26 16:55:03  rsh
+ * Minor comment change.
+ *
  * Revision 1.5  2002/11/21 13:52:33  rsh
  * Added GPL.
  *
