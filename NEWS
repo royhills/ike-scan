@@ -3,6 +3,70 @@ $Id$
 This file gives a brief overview of the major changes between each ike-scan
 release.  For more details please read the ChangeLog file.
 
+ike-scan v1.6.5:
+
+* Added --nodns (-N) option to prevent DNS lookups.  With this option,
+  target hosts are not processed with gethostbyname(), which can avoid
+  delays when the system running ike-scan does not have functioning DNS.
+
+* Added additional authentication methods and hash algorithms to the output
+  decoding functions in isakmp.c
+
+* Added new psk-crack program to perform offline aggressive mode pre-shared
+  key cracking using the output from ike-scan with the --pskcrack option.
+  This psk-crack program supports both dictionary and brute-force cracking
+  modes against MD5 and SHA1-based HMAC hashes.
+
+* Added ability to output aggressive mode pre-shared key (PSK) parameters
+  for later offline cracking with the --pskcrack (-P) option.  This option
+  outputs the pre-shared key parameters as colon-separated hex-encoded values
+  in the following format:
+
+  g_xr:g_xi:cky_r:cky_i:sai_b:idir_b:ni_b:nr_b:hash_r
+
+  These parameter details can be used by the psk-crack program (which is
+  supplied as part of the ike-scan package) to attempt to crack the pre-
+  shared key.
+
+* Added support for IKE over TCP with the --tcp (-T) option.  Two TCP
+  variants are supported:
+
+  --tcp=1 (-T1) specifies raw IKE over TCP as used by Checkpoint; and
+  --tcp=2 (-T2) specifies encapsulated IKE over TCP as used by Cisco.
+
+  Note that you can only scan one host at a time when using IKE over TCP.
+
+  When using TCP, you can modify the connect() timeout with the
+  --tcptimeout (-O) option.  Default timeout is 10 seconds.
+
+* Added experimental timing error smoothing code, which is based on the TCP RTT
+  smoothing algorithm in RFC 793.  This is disabled by default; to enable it,
+  #define ALPHA in ike-scan.h
+
+* Allow the ID (Identity) payload that is specified with the --id option to
+  be specified as either a string e.g. --id=test or a hex value with a leading
+  0x e.g. --id=0xdeadbeef.  Note that you will probably need to change previous
+  ID payload strings because of this change, as previously they were always
+  interpreted as hex.
+
+* Added support for OpenSSL MD5 and SHA1 hash functions.  These are generally
+  faster than the hash functions supplied with ike-scan, which is of benefit
+  when performing pre-shared key cracking.
+
+  To compile with OpenSSL, use the --with-openssl=PATH option to configure.
+
+* Added --random (-R) option to randomise the host list before scanning.
+  This causes the hosts to be scanned in a random order, which may be less
+  obvious than the default sequential scanning.  The Knuth shuffle algorithm
+  is used to randomise the list.
+
+* Changed host entry from a linked-list to a dynamic array which decreases the
+  memory required from 56 bytes per target host to 45 bytes.
+
+* Added several new Vendor ID patterns.
+
+* Added several new UDP backoff patterns.
+
 ike-scan v1.6:
 
 * ike-scan will now display multiple Vendor ID payloads if the server sends
