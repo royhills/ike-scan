@@ -342,7 +342,7 @@ main(int argc, char *argv[]) {
             auth_method=atoi(optarg);
             break;
          case 'V':
-            fprintf(stderr, "%s\n", VERSION);
+            fprintf(stderr, "%s\n\n", VERSION);
             fprintf(stderr, "Copyright (C) 2003 Roy Hills, NTA Monitor Ltd.\n");
             fprintf(stderr, "ike-scan comes with NO WARRANTY to the extent permitted by law.\n");
             fprintf(stderr, "You may redistribute copies of ike-scan under the terms of the GNU\n");
