@@ -978,7 +978,7 @@ void
 remove_host(struct host_entry **he, unsigned *live_count, unsigned num_hosts) {
    (*he)->live = 0;
    (*live_count)--;
-   if (he == cursor)
+   if (*he == *cursor)
       advance_cursor(*live_count, num_hosts);
 }
 
