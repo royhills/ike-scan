@@ -985,11 +985,14 @@ process_attr(unsigned char **cp, size_t *len) {
 char *
 process_vid(unsigned char *cp, size_t len, struct vid_pattern_list *vidlist) {
    struct isakmp_vid *hdr = (struct isakmp_vid *) cp;
-   struct vid_pattern_list *ve;
    char *msg;
+   char *hexvid;
    char *p;
    unsigned char *vid_data;
    size_t data_len;
+#ifdef HAVE_REGEX_H
+   struct vid_pattern_list *ve;
+#endif
 
    if (len < sizeof(struct isakmp_vid) ||
         ntohs(hdr->isavid_length) < sizeof(struct isakmp_vid))
@@ -999,16 +1002,15 @@ process_vid(unsigned char *cp, size_t len, struct vid_pattern_list *vidlist) {
    data_len = ntohs(hdr->isavid_length) < len ? ntohs(hdr->isavid_length) : len;
    data_len -= sizeof(struct isakmp_vid);
 
-   msg = hexstring(vid_data, data_len);
-   p = msg;
-   msg=make_message("VID=%s", p);
-   free(p);
+   hexvid = hexstring(vid_data, data_len);
+   msg=make_message("VID=%s", hexvid);
 /*
  *	Try to find a match in the Vendor ID pattern list.
  */
+#ifdef HAVE_REGEX_H
    ve = vidlist;
    while(ve != NULL) {
-      if (data_len >= ve->len && !(memcmp(vid_data, ve->data, ve->len))) {
+      if (!(regexec(ve->regex, hexvid, 0, NULL, 0))) {
          p=msg;
          msg=make_message("%s (%s)", p, ve->name);
          free(p);
@@ -1016,7 +1018,8 @@ process_vid(unsigned char *cp, size_t len, struct vid_pattern_list *vidlist) {
       }
       ve=ve->next;
    }
-
+#endif
+   free(hexvid);
    return msg;
 }
 

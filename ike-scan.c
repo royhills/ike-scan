@@ -53,7 +53,9 @@ static const char rcsid[] = "$Id$";   /* RCS ID for ident(1) */
 struct host_entry *rrlist = NULL;	/* Round-robin linked list of hosts */
 struct host_entry *cursor;		/* Pointer to current list entry */
 struct pattern_list *patlist = NULL;	/* Backoff pattern list */
+#ifdef HAVE_REGEX_H
 struct vid_pattern_list *vidlist = NULL;	/* Vendor ID pattern list */
+#endif
 static int verbose=0;			/* Verbose level */
 int experimental=0;			/* Experimental flag */
 
@@ -370,7 +372,9 @@ main(int argc, char *argv[]) {
 /*
  *	Load known Vendor ID patterns from the Vendor ID file.
  */
+#ifdef HAVE_REGEX_H
    load_vid_patterns(vidfile);
+#endif
 /*
  *	Check that we have at least one entry in the list.
  */
@@ -1461,25 +1465,23 @@ dump_backoff(unsigned pattern_fuzz) {
  *	when debugging to check that the patterns have been loaded correctly
  *	from the Vendor ID patterns file.
  */
+#ifdef HAVE_REGEX_H
 void
 dump_vid(void) {
    struct vid_pattern_list *pl;
-   char *vid_data;
    int i;
 
    printf("Vendor ID Pattern List:\n\n");
-   printf("Entry\tName\tSize\tVendor ID Data\n");
+   printf("Entry\tName\tVendor ID Pattern\n");
    pl = vidlist;
    i=1;
    while (pl != NULL) {
-      printf("%d\t%s\t%d\t", i++, pl->name, pl->len);
-      vid_data = hexstring(pl->data, pl->len);
-      printf("%s\n", vid_data);
-      free(vid_data);
+      printf("%d\t%s\t%s\n", i++, pl->name, pl->pattern);
       pl = pl->next;
    } /* End While */
    printf("\nTotal of %d Vendor ID pattern entries.\n\n", i-1);
 }
+#endif
 
 /*
  *	dump_times -- Display packet times for backoff fingerprinting
@@ -1676,6 +1678,18 @@ add_recv_time(struct host_entry *he, struct timeval *last_recv_time) {
    he->num_recv++;
 }
 
+/*
+ *	load_backoff_patterns -- Load UDP backoff patterns from specified file
+ *
+ *	Inputs:
+ *
+ *	patfile		Name of the file to load the patterns from
+ *	pattern_fuzz	Default fuzz value in ms
+ *
+ *	Returns:
+ *
+ *	None.
+ */
 void
 load_backoff_patterns(const char *patfile, unsigned pattern_fuzz) {
    FILE *fp;
@@ -1864,6 +1878,18 @@ add_pattern(char *line, unsigned pattern_fuzz) {
    pe->num_times=i;
 }
 
+/*
+ *	load_vid_patterns -- Load Vendor ID Patterns from specified file
+ *
+ *	Inputs:
+ *
+ *	vidfile		The name of the file to load the patterns from
+ *
+ *	Returns:
+ *
+ *	None
+ */
+#ifdef HAVE_REGEX_H
 void
 load_vid_patterns(const char *vidfile) {
    FILE *fp;
@@ -1910,6 +1936,7 @@ load_vid_patterns(const char *vidfile) {
    }
    free(fn);
 }
+#endif
 
 /*
  *	add_vid_pattern -- add a Vendor ID pattern to the list.
@@ -1922,33 +1949,19 @@ load_vid_patterns(const char *vidfile) {
  *
  *	None.
  */
+#ifdef HAVE_REGEX_H
 void
 add_vid_pattern(char *line) {
    char *cp;
    char *np;
    char *pp;
-   unsigned char *ucp;
+   regex_t *rep;	/* Compiled regex */
    char name[MAXLINE];
    char pat[MAXLINE];
    int tabseen;
    struct vid_pattern_list *pe;     /* Pattern entry */
    struct vid_pattern_list *p;      /* Temp pointer */
-   unsigned char *vid_data;
-   size_t vid_data_len;
-   unsigned i;
-/*
- *      Allocate new pattern list entry and add to tail of vidlist.
- */
-   pe = Malloc(sizeof(struct vid_pattern_list));
-   pe->next = NULL;
-   p = vidlist;
-   if (p == NULL) {
-      vidlist=pe;
-   } else {
-      while (p->next != NULL)
-         p = p->next;
-      p->next = pe;
-   }
+   int result;
 /*
  *	Separate line from VID patterns file into name and pattern.
  */
@@ -1970,24 +1983,53 @@ add_vid_pattern(char *line) {
    *np = '\0';
    *pp = '\0';
 /*
- *      Copy name into malloc'ed storage and set pl->name to point to this.
- */
-   cp = Malloc(strlen(name)+1);
-   strcpy(cp, name);
-   pe->name = cp;
-/*
  *      Process and store the Vendor ID pattern.
+ *	The pattern in the file is a Posix basic regular expression which is
+ *	compiled with "regcomp".  A pointer to this compiled pattern is
+ *	stored in pe->regex.  We also store the text pattern in pe->pattern
+ *	for dump_vid().
  */
-   if (strlen(pat) % 2) 	/* Length is odd */
-      err_msg("Length of vendor ID pattern must be even (multiple of 2).");
-   vid_data_len = strlen(pat) / 2;
-   vid_data = Malloc(vid_data_len);
-   ucp = vid_data;
-   for (i=0; i<vid_data_len; i++)
-      *ucp++=hstr_i(&pat[i*2]);
-   pe->len = vid_data_len;
-   pe->data = vid_data;
+   rep = Malloc(sizeof(regex_t));
+   if ((result=regcomp(rep, pat, REG_ICASE|REG_NOSUB))) {
+      char errbuf[MAXLINE];
+      size_t errlen;
+      errlen=regerror(result, rep, errbuf, MAXLINE);
+      warn_msg("Ignoring invalid Vendor ID pattern \"%s\": %s", pat, errbuf);
+      free(rep);
+      /* Should we call regfree(rep) here? */
+   } else {
+/*
+ *      Allocate new pattern list entry and add to tail of vidlist.
+ */
+      pe = Malloc(sizeof(struct vid_pattern_list));
+      pe->next = NULL;
+      p = vidlist;
+      if (p == NULL) {
+         vidlist=pe;
+      } else {
+         while (p->next != NULL)
+            p = p->next;
+         p->next = pe;
+      }
+/*
+ *	Store compiled regex.
+ */
+      pe->regex = rep;
+/*
+ *	Store text regex.
+ */
+      cp = Malloc(strlen(pat)+1);
+      strcpy(cp, pat);
+      pe->pattern = cp;
+/*
+ *	Store pattern name.
+ */
+      cp = Malloc(strlen(name)+1);
+      strcpy(cp, name);
+      pe->name = cp;
+   }
 }
+#endif
 
 /*
  *	hstr_i -- Convert two-digit hex string to unsigned integer

@@ -170,12 +170,14 @@ struct pattern_list {
    struct pattern_list *next;
 };
 
+#ifdef HAVE_REGEX_H
 struct vid_pattern_list {
    char *name;
-   unsigned short len;
-   unsigned char *data;
+   char *pattern;	/* Text regular expression */
+   regex_t *regex;	/* Compiled regular expression */
    struct vid_pattern_list *next;
 };
+#endif
 
 /* Functions */
 
