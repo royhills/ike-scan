@@ -190,7 +190,7 @@ unsigned char *initialise_ike_packet(size_t *, unsigned, unsigned, int, int,
 struct host_entry *find_host_by_cookie(struct host_entry *, unsigned char *,
                                        int);
 void display_packet(int, unsigned char *, struct host_entry *,
-                    struct in_addr *, unsigned *, unsigned *);
+                    struct in_addr *, unsigned *, unsigned *, int);
 void advance_cursor(unsigned);
 void dump_list(unsigned);
 void dump_times(void);
@@ -225,12 +225,15 @@ void *Realloc(void *, size_t);
 void decode_trans(char *, int *, int *, int *, int *, int *);
 unsigned char *skip_payload(unsigned char *, size_t *, int *);
 unsigned char *process_isakmp_hdr(unsigned char *, size_t *, int *, int *);
-char *process_sa(unsigned char *, size_t, int);
+char *process_sa(unsigned char *, size_t, int, int);
 char *process_attr(unsigned char **, size_t *);
 char *process_vid(unsigned char *, size_t, struct vid_pattern_list *);
 char *process_notify(unsigned char *, size_t);
+char *process_id(unsigned char *, size_t);
 char *make_message(const char *, ...);
 char *numstr(int);
+char *printable(unsigned char*, size_t);
+char *hexstring(unsigned char*, size_t);
 /* The following functions are just to prevent rcsid being optimised away */
 void error_use_rcsid(void);
 void isakmp_use_rcsid(void);
