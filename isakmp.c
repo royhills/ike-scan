@@ -704,6 +704,8 @@ process_isakmp_hdr(unsigned char *cp, size_t *len, int *next, int *type) {
  *	cp	Pointer to start of SA payload
  *	len	Packet length remaining
  *	type	Exchange type.
+ *	quiet	Only print the basic info if nonzero
+ *	multiline	Split decodes across lines if nonzero
  *
  *	Returns:
  *
@@ -713,7 +715,7 @@ process_isakmp_hdr(unsigned char *cp, size_t *len, int *next, int *type) {
  *	which should be free'ed by the caller when it's no longer needed.
  */
 char *
-process_sa(unsigned char *cp, size_t len, int type, int quiet) {
+process_sa(unsigned char *cp, size_t len, int type, int quiet, int multiline) {
    struct isakmp_sa *sa_hdr = (struct isakmp_sa *) cp;
    struct isakmp_proposal *prop_hdr =
       (struct isakmp_proposal *) (cp + sizeof(struct isakmp_sa));
@@ -758,7 +760,7 @@ process_sa(unsigned char *cp, size_t len, int type, int quiet) {
       int firstloop=1;
 
       msg2 = msg;
-      msg = make_message("%s SA=(", msg2);
+      msg = make_message("%s%sSA=(", msg2, multiline?"\n\t":" ");
       free(msg2);
       attr_ptr = (cp + sizeof(struct isakmp_sa) + sizeof(struct isakmp_proposal) +
                   sizeof(struct isakmp_transform));
