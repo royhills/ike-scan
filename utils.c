@@ -779,6 +779,25 @@ hmac_sha1(const unsigned char *text, size_t text_len, const unsigned char *key,
    return md;
 }
 
+/*
+ *	sig_alarm -- Signal handler for SIGALRM
+ *
+ *	Inputs:
+ *
+ *	signo		The signal number (ignored)
+ *
+ *	Returns:
+ *
+ *	None.
+ *
+ *	This function is used as the signal handler for SIGALRM.
+ *	It doesn't perform any processing; it merely returns to
+ *	interrupt the current system call.
+ */
+void sig_alarm(int signo) {
+   return;      /* just interrupt the current system call */
+}
+
 void utils_use_rcsid(void) {
    printf("%s\n", rcsid);	/* Use rcsid to stop compiler optimising away */
 }
