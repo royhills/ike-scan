@@ -196,7 +196,7 @@ main(int argc, char *argv[]) {
    uint64_t host_timediff;	/* Time since last packet sent to this host */
    unsigned long end_timediff=0; /* Time since last packet received in ms */
    int req_interval;		/* Requested per-packet interval */
-   unsigned select_timeout;	/* Select timeout */
+   int select_timeout;		/* Select timeout */
    int cum_err=0;		/* Cumulative timing error */
    static int reset_cum_err;
    struct timeval start_time;	/* Program start time */
@@ -1070,6 +1070,8 @@ recvfrom_wto(int s, char *buf, int len, struct sockaddr *saddr, int tmo) {
    int n;
    NET_SIZE_T saddr_len;
 
+   if (tmo < 0)
+     tmo = 0;	/* Negative timeouts not allowed */
    FD_ZERO(&readset);
    FD_SET(s, &readset);
    to.tv_sec  = tmo/1000000;
