@@ -263,6 +263,7 @@ main(int argc, char *argv[]) {
             for (i=0; i<vid_data_len; i++)
                *cp++=hstr_i(&optarg[i*2]);
             add_vid(0, NULL, vid_data, vid_data_len);
+            free(vid_data);
             break;
          case 'a':	/* --trans */
             strncpy(trans_str, optarg, MAXLINE);
@@ -285,9 +286,10 @@ main(int argc, char *argv[]) {
             pattern_fuzz=strtoul(optarg, (char **)NULL, 10);
             break;
          case 'n':	/* --id */
-            if (strlen(optarg) % 2) {	/* Length is odd */
+            if (id_data)
+               err_msg("You may only specify one identity payload with --id");
+            if (strlen(optarg) % 2) 	/* Length is odd */
                err_msg("Length of --id argument must be even (multiple of 2).");
-            }
             id_data_len=strlen(optarg)/2;
             id_data = Malloc(id_data_len);
             cp = id_data;
@@ -442,7 +444,7 @@ main(int argc, char *argv[]) {
    }
 /*
  *	Main loop: send packets to all hosts in order until a response
- *	has been received or the host has exhausted it's retry limit.
+ *	has been received or the host has exhausted its retry limit.
  *
  *	The loop exits when all hosts have either responded or timed out
  *	and, if showbackoff_flag is set, at least end_wait ms have elapsed
@@ -721,6 +723,7 @@ add_host_pattern(const char *pattern, unsigned timeout, unsigned *num_hosts) {
    } else {				/* Single host */
       add_host(patcopy, timeout, num_hosts);
    }
+   free(patcopy);
 }
 
 /*
@@ -1231,6 +1234,8 @@ initialise_ike_packet(size_t *packet_out_len, unsigned lifetime,
       } else {
          id = make_id(&id_len, ISAKMP_NEXT_NONE, idtype, id_data, id_data_len);
       }
+      if (id_data)
+         free(id_data);
       *packet_out_len += id_len;
       nonce = make_nonce(&nonce_len, ISAKMP_NEXT_ID, nonce_data_len);
       *packet_out_len += nonce_len;
@@ -1299,6 +1304,8 @@ initialise_ike_packet(size_t *packet_out_len, unsigned lifetime,
                    dhgroup, lifetime, lifesize, gss_id_flag, gss_data, gss_data_len);
          no_trans=4;
       }
+      if (gss_data)
+         free(gss_data);
    } else {	/* Custom transforms */
       no_trans = trans_flag;
    }
@@ -1339,23 +1346,31 @@ initialise_ike_packet(size_t *packet_out_len, unsigned lifetime,
    packet_out=Malloc(*packet_out_len);
    cp = packet_out;
    memcpy(cp, hdr, sizeof(struct isakmp_hdr));
+   free(hdr);
    cp += sizeof(struct isakmp_hdr);
    memcpy(cp, sa, sizeof(struct isakmp_sa));
+   free(sa);
    cp += sizeof(struct isakmp_sa);
    memcpy(cp, prop, sizeof(struct isakmp_proposal));
+   free(prop);
    cp += sizeof(struct isakmp_proposal);
    memcpy(cp, transforms, trans_len);
+   free(transforms);
    cp += trans_len;
    if (exchange_type == ISAKMP_XCHG_AGGR) {
       memcpy(cp, ke, ke_len);
+      free(ke);
       cp += ke_len;
       memcpy(cp, nonce, nonce_len);
+      free(nonce);
       cp += nonce_len;
       memcpy(cp, id, id_len);
+      free(id);
       cp += id_len;
    }
    if (vendor_id_flag) {
       memcpy(cp, vid, vid_len);
+      free(vid);
       cp += vid_len;
    }
 
