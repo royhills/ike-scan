@@ -92,6 +92,9 @@ struct transform trans[8];		/* Transform payload */
 struct isakmp_vid vid_hdr;		/* Vendor ID header */
 unsigned char *vid_data;		/* Binary Vendor ID data */
 int vid_data_len;			/* Vendor ID data length */
+/* These two should be made local.  Used by initialise and send_packet */
+unsigned char *buf;
+int buflen;
 
 const char *auth_methods[] = { /* Authentication methods from RFC 2409 Appendix A */
    "UNSPECIFIED",		/* 0 */
@@ -634,7 +637,7 @@ main(int argc, char *argv[]) {
       err_sys("gettimeofday");
    timeval_diff(&end_time, &start_time, &elapsed_time);
    elapsed_seconds = (elapsed_time.tv_sec*1000 +
-                      elapsed_time.tv_usec/1000) / 1000.0;
+                      elapsed_time.tv_usec/1000.0) / 1000.0;
 
 #ifdef SYSLOG
    info_syslog("Ending: %u hosts scanned in %.3f seconds (%.2f hosts/sec). %u returned handshake; %u returned notify",
@@ -997,10 +1000,8 @@ void
 send_packet(int s, struct host_entry *he, int dest_port,
             struct timeval *last_packet_time) {
    struct sockaddr_in sa_peer;
-   char buf[MAXUDP];
-   int buflen;
    NET_SIZE_T sa_peer_len;
-   char *cp;
+   struct isakmp_hdr *hdr = (struct isakmp_hdr *) buf;
 /*
  *	Set up the sockaddr_in structure for the host.
  */
@@ -1012,35 +1013,8 @@ send_packet(int s, struct host_entry *he, int dest_port,
 /*
  *	Copy the initiator cookie from the host entry into the ISAKMP header.
  */
-   hdr.isa_icookie[0] = he->icookie[0];
-   hdr.isa_icookie[1] = he->icookie[1];
-/*
- *	Copy the IKE structures into the output buffer
- */
-   cp = buf;
-   memcpy(cp,&hdr,sizeof(hdr));
-   cp += sizeof(hdr);
-   memcpy(cp,&sa_hdr,sizeof(sa_hdr));
-   cp += sizeof(sa_hdr);
-   memcpy(cp,&sa_prop,sizeof(sa_prop));
-   cp += sizeof(sa_prop);
-   buflen = sizeof(hdr)+sizeof(sa_hdr)+sizeof(sa_prop);
-   if (trans_flag) {
-      memcpy(cp,&trans[0],sizeof(trans[0]));
-      cp += sizeof(trans[0]);
-      buflen += sizeof(trans[0]);
-   } else {
-      memcpy(cp,&trans,sizeof(trans));
-      cp += sizeof(trans);
-      buflen += sizeof(trans);
-   }
-   if (vendor_id_flag) {
-      memcpy(cp, &vid_hdr, sizeof(vid_hdr));
-      cp += sizeof(vid_hdr);
-      memcpy(cp, vid_data, vid_data_len);
-      cp += vid_data_len;
-      buflen += sizeof(vid_hdr)+vid_data_len;
-   } 
+   hdr->isa_icookie[0] = he->icookie[0];
+   hdr->isa_icookie[1] = he->icookie[1];
 /*
  *	Update the last send times for this host.
  */
@@ -1142,241 +1116,136 @@ timeval_diff(struct timeval *a, struct timeval *b, struct timeval *diff) {
  */
 void
 initialise_ike_packet(void) {
+   struct isakmp_hdr *hdr;
+   struct isakmp_sa *sa;
+   struct isakmp_proposal *prop;
+   unsigned char *trans;	/* Individual Transform */
+   unsigned char *transforms;	/* All transforms */
+   unsigned char *vid=NULL;
+   unsigned char *cp;
    int len;
+   int trans_len=0;
 /*
- *	Zero all header fields to start with.
+ *	Vendor ID Payload (Optional)
  */
-   memset(&hdr, '\0', sizeof(hdr));
-   memset(&sa_hdr, '\0', sizeof(sa_hdr));
-   memset(&sa_prop, '\0', sizeof(sa_prop));
-   memset(&trans, '\0', sizeof(trans));
-/*
- *	Fill in static values...
- */
-
-/*
- *	ISAKMP Header
- */
-   hdr.isa_rcookie[0] = 0;              /* Set responder cookie to 0 */
-   hdr.isa_rcookie[1] = 0;
-   hdr.isa_np = ISAKMP_NEXT_SA;         /* Next payload is SA */
-   hdr.isa_version = 0x10;              /* v1.0 */
-   hdr.isa_xchg = ISAKMP_XCHG_IDPROT;   /* Identity Protection (main mode) */
-   hdr.isa_flags = 0;                   /* No flags */
-   hdr.isa_msgid = 0;                   /* MBZ for phase-1 */
-   len=sizeof(hdr)+sizeof(sa_hdr)+sizeof(sa_prop);
    if (vendor_id_flag) {
-      len += sizeof(vid_hdr) + vid_data_len;
+      vid = make_vid(&len, ISAKMP_NEXT_NONE, vid_data, vid_data_len);
+      buflen += len;
    }
-   if (trans_flag) {
-      len += sizeof(trans[0]);
-   } else {
-      len += sizeof(trans);
-   }
-   hdr.isa_length = htonl(len);
+/*
+ *	Transform payloads
+ */
+   trans = make_trans(&len, 3, 1, OAKLEY_3DES_CBC, 0, OAKLEY_SHA, auth_method,
+                      2, lifetime);
+   if ((transforms=realloc(NULL, len)) == NULL)
+      err_sys("realloc");
+   cp = transforms;
+   memcpy(cp, trans, len);
+   cp += len;
+   buflen += len;
+   trans_len += len;
+
+   trans = make_trans(&len, 3, 2, OAKLEY_3DES_CBC, 0, OAKLEY_MD5, auth_method,
+                      2, lifetime);
+   if ((transforms=realloc(transforms, len)) == NULL)
+      err_sys("realloc");
+   memcpy(cp, trans, len);
+   cp += len;
+   buflen += len;
+   trans_len += len;
+
+   trans = make_trans(&len, 3, 3, OAKLEY_DES_CBC,  0, OAKLEY_SHA, auth_method,
+                      2, lifetime);
+   if ((transforms=realloc(transforms, len)) == NULL)
+      err_sys("realloc");
+   memcpy(cp, trans, len);
+   cp += len;
+   buflen += len;
+   trans_len += len;
+
+   trans = make_trans(&len, 3, 4, OAKLEY_DES_CBC,  0, OAKLEY_MD5, auth_method,
+                      2, lifetime);
+   if ((transforms=realloc(transforms, len)) == NULL)
+      err_sys("realloc");
+   memcpy(cp, trans, len);
+   cp += len;
+   buflen += len;
+   trans_len += len;
+
+   trans = make_trans(&len, 3, 5, OAKLEY_3DES_CBC, 0, OAKLEY_SHA, auth_method,
+                      1, lifetime);
+   if ((transforms=realloc(transforms, len)) == NULL)
+      err_sys("realloc");
+   memcpy(cp, trans, len);
+   cp += len;
+   buflen += len;
+   trans_len += len;
+
+   trans = make_trans(&len, 3, 6, OAKLEY_3DES_CBC, 0, OAKLEY_MD5, auth_method,
+                      1, lifetime);
+   if ((transforms=realloc(transforms, len)) == NULL)
+      err_sys("realloc");
+   memcpy(cp, trans, len);
+   cp += len;
+   buflen += len;
+   trans_len += len;
+
+   trans = make_trans(&len, 3, 7, OAKLEY_DES_CBC,  0, OAKLEY_SHA, auth_method,
+                      1, lifetime);
+   if ((transforms=realloc(transforms, len)) == NULL)
+      err_sys("realloc");
+   memcpy(cp, trans, len);
+   cp += len;
+   buflen += len;
+   trans_len += len;
+
+   trans = make_trans(&len, 0, 8, OAKLEY_DES_CBC,  0, OAKLEY_MD5, auth_method,
+                      1, lifetime);
+   if ((transforms=realloc(transforms, len)) == NULL)
+      err_sys("realloc");
+   memcpy(cp, trans, len);
+   cp += len;
+   buflen += len;
+   trans_len += len;
+/*
+ *	Proposal payload
+ */
+   prop = make_prop(trans_len+sizeof(struct isakmp_proposal), 8);
+   buflen += sizeof(struct isakmp_proposal);
 /*
  *	SA Header
  */
    if (vendor_id_flag) {
-      sa_hdr.isasa_np = ISAKMP_NEXT_VID;  /* Next payload is Vendor ID */
+      sa = make_sa_hdr(ISAKMP_NEXT_VID, trans_len+
+                       sizeof(struct isakmp_proposal)+sizeof(struct isakmp_sa));
    } else {
-      sa_hdr.isasa_np = ISAKMP_NEXT_NONE;  /* No Next payload */
+      sa = make_sa_hdr(ISAKMP_NEXT_NONE, trans_len+
+                       sizeof(struct isakmp_proposal)+sizeof(struct isakmp_sa));
    }
-   if (trans_flag) {
-      sa_hdr.isasa_length = htons(sizeof(sa_hdr)+sizeof(sa_prop)+sizeof(trans[0]));
-   } else {
-      sa_hdr.isasa_length = htons(sizeof(sa_hdr)+sizeof(sa_prop)+sizeof(trans));
-   }
-   sa_hdr.isasa_doi = htonl(ISAKMP_DOI_IPSEC);  /* IPsec DOI */
-   sa_hdr.isasa_situation = htonl(SIT_IDENTITY_ONLY);
+   buflen += sizeof(struct isakmp_sa);
 /*
- *	Proposal payload
+ *	ISAKMP Header
  */
-   sa_prop.isap_np = 0;                 /* No more proposals */
-   if (trans_flag) {
-      sa_prop.isap_length = htons(sizeof(sa_prop)+sizeof(trans[0]));
-   } else {
-      sa_prop.isap_length = htons(sizeof(sa_prop)+sizeof(trans));
-   }
-   sa_prop.isap_proposal = 1;           /* Proposal #1 (should this start at 0)*/
-   sa_prop.isap_protoid = PROTO_ISAKMP;
-   sa_prop.isap_spisize = 0;            /* No SPI */
-   if (trans_flag) {
-      sa_prop.isap_notrans = 1;            /* One Transforms */
-   } else {
-      sa_prop.isap_notrans = 8;            /* Eight Transforms */
-   }
+   buflen += sizeof(struct isakmp_hdr);
+   hdr = make_isakmp_hdr(ISAKMP_XCHG_IDPROT, ISAKMP_NEXT_SA, buflen);
 /*
- *	Transform payload
+ *	Allocate packet and copy payloads into packet.
  */
-   if (trans_flag) {
-      trans[0].trans_hdr.isat_np = 0;                  /* No More transforms */
-   } else {
-      trans[0].trans_hdr.isat_np = 3;                  /* More transforms */
+   if ((buf=malloc(buflen)) == NULL)
+      err_sys("malloc");
+   cp = buf;
+   memcpy(cp, hdr, sizeof(struct isakmp_hdr));
+   cp += sizeof(struct isakmp_hdr);
+   memcpy(cp, sa, sizeof(struct isakmp_sa));
+   cp += sizeof(struct isakmp_sa);
+   memcpy(cp, prop, sizeof(struct isakmp_proposal));
+   cp += sizeof(struct isakmp_proposal);
+   memcpy(cp, transforms, trans_len);
+   cp += trans_len;
+   if (vendor_id_flag) {
+      memcpy(cp, vid, sizeof(struct isakmp_vid)+vid_data_len);
+      cp += sizeof(struct isakmp_vid)+vid_data_len;
    }
-   trans[0].trans_hdr.isat_length = htons(sizeof(trans[0]));
-   trans[0].trans_hdr.isat_transnum = 1;                /* Transform #1 */
-   trans[0].trans_hdr.isat_transid = KEY_IKE;
-   trans[0].attr[0].isaat_af_type = htons(0x8001);      /* Encrypt */
-   if (trans_flag) {
-      trans[0].attr[0].isaat_lv = htons(trans_enc);
-   } else {
-      trans[0].attr[0].isaat_lv = htons(OAKLEY_3DES_CBC);
-   }
-   trans[0].attr[1].isaat_af_type = htons(0x8002);      /* Hash */
-   if (trans_flag) {
-      trans[0].attr[1].isaat_lv = htons(trans_hash);
-   } else {
-      trans[0].attr[1].isaat_lv = htons(OAKLEY_SHA);
-   }
-   trans[0].attr[2].isaat_af_type = htons(0x8003);      /* Auth */
-   if (trans_flag) {
-      trans[0].attr[2].isaat_lv = htons(trans_auth);
-   } else {
-      trans[0].attr[2].isaat_lv = htons(auth_method);
-   }
-   trans[0].attr[3].isaat_af_type = htons(0x8004);      /* Group */
-   if (trans_flag) {
-      trans[0].attr[3].isaat_lv = htons(trans_group);   /* custom group */
-   } else {
-      trans[0].attr[3].isaat_lv = htons(2);             /* group 2 */
-   }
-   trans[0].attr[4].isaat_af_type = htons(0x800b);      /* Life Type */
-   trans[0].attr[4].isaat_lv = htons(1);                /* Seconds */
-   trans[0].attr2.isaat_af_type = htons(0x000c);        /* Life Duration */
-   trans[0].attr2.isaat_l = htons(4);                   /* 4 Bytes- CANT CHANGE*/
-   trans[0].attr2.isaat_v = htonl(lifetime);            /* Lifetime */
-
-   trans[1].trans_hdr.isat_np = 3;                      /* More transforms */
-   trans[1].trans_hdr.isat_length = htons(sizeof(trans[1]));
-   trans[1].trans_hdr.isat_transnum = 2;                /* Transform #2 */
-   trans[1].trans_hdr.isat_transid = KEY_IKE;
-   trans[1].attr[0].isaat_af_type = htons(0x8001);      /* Encrypt */
-   trans[1].attr[0].isaat_lv = htons(OAKLEY_3DES_CBC);
-   trans[1].attr[1].isaat_af_type = htons(0x8002);      /* Hash */
-   trans[1].attr[1].isaat_lv = htons(OAKLEY_MD5);
-   trans[1].attr[2].isaat_af_type = htons(0x8003);      /* Auth */
-   trans[1].attr[2].isaat_lv = htons(auth_method);
-   trans[1].attr[3].isaat_af_type = htons(0x8004);      /* Group */
-   trans[1].attr[3].isaat_lv = htons(2);                /* group 2 */
-   trans[1].attr[4].isaat_af_type = htons(0x800b);      /* Life Type */
-   trans[1].attr[4].isaat_lv = htons(1);                /* Seconds */
-   trans[1].attr2.isaat_af_type = htons(0x000c);        /* Life Duration */
-   trans[1].attr2.isaat_l = htons(4);                   /* 4 Bytes- CANT CHANGE*/
-   trans[1].attr2.isaat_v = htonl(lifetime);            /* Lifetime */
-
-   trans[2].trans_hdr.isat_np = 3;                      /* More transforms */
-   trans[2].trans_hdr.isat_length = htons(sizeof(trans[2]));
-   trans[2].trans_hdr.isat_transnum = 3;                /* Transform #3 */
-   trans[2].trans_hdr.isat_transid = KEY_IKE;
-   trans[2].attr[0].isaat_af_type = htons(0x8001);      /* Encrypt */
-   trans[2].attr[0].isaat_lv = htons(OAKLEY_DES_CBC);
-   trans[2].attr[1].isaat_af_type = htons(0x8002);      /* Hash */
-   trans[2].attr[1].isaat_lv = htons(OAKLEY_SHA);
-   trans[2].attr[2].isaat_af_type = htons(0x8003);      /* Auth */
-   trans[2].attr[2].isaat_lv = htons(auth_method);
-   trans[2].attr[3].isaat_af_type = htons(0x8004);      /* Group */
-   trans[2].attr[3].isaat_lv = htons(2);                /* group 2 */
-   trans[2].attr[4].isaat_af_type = htons(0x800b);      /* Life Type */
-   trans[2].attr[4].isaat_lv = htons(1);                /* Seconds */
-   trans[2].attr2.isaat_af_type = htons(0x000c);        /* Life Duration */
-   trans[2].attr2.isaat_l = htons(4);                   /* 4 Bytes- CANT CHANGE*/
-   trans[2].attr2.isaat_v = htonl(lifetime);            /* Lifetime */
-
-   trans[3].trans_hdr.isat_np = 3;                      /* More transforms */
-   trans[3].trans_hdr.isat_length = htons(sizeof(trans[3]));
-   trans[3].trans_hdr.isat_transnum = 4;                /* Transform #4 */
-   trans[3].trans_hdr.isat_transid = KEY_IKE;
-   trans[3].attr[0].isaat_af_type = htons(0x8001);      /* Encrypt */
-   trans[3].attr[0].isaat_lv = htons(OAKLEY_DES_CBC);
-   trans[3].attr[1].isaat_af_type = htons(0x8002);      /* Hash */
-   trans[3].attr[1].isaat_lv = htons(OAKLEY_MD5);
-   trans[3].attr[2].isaat_af_type = htons(0x8003);      /* Auth */
-   trans[3].attr[2].isaat_lv = htons(auth_method);
-   trans[3].attr[3].isaat_af_type = htons(0x8004);      /* Group */
-   trans[3].attr[3].isaat_lv = htons(2);                /* group 2 */
-   trans[3].attr[4].isaat_af_type = htons(0x800b);      /* Life Type */
-   trans[3].attr[4].isaat_lv = htons(1);                /* Seconds */
-   trans[3].attr2.isaat_af_type = htons(0x000c);        /* Life Duration */
-   trans[3].attr2.isaat_l = htons(4);                   /* 4 Bytes- CANT CHANGE*/
-   trans[3].attr2.isaat_v = htonl(lifetime);            /* Lifetime */
-
-   trans[4].trans_hdr.isat_np = 3;                      /* More transforms */
-   trans[4].trans_hdr.isat_length = htons(sizeof(trans[0]));
-   trans[4].trans_hdr.isat_transnum = 5;                /* Transform #5 */
-   trans[4].trans_hdr.isat_transid = KEY_IKE;
-   trans[4].attr[0].isaat_af_type = htons(0x8001);      /* Encrypt */
-   trans[4].attr[0].isaat_lv = htons(OAKLEY_3DES_CBC);
-   trans[4].attr[1].isaat_af_type = htons(0x8002);      /* Hash */
-   trans[4].attr[1].isaat_lv = htons(OAKLEY_SHA);
-   trans[4].attr[2].isaat_af_type = htons(0x8003);      /* Auth */
-   trans[4].attr[2].isaat_lv = htons(auth_method);
-   trans[4].attr[3].isaat_af_type = htons(0x8004);      /* Group */
-   trans[4].attr[3].isaat_lv = htons(1);                /* group 1 */
-   trans[4].attr[4].isaat_af_type = htons(0x800b);      /* Life Type */
-   trans[4].attr[4].isaat_lv = htons(1);                /* Seconds */
-   trans[4].attr2.isaat_af_type = htons(0x000c);        /* Life Duration */
-   trans[4].attr2.isaat_l = htons(4);                   /* 4 Bytes- CANT CHANGE*/
-   trans[4].attr2.isaat_v = htonl(lifetime);            /* Lifetime */
-
-   trans[5].trans_hdr.isat_np = 3;                      /* More transforms */
-   trans[5].trans_hdr.isat_length = htons(sizeof(trans[1]));
-   trans[5].trans_hdr.isat_transnum = 6;                /* Transform #6 */
-   trans[5].trans_hdr.isat_transid = KEY_IKE;
-   trans[5].attr[0].isaat_af_type = htons(0x8001);      /* Encrypt */
-   trans[5].attr[0].isaat_lv = htons(OAKLEY_3DES_CBC);
-   trans[5].attr[1].isaat_af_type = htons(0x8002);      /* Hash */
-   trans[5].attr[1].isaat_lv = htons(OAKLEY_MD5);
-   trans[5].attr[2].isaat_af_type = htons(0x8003);      /* Auth */
-   trans[5].attr[2].isaat_lv = htons(auth_method);
-   trans[5].attr[3].isaat_af_type = htons(0x8004);      /* Group */
-   trans[5].attr[3].isaat_lv = htons(1);                /* group 1 */
-   trans[5].attr[4].isaat_af_type = htons(0x800b);      /* Life Type */
-   trans[5].attr[4].isaat_lv = htons(1);                /* Seconds */
-   trans[5].attr2.isaat_af_type = htons(0x000c);        /* Life Duration */
-   trans[5].attr2.isaat_l = htons(4);                   /* 4 Bytes- CANT CHANGE*/
-   trans[5].attr2.isaat_v = htonl(lifetime);            /* Lifetime */
-
-   trans[6].trans_hdr.isat_np = 3;                      /* More transforms */
-   trans[6].trans_hdr.isat_length = htons(sizeof(trans[2]));
-   trans[6].trans_hdr.isat_transnum = 7;                /* Transform #7 */
-   trans[6].trans_hdr.isat_transid = KEY_IKE;
-   trans[6].attr[0].isaat_af_type = htons(0x8001);      /* Encrypt */
-   trans[6].attr[0].isaat_lv = htons(OAKLEY_DES_CBC);
-   trans[6].attr[1].isaat_af_type = htons(0x8002);      /* Hash */
-   trans[6].attr[1].isaat_lv = htons(OAKLEY_SHA);
-   trans[6].attr[2].isaat_af_type = htons(0x8003);      /* Auth */
-   trans[6].attr[2].isaat_lv = htons(auth_method);
-   trans[6].attr[3].isaat_af_type = htons(0x8004);      /* Group */
-   trans[6].attr[3].isaat_lv = htons(1);                /* group 1 */
-   trans[6].attr[4].isaat_af_type = htons(0x800b);      /* Life Type */
-   trans[6].attr[4].isaat_lv = htons(1);                /* Seconds */
-   trans[6].attr2.isaat_af_type = htons(0x000c);        /* Life Duration */
-   trans[6].attr2.isaat_l = htons(4);                   /* 4 Bytes- CANT CHANGE*/
-   trans[6].attr2.isaat_v = htonl(lifetime);            /* Lifetime */
-
-   trans[7].trans_hdr.isat_np = 0;                      /* No more transforms */
-   trans[7].trans_hdr.isat_length = htons(sizeof(trans[3]));
-   trans[7].trans_hdr.isat_transnum = 8;                /* Transform #8 */
-   trans[7].trans_hdr.isat_transid = KEY_IKE;
-   trans[7].attr[0].isaat_af_type = htons(0x8001);      /* Encrypt */
-   trans[7].attr[0].isaat_lv = htons(OAKLEY_DES_CBC);
-   trans[7].attr[1].isaat_af_type = htons(0x8002);      /* Hash */
-   trans[7].attr[1].isaat_lv = htons(OAKLEY_MD5);
-   trans[7].attr[2].isaat_af_type = htons(0x8003);      /* Auth */
-   trans[7].attr[2].isaat_lv = htons(auth_method);
-   trans[7].attr[3].isaat_af_type = htons(0x8004);      /* Group */
-   trans[7].attr[3].isaat_lv = htons(1);                /* group 1 */
-   trans[7].attr[4].isaat_af_type = htons(0x800b);      /* Life Type */
-   trans[7].attr[4].isaat_lv = htons(1);                /* Seconds */
-   trans[7].attr2.isaat_af_type = htons(0x000c);        /* Life Duration */
-   trans[7].attr2.isaat_l = htons(4);                   /* 4 Bytes- CANT CHANGE*/
-   trans[7].attr2.isaat_v = htonl(lifetime);            /* Lifetime */
-/*
- *	Vendor ID Payload (Optional)
- */
-   vid_hdr.isavid_np = ISAKMP_NEXT_NONE;	/* No Next payload */
-   vid_hdr.isavid_length = htons(sizeof(vid_hdr) + vid_data_len);	/* Length of VID data */
 }
 
 /*
