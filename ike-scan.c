@@ -20,6 +20,10 @@
  * Change History:
  *
  * $Log$
+ * Revision 1.10  2002/09/16 14:26:30  rsh
+ * Changed timeval_diff computation method from floating point to integer.
+ * Modified main loop so that timing is more exact.
+ *
  * Revision 1.9  2002/09/16 12:15:39  rsh
  * Don't remove host entries from the list, mark them as not live instead.
  * This allows us to identify responses that come in after the host has been
@@ -345,18 +349,18 @@ int main(int argc, char *argv[]) {
       if ((gettimeofday(&now, NULL)) != 0) {
          err_sys("gettimeofday");
       }
-      loop_timediff=timeval_diff(&now, &last_packet_time);
-      host_timediff=timeval_diff(&now, &(cursor->last_send_time));
 /*
  *	If the last packet was sent more than interval ms ago, then we can
  *	potentially send a packet to the current host.
  */
+      loop_timediff=timeval_diff(&now, &last_packet_time);
       if (loop_timediff > interval) {
 /*
  *	If the last packet to this host was sent more than the current
  *	timeout for this host ms ago, then we can potentially send a packet
  *	to it.
  */
+         host_timediff=timeval_diff(&now, &(cursor->last_send_time));
          if (host_timediff > cursor->timeout) {
 /*
  *	If we've exceeded our retry limit, then this host has timed out so
@@ -373,6 +377,11 @@ int main(int argc, char *argv[]) {
                   cursor->timeout *= backoff;
                }
                send_packet(sockfd, cursor);
+               if (live_count) {
+                  do {
+                     cursor = cursor->next;
+                  } while (!cursor->live);
+               } /* End If */
             }
          } else {	/* We can't send a packet to this host yet */
             if (live_count) {
@@ -688,12 +697,30 @@ int recvfrom_wto(int s, char *buf, int len, struct sockaddr *saddr, int tmo) {
  *	Returns the difference in milliseconds between the two
  *	specified time values.  return = a - b.
  */
-unsigned long timeval_diff(struct timeval *a,struct timeval *b) {
-   double temp;
-   temp = (((a->tv_sec*1000000)+ a->tv_usec) -
-           ((b->tv_sec*1000000)+ b->tv_usec)) / 1000;
+int timeval_diff(struct timeval *a,struct timeval *b) {
+   struct timeval diff;
+   int result;
 
-   return (long) temp;
+   /* Perform the carry for the later subtraction by updating y. */
+   if (a->tv_usec < b->tv_usec) {
+     int nsec = (b->tv_usec - a->tv_usec) / 1000000 + 1;
+     b->tv_usec -= 1000000 * nsec;
+     b->tv_sec += nsec;
+   }
+   if (a->tv_usec - b->tv_usec > 1000000) {
+     int nsec = (a->tv_usec - b->tv_usec) / 1000000;
+     b->tv_usec += 1000000 * nsec;
+     b->tv_sec -= nsec;
+   }
+ 
+   /* Compute the time difference
+      tv_usec is certainly positive. */
+   diff.tv_sec = a->tv_sec - b->tv_sec;
+   diff.tv_usec = a->tv_usec - b->tv_usec;
+
+   result = 1000*diff.tv_sec + diff.tv_usec/1000;
+
+   return result;
 }
 
 /*
