@@ -163,3 +163,7 @@ sonicwall-pro	0, 6.5/1500, 9/1000, 13/2000, 22/3000
 #	payloads can distinguish Win-2003 from Win-2000 in any event, but
 #	that's another story.
 Windows-2003	0, 1/600, 2, 4, 8, 16, 32
+
+# Discovered by: Bob Davies, March 2004
+# Observed on Lynksys router, Unknown version
+Lynksys	0, 15/500, 15, 15
