@@ -44,7 +44,7 @@
 #define DEFAULT_PATTERN_FUZZ 100	/* Default pattern fuzz in ms */
 #define SYSLOG 1			/* Use syslog if defined */
 #define SYSLOG_FACILITY LOG_USER	/* Syslog facility to use */
-#define PATTERNS_FILE "/usr/local/bin/backoff-patterns" /* Backoff patterns file */
+#define PATTERNS_FILE "ike-backoff-patterns" /* Backoff patterns file */
 
 /* Structures */
 struct host_entry {
@@ -97,3 +97,5 @@ void dump_list(void);
 void dump_times(void);
 void add_recv_time(struct host_entry *);
 void add_pattern(char *);
+char *match_pattern(struct host_entry *);
+int times_close_enough(struct timeval *, struct timeval *);
