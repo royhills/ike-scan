@@ -121,7 +121,6 @@
 #define SYSLOG 1			/* Use syslog if defined */
 #define SYSLOG_FACILITY LOG_USER	/* Syslog facility to use */
 #define PATTERNS_FILE "ike-backoff-patterns" /* Backoff patterns filename */
-#define NET_SIZE_T socklen_t
 
 /* Structures */
 struct host_entry {
