@@ -1,0 +1,25 @@
+$Id$
+
+Using GPG to sign and verify ike-scan packages
+----------------------------------------------
+
+To Sign:
+
+   gpg --armor --detach-sign <file>
+
+   e.g. gpg --armor --detach-sign ike-scan-1.7.tar.gz
+
+   This will create a ".asc" file, e.g. ike-scan-1.7.tar.gz.asc
+
+To Verify:
+
+   gpg --verify <sig> <file>
+
+   e.g. gpg --verify ike-scan-1.6.tar.gz.asc ike-scan-1.6.tar.gz
+
+   This will report either "Good signature" or "BAD signature", e.g:
+
+   $ gpg --verify ike-scan-1.6.tar.gz.asc ike-scan-1.6.tar.gz
+   gpg: Signature made Thu Jan 15 09:20:31 2004 GMT using DSA key ID 567B9F3A
+   gpg: Good signature from "Roy Hills <Roy.Hills@nta-monitor.com>"
+
