@@ -107,6 +107,9 @@
  * Change History:
  *
  * $Log$
+ * Revision 1.29  2003/01/02 13:28:29  rsh
+ * Wrapped libgen.h include in #ifdef HAVE_LIBGEN_H / #endif.
+ *
  * Revision 1.28  2002/12/31 21:09:47  rsh
  * Changes to allow compilation on FreeBSD and OpenBSD as well as Linux.
  *
@@ -238,7 +241,9 @@
 #endif
 #include <errno.h>
 #include <syslog.h>
+#ifdef HAVE_LIBGEN_H
 #include <libgen.h>
+#endif
 
 #include "global.h"
 #include "md5.h"
