@@ -167,7 +167,7 @@ void err_print(int, int, const char *, va_list);
 char *cpystr(char *string);
 void usage(void);
 void add_host(char *);
-void send_packet(int, struct host_entry *);
+void send_packet(int, struct host_entry *, int, struct timeval *);
 int recvfrom_wto(int, char *, int, struct sockaddr *, int);
 void remove_host(struct host_entry *);
 void timeval_diff(struct timeval *, struct timeval *, struct timeval *);
