@@ -3,7 +3,7 @@ $Id$
 This file gives a brief overview of the major changes between each ike-scan
 release.  For more details please read the ChangeLog file.
 
-ike-scan v1.6.5:
+ike-scan v1.7:
 
 * Added --nodns (-N) option to prevent DNS lookups.  With this option,
   target hosts are not processed with gethostbyname(), which can avoid
@@ -53,7 +53,9 @@ ike-scan v1.6.5:
   faster than the hash functions supplied with ike-scan, which is of benefit
   when performing pre-shared key cracking.
 
-  To compile with OpenSSL, use the --with-openssl=PATH option to configure.
+  To compile with OpenSSL, use the --with-openssl option to configure.  With
+  this option, configure will search for the OpenSSL libraries in several
+  standard locations.
 
 * Added --random (-R) option to randomise the host list before scanning.
   This causes the hosts to be scanned in a random order, which may be less
