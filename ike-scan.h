@@ -1,3 +1,22 @@
+/*
+ *  The IKE security scanner is copyright (C) Roy Hills, NTA Monitor Ltd.
+ *  This program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published
+ *  by the Free Software Foundation; Version 2.  This guarantees your
+ *  right to use, modify, and redistribute this software under certain
+ *  conditions.  If this license is unacceptable to you, I may be
+ *  willing to sell alternative licenses (contact Roy.Hills@nta-monitor.com).
+ *
+ *  You are encouraged to send comments, improvements or suggestions to
+ *  me at Roy.Hills@nta-monitor.com.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ *  General Public License for more details:
+ *  http://www.gnu.org/copyleft/gpl.html
+ */
+
 /* Includes */
 #include <stdarg.h>
 #include <netinet/in.h>
