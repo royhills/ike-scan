@@ -99,6 +99,8 @@
 
 /* Defines */
 
+#define PRINT_VENDOR_ID 1		/* EXPERIMENTAL */
+
 #define MAXLINE 255			/* Max line length for input files */
 #define MAXUDP 65507			/* Max UDP data size = 64k - 20 - 8 */
 #define DEFAULT_SELECT_TIMEOUT 10	/* Default select timeout in ms */
