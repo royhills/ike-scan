@@ -490,6 +490,7 @@ main(int argc, char *argv[]) {
    req_interval = interval;
    while (live_count ||
           (showbackoff_flag && sa_responders && (end_timediff < end_wait))) {
+      int s_err=0;	/* smoothed timing error */
 /*
  *	Obtain current time and calculate deltas since last packet and
  *	last packet to this host.
@@ -513,12 +514,19 @@ main(int argc, char *argv[]) {
          host_timediff = 1000000*diff.tv_sec + diff.tv_usec;
          if (host_timediff >= (*cursor)->timeout && (*cursor)->live) {
             if (reset_cum_err) {
+               s_err = 0;
                cum_err = 0;
                req_interval = interval;
                reset_cum_err = 0;
             } else {
+#ifdef ALPHA
+               s_err = (ALPHA*s_err) +
+                       (1-ALPHA)*(long)(loop_timediff - interval);
+               cum_err += s_err;
+#else
                cum_err += loop_timediff - interval;
-               if (req_interval >= cum_err) {
+#endif
+               if (req_interval > cum_err) {
                   req_interval = req_interval - cum_err;
                } else {
                   req_interval = 0;
