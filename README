@@ -23,7 +23,27 @@ TABLE OF CONTENTS
 1.  BUILDING AND INSTALLING
 
 ike-scan uses the standard GNU autoconf and automake tools, so installation
-involves the normal unzip/untar, ./configure, make, make install process.
+is the normal process:
+
+a) Unzip/Untar the tarball (e.g. tar xzf <tarball-name> if you're using GNU tar)
+b) cd to the ike-scan source directory (e.g. cd ike-scan-1.7)
+c) ./configure (use "./configure --with-openssl" to use the OpenSSL libraries)
+d) make
+e) make check (optional, but recommended)
+f) make install (you'll need to be root for this bit)
+
+If you plan on performing pre-shared key cracking, then you should configure
+ike-scan to use the OpenSSL hash functions rather than its built-in functions
+because the OpenSSL ones are normally faster.  To do this, make sure you have
+the OpenSSL include files and libraries installed, and run configure as
+"./configure --with-openssl" in step (c) above.  Whether you use OpenSSL or
+not won't affect the functionallity of ike-scan, just the speed of pre-shared
+key cracking with psk-crack.
+
+Some operating systems install the OpenSSL headers and libraries by default;
+others require that you install an optional package, for example on Debian
+Linux you need to install the libssl-dev package.  Alternatively, you can
+download and install the OpenSSL tarball from http://www.openssl.org/
 
 It should build on most modern Unix-like OSes.  It works on Windows with Cygwin
 and can be used as a standalone Windows executable when cygwin1.dll is present.
@@ -32,8 +52,9 @@ If you are using the Windows-32 binary package, please also read the file
 README-WIN32 which details the differences when running on the Windows
 platform.
 
-The program is known to build and run on Linux, FreeBSD, OpenBSD, Win32/Cygwin,
-Solaris and HP Tru64.  For more details see the section "SUPPORTED PLATFORMS" below.
+The program is known to build and run on Linux, FreeBSD, OpenBSD, NetBSD,
+Win32/Cygwin, Solaris, MacOS X, HP Tru64, HP-UX, and SCO OpenServer.  For more
+details see the section "SUPPORTED PLATFORMS" below.
 
 For installation instructions, see the file INSTALL.
 
@@ -42,33 +63,47 @@ For installation instructions, see the file INSTALL.
 ike-scan discovers IKE hosts and can also fingerprint them using the
 retransmission backoff pattern.
 
-ike-scan does two things:
+ike-scan can perform the following functions:
 
-a) Discovery: Determine which hosts are running IKE.
+a) Discovery: Determine which hosts in a given IP range are running IKE.
    This is done by displaying those hosts which respond to the IKE requests
    sent by ike-scan.
 
-b) Fingerprinting: Determine which IKE implementation the hosts are using.
-   This is done by recording the times of the IKE response packets from the
+b) Fingerprinting: Determine which IKE implementation the hosts are using,
+   and in some cases determine the version of software that they are running.
+   This is done in two ways: firstly by UDP backoff fingerprinting which
+   involves recording the times of the IKE response packets from the
    target hosts and comparing the observed retransmission backoff pattern
-   against known patterns.
+   against known patterns; and secondly by Vendor ID fingerprinting which
+   compares Vendor ID payloads from the VPN servers against known vendor id
+   patterns.
+
+c) Transform Enumeration: Find which transform attributes are supported by the
+   VPN server for IKE Phase-1 (e.g. encryption algorithm, hash algorithm etc.).
+
+d) User Enumeration: For some VPN systems, discover valid VPN usernames.
+
+e) Pre-Shared Key Cracking: Perform offline dictionary or brute-force password
+   cracking for IKE Aggressice Mode with Pre-Shared Key authentication. This
+   uses ike-scan to obtain the hash and other parameters, and psk-crack (which
+   is part of the ike-scan package) to perform the cracking.
 
 The retransmission backoff fingerprinting concept is discussed in more
 detail in the UDP backoff fingerprinting paper which should be included
 in the ike-scan kit as udp-backoff-fingerprinting-paper.txt.
 
-The program sends IKE main mode requests to the specified hosts and displays
-any responses that are received.  It handles retry and retransmission with
-backoff to cope with packet loss.  It also limits the amount of bandwidth
-used by the outbound IKE packets.
+The program sends IKE phase-1 (Main Mode or Aggressive Mode) requests to the
+specified hosts and displays any responses that are received.  It handles
+retry and retransmission with backoff to cope with packet loss.  It also
+limits the amount of bandwidth used by the outbound IKE packets.
 
 IKE is the Internet Key Exchange protocol which is the key exchange and
 authentication mechanism used by IPsec.  Just about all modern VPN systems
 implement IPsec, and the vast majority of IPsec VPNs use IKE for key exchange.
-Main mode is one of the modes defined for phase-1 of the IKE exchange (the
+Main Mode is one of the modes defined for phase-1 of the IKE exchange (the
 other defined mode is aggressive mode).  RFC 2409 section 5 specifies that
 main mode must be implemented, therefore all IKE implementations can
-be expected to support main mode.
+be expected to support main mode. Many also support Aggressive Mode.
 
 3.  USAGE
 
@@ -79,7 +114,16 @@ program.
 
 Usage: ike-scan [options] [hosts...]
 
-Hosts are specified on the command line unless the --file option is specified.
+Target hosts must be specified on the command line unless the --file option is
+given, in which case the targets are read from the specified file instead.
+
+The target hosts can be specified as IP addresses or hostnames.  You can also
+specify IPnetwork/bits (e.g. 192.168.1.0/24) to specify all hosts in the given
+network (network and broadcast addresses included), and IPstart-IPend
+(e.g. 192.168.1.3-192.168.1.27) to specify all hosts in the inclusive range.
+
+These different options for specifying target hosts may be used both on the
+command line, and also in the file specified with the --file option.
 
 Options:
 
@@ -130,11 +174,22 @@ Options:
 
 --verbose or -v		Display verbose progress messages.
 			Use more than once for greater effect:
-			1 - Show when hosts are removed from the list and
-			    when packets with invalid cookies are received.
-			2 - Show each packet sent and received.
-			3 - Display the host and backoff lists before
-			    scanning starts.
+			1 - Show when each pass is completed and when
+			    packets with invalid cookies are received.
+			2 - Show each packet sent and received and when
+			    hosts are removed from the list.
+			3 - Display the host, Vendor ID and backoff lists
+			    before scanning starts.
+
+--quiet or -q		Don't decode the returned packet.
+			This prints less protocol information so the
+			output lines are shorter.
+
+--multiline or -M	Split the payload decode across multiple lines.
+			With this option, the decode for each payload is
+			printed on a seperate line starting with a TAB.
+			This option makes the output easier to read, especially
+			when there are many payloads.
 
 --lifetime=<s> or -l <s> Set IKE lifetime to <s> seconds, default=28800.
 			RFC 2407 specifies 28800 as the default, but some
@@ -145,9 +200,18 @@ Options:
 			payloads with different lifetimes.  Each --trans option
 			will use the previously specified lifetime value.
 
+--lifesize=<s> or -z <s> Set IKE lifesize to <s> Kilobytes, default=0.
+			If you specify 0, then no lifesize will be specified.
+			You can use this option more than once in conjunction
+			with the --trans options to produce multiple transform
+			payloads with different lifesizes.  Each --trans option
+			will use the previously specified lifesize value.
+
 --auth=<n> or -m <n>	Set auth. method to <n>, default=1 (pre-shared key).
 			RFC defined values are 1 to 5.  See RFC 2409 Appendix A.
 			Checkpoint hybrid mode is 64221.
+			GSS (Windows "Kerberos") is 65001.
+			XAUTH uses 65001 to 65010.
 
 --version or -V		Display program version and exit.
 
@@ -192,6 +256,12 @@ Options:
 			IKE backoff patterns.  This file is only used when
 			--showbackoff is specified.
 
+--vidpatterns=<f> or -I <f> Use Vendor ID patterns file <f>,
+			default=/usr/local/share/ike-scan/ike-vendor-ids.
+			This specifies the name of the file containing
+			Vendor ID patterns.  These patterns are used for
+			Vendor ID fingerprinting.
+
 --aggressive or -A	Use IKE Aggressive Mode (The default is Main Mode)
 			If you specify --aggressive, then you may also
 			specify --dhgroup, --id and --idtype.  If you use
@@ -200,16 +270,67 @@ Options:
 			DH Group and this should match the group specified
 			with --dhgroup or the default if --dhgroup is not used.
 
---id <id> or -n <id>	Use <id> as the identification value.
+--id=<id> or -n <id>	Use <id> as the identification value.
 			This option is only applicable to Aggressive Mode.
-			<id> should be specified in hex, e.g. --id=deadbeef.
+			<id> can be specified as a string, e.g. --id=test or as
+			a hex value with a leading "0x", e.g. --id=0xdeadbeef.
 
 --idtype=n or -y n	Use identification type <n>.  Default 3 (ID_USER_FQDN).
 			This option is only applicable to Aggressive Mode.
 			See RFC 2407 4.6.2 for details of Identification types.
 
 --dhgroup=n or -g n	Use Diffie Hellman Group <n>.  Default 2.
-			This option is only applicable to Aggressive Mode.
+			This option is only applicable to Aggressive Mode where
+			it is used to determine the size of the key exchange
+			payload.
+			Acceptable values are 1,2,5,14,15,16,17,18 (MODP only).
+
+--gssid=<n> or -G <n>	Use GSS ID <n> where <n> is a hex string.
+			This uses transform attribute type 16384 as specified
+			in draft-ietf-ipsec-isakmp-gss-auth-07.txt, although
+			Windows-2000 has been observed to use 32001 as well.
+			For Windows 2000, you'll need to use --auth=65001 to
+			specify Kerberos (GSS) authentication.
+
+--random or -R		Randomise the host list.
+			This option randomises the order of the hosts in the
+			host list, so the IKE probes are sent to the hosts in
+			a random order.  It uses the Knuth shuffle algorithm.
+
+--tcp[=n] or -T[n]	Use TCP transport instead of UDP.
+			This allows you to test a host running IKE over TCP.
+			You won't normally need this option because the vast
+			majority of IPsec systems only support IKE over UDP.
+			The optional value <n> specifies the type of IKE over
+			TCP.  There are currently two possible values:
+			1 = RAW IKE over TCP as used by Checkpoint (default);
+			2 = Encapsulated IKE over TCP as used by Cisco.
+			If you are using the short form of the option (-T)
+			then the value must immediately follow the option
+			letter with no spaces, e.g. -T2 not -T 2.
+			You can only specify a single target host if you use
+			this option.
+
+--tcptimeout=n or -O n	Set TCP connect timeout to n seconds (default=10).
+			This is only applicable to TCP transport mode.
+
+--pskcrack[=f] or -P[f]	Crack aggressive mode pre-shared keys.
+			This option outputs the aggressive mode pre-shared key
+			(PSK) parameters for offline cracking using the
+			"psk-crack" program that is supplied with ike-scan.
+			You can optionally specify a filename, "f", to write
+			the PSK parameters to.  If you do not specify a filename
+			then the PSK parameters are written to standard output.
+			If you are using the short form of the option (-P)
+			then the value must immediately follow the option
+			letter with no spaces, e.g. -Pfile not -P file.
+			You can only specify a single target host if you use
+			this option.
+			This option is only applicable to IKE aggressive mode.
+
+--nodns or -N		Do not use DNS to resolve names.
+			If you use this option, then all hosts must be
+			specified as IP addresses.
 
 Report bugs or send suggestions to ike-scan@nta-monitor.com
 See the ike-scan homepage at http://www.nta-monitor.com/ike-scan/
@@ -221,12 +342,13 @@ See the ike-scan homepage at http://www.nta-monitor.com/ike-scan/
 The hosts to scan can be specified on the command line or read from an
 input file using the --file=<fn> option.  The program can cope with
 large numbers of hosts limited only by the amount of memory needed to store
-the list of host_entry structures.  Each host_entry structure requires 52
+the list of host_entry structures.  Each host_entry structure requires 45
 bytes on a 32-bit system, so a class B network (65534 hosts) would require
-about 3.25 MB for the list.  The hosts can be specified as either IP
+about 2.8 MB for the list.  The hosts can be specified as either IP
 addresses or hostnames, however the program will store all hosts internally
 as IP addresses and will only display IP addresses in the output (ike-scan
-calls gethostbyname(3) to determine the IP address of each host).
+calls gethostbyname(3) to determine the IP address of each host, but this can
+be disabled with the --nodns (-N) option).
 
 4.2. Rate Limiting
 
@@ -262,7 +384,7 @@ current time in seconds and microseconds as returned by gettimeofday(), the
 unique host number, and the host IP address.  This ensures that the cookies
 are unique with a reasonable degree of certainty.
 
-If --verbose is in effect, any packets that are received with cookies that
+If --verbose (-v) is in effect, any packets that are received with cookies that
 do not match will result in a message like:
 
 ---	Ignoring 84 bytes from 172.16.2.2 with unknown cookie 195c837e5a39f657
@@ -390,9 +512,9 @@ of 2 if --dhgroup is not specified.
 
 IKE hosts may respond in one of two ways:
 
-a) With an IKE main mode response packet containing the cookie that was
-   originally sent to the host.  This is a "handshake" response and indicates
-   that the host supports IKE and finds our proposal acceptable; or
+a) With an IKE main or aggressive mode response packet containing the cookie
+   that was originally sent to the host.  This is a "handshake" response and
+   indicates that the host supports IKE and finds our proposal acceptable; or
 
 b) With an IKE notify message containing the cookie that was originally sent
    to the host.  This is a "notify" response and indicates that the host
@@ -598,27 +720,57 @@ This will read the target hosts from the file "hostlist.txt".
 This reads the hosts from stdin and performs both IKE detection and backoff
 fingerprinting.  The backoff wait is specified as 20 seconds.
 
+4) ike-scan 172.16.0.0/16
+
+This will run ike-scan against all hosts in the network specified by
+172.16.0.0/16 (including network and broadcast addresses).  In this case, this
+will result in a total of 65536 hosts being scanned - from 172.16.0.0 to
+172.16.255.255 inclusive.
+
+5) ike-scan 172.16.0.0-172.16.255.255
+
+This uses the range notation to scan a total of 65536 hosts from 172.16.0.0 to
+172.16.255.255 inclusive.
+
 7.  SUPPORTED PLATFORMS
 
 ike-scan has been built and tested on the following platforms:
 
-Debian Linux 1.3.1 with gcc 2.7.2.1, libc5 and 2.0.29 Kernel
-Debian Linux 2.2r7 (Potato) with gcc 2.95.2 and 2.2.17 Kernel
-Debian Linux 3.0r1 (Woody) with gcc 2.95.4 and 2.4.18 Kernel
-FreeBSD 4.3 with gcc 2.95.3
-OpenBSD 3.1 with gcc 2.95.3
-Windows NT 4.0 / Cygwin 1.3.19 with gcc 3.2 20020927 (prerelease)
-SPARC/Solaris 2.8 with gcc 2.95.3 (warns "subscript has type `char'" but works OK)
-HP Tru64 Unix v5.1 with Tru64 cc
+Debian Linux 1.3.1 on IA32 with gcc 2.7.2.1, libc5 and 2.0.29 Kernel
+Debian Linux 2.2r7 (Potato) on IA32 with gcc 2.95.2 and 2.2.17 Kernel
+Debian Linux 3.0r1 (Woody) on IA32 with gcc 2.95.4 and 2.4.18 Kernel
+Debian Linux 3.1 (Sarge) on IA32 with gcc 3.3.4 and 2.4.27 Kernel
+Debian Linux 3.0 (Woody) on PA-RISC with gcc 3.0.4 and 2.4.17-64 Kernel
+Debian Linux 3.0 (Woody) on Alpha with gcc 3.3.1 and 2.4.18-smp Kernel
+Redhat Advanced Server 3.2 on IA64 with gcc 3.2.3 and 2.4.21-19.EL Kernel
+HP-UX 11.11 on PA-RISC with gcc 3.4.1
+HP-UX 11.11 on PA-RISC with HP cc HP92453-01 B.11.11.32003.GP
+FreeBSD 4.3 on IA32 with gcc 2.95.3
+OpenBSD 3.1 on IA32 with gcc 2.95.3
+NetBSD 1.6 on IA32 with gcc 2.95.3
+SCO OpenServer 5.0.7 on IA32 with gcc 2.95.3
+Windows NT 4.0 / Cygwin 1.5.12 on IA32 with gcc 3.3.3
+Solaris 2.8 on SPARC with gcc 2.95.3
+HP Tru64 Unix v5.1 on Alpha with Tru64 cc
+MacOS X (Darwin 7.7.0) on PowerPC
 
 I've also had reports that it builds OK on the following systems:
 
 RedHat Linux 7.1 with 2.4 Kernel
 RedHat Linux 8.0 with 2.4 Kernel
+Debian Linux 3.1 on Alpha
+Debian Linux 3.1 on ARM
+Debian Linux 3.1 on HP PA-RISC
+Debian Linux 3.1 on Intel IA64
+Debian Linux 3.1 on Motorola 68000
+Debian Linux 3.1 on MIPS
+Debian Linux 3.1 on PowerPC
+Debian Linux 3.1 on IBM S390
+Debian Linux 3.1 on SPARC
 
 It should work, or be capable of working, on any Unix-like system which
-supports sockets and has the system calls malloc, gethostbyname, gettimeofday,
-inet_ntoa, memset, select, socket, and strerror.
+has a 64-bit integer type, supports sockets and has the system calls malloc,
+gethostbyname, gettimeofday, inet_ntoa, memset, select, socket, and strerror.
 
 If you port ike-scan to a system not listed above, please let me know the
 details of the changes required so I can add them to future releases.
@@ -647,6 +799,7 @@ Web:  http://www.nta-monitor.com/ike-scan/
 
 Postal address:
 
+   Roy Hills
    NTA Monitor Limited
    14 Ashford House
    Medway City Estate
@@ -662,7 +815,9 @@ b) An OS not listed in the list above which ike-scan builds and runs OK on;
 
 c) Any IKE implementation patterns that are not already in the
    ike-backoff-patterns file.  Please include details of the pattern and
-   also details of the IKE implementation; or
+   also details of the IKE implementation;
 
-d) Any comments or suggestions about the program.
+d) Any Vendor ID pattern that is not already in the ike-vendor-ids file; or
+
+e) Any comments or suggestions about the program.
 
