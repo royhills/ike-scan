@@ -917,7 +917,10 @@ process_attr(unsigned char **cp, size_t *len) {
       "DSS",					/*  2 */
       "RSA_Sig",				/*  3 */
       "RSA_Enc",				/*  4 */
-      "RSA_RevEnc"				/*  5 */
+      "RSA_RevEnc",				/*  5 */
+      "ElGamel_Enc",				/*  6 */
+      "ElGamel_RevEnc",				/*  7 */
+      "ECDSA_Sig"				/*  8 */
    };
    static const char *dh_names[] = {		/* From RFC 2409 App. A */
       NULL,					/* and RFC 3526 */
@@ -926,14 +929,14 @@ process_attr(unsigned char **cp, size_t *len) {
       "3:ec2n155",				/*  3 */
       "4:ec2n185",				/*  4 */
       "5:modp1536",				/*  5 */
-      NULL,					/*  6 */
-      NULL,					/*  7 */
-      NULL,					/*  8 */
-      NULL,					/*  9 */
-      NULL,					/* 10 */
-      NULL,					/* 11 */
-      NULL,					/* 12 */
-      NULL,					/* 13 */
+      "6:ec2n163",				/*  6 */
+      "7:ec2n163",				/*  7 */
+      "8:ec2n283",				/*  8 */
+      "9:ec2n283",				/*  9 */
+      "10:ec2n409",				/* 10 */
+      "11:ec2n409",				/* 11 */
+      "12:ec2n571",				/* 12 */
+      "13:ec2n571",				/* 13 */
       "14:modp2048",				/* 14 */
       "15:modp3072",				/* 15 */
       "16:modp4096",				/* 16 */
