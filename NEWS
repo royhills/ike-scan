@@ -3,6 +3,23 @@ $Id$
 This file gives a brief overview of the major changes between each ike-scan
 release.  For more details please read the ChangeLog file.
 
+ike-scan v1.5:
+
+* Aggressive mode is now supported.  The --aggressive (-A) option specifies
+  aggressive mode.
+
+* The --trans option can be specified multiple times to generate an arbitary
+  number of custom transforms in the ISAKMP SA Proposal.
+
+* The --vendor option can be specified multiple times to generate an arbitary
+  number of Vendor ID payloads.
+
+* UDP engine improvements: Dynamically adjust select() timeout, removing the
+  need for a --selectwait argument; keep track of cumulative timing error, and
+  use this to adjust the timing to compensate; calculate timings in
+  microseconds rather than milliseconds to improve accuracy; and some minor
+  tuning.
+
 ike-scan v1.4:
 
 * Two additions to permit Vendor ID fingerprinting.
