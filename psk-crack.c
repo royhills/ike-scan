@@ -372,6 +372,8 @@ main (int argc, char *argv[]) {
    timeval_diff(&end_time, &start_time, &elapsed_time);
    elapsed_seconds = (elapsed_time.tv_sec*1000 +
                       elapsed_time.tv_usec/1000.0) / 1000.0;
+   if (elapsed_seconds < 0.000001)
+      elapsed_seconds = 0.000001;	/* Avoid div by zero */
    printf("Ending psk-crack: " IKE_UINT64_FORMAT
           " iterations in %.3f seconds (%.2f iterations/sec)\n",
           iterations, elapsed_seconds, iterations/elapsed_seconds);
