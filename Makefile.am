@@ -7,4 +7,4 @@ ike_scan_SOURCES = ike-scan.c ike-scan.h error.c md5.c md5.h isakmp.h
 ike_scan_LDADD = @COMPAT_OBJS@
 ike_scan_DEPENDENCIES = @COMPAT_OBJS@
 EXTRA_ike_scan_SOURCES = getopt.c getopt.h getopt1.c
-EXTRA_DIST = $(data_DATA) udp-backoff-fingerprinting-paper.txt
+EXTRA_DIST = $(data_DATA) udp-backoff-fingerprinting-paper.txt README-WIN32
