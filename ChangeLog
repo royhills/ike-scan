@@ -1,5 +1,61 @@
 $Id$
 
+2004-06-16 Roy Hills <Roy.Hills@nta-monitor.com>
+
+	* ike-vendor-ids: Added several new Vendor ID patterns bringing the
+	  total to 68.
+
+2004-05-25 Roy Hills <Roy.Hills@nta-monitor.com>
+
+	* ike-scan.c: Allow identification value specified with --id option
+	  to be either a string e.g. --id=test or a hex value with a leading
+	  0x e.g. --id=0xdeadbeef.
+
+2004-05-19 Roy Hills <Roy.Hills@nta-monitor.com>
+
+	* Makefile.am: updated for automake 1.8.
+
+	* configure.ac: updated for autoconf 2.59.
+
+	* configure.ac: Support the use of OpenSSL hash functions.
+	  If --with-openssl=PATH option is specified, then the OpenSSL
+	  functions will be used; otherwise the built-in functions will be
+	  used.
+
+	* check-hash.c: New file to check MD5, SHA1 and HMAC functions for
+	  "make check".
+
+2004-04-15 Roy Hills <Roy.Hills@nta-monitor.com>
+
+	* ike-scan.h, ike-scan.c: Changed host entry list to use dynamic array
+	  grown with realloc rather than a linked list using malloc for each
+	  entry, plus an additional array of pointers.  This reduces the amount
+	  of memory required from 56bytes per host to 45bytes per host.
+
+	* ike-scan.c: Added --random (-R) option to randomise the host entry
+	  list.  This uses the Knuth shuffle algorithm to shuffle the array of
+	  pointers.
+
+2004-04-05 Roy Hills <Roy.Hills@nta-monitor.com>
+
+	* ike-scan.h: Changed num_sent and num_rcvd fields from unsigned to
+	  unsigned short to save space.
+
+	* ike-scan.c: Moved the various utility functions that are not IKE
+	  related to the new file utils.c.
+
+	* Makefile.am: Added new source file: utils.c
+
+2004-03-29 Roy Hills <Roy.Hills@nta-monitor.com>
+
+	* configure.ac: Incremented version number from 1.6 to 1.6.1 for next
+	  version.
+	* ike-scan.h: Re-arranged struct host_entry for better alignment -
+	  moved "live" to end of structure.
+	* ike-scan.c: Included host name in error message from gethostbyname().
+	* ike-backoff-patterns: Added Linksys router pattern, submitted by
+	  Bob Davis.
+
 2004-01-16 Roy Hills <Roy.Hills@nta-monitor.com>
 
 	* Released v1.6  Tarball size: 141847, Zip size: 648717.
