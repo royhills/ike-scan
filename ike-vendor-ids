@@ -186,6 +186,11 @@ Unknown 5	^ac5078c25cabb9523979978e76a3d0d2426bc9260000000400000401
 Unknown 7	^69b761a173cc1471dc4547d2a5e94812
 Unknown 8	^4c5647362e303a627269636b3a362e302e353732
 Unknown 9	^3499691eb82f9eaefed378f5503671debd0663b4000000040000023c
+# I've seen Unknown 10 sent from SonicWall Global VPN Client
+Unknown 10	^975b7816f69789600dda89040576e0db
 Netscreen	^9b096d9ac3275a7d6fe8b91c583111b09efed1a0
+# The "Safenet or Watchguard" Vendor ID has also been seen sent from SonicWall
+# Global VPN client.  It is normally followed by 80010000 which looks like a
+# version number.
 Safenet or Watchguard	^da8e9378
 Unknown-cisco	^e23ae9f51a46876ff93d89ba725d649d
