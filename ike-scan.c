@@ -20,6 +20,9 @@
  * Change History:
  *
  * $Log$
+ * Revision 1.18  2002/10/29 09:02:04  rsh
+ * Added printing of cookie data in "unknown cookie" message.
+ *
  * Revision 1.17  2002/10/28 16:55:32  rsh
  * Added support for --trans option to specify single custom transform.
  *
@@ -450,11 +453,15 @@ int main(int argc, char *argv[]) {
                warn_msg("---\tRemoving host entry %d (%s) - Received %d bytes", temp_cursor->n, inet_ntoa(sa_peer.sin_addr), n);
             remove_host(temp_cursor);
          } else {
+            struct isakmp_hdr hdr_in;
 /*
  *	The recieved cookie doesn't match any entry in the list
  *	so just issue a message to that effect and ignore the packet.
  */
-            warn_msg("---\tReceived %d bytes from %s with unknown cookie", n, inet_ntoa(sa_peer.sin_addr));
+            if (n >= sizeof(hdr_in)) {
+               memcpy(&hdr_in, packet_in, sizeof(hdr_in));
+               warn_msg("---\tReceived %d bytes from %s with unknown cookie %0x%0x", n, inet_ntoa(sa_peer.sin_addr),hdr_in.isa_icookie[0], hdr_in.isa_icookie[1]);
+            }
          }
       } /* End If */
    } /* End While */
