@@ -53,3 +53,4 @@ struct host_entry *find_host_by_cookie(struct host_entry *, char *, int);
 void display_packet(int, char *, struct host_entry *, struct in_addr *);
 void advance_cursor(void);
 void decode_transform(char *, int, int);
+void dump_list(void);
