@@ -1,5 +1,20 @@
 $Id$
 
+2003-07-17 Roy Hills <Roy.Hills@nta-monitor.com>
+
+	* ike-scan.c: Print any vendor ID payload in hex if it follows an SA
+	  payload.
+	* ike-scan.c: allocate vid_data using malloc rather than having a
+	  fixed-length array.  This allows the supplied vendor id to be of
+	  arbitary length.
+
+2003-07-16 Roy Hills <Roy.Hills@nta-monitor.com>
+
+	* ike-scan.c: Changed --vendor option to use a hex string of arbitary
+	  length (up to MAXLINE) rather than an md5 hash of the supplied
+	  string.  This allows us to specify any vandor ID e.g. the one that
+	  SecuRemote uses with main mode.
+
 2003-07-10 Roy Hills <Roy.Hills@nta-monitor.com>
 
 	* Released version v1.3.  Tarball size 113350 bytes.
