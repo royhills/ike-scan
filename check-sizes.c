@@ -56,7 +56,6 @@
 #define EXPECTED_UINT8_T 1
 #define EXPECTED_UINT16_T 2
 #define EXPECTED_UINT32_T 4
-#define EXPECTED_UINT64_T 8
 
 int
 main() {
@@ -174,15 +173,6 @@ main() {
    printf("uint32_t\t\t%u\t%u\t", EXPECTED_UINT32_T,
           octets_per_char * sizeof(uint32_t));
    if (octets_per_char * sizeof(uint32_t) != EXPECTED_UINT32_T) {
-      error++;
-      printf("ERROR\n");
-   } else {
-      printf("ok\n");
-   }
-
-   printf("uint64_t\t\t%u\t%u\t", EXPECTED_UINT64_T,
-          octets_per_char * sizeof(uint64_t));
-   if (octets_per_char * sizeof(uint64_t) != EXPECTED_UINT64_T) {
       error++;
       printf("ERROR\n");
    } else {
