@@ -840,7 +840,7 @@ send_packet(int s, struct host_entry *he) {
    struct sockaddr_in sa_peer;
    char buf[MAXUDP];
    int buflen;
-   int sa_peer_len;
+   NET_SIZE_T sa_peer_len;
    char *cp;
 /*
  *	Set up the sockaddr_in structure for the host.
@@ -911,12 +911,7 @@ recvfrom_wto(int s, char *buf, int len, struct sockaddr *saddr, int tmo) {
    fd_set readset;
    struct timeval to;
    int n;
-/*
- * Portability note:
- * Some systems (e.g. HP-UX and Tru64) want saddr_len below to be an int
- * or size_t rather than socklen_t.
- */
-   socklen_t saddr_len;
+   NET_SIZE_T saddr_len;
 
    FD_ZERO(&readset);
    FD_SET(s, &readset);
