@@ -34,6 +34,8 @@
 
 static char rcsid[] = "$Id$";	/* RCS ID for ident(1) */
 
+extern int experimental;
+
 const char *notification_msg[] = { /* Notify Message Types from RFC 2408 3.14.1 */
    "UNSPECIFIED",                    /* 0 */
    "INVALID-PAYLOAD-TYPE",           /* 1 */
@@ -711,14 +713,26 @@ process_sa(unsigned char *cp, size_t len, int type) {
    struct isakmp_sa *sa_hdr = (struct isakmp_sa *) cp;
    struct isakmp_proposal *prop_hdr =
       (struct isakmp_proposal *) (cp + sizeof(struct isakmp_sa));
+   struct isakmp_transform *trans_hdr =
+      (struct isakmp_transform *) (cp + sizeof(struct isakmp_sa) + sizeof(struct isakmp_proposal));
    char *msg;
    char *msg2;
+   char *msg3;
+   unsigned char *attr_ptr;
+   size_t safelen;	/* Shorter of actual and claimed length */
 
-   if (len < sizeof(struct isakmp_sa) + sizeof(struct isakmp_proposal) ||
-        ntohs(sa_hdr->isasa_length) < sizeof(struct isakmp_sa) +
-        sizeof(struct isakmp_proposal))
+   safelen = (ntohs(sa_hdr->isasa_length)<len)?ntohs(sa_hdr->isasa_length):len;
+/*
+ *	Return with a "too short to decode" message if either the remaining
+ *	packet length or the claimed payload length is less than the combined
+ *	size of the SA, Proposal, and transform headers.
+ */
+   if (safelen < sizeof(struct isakmp_sa) + sizeof(struct isakmp_proposal) +
+       sizeof(struct isakmp_transform))
       return make_message("IKE Handshake returned (packet too short to decode)");
-
+/*
+ *	Build the first part of the message based on the exchange type.
+ */
    if (type == ISAKMP_XCHG_IDPROT) {		/* Main Mode */
       msg = make_message("Main Mode Handshake returned");
    } else if (type == ISAKMP_XCHG_AGGR) {	/* Aggressive Mode */
@@ -726,11 +740,142 @@ process_sa(unsigned char *cp, size_t len, int type) {
    } else {
       msg = make_message("UNKNOWN Mode Handshake returned (%u)", type);
    }
+/*
+ *	We should have exactly one transform in the server's response.
+ *	If there is not one transform, then add this fact to the message.
+ */
    if (prop_hdr->isap_notrans != 1) {
       msg2 = msg;
       msg = make_message("%s (%d transforms)", msg2, prop_hdr->isap_notrans);
       free(msg2);
    }
+
+   if (experimental) {
+/*
+ *	****	EXPERIMENTAL AREA	****
+ */
+
+/*      msg2 = msg;
+      msg = make_message("%s (transnum=%u, transid=%u)", msg2,
+                         trans_hdr->isat_transnum, trans_hdr->isat_transid);
+      free(msg2); */
+
+      attr_ptr = (cp + sizeof(struct isakmp_sa) + sizeof(struct isakmp_proposal) +
+                  sizeof(struct isakmp_transform));
+      safelen -= sizeof(struct isakmp_sa) + sizeof(struct isakmp_proposal) +
+                 sizeof(struct isakmp_transform);
+
+      while (safelen) {
+         msg2 = msg;
+         msg3 = process_attr(&attr_ptr, &safelen);
+         msg = make_message("%s %s", msg2, msg3);
+         free(msg2);
+         free(msg3);
+      }
+/*
+ *	****	EXPERIMENTAL AREA	****
+ */
+   }
+
+   return msg;
+}
+
+/*
+ *	process_attr -- Process transform attribute
+ *
+ *	Inputs:
+ *
+ *	cp	Pointer to start of attribute
+ *	len	Packet length remaining
+ *
+ *	Returns:
+ *
+ *	Pointer to attribute description string.
+ *
+ *	The description string pointer returned points to malloc'ed storage
+ *	which should be free'ed by the caller when it's no longer needed.
+ */
+char *
+process_attr(unsigned char **cp, size_t *len) {
+   char *msg;
+   struct isakmp_attribute *attr_hdr = (struct isakmp_attribute *) *cp;
+   char attr_type;	/* B=Basic, V=Variable */
+   unsigned attr_class;
+   unsigned attr_value=0;
+   char *attr_class_str;
+   char *attr_value_str;
+   size_t value_len;
+   size_t size;
+   static const char *attr_classes[] = {	/* From RFC 2409 App. A */
+      "UNSPECIFIED",				/* 0 */
+      "Enc",					/* 1 */
+      "Hash",					/* 2 */
+      "Auth",					/* 3 */
+      "Group",					/* 4 */
+      "Group Type",				/* 5 */
+      "Group Prime/Irreducible Polynomial",	/* 6 */
+      "Group Generator One",			/* 7 */
+      "Group Generator Two",			/* 8 */
+      "Group Curve A",				/* 9 */
+      "Group Curve B",				/* 10 */
+      "LifeType",				/* 11 */
+      "LifeDuration",				/* 12 */
+      "PRF",					/* 13 */
+      "KeyLength",				/* 14 */
+      "Field Size",				/* 15 */
+      "Group Order"				/* 16 */
+   };
+
+   if (ntohs(attr_hdr->isaat_af_type) & 0x8000) {	/* Basic attribute */
+      attr_type = 'B';
+      attr_class = ntohs (attr_hdr->isaat_af_type) & 0x7fff;
+      attr_value = ntohs (attr_hdr->isaat_lv);
+      value_len = 0;	/* Value is in length field */
+   } else {					/* Variable attribute */
+      attr_type = 'V';
+      attr_class = ntohs (attr_hdr->isaat_af_type);
+      value_len = ntohs (attr_hdr->isaat_lv);
+   }
+
+   if (attr_class <= MAX_ATTR)
+      attr_class_str = make_message("%s", attr_classes[attr_class]);
+   else
+      attr_class_str = make_message("%u", attr_class);
+
+   if (attr_type == 'B') {
+      attr_value_str = make_message("%u", attr_value);
+   } else {
+      char *p;
+      int i;
+      unsigned char *ucp;
+
+      attr_value_str = Malloc(2*value_len + 1);	/* 2 chars/byte + end NULL */
+      p = attr_value_str;
+      ucp = (*cp) + sizeof (struct isakmp_attribute);
+      for (i=0; i<value_len; i++) {
+         sprintf(p, "%.2x", *ucp++);
+         p += 2;
+      }
+      *p = '\0';
+   }
+
+   if (attr_type == 'B')
+      msg = make_message("%s=%s", attr_class_str, attr_value_str);
+   else
+      msg = make_message("%s(%u)=%s", attr_class_str, value_len,
+                         attr_value_str);
+
+   free(attr_class_str);
+   free(attr_value_str);
+
+   size=sizeof (struct isakmp_attribute) + value_len;
+   if (size >= *len) {
+      *len=0;
+   } else {
+      *len -= size;
+      (*cp) += size;
+   }
+
    return msg;
 }
 
