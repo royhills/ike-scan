@@ -124,6 +124,7 @@
 #define PATTERNS_FILE "ike-backoff-patterns" /* Backoff patterns filename */
 #define VID_FILE "ike-vendor-ids"	/* Vendor ID patterns filename */
 #define MAX_PAYLOAD 13			/* Maximum defined payload number */
+#define MAX_ATTR 16			/* Maximum defined attribute number */
 #define EXPECTED_TOTAL 72		/* Expected ISAKMP header size total */
 
 /* Structures */
@@ -224,6 +225,7 @@ void decode_trans(char *, int *, int *, int *, int *, int *);
 unsigned char *skip_payload(unsigned char *, size_t *, int *);
 unsigned char *process_isakmp_hdr(unsigned char *, size_t *, int *, int *);
 char *process_sa(unsigned char *, size_t, int);
+char *process_attr(unsigned char **, size_t *);
 char *process_vid(unsigned char *, size_t, struct vid_pattern_list *);
 char *process_notify(unsigned char *, size_t);
 char *make_message(const char *, ...);
