@@ -2,17 +2,14 @@ dnl $Id$
 dnl Process this file with autoconf to produce a configure script.
 
 AC_INIT([ike-scan], [1.6.1], [ike-scan@nta-monitor.com])
+AC_PREREQ(2.59)
+AC_REVISION($Id$)
 AC_CONFIG_SRCDIR([ike-scan.c])
-dnl If I don't pass $PACKAGE_NAME and $PACKAGE_VERSION to AM_INIT_AUTOMAKE,
-dnl then PACKAGE and VERSION are not defined and these are required for
-dnl make dist.  The documentation implies that I shouldn't need to
-dnl supply these arguments, but I find that I do need to with autoconf 2.53 and
-dnl automake 1.4.
-AM_INIT_AUTOMAKE($PACKAGE_NAME, $PACKAGE_VERSION)
+AM_INIT_AUTOMAKE
 
 AM_CONFIG_HEADER([config.h])
 
-dnl Checks for programs.
+dnl Check for programs.
 AC_PROG_CC
  if test -n "$GCC"; then
       CFLAGS="$CFLAGS -Wall "
@@ -24,13 +21,11 @@ AC_PROG_LN_S
 dnl Check endian-ness. MD5 and SHA1 hash functions need to know this.
 AC_C_BIGENDIAN
 
-dnl Checks for libraries.
+dnl Check for libraries.
 dnl Solaris 8 needs nsl and socket.  Linux and {Free,Open}BSD do not.
-AC_CHECK_LIB(nsl, t_open)
-AC_CHECK_LIB(socket, socket)
-
-AC_SUBST(COMPAT_OBJS)
-AC_SUBST(COMPAT_SRCS)
+dnl We should only include these libraries if they are actually needed.
+AC_SEARCH_LIBS([gethostbyname], [nsl])
+AC_SEARCH_LIBS([socket], [socket])
 
 dnl Checks for header files.
 AC_HEADER_STDC
@@ -58,11 +53,11 @@ AC_NTA_NET_SIZE_T
 dnl Check if the Posix regular expression functions "regcomp" and "regexec"
 dnl and the header file "regex.h" are present.
 AC_MSG_CHECKING([for posix regular expression support])
-AC_TRY_LINK([
+AC_LINK_IFELSE([AC_LANG_PROGRAM([[
 #include <sys/types.h>
-#include <regex.h>],
-[regcomp(0, 0, 0);
- regexec(0, 0, 0, 0, 0)],
+#include <regex.h>]],
+[[regcomp(0, 0, 0);
+regexec(0, 0, 0, 0, 0)]])],
 [ac_nta_posix_regex=yes],
 [ac_nta_posic_regex=no])
 AC_MSG_RESULT([$ac_nta_posix_regex])
@@ -74,21 +69,17 @@ fi
 
 dnl GNU systems e.g. Linux have getopt_long_only, but many other systems
 dnl e.g. FreeBSD 4.3 and Solaris 8 do not.  For systems that don't have it,
-dnl we compile the GNU getopt sources (obtained from glibc) and link with the
-dnl resultant objects.
-dnl
-dnl We should be able to use AC_LIBOBJ here, but I've not been able to get
-dnl that to work with automake 1.4 and autoconf 2.53.
-AC_CHECK_FUNC(getopt_long_only, ,
-  [ COMPAT_SRCS="$COMPAT_SRCS getopt.c getopt1.c"
-    COMPAT_OBJS="$COMPAT_OBJS getopt.o getopt1.o" ])
+dnl use the GNU getopt sources (obtained from glibc).
+AC_CHECK_FUNC([getopt_long_only], ,
+  [ AC_LIBOBJ(getopt)
+    AC_LIBOBJ(getopt1) ])
 
 dnl Do we have inet_aton?  Most systems do, but some e.g. Solaris don't
-dnl If we don't have it, then use a replacement function.
-AC_CHECK_FUNC(inet_aton, ,
-  [ COMPAT_SRCS="$COMPAT_SRCS inet_aton.c"
-    COMPAT_OBJS="$COMPAT_OBJS inet_aton.o" ])
+dnl If we don't have it, then use Russ Allbery's implementation as a
+dnl replacement function.
+AC_CHECK_FUNC(inet_aton, , [ AC_LIBOBJ(inet_aton) ])
 
+dnl --- OpenSSL START ---
 # Search for OpenSSL
 # From openssh-3.8.1p1/configure.ac
 saved_CPPFLAGS="$CPPFLAGS"
@@ -207,6 +198,7 @@ Check config.log for details.
 Also see contrib/findssl.sh for help identifying header/library mismatches.])
 	]
 )
+dnl --- OpenSSL END ---
 
 AC_CONFIG_FILES([Makefile])
 AC_OUTPUT
