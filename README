@@ -35,7 +35,12 @@ a) Discovery: Determine which hosts are running IKE.
 
 b) Fingerprinting: Determine which IKE implementation the hosts are using.
    This is done by recording the times of the IKE response packets from the
-   target hosts and comparing the backoff pattern against known patterns.
+   target hosts and comparing the observed retransmission backoff pattern
+   against known patterns.
+
+The retransmission backoff fingerprinting concept is discussed in more
+detail in the UDP backoff fingerprinting paper which should be included
+in the ike-scan kit as udp-backoff-fingerprinting-paper.txt.
 
 USAGE:
 
@@ -177,7 +182,8 @@ ike-scan generates unique IKE cookies for each host, and it uses these
 cookies to determine which host the response packets belong to.  Note that
 it does not rely on the source IP address of the response packets because
 it is possible for a response packet to be sent from a different IP address
-than it was originally sent to.
+than it was originally sent to.  See the PROGRAM OUTPUT section for an
+example of this.
 
 ike-scan does not respond to any of the IKE responses it receives, so the
 IKE main mode handshake will never complete.  Some IKE implementations do
@@ -192,6 +198,21 @@ By default, the main mode packets sent contain one proposal which contains
 a) Encryption Algorithm: DES-CBC and 3DES-CBC;
 b) Hash Algorithm: MD5 and SHA; and
 c) DH Group: 1 (MODP 768) and 2 (MODP 1024).
+
+An example tcpdump output of the main mode packet sent by ike-scan using
+the default transform set is shown below:
+
+16:57:16.024536 192.168.124.8.500 > 172.16.2.2.500:  [udp sum ok]isakmp 1.0 msgid 00000000: phase 1 I ident:
+    (sa: doi=ipsec situation=identity
+        (p: #1 protoid=isakmp transform=8
+            (t: #1 id=ike (type=enc value=3des)(type=hash value=sha1)(type=auth value=preshared)(type=group desc value=modp1024)(type=lifetype value=sec)(type=lifeduration len=4 value=00007080))
+            (t: #2 id=ike (type=enc value=3des)(type=hash value=md5)(type=auth value=preshared)(type=group desc value=modp1024)(type=lifetype value=sec)(type=lifeduration len=4 value=00007080))
+            (t: #3 id=ike (type=enc value=1des)(type=hash value=sha1)(type=auth value=preshared)(type=group desc value=modp1024)(type=lifetype value=sec)(type=lifeduration len=4 value=00007080))
+            (t: #4 id=ike (type=enc value=1des)(type=hash value=md5)(type=auth value=preshared)(type=group desc value=modp1024)(type=lifetype value=sec)(type=lifeduration len=4 value=00007080))
+            (t: #5 id=ike (type=enc value=3des)(type=hash value=sha1)(type=auth value=preshared)(type=group desc value=modp768)(type=lifetype value=sec)(type=lifeduration len=4 value=00007080))
+            (t: #6 id=ike (type=enc value=3des)(type=hash value=md5)(type=auth value=preshared)(type=group desc value=modp768)(type=lifetype value=sec)(type=lifeduration len=4 value=00007080))
+            (t: #7 id=ike (type=enc value=1des)(type=hash value=sha1)(type=auth value=preshared)(type=group desc value=modp768)(type=lifetype value=sec)(type=lifeduration len=4 value=00007080))
+            (t: #8 id=ike (type=enc value=1des)(type=hash value=md5)(type=auth value=preshared)(type=group desc value=modp768)(type=lifetype value=sec)(type=lifeduration len=4 value=00007080)))) (DF) (ttl 64, id 0, len 364)
 
 It is also possible to specify the Authentication Method with --auth
 (default is 1 - pre-shared key) and the IKE lifetime in seconds with
@@ -228,6 +249,34 @@ b) If you know that a particular transform will be acceptable, and you want
 c) If you want to determine exactly which transforms a remote IKE
    implementation supports for fingerprinting.
 
+IKE hosts may respond in one of two ways:
+
+a) With an IKE main mode response packet containing the cookie that was
+   originally sent to the host.  This is a "handshake" response and indicates
+   that the host supports IKE and finds our proposal acceptable; or
+
+b) With an IKE notify message containing the cookie that was originally sent
+   to the host.  This is a "notify" response and indicates that the host
+   is running IKE, but does not accept our proposal.
+
+An example tcpdump output for a "handshake" response is:
+
+16:57:48.068698 172.16.2.2.500 > 192.168.124.8.500:  [udp sum ok]isakmp 1.0 msgid 00000000: phase 1 R ident:
+    (sa: doi=ipsec situation=identity
+        (p: #1 protoid=isakmp transform=1
+            (t: #1 id=ike (type=enc value=3des)(type=hash value=sha1)(type=auth value=preshared)(type=group desc value=modp1024)(type=lifetype value=sec)(type=lifeduration len=4 value=00007080)))) (ttl 126, id 37891, len 112)
+
+This shows that the IKE host has chosen the 3DES/SHA1 transform from our
+proposed set.
+
+An example tcpdump output for a "notify" response is:
+
+17:12:55.038554 161.30.89.22.500 > 194.164.37.1.500:  [udp sum ok]isakmp 1.0 msgid 00000000: phase 1 R inf:
+    (n: doi=0 proto=1 type=NO-PROPOSAL-CHOSEN) (ttl 52, id 39577, len 68)
+
+This shows that the IKE host has responded with the notify message
+"NO-PROPOSAL-CHOSEN".
+
 For those hosts that respond, ike-scan records the times of the received
 IKE responses.  The backoff between IKE responses varies between different
 IKE implementations and can therefore be used as a fingerprint.  The
@@ -239,9 +288,17 @@ a different value in seconds to the --showbackoff option.
 
 When all of the packets have been received, the backoff table is displayed,
 and the program attempts to match the backoff pattern against the known
-backoff patterns contained in the text file "ike-backoff-patterns".  Note
-that only hosts which respond with a handshake can be fingerprinted by
-backoff timings because notify messages are not repeated.
+backoff patterns contained in the text file "ike-backoff-patterns".  It is
+possible to add new patterns to this file.  If you discover new backoff
+patterns, you are encouraged to submit them so that they can be included
+in future releases of ike-scan.  See:
+http://www.nta-monitor.com/ike-scan/submit.htm
+for details on how to submit new backoff patterns.
+
+Note that only hosts which respond with a handshake can be fingerprinted by
+backoff timings; hosts which respond with a notify message cannot.  This is
+because notify messages are only ever sent once and are not subject to
+retransmission with backoff.
 
 Note that ike-scan can also be used to fingerprint IKE hosts in other ways.
 For example:
@@ -266,9 +323,10 @@ fingerprinting the IP stack which can help to determine the IKE implementation.
 
 If you discover IKE hosts with backoff patterns which are not recognised by
 ike-scan, then you are encouraged to submit the pattern and details of
-the IKE implementation to me at ike-scan@nta-monitor.com.  Note that by
-submitting fingerprints, you are transferring copyright to me (Roy Hills)
-so I can incorporate it into future versions of the software.
+the IKE implementation to me so I can incorporate it into future versions of
+ike-scan.  See:
+http://www.nta-monitor.com/ike-scan/submit.htm
+For details of how to submit new backoff patterns.
 
 Note that any packet loss will prevent the backoff fingerprinting from working
 because the program needs to see all of the responses.
