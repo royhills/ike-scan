@@ -8,6 +8,20 @@ $Id$
 	* ike-scan.1: Updated man page OPTIONS section and added FILES
 	  section.
 
+	* Added Russ Allbery's inet_aton replacement function for systems
+	  like Solaris which don't have inet_aton in the standard library.
+	  Added inet_aton check to configure.ac.
+
+	* ike-scan.c: Cast char * to unsigned char * before passing to
+	  isdigit().  isdigit can have problems with char if char is signed
+	  and value >127, esp. when it's implemeted as a macro that indexes
+	  into an array as on Solaris 8.
+
+	* Use hexstring() to print cookie values rather than using htonl()
+	  on the two 32-bit pieces.  Some systems define htonl() to return
+	  unsigned long while others return unsigned int making it impossible
+	  to use the same printf format string on all systems.
+
 2004-01-10 Roy Hills <Roy.Hills@nta-monitor.com>
 
 	* iks-scan.c, isakmp.c: Added regular expression support for
