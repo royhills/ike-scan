@@ -500,8 +500,12 @@ main(int argc, char *argv[]) {
       if ((setsockopt(sockfd, IPPROTO_TCP, TCP_NODELAY, &on, sizeof(on))) < 0)
          err_sys("ERROR: setsockopt() failed");
    } else {
+      const int on = 1;	/* for setsockopt() */
+
       if ((sockfd = socket(AF_INET, SOCK_DGRAM, 0)) < 0)
          err_sys("ERROR: socket");
+      if ((setsockopt(sockfd, SOL_SOCKET, SO_BROADCAST, &on, sizeof(on))) != 0)
+         err_sys("setsockopt");
    }
 
    memset(&sa_local, '\0', sizeof(sa_local));
