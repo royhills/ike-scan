@@ -32,6 +32,8 @@
 
 #include "ike-scan.h"
 
+static char rcsid[] = "$Id$"; /* RCS ID for ident(1) */
+
 int daemon_proc;	/* Non-zero if process is a daemon */
 
 /*
@@ -121,4 +123,9 @@ err_print (int errnoflag, int level, const char *fmt, va_list ap) {
       fputs(buf, stderr);
       fflush(stderr);
    }
+}
+
+void
+error_use_rcsid(void) {
+   printf("%s\n", rcsid);       /* Use rcsid to stop compiler optimising away */
 }
