@@ -110,3 +110,4 @@ void add_recv_time(struct host_entry *);
 void add_pattern(char *);
 char *match_pattern(struct host_entry *);
 int times_close_enough(struct timeval *, struct timeval *);
+void dump_backoff(void);
