@@ -191,9 +191,11 @@ void display_packet(int, unsigned char *, struct host_entry *,
                     struct in_addr *, unsigned *, unsigned *);
 void advance_cursor(unsigned);
 void dump_list(unsigned);
-void dump_times(int);
+void dump_times(void);
 void add_recv_time(struct host_entry *, struct timeval *);
+void load_backoff_patterns(char *, unsigned);
 void add_pattern(char *, unsigned);
+void load_vid_patterns(char *);
 void add_vid_pattern(char *);
 char *match_pattern(struct host_entry *);
 int times_close_enough(struct timeval *, struct timeval *, unsigned);
