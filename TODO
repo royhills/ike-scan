@@ -10,3 +10,13 @@ already written in fw1-ike-userguess and just needs to be merged into ike-scan.
 Allow specification of GSS identities in the transforms as used by Windows 2000.
 This would be a good time to re-write the initial IKE packet generation code,
 especially the transforms bit.
+
+Allow specification of multiple vendor ID payloads, e.g. --vendor=dead
+--vendor=beef.  It might be easiest to initialise the static parts of the
+ike packet _before_ the options parsing and then add the VID payloads as they
+are encountered.  Doing this would also allow specification of multiple
+custom transforms which could be useful.
+
+Store times in us rather than ms.  This allows better timing because it
+avoids the rounding errors that occur with ms timing.  Can either use timevals
+or use 64-bit integers for this.
