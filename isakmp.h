@@ -311,7 +311,6 @@ struct isakmp_nonce
     uint8_t    isanonce_np;
     uint8_t    isanonce_reserved;
     uint16_t   isanonce_length;
-    uint8_t	isanonce_data[20];
 };
 
 /* ISAKMP Identification Payload
