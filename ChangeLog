@@ -2,8 +2,12 @@ $Id$
 
 2003-10-30 Roy Hills <Roy.Hills@nta-monitor.com>
 
-	* Released version v1.5.  Tarball size X bytes.
-	  tarball md5sum: 
+	* Released version v1.5.  Tarball size 115814 bytes.
+	  tarball md5sum: df25aec3fea5aeae4d106d9fb721fe7c
+	  Note: This is only an internal release.  No Zip file was produced.
+	  This version is to test the improved scanning engine incorporating
+	  dynamic select timeout, cumulative error adjustment, and
+	  fast host timeout together with a few other minor improvements.
 
 2003-10-30 Roy Hills <Roy.Hills@nta-monitor.com>
 
