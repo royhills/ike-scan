@@ -30,12 +30,45 @@
  */
 
 /* Includes */
-#include <sys/types.h>  /* FreeBSD needs explicit include for sys/types.h */
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
+#ifdef STDC_HEADERS
+#include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
+#include <ctype.h>
 #include <stdarg.h>
+#include <errno.h>
+#include <math.h>
+#else
+#error This program requires the ANSI C Headers
+#endif
+
+#include <unistd.h>
+#include <netdb.h>
+#include <syslog.h>
+
+#ifdef HAVE_GETOPT_H
+#include <getopt.h>
+#else
+/* Include getopt.h for the sake of getopt_long.
+   We don't need the declaration of getopt, and it could conflict
+   with something from a system header file, so effectively nullify that.  */
+#define getopt getopt_loser
+#include "getopt.h"
+#undef getopt
+#endif
+
+#include <sys/types.h>  /* FreeBSD needs explicit include for sys/types.h */
 #include <netinet/in.h>
 #include <sys/time.h>
 #include <sys/socket.h>	/* For struct sockaddr */
 #include <arpa/inet.h>
+
+#include "global.h"
+#include "md5.h"
 #include "isakmp.h"
 
 /* Defines */
