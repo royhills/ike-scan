@@ -302,6 +302,7 @@ main(int argc, char *argv[]) {
             cp = vid_data;
             for (i=0; i<vid_data_len; i++)
                *cp++=hstr_i(&optarg[i*2]);
+            add_vid(0, NULL, vid_data, vid_data_len);
             break;
          case 'a':	/* --trans */
             strncpy(trans_str, optarg, MAXLINE);
@@ -1100,14 +1101,14 @@ initialise_ike_packet(void) {
    unsigned char *transforms;	/* All transforms */
    unsigned char *vid=NULL;
    unsigned char *cp;
-   int len;
+   int vid_len;
    int trans_len;
 /*
  *	Vendor ID Payload (Optional)
  */
    if (vendor_id_flag) {
-      vid = make_vid(&len, ISAKMP_NEXT_NONE, vid_data, vid_data_len);
-      buflen += len;
+      vid = add_vid(1, &vid_len, NULL, 0);
+      buflen += vid_len;
    }
 /*
  *	Transform payloads
@@ -1167,8 +1168,8 @@ initialise_ike_packet(void) {
    memcpy(cp, transforms, trans_len);
    cp += trans_len;
    if (vendor_id_flag) {
-      memcpy(cp, vid, sizeof(struct isakmp_vid)+vid_data_len);
-      cp += sizeof(struct isakmp_vid)+vid_data_len;
+      memcpy(cp, vid, vid_len);
+      cp += vid_len;
    }
 }
 
