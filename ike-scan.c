@@ -20,6 +20,9 @@
  * Change History:
  *
  * $Log$
+ * Revision 1.14  2002/10/25 08:55:51  rsh
+ * Added vendor id support.  Not fully tested yet.
+ *
  * Revision 1.13  2002/10/24 15:19:04  rsh
  * Added "---\t" to wanr messages.
  * Added placeholder function to decode transforms.
@@ -91,6 +94,8 @@
 #include <errno.h>
 #include <ctype.h>
 
+#include "global.h"
+#include "md5.h"
 #include "ike-scan.h"
 
 #define VERSION "ike-scan $Revision$ $Date$ <Roy.Hills@nta-monitor.com>"
@@ -112,6 +117,8 @@ int dest_port = DEFAULT_DEST_PORT;	/* UDP destination port */
 unsigned lifetime = DEFAULT_LIFETIME;	/* Lifetime in seconds */
 int auth_method = DEFAULT_AUTH_METHOD;	/* Authentication method */
 int verbose=0;
+char vendor_id[MAXLINE];		/* Vendor ID string */
+int vendor_id_flag = 0;			/* Indicates if VID to be used */
 struct timeval last_packet_time;	/* Time last packet was sent */
 struct isakmp_hdr hdr;			/* ISAKMP Header */
 struct isakmp_sa sa_hdr;		/* SA Header */
@@ -123,6 +130,8 @@ struct transform
    struct isakmp_attribute_l32 attr2;
 };
 struct transform trans[8];		/* Transform payload */
+struct isakmp_vid vid_hdr;		/* Vendor ID header */
+unsigned char vid_md5[16];		/* Vendor ID data - md5 digest */
 
 char *auth_methods[] = { /* Authentication methods from RFC 2409 Appendix A */
    "UNSPECIFIED",		/* 0 */
@@ -200,9 +209,10 @@ int main(int argc, char *argv[]) {
       {"lifetime", required_argument, 0, 'l'},
       {"auth", required_argument, 0, 'm'},
       {"version", no_argument, 0, 'V'},
+      {"vendor", required_argument, 0, 'e'},
       {0, 0, 0, 0}
    };
-   char *short_options = "f:hr:t:i:b:w:a:vl:m:V";
+   char *short_options = "f:hr:t:i:b:w:a:vl:m:Ve:";
    int arg;
    int options_index=0;
    char filename[MAXLINE];
@@ -222,6 +232,8 @@ int main(int argc, char *argv[]) {
  */
    while ((arg=getopt_long_only(argc, argv, short_options, long_options, &options_index)) != -1) {
       switch (arg) {
+         MD5_CTX context;
+         int i;
          case 'f':
             strncpy(filename, optarg, MAXLINE);
             filename_flag=1;
@@ -265,6 +277,17 @@ int main(int argc, char *argv[]) {
          case 'V':
             fprintf(stderr, "%s\n", VERSION);
             exit(0);
+            break;
+         case 'e':
+            strncpy(vendor_id, optarg, MAXLINE);
+            vendor_id_flag=1;
+            MD5Init(&context);
+            MD5Update(&context, vendor_id, strlen(vendor_id));
+            MD5Final(&vid_md5,&context);
+            printf("vid_md5: ");
+            for (i=0; i<16; i++)
+               printf("%.2x",vid_md5[i]);
+            printf("\n");
             break;
          default:
             usage();
@@ -744,6 +767,13 @@ void send_packet(int s, struct host_entry *he) {
    memcpy(cp,&trans,sizeof(trans));
    cp += sizeof(trans);
    buflen = sizeof(hdr)+sizeof(sa_hdr)+sizeof(sa_prop)+sizeof(trans);
+   if (vendor_id_flag) {
+      memcpy(cp, &vid_hdr, sizeof(vid_hdr));
+      cp += sizeof(vid_hdr);
+      memcpy(cp, &vid_md5, sizeof(vid_md5));
+      cp += sizeof(vid_md5);
+      buflen += sizeof(vid_hdr)+sizeof(vid_md5);
+   } 
 /*
  *	Update the last send times for this host.
  */
@@ -855,11 +885,19 @@ void initialise_ike_packet(void) {
    hdr.isa_xchg = ISAKMP_XCHG_IDPROT;   /* Identity Protection (main mode) */
    hdr.isa_flags = 0;                   /* No flags */
    hdr.isa_msgid = 0;                   /* MBZ for phase-1 */
-   hdr.isa_length = htonl(sizeof(hdr)+sizeof(sa_hdr)+sizeof(sa_prop)+sizeof(trans));
+   if (vendor_id_flag) {
+      hdr.isa_length = htonl(sizeof(hdr)+sizeof(sa_hdr)+sizeof(sa_prop)+sizeof(trans)+sizeof(vid_hdr)+sizeof(vid_md5));
+   } else {
+      hdr.isa_length = htonl(sizeof(hdr)+sizeof(sa_hdr)+sizeof(sa_prop)+sizeof(trans));
+   }
 /*
  *	SA Header
  */
-   sa_hdr.isasa_np = ISAKMP_NEXT_NONE;  /* No Next payload */
+   if (vendor_id_flag) {
+      sa_hdr.isasa_np = ISAKMP_NEXT_VID;  /* Next payload is Vendor ID */
+   } else {
+      sa_hdr.isasa_np = ISAKMP_NEXT_NONE;  /* No Next payload */
+   }
    sa_hdr.isasa_length = htons(sizeof(sa_hdr)+sizeof(sa_prop)+sizeof(trans));
    sa_hdr.isasa_doi = htonl(ISAKMP_DOI_IPSEC);  /* IPsec DOI */
    sa_hdr.isasa_situation = htonl(SIT_IDENTITY_ONLY);
@@ -1018,6 +1056,11 @@ void initialise_ike_packet(void) {
    trans[7].attr2.isaat_af_type = htons(0x000c);        /* Life Duration */
    trans[7].attr2.isaat_l = htons(4);                   /* 4 Bytes- CANT CHANGE*/
    trans[7].attr2.isaat_v = htonl(lifetime);            /* Lifetime */
+/*
+ *	Vendor ID Payload (Optional)
+ */
+   vid_hdr.isavid_np = ISAKMP_NEXT_NONE;	/* No Next payload */
+   vid_hdr.isavid_length = htons(sizeof(vid_hdr) + sizeof(vid_md5));	/* Length of MD5 digest */
 }
 
 /*
@@ -1047,6 +1090,7 @@ void usage(void) {
    fprintf(stderr, "--auth=<n> or -m <n>\tSet auth. method to <n>, default=%d (%s)\n", DEFAULT_AUTH_METHOD, auth_methods[DEFAULT_AUTH_METHOD]);
    fprintf(stderr, "\t\t\tRFC defined values are 1 to 5.  See RFC 2409 Appendix A.\n");
    fprintf(stderr, "--version or -V\t\tDisplay program version and exit.\n");
+   fprintf(stderr, "--vendor or -e\t\tSet vendor id string (experimental).\n");
    fprintf(stderr, "\n");
    fprintf(stderr, "%s\n", rcsid);
    fprintf(stderr, "\n");
