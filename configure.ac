@@ -5,8 +5,9 @@ AC_INIT(ike-scan, 1.3, [ike-scan@nta-monitor.com])
 AC_CONFIG_SRCDIR(ike-scan.c)
 dnl If I don't pass $PACKAGE_NAME and $PACKAGE_VERSION to AM_INIT_AUTOMAKE,
 dnl then PACKAGE and VERSION are not defined and these are required for
-dnl make dist.  However, the documentation implies that I shouldn't need to
-dnl supply these arguments.
+dnl make dist.  The documentation implies that I shouldn't need to
+dnl supply these arguments, but I find that I do need to with autoconf 2.53 and
+dns automake 1.4.
 AM_INIT_AUTOMAKE($PACKAGE_NAME, $PACKAGE_VERSION)
 
 AM_CONFIG_HEADER(config.h)
@@ -57,7 +58,7 @@ dnl we compile the GNU getopt sources (obtained from glibc) and link with the
 dnl resultant objects.
 dnl
 dnl We should be able to use AC_LIBOBJ here, but I've not been able to get
-dnl that to work with automake.
+dnl that to work with automake 1.4 and autoconf 2.53.
 AC_CHECK_FUNC(getopt_long_only, ,
   [ COMPAT_SRCS="$COMPAT_SRCS getopt.c getopt1.c"
     COMPAT_OBJS="$COMPAT_OBJS getopt.o getopt1.o" ])
