@@ -19,9 +19,12 @@
  */
 
 /* Includes */
+#include <sys/types.h>  /* FreeBSD needs explicit include for sys/types.h */
 #include <stdarg.h>
 #include <netinet/in.h>
 #include <sys/time.h>
+#include <sys/socket.h>	/* For struct sockaddr */
+#include <arpa/inet.h>
 #include "isakmp.h"
 
 /* Defines */

@@ -107,6 +107,9 @@
  * Change History:
  *
  * $Log$
+ * Revision 1.28  2002/12/31 21:09:47  rsh
+ * Changes to allow compilation on FreeBSD and OpenBSD as well as Linux.
+ *
  * Revision 1.27  2002/12/31 15:14:38  rsh
  * Changed function definitions so return type is on a line by itself.
  * Added contents of README file as initial program comments.
@@ -213,17 +216,27 @@
  * Initial revision
  *
  */
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include <stdio.h>
-#include <netdb.h>
 #include <string.h>
 #include <stdlib.h>
 #include <unistd.h>
-#include <getopt.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
-#include <errno.h>
 #include <ctype.h>
+#include <netdb.h>
+#ifdef HAVE_GETOPT_H
+#include <getopt.h>
+#else
+/* Include getopt.h for the sake of getopt_long.
+   We don't need the declaration of getopt, and it could conflict
+   with something from a system header file, so effectively nullify that.  */
+#define getopt getopt_loser
+#include "getopt.h"
+#undef getopt
+#endif
+#include <errno.h>
 #include <syslog.h>
 #include <libgen.h>
 
