@@ -242,44 +242,44 @@ main(int argc, char *argv[]) {
       switch (arg) {
          md5_state_t context;
          int i;
-         case 'f':
+         case 'f':	/* --file */
             strncpy(filename, optarg, MAXLINE);
             filename_flag=1;
             break;
-         case 'h':
+         case 'h':	/* --help */
             usage();
             break;
-         case 's':
+         case 's':	/* --sport */
             source_port=atoi(optarg);
             break;
-         case 'd':
+         case 'd':	/* --dport */
             dest_port=atoi(optarg);
             break;
-         case 'r':
+         case 'r':	/* --retry */
             retry=atoi(optarg);
             break;
-         case 't':
+         case 't':	/* --timeout */
             timeout=atoi(optarg);
             break;
-         case 'i':
+         case 'i':	/* --interval */
             interval=atoi(optarg);
             break;
-         case 'b':
+         case 'b':	/* --backoff */
             backoff=atof(optarg);
             break;
-         case 'w':
+         case 'w':	/* --selectwait */
             select_timeout=atoi(optarg);
             break;
-         case 'v':
+         case 'v':	/* --verbose */
             verbose++;
             break;
-         case 'l':
+         case 'l':	/* --lifetime */
             lifetime=atoi(optarg);
             break;
-         case 'm':
+         case 'm':	/* --auth */
             auth_method=atoi(optarg);
             break;
-         case 'V':
+         case 'V':	/* --version */
             fprintf(stderr, "%s\n\n", VERSION);
             fprintf(stderr, "Copyright (C) 2003 Roy Hills, NTA Monitor Ltd.\n");
             fprintf(stderr, "ike-scan comes with NO WARRANTY to the extent permitted by law.\n");
@@ -291,7 +291,7 @@ main(int argc, char *argv[]) {
             fprintf(stderr, "%s\n", rcsid);
             exit(0);
             break;
-         case 'e':
+         case 'e':	/* --vendor */
             strncpy(vendor_id, optarg, MAXLINE);
             vendor_id_flag=1;
             md5_init(&context);
@@ -302,12 +302,12 @@ main(int argc, char *argv[]) {
                printf("%.2x",vid_md5[i]);
             printf("\n");
             break;
-         case 'a':
+         case 'a':	/* --trans */
             strncpy(trans_str, optarg, MAXLINE);
             trans_flag=1;
             sscanf(trans_str, "%d,%d,%d,%d", &trans_enc, &trans_hash, &trans_auth, &trans_group);
             break;
-         case 'o':
+         case 'o':	/* --showbackoff */
             showbackoff_flag=1;
             if (optarg == NULL) {
                end_wait=1000 * DEFAULT_END_WAIT;
@@ -315,13 +315,22 @@ main(int argc, char *argv[]) {
                end_wait=1000 * atoi(optarg);
             }
             break;
-         case 'u':
+         case 'u':	/* --fuzz */
             pattern_fuzz=atoi(optarg);
             break;
-         case 'p':
+         case 'n':	/* --id */
+            /* Not implemented yet */
+            break;
+         case 'y':	/* --idtype */
+            /* Not implemented yet */
+            break;
+         case 'g':	/* --dhgroup */
+            /* Not implemented yet */
+            break;
+         case 'p':	/* --patterns */
             strncpy(patfile, optarg, MAXLINE);
             break;
-         default:
+         default:	/* Unknown option */
             usage();
             break;
       }
@@ -1493,20 +1502,20 @@ usage(void) {
    fprintf(stderr, "\n--file=<fn> or -f <fn>\tRead hostnames or addresses from the specified file\n");
    fprintf(stderr, "\t\t\tinstead of from the command line. One name or IP\n");
    fprintf(stderr, "\t\t\taddress per line.  Use \"-\" for standard input.\n");
-   fprintf(stderr, "\n--sport=<p> or -s p\tSet UDP source port to <p>, default=%d, 0=random.\n", DEFAULT_SOURCE_PORT);
+   fprintf(stderr, "\n--sport=<p> or -s <p>\tSet UDP source port to <p>, default=%d, 0=random.\n", DEFAULT_SOURCE_PORT);
    fprintf(stderr, "\t\t\tSome IKE implementations require the client to use\n");
    fprintf(stderr, "\t\t\tUDP source port 500 and will not talk to other ports.\n");
    fprintf(stderr, "\t\t\tNote that superuser privileges are normally required\n");
    fprintf(stderr, "\t\t\tto use non-zero source ports below 1024.  Also only\n");
    fprintf(stderr, "\t\t\tone process on a system may bind to a given source port\n");
    fprintf(stderr, "\t\t\tat any one time.\n");
-   fprintf(stderr, "\n--dport=<p> or -d p\tSet UDP destination port to <p>, default=%d.\n", DEFAULT_DEST_PORT);
+   fprintf(stderr, "\n--dport=<p> or -d <p>\tSet UDP destination port to <p>, default=%d.\n", DEFAULT_DEST_PORT);
    fprintf(stderr, "\t\t\tUDP port 500 is the assigned port number for ISAKMP\n");
    fprintf(stderr, "\t\t\tand this is the port used by most if not all IKE\n");
    fprintf(stderr, "\t\t\timplementations.\n");
-   fprintf(stderr, "\n--retry=<n> or -r n\tSet total number of attempts per host to <n>,\n");
+   fprintf(stderr, "\n--retry=<n> or -r <n>\tSet total number of attempts per host to <n>,\n");
    fprintf(stderr, "\t\t\tdefault=%d.\n", DEFAULT_RETRY);
-   fprintf(stderr, "\n--timeout=<n> or -t n\tSet initial per host timeout to <n> ms, default=%d.\n", DEFAULT_TIMEOUT);
+   fprintf(stderr, "\n--timeout=<n> or -t <n>\tSet initial per host timeout to <n> ms, default=%d.\n", DEFAULT_TIMEOUT);
    fprintf(stderr, "\t\t\tThis timeout is for the first packet sent to each host.\n");
    fprintf(stderr, "\t\t\tsubsequent timeouts are multiplied by the backoff\n");
    fprintf(stderr, "\t\t\tfactor which is set with --backoff.\n");
