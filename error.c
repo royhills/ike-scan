@@ -105,7 +105,7 @@ info_syslog(const char *fmt,...) {
 void
 err_print (int errnoflag, int level, const char *fmt, va_list ap) {
    int errno_save;
-   int n;
+   size_t n;
    char buf[MAXLINE];
 
    errno_save=errno;
