@@ -153,7 +153,7 @@ main(int argc, char *argv[]) {
    struct sockaddr_in sa_local;
    struct sockaddr_in sa_peer;
    struct timeval now;
-   char packet_in[MAXUDP];	/* Received packet */
+   unsigned char packet_in[MAXUDP];	/* Received packet */
    int n;
    struct host_entry *temp_cursor;
    struct hostent *hp;
@@ -735,7 +735,7 @@ advance_cursor(void) {
  *	he =	Pointer to current position in list.  Search runs backwards
  *		starting from this point.
  *
- *	packet = points to the received packet containing the cookie.
+ *	packet_in = points to the received packet containing the cookie.
  *
  *	n =	Size of the received packet in bytes.
  *
@@ -743,7 +743,7 @@ advance_cursor(void) {
  *	or NULL if no match found.
  */
 struct host_entry *
-find_host_by_cookie(struct host_entry *he, char *packet_in, int n) {
+find_host_by_cookie(struct host_entry *he, unsigned char *packet_in, int n) {
    struct host_entry *p;
    int found;
    struct isakmp_hdr hdr_in;
@@ -804,7 +804,7 @@ find_host_by_cookie(struct host_entry *he, char *packet_in, int n) {
  *	was received in the format: <IP-Address><TAB><Details>.
  */
 void
-display_packet(int n, char *packet_in, struct host_entry *he,
+display_packet(int n, unsigned char *packet_in, struct host_entry *he,
                struct in_addr *recv_addr) {
    char *cp;			/* Temp pointer */
    int bytes_left;		/* Remaining buffer size */
@@ -885,23 +885,6 @@ display_packet(int n, char *packet_in, struct host_entry *he,
 }
 
 /*
- *	decode-transform -- Decode an IKE transform payload
- *
- *	On entry:
- *	packet_in points to the start of the transform payload
- *	n is the total packet size
- *	ntrans is the number of transforms (almost always 1)
- */
-void
-decode_transform(char *packet_in, int n, int ntrans) {
-   if (ntrans <=0)
-      return;	/* Nothing to do if no transforms */
-/*
- *	Body of function has not been written yet.
- */
-}
-
-/*
  *	send_packet -- Construct and send a packet to the specified host
  *	
  *	Inputs:
@@ -969,7 +952,8 @@ send_packet(int s, struct host_entry *he, int dest_port,
  *	Returns number of characters received, or -1 for timeout.
  */
 int
-recvfrom_wto(int s, char *buf, int len, struct sockaddr *saddr, int tmo) {
+recvfrom_wto(int s, unsigned char *buf, int len, struct sockaddr *saddr,
+             int tmo) {
    fd_set readset;
    struct timeval to;
    int n;
