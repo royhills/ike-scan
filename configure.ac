@@ -1,7 +1,8 @@
 dnl $Id$
 dnl Process this file with autoconf to produce a configure script.
 
-AC_INIT(ike-scan.c)
+AC_INIT
+AC_CONFIG_SRCDIR([ike-scan.c])
 AM_INIT_AUTOMAKE(ike-scan, 1.2, nodefine)
 
 AM_CONFIG_HEADER(config.h)
@@ -50,4 +51,5 @@ AC_CHECK_FUNC(getopt_long_only, ,
   [ COMPAT_SRCS="$COMPAT_SRCS getopt.c getopt1.c"
     COMPAT_OBJS="$COMPAT_OBJS getopt.o getopt1.o" ])
 
-AC_OUTPUT(Makefile)
+AC_CONFIG_FILES([Makefile])
+AC_OUTPUT
