@@ -166,15 +166,10 @@ make_trans(size_t *length, uint8_t next, uint8_t number, uint16_t cipher,
            unsigned char *gss_data, size_t gss_data_len) {
 
    struct isakmp_transform* hdr;	/* Transform header */
-   struct isakmp_attribute* attr1;	/* Mandatory attributes */
-   struct isakmp_attribute* attr2=NULL;	/* Optional keylen attribute */
-   struct isakmp_attribute* attr3=NULL;	/* Optional lifetype attribute */
-   struct isakmp_attribute_l32* attr4=NULL; /* Optional lifetime attribute */
-   struct isakmp_attribute* attr5=NULL;	/* Optional lifetype attribute */
-   struct isakmp_attribute_l32* attr6=NULL; /* Optional lifesize attribute */
-   unsigned char *gssid=NULL;		/* Optional GSSID attribute */
    unsigned char *payload;
+   unsigned char *attr;
    unsigned char *cp;
+   size_t attr_len;			/* Attribute Length */
    size_t len;				/* Payload Length */
 
 /* Allocate and initialise the transform header */
@@ -188,64 +183,37 @@ make_trans(size_t *length, uint8_t next, uint8_t number, uint16_t cipher,
 
 /* Allocate and initialise the mandatory attributes */
 
-   attr1 = Malloc(4 * sizeof(struct isakmp_attribute));
-
-   attr1[0].isaat_af_type = htons(0x8001);	/* Encryption Algorithm */
-   attr1[0].isaat_lv = htons(cipher);
-   attr1[1].isaat_af_type = htons(0x8002);	/* Hash Algorithm */
-   attr1[1].isaat_lv = htons(hash);
-   attr1[2].isaat_af_type = htons(0x8003);	/* Authentication Method */
-   attr1[2].isaat_lv = htons(auth);
-   attr1[3].isaat_af_type = htons(0x8004);	/* Group Description */
-   attr1[3].isaat_lv = htons(group);
-
-   len = sizeof(struct isakmp_transform) + 4 * sizeof(struct isakmp_attribute);
+   add_attr(0, NULL, 'B', OAKLEY_ENCRYPTION_ALGORITHM, 0, cipher, NULL);
+   add_attr(0, NULL, 'B', OAKLEY_HASH_ALGORITHM, 0, hash, NULL);
+   add_attr(0, NULL, 'B', OAKLEY_AUTHENTICATION_METHOD, 0, auth, NULL);
+   add_attr(0, NULL, 'B', OAKLEY_GROUP_DESCRIPTION, 0, group, NULL);
 
 /* Allocate and initialise the optional attributes */
 
-   if (keylen) {
-      attr2 = Malloc(sizeof(struct isakmp_attribute));
-      attr2->isaat_af_type = htons(0x800e);	/* Key Length */
-      attr2->isaat_lv = htons(keylen);
-      len += sizeof(struct isakmp_attribute);
-   }
+   if (keylen)
+      add_attr(0, NULL, 'B', OAKLEY_KEY_LENGTH, 0, keylen, NULL);
 
    if (lifetime) {
-      attr3 = Malloc(sizeof(struct isakmp_attribute));
-      attr4 = Malloc(sizeof(struct isakmp_attribute_l32));
-      attr3->isaat_af_type = htons(0x800b);	/* Life Type */
-      attr3->isaat_lv = htons(1);		/* Seconds */
-      attr4->isaat_af_type = htons(0x000c);	/* Life Duratiion */
-      attr4->isaat_l = htons(4);		/* 4 Bytes- CANT CHANGE */
-      attr4->isaat_v = htonl(lifetime);		/* Lifetime in seconds */
-      len += sizeof(struct isakmp_attribute) +
-             sizeof(struct isakmp_attribute_l32);
+      uint32_t lifetime_n = htonl(lifetime);
+
+      add_attr(0, NULL, 'B', OAKLEY_LIFE_TYPE, 0, SA_LIFE_TYPE_SECONDS, NULL);
+      add_attr(0, NULL, 'V', OAKLEY_LIFE_DURATION, 4, 0, &lifetime_n);
    }
 
    if (lifesize) {
-      attr5 = Malloc(sizeof(struct isakmp_attribute));
-      attr6 = Malloc(sizeof(struct isakmp_attribute_l32));
-      attr5->isaat_af_type = htons(0x800b);	/* Life Type */
-      attr5->isaat_lv = htons(2);		/* Kilobytes */
-      attr6->isaat_af_type = htons(0x000c);	/* Life Duratiion */
-      attr6->isaat_l = htons(4);		/* 4 Bytes- CANT CHANGE */
-      attr6->isaat_v = htonl(lifesize);		/* Lifetime in seconds */
-      len += sizeof(struct isakmp_attribute) +
-             sizeof(struct isakmp_attribute_l32);
+      uint32_t lifesize_n = htonl(lifesize);
+
+      add_attr(0, NULL, 'B', OAKLEY_LIFE_TYPE, 0, SA_LIFE_TYPE_KBYTES, NULL);
+      add_attr(0, NULL, 'V', OAKLEY_LIFE_DURATION, 4, 0, &lifesize_n);
    }
 
-   if (gss_id_flag) {
-      struct isakmp_attribute *gss_hdr;
-      gssid = Malloc(gss_data_len + sizeof(struct isakmp_attribute));
-      gss_hdr = (struct isakmp_attribute *) gssid;	/* Overlay */
-      gss_hdr->isaat_af_type = htons(16384);	/* GSS ID */
-      gss_hdr->isaat_lv = htons(gss_data_len);
-      memcpy(gssid+sizeof(struct isakmp_attribute), gss_data, gss_data_len);
-      len += gss_data_len + sizeof(struct isakmp_attribute);
-   }
+   if (gss_id_flag)
+      add_attr(0, NULL, 'V', OAKLEY_GSS_ID, gss_data_len, 0, gss_data);
 
-/* Fill in length value now we know it */
+/* Finalise attributes and fill in length value */
 
+   attr = add_attr(1, &attr_len, '\0', 0, 0, 0, NULL);
+   len = attr_len + sizeof(struct isakmp_transform);
    hdr->isat_length = htons(len);	/* Transform length */
    *length = len;
 
@@ -257,36 +225,8 @@ make_trans(size_t *length, uint8_t next, uint8_t number, uint16_t cipher,
    memcpy(cp, hdr, sizeof(struct isakmp_transform));
    free(hdr);
    cp += sizeof(struct isakmp_transform);
-   memcpy(cp, attr1, 4 * sizeof(struct isakmp_attribute));
-   free(attr1);
-   cp += 4 * sizeof(struct isakmp_attribute);
-   if (keylen) {
-      memcpy(cp, attr2, sizeof(struct isakmp_attribute));
-      free(attr2);
-      cp += sizeof(struct isakmp_attribute);
-   }
-   if (lifetime) {
-      memcpy(cp, attr3, sizeof(struct isakmp_attribute));
-      free(attr3);
-      cp += sizeof(struct isakmp_attribute);
-      memcpy(cp, attr4, sizeof(struct isakmp_attribute_l32));
-      free(attr4);
-      cp += sizeof(struct isakmp_attribute_l32);
-   }
-   if (lifesize) {
-      memcpy(cp, attr5, sizeof(struct isakmp_attribute));
-      free(attr5);
-      cp += sizeof(struct isakmp_attribute);
-      memcpy(cp, attr6, sizeof(struct isakmp_attribute_l32));
-      free(attr6);
-      cp += sizeof(struct isakmp_attribute_l32);
-   }
-   if (gss_id_flag) {
-      memcpy(cp, gssid, gss_data_len+sizeof(struct isakmp_attribute));
-      free(gssid);
-      cp += gss_data_len+sizeof(struct isakmp_attribute);
-   }
-
+   memcpy(cp, attr, attr_len);
+   free(attr);
 
    return payload;
 }
@@ -355,9 +295,120 @@ add_trans(int finished, size_t *length,
       struct isakmp_transform* hdr =
          (struct isakmp_transform*) (trans_start+cur_offset);	/* Overlay */
 
+      first_transform = 1;
       hdr->isat_np = 0;		/* No more transforms */
       *length = end_offset;
       return trans_start;
+   }
+}
+
+/*
+ *	make_attr -- Construct a transform attribute
+ *
+ *	Inputs:
+ *
+ *	outlen	(output) Total length of transform attribute.
+ *	type	Attribute Type.  'B' = basic, 'V' = variable.
+ *	class	Attribute Class
+ *	length	Attribute data length for variable type (ignored for basic).
+ *	b_value	Basic Attribute Value
+ *	v_value	Pointer to Variable Attribute Value
+ *
+ *	Returns:
+ *
+ *	Pointer to transform attribute.
+ *
+ *	For variable attribute types, the data must be in network byte
+ *	order, and its length should be a multiple of 4 bytes to avoid
+ *	allignment issues.
+ *
+ *	If type is "B", then length and v_value are ignored.  If type is "V",
+ *	then b_value is ignored.
+ */
+unsigned char *
+make_attr(size_t *outlen, char type, unsigned class, size_t length,
+          unsigned b_value, void *v_value) {
+   struct isakmp_attribute *hdr;
+   unsigned char *cp;
+   size_t total_len;
+
+   total_len = sizeof(struct isakmp_attribute);
+   if (type == 'V')
+      total_len += length;
+
+   cp = Malloc(total_len);
+   hdr = (struct isakmp_attribute *) cp;
+
+   if (type == 'B') {	/* Basic Attribute */
+      hdr->isaat_af_type = htons(class | 0x8000);
+      hdr->isaat_lv = htons(b_value);
+   } else {		/* Variable Attribute */
+      hdr->isaat_af_type = htons(class);
+      hdr->isaat_lv = htons(length);
+      memcpy(cp+sizeof(struct isakmp_attribute), v_value, length);
+   }
+
+   *outlen = total_len;
+   return cp;
+}
+
+/*
+ *	add_attr -- Add a new attribute onto the list of attributes
+ *
+ *	Inputs:
+ *
+ *	finished	0 if adding a new attribute; 1 if finalising.
+ *	outlen	(output) Total length of attribute list.
+ *	type	Attribute Type.  'B' = basic, 'V' = variable.
+ *	class	Attribute Class
+ *	length	Attribute data length for variable type (ignored for basic).
+ *	b_value	Basic Attribute Value
+ *	v_value	Pointer to Variable Attribute Value
+ *
+ *	Returns:
+ *
+ *	Pointer to attribute list
+ *
+ *	This function can either be called with finished = 0, in which case
+ *	type, class, length and either b_value or v_value must be specified,
+ *	and the function will return NULL; or it can be called with
+ *	finished = 1 in which case type, class, length,  b_value and v_value
+ *	are ignored and the function will return a pointer to the finished
+ *	attribute list and will set *outlen to the length of the attribute
+ *	list.
+ */
+unsigned char *
+add_attr(int finished, size_t *outlen, char type, unsigned class, size_t length,
+         unsigned b_value, void *v_value) {
+
+   static int first_attr=1;
+   unsigned char *attr;
+   static unsigned char *attr_start=NULL;	/* Start of attr list */
+   static size_t cur_offset;			/* Start of current attr */
+   static size_t end_offset;			/* End of attr list */
+   size_t len;					/* Attr length */
+/*
+ *	Construct a new attribute if we are not fianlising.
+ */
+   if (!finished) {
+      attr = make_attr(&len, type, class, length, b_value, v_value);
+      if (first_attr) {
+         cur_offset = 0;
+         end_offset = len;
+         attr_start = Malloc(end_offset);
+         memcpy(attr_start, attr, len);
+         first_attr = 0;
+      } else {
+         cur_offset = end_offset;
+         end_offset += len;
+         attr_start = Realloc(attr_start, end_offset);
+         memcpy(attr_start+cur_offset, attr, len);
+      }
+      return NULL;
+   } else {
+      first_attr = 1;
+      *outlen = end_offset;
+      return attr_start;
    }
 }
 
@@ -514,6 +565,10 @@ make_ke(size_t *length, uint8_t next, size_t kx_data_len) {
  *	For a real implementation, the nonce should use strong random numbers.
  *	However, we just use rand() because we don't care about the quality of
  *	the random numbers for this tool.
+ *
+ *	RFC 2409 states that: "The length of nonce payload MUST be between 8
+ *	and 256 bytes inclusive".  However, this function doesn't enforce the
+ *	restriction.
  */
 unsigned char*
 make_nonce(size_t *length, uint8_t next, size_t nonce_len) {
