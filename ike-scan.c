@@ -902,7 +902,7 @@ display_packet(int n, unsigned char *packet_in, struct host_entry *he,
    char *msg2;
    unsigned char *pkt_ptr;
    static const char *payload_name[] = { /* Payload types from RFC 2408 3.1 */
-      "NONE",                           /* 0 */
+      NULL,                             /* 0 */
       "Security Association",           /* 1 */
       "Proposal",                       /* 2 */
       "Transform",                      /* 3 */
@@ -955,13 +955,8 @@ display_packet(int n, unsigned char *packet_in, struct host_entry *he,
          cp = process_notify(pkt_ptr, bytes_left);
          break;
       default:
-         if (next <= MAX_PAYLOAD) {
-            cp=make_message("Unknown IKE packet returned: payload %d (%s)",
-                            next, payload_name[next]);
-         } else {
-            cp=make_message("Unknown IKE packet returned: payload %d (UNDEFINED)",
-                            next);
-         }
+         cp=make_message("Unknown IKE payload returned: %s",
+                         STR_OR_ID(next, payload_name));
          break;
    }
    pkt_ptr = skip_payload(pkt_ptr, &bytes_left, &next);
@@ -2144,6 +2139,27 @@ make_message(const char *fmt, ...) {
 }
 
 /*
+ *	numstr -- Convert a number to a string
+ *
+ *	Inputs:
+ *
+ *	num	The number to convert
+ *
+ *	Returns:
+ *
+ *	Pointer to the string representation of the number.
+ *
+ *	I'm surprised that there is not a standard library function to do this.
+ */
+char *
+numstr(int num) {
+   static char buf[21];	/* Large enough for biggest 64-bit integer */
+
+   snprintf(buf, sizeof(buf), "%d", num);
+   return buf;
+}
+
+/*
  *	usage -- display usage message and exit
  *
  *      Inputs:
@@ -2158,7 +2174,7 @@ void
 usage(void) {
 
    static const char *auth_methods[] = { /* Auth methods from RFC 2409 App. A */
-      "UNSPECIFIED",		/* 0 */
+      NULL,			/* 0 */
       "pre-shared key",		/* 1 */
       "DSS signatures",		/* 2 */
       "RSA signatures",		/* 3 */
@@ -2166,7 +2182,7 @@ usage(void) {
       "Revised encryption with RSA" /* 5 */
    };
    static const char *id_type_name[] ={	/* ID Type names from RFC 2407 4.6.2.1 */
-      "RESERVED",               /* 0 */
+      NULL,	                /* 0 */
       "ID_IPV4_ADDR",           /* 1 */
       "ID_FQDN",                /* 2 */
       "ID_USER_FQDN",           /* 3 */
@@ -2254,7 +2270,7 @@ usage(void) {
    fprintf(stderr, "\t\t\twith the --trans options to produce multiple transform\n");
    fprintf(stderr, "\t\t\tpayloads with different lifesizes.  Each --trans option\n");
    fprintf(stderr, "\t\t\twill use the previously specified lifesize value.\n");
-   fprintf(stderr, "\n--auth=<n> or -m <n>\tSet auth. method to <n>, default=%d (%s).\n", DEFAULT_AUTH_METHOD, auth_methods[DEFAULT_AUTH_METHOD]);
+   fprintf(stderr, "\n--auth=<n> or -m <n>\tSet auth. method to <n>, default=%d (%s).\n", DEFAULT_AUTH_METHOD, STR_OR_ID(DEFAULT_AUTH_METHOD, auth_methods));
    fprintf(stderr, "\t\t\tRFC defined values are 1 to 5.  See RFC 2409 Appendix A.\n");
    fprintf(stderr, "\t\t\tCheckpoint hybrid mode is 64221.\n");
    fprintf(stderr, "\t\t\tGSS (Windows \"Kerberos\") is 65001.\n");
@@ -2321,7 +2337,7 @@ usage(void) {
    fprintf(stderr, "\n--id <id> or -n <id>\tUse <id> as the identification value.\n");
    fprintf(stderr, "\t\t\tThis option is only applicable to Aggressive Mode.\n");
    fprintf(stderr, "\t\t\t<id> should be specified in hex, e.g. --id=deadbeef.\n");
-   fprintf(stderr, "\n--idtype=n or -y n\tUse identification type <n>.  Default %d (%s).\n", DEFAULT_IDTYPE, id_type_name[DEFAULT_IDTYPE]);
+   fprintf(stderr, "\n--idtype=n or -y n\tUse identification type <n>.  Default %d (%s).\n", DEFAULT_IDTYPE, STR_OR_ID(DEFAULT_IDTYPE, id_type_name));
    fprintf(stderr, "\t\t\tThis option is only applicable to Aggressive Mode.\n");
    fprintf(stderr, "\t\t\tSee RFC 2407 4.6.2 for details of Identification types.\n");
    fprintf(stderr, "\n--dhgroup=n or -g n\tUse Diffie Hellman Group <n>.  Default %d.\n", DEFAULT_DH_GROUP);
