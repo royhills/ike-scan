@@ -252,6 +252,7 @@ void warn_msg(const char *, ...);
 void info_syslog(const char *, ...);
 void err_print(int, int, const char *, va_list);
 void usage(int);
+void psk_crack_usage(int);
 void add_host_pattern(const char *, unsigned, unsigned *);
 void add_host(const char *, unsigned, unsigned *);
 void send_packet(int, unsigned char *, size_t, struct host_entry *, unsigned,
