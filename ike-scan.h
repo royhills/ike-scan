@@ -40,7 +40,7 @@
 #define DEFAULT_DEST_PORT 500		/* Default UDP destination port */
 #define DEFAULT_LIFETIME 28800		/* Default lifetime in seconds */
 #define DEFAULT_AUTH_METHOD 1		/* Default authentication method */
-#define DEFAULT_END_WAIT 60000		/* Default time to wait at end in ms */
+#define DEFAULT_END_WAIT 60		/* Default time to wait at end in sec */
 #define DEFAULT_PATTERN_FUZZ 100	/* Default pattern fuzz in ms */
 #define SYSLOG 1			/* Use syslog if defined */
 #define SYSLOG_FACILITY LOG_USER	/* Syslog facility to use */
