@@ -122,6 +122,7 @@
 #define SYSLOG 1			/* Use syslog if defined */
 #define SYSLOG_FACILITY LOG_USER	/* Syslog facility to use */
 #define PATTERNS_FILE "ike-backoff-patterns" /* Backoff patterns filename */
+#define VID_FILE "ike-vendor-ids"	/* Vendor ID patterns filename */
 #define MAX_PAYLOAD 13			/* Maximum defined payload number */
 #define EXPECTED_TOTAL 72		/* Expected ISAKMP header size total */
 
@@ -158,6 +159,13 @@ struct pattern_list {
    struct pattern_list *next;
 };
 
+struct vid_pattern_list {
+   char *name;
+   unsigned short len;
+   unsigned char *data;
+   struct vid_pattern_list *next;
+};
+
 /* Functions */
 
 void err_sys(const char *, ...);
@@ -186,9 +194,11 @@ void dump_list(unsigned);
 void dump_times(int);
 void add_recv_time(struct host_entry *, struct timeval *);
 void add_pattern(char *, unsigned);
+void add_vid_pattern(char *);
 char *match_pattern(struct host_entry *);
 int times_close_enough(struct timeval *, struct timeval *, unsigned);
 void dump_backoff(unsigned);
+void dump_vid(void);
 void check_struct_sizes(void);
 unsigned int hstr_i(const char *);
 struct isakmp_hdr* make_isakmp_hdr(uint8_t, uint8_t, uint32_t);
@@ -212,6 +222,6 @@ void decode_trans(char *, int *, int *, int *, int *, int *);
 unsigned char *skip_payload(unsigned char *, int *, int *);
 unsigned char *process_isakmp_hdr(unsigned char *, int *, int *, int *);
 char *process_sa(unsigned char *, int, int);
-char *process_vid(unsigned char *, int);
+char *process_vid(unsigned char *, int, struct vid_pattern_list *);
 char *process_notify(unsigned char *, int);
 char *make_message(const char *, ...);
