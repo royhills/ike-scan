@@ -487,6 +487,7 @@ make_nonce(int *length, uint8_t next, int nonce_len) {
    for (i=0; i<nonce_len; i++)
       *(cp++) = (unsigned char) (rand() & 0xff);
 
+   *length = sizeof(struct isakmp_nonce)+nonce_len;
    return payload;
 }
 
