@@ -6,6 +6,3 @@ printing "%d transforms" (where the number is always 1).
 
 Add support for aggressive mode in addition to main mode.  Much of this is
 already written in fw1-ike-userguess and just needs to be merged into ike-scan.
-
-Detect and display VID (vendor ID) payloads returned.  Do any servers actually
-send these, or is it only clients?
