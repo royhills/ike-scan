@@ -38,7 +38,6 @@ static char rcsid[] = "$Id$";	/* RCS ID for ident(1) */
 extern int experimental_value;
 extern psk_crack psk_values;
 extern int mbz_value;
-extern int header_version;
 extern const id_name_map payload_map[];
 
 /*
@@ -59,7 +58,8 @@ extern const id_name_map payload_map[];
  *	before the packet is sent.
  */
 struct isakmp_hdr*
-make_isakmp_hdr(unsigned xchg, unsigned next, unsigned length) {
+make_isakmp_hdr(unsigned xchg, unsigned next, unsigned length,
+                int header_version) {
    struct isakmp_hdr* hdr;
 
    hdr = Malloc(sizeof(struct isakmp_hdr));
