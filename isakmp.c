@@ -772,7 +772,7 @@ process_notify(unsigned char *cp, int len) {
       msg=make_message("Notify message %d (%s)", msg_type,
                        notification_msg[msg_type]);
    } else if (msg_type == 9101) {	/* Firewall-1 4.x/NG Base msg */
-      char *p;
+      unsigned char *p;
       notify_msg = Malloc(msg_len + 1);	/* Allow extra byte for NULL */
       memcpy(notify_msg, msg_data, msg_len);
       *(notify_msg+msg_len) = '\0';	/* Ensure string is null terminated */
