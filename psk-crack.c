@@ -6,22 +6,25 @@
  * Date: 8 July 2004
  */
 #include "ike-scan.h"
+#define MAXLEN 4096
 
 int
-main () {
-   FILE *psk_file;
+main (int argc, char *argv[]) {
+   FILE *dictionary_file;
+   FILE *data_file;	/* PSK parameters in colon separated format */
    int iterations=0;
    int found=0;
+   int n;
 
-   char *g_xr_hex = "9c1e0e07828af45086a4eb559ad8dafb7d655bab38656609426653565ef7e332bed7212cf24a05048032240256a169a68ee304ca500abe073d150bc50239350446ab568132aebcf34acd25ce23b30d0de9f8e7a89c22ce0dec2dabf0409bc25f0988d5d956916dce220c630d2a1fda846667fdecb20b2dc2d5c5b8273a07095c";
-   char *g_xi_hex = "6f8c74c15bb4dd09b7af8d1c23e7b381a38dddcd4c5afb3b1335ff766f0267df8fdca0ea907ef4482d8164506817d10ba4aed8f108d32c1b082b91772df956bcd5f7a765759bada21c11f28429c48fcd7267be7b3aea96421528b9432110fff607a65b7c41091e5d1a10e143d4701147d7cfc211ba5853cf800d12a11d129724";
-   char *cky_r_hex = "6d08132c8abb6931";
-   char *cky_i_hex = "eac82ea45cbe59e6";
-   char *sai_b_hex = "00000001000000010000002c01010001000000240101000080010001800200018003000180040002800b0001000c000400007080";
-   char *idir_b_hex = "01000000ac100202";
-   char *ni_b_hex = "64745a975dbcd95c2abf7d2eeeb93ac4633a03f1";
-   char *nr_b_hex = "502c0b3872518fa1e7ff8f5a28a3d797f65e2cb1";
-   char *expected_hash_r_hex = "f995ec2968f695aeb1d4e4b437f49d26";
+   char g_xr_hex[MAXLEN];
+   char g_xi_hex[MAXLEN];
+   char cky_r_hex[MAXLEN];
+   char cky_i_hex[MAXLEN];
+   char sai_b_hex[MAXLEN];
+   char idir_b_hex[MAXLEN];
+   char ni_b_hex[MAXLEN];
+   char nr_b_hex[MAXLEN];
+   char expected_hash_r_hex[MAXLEN];
 
    unsigned char *g_xr;
    unsigned char *g_xi;
@@ -57,8 +60,37 @@ main () {
    unsigned char *cp;
 
    char line[MAXLINE];
+   char psk_data[MAXLEN];
+
+   if (argc != 3) {
+      printf("Usage psk-crack <psk-parameters-file> <dictionary-file>\n");
+      printf("\n");
+      printf("psk-paramaters-file: g_xr:g_xi:cky_r:cky_i:sai_b:idir_b:ni_b:nr_b:hash_r\n");
+      printf("dictionary file: one word per line\n");
+      exit(1);
+   }
+
+   if ((data_file = fopen(argv[1], "r")) == NULL) {
+      perror("fopen");
+      exit(1);
+   }
+   if ((dictionary_file = fopen(argv[2], "r")) == NULL) {
+      perror("fopen");
+      exit(1);
+   }
 
    print_times();
+
+   fgets(psk_data, 4096, data_file);
+
+   n=sscanf(psk_data, "%[^:]:%[^:]:%[^:]:%[^:]:%[^:]:%[^:]:%[^:]:%[^:]:%[^:\r\n]",
+            g_xr_hex, g_xi_hex, cky_r_hex, cky_i_hex, sai_b_hex,
+            idir_b_hex, ni_b_hex, nr_b_hex, expected_hash_r_hex);
+
+   if (n != 9) {
+      printf("Error in data format.  Expected 9 fields, found %d\n", n);
+      exit(1);
+   }
 
    g_xr = hex2data(g_xr_hex, &g_xr_len);
    g_xi = hex2data(g_xi_hex, &g_xi_len);
@@ -94,12 +126,8 @@ main () {
    memcpy(cp, idir_b, idir_b_len);
    hash_r = Malloc(16);
 
-   if ((psk_file = fopen("psk-file.txt", "r")) == NULL) {
-      perror("fopen");
-      exit(1);
-   }
    print_times();
-   while (fgets(line, MAXLINE, psk_file)) {
+   while (fgets(line, MAXLINE, dictionary_file)) {
       char *line_p;
       for (line_p = line; !isspace(*line_p) && *line_p != '\0'; line_p++)
          ;
@@ -119,23 +147,8 @@ main () {
    if (!found)
       printf("no match found after %d iterations\n", iterations);
    print_times();
-   fclose(psk_file);
+   fclose(data_file);
+   fclose(dictionary_file);
 
    return 0;
 }
-
-/*
-
-Sample parameters from ike-scan
-
-I 10 (20):	64745a975dbcd95c2abf7d2eeeb93ac4633a03f1
-I 4 (128):	6f8c74c15bb4dd09b7af8d1c23e7b381a38dddcd4c5afb3b1335ff766f0267df8fdca0ea907ef4482d8164506817d10ba4aed8f108d32c1b082b91772df956bcd5f7a765759bada21c11f28429c48fcd7267be7b3aea96421528b9432110fff607a65b7c41091e5d1a10e143d4701147d7cfc211ba5853cf800d12a11d129724
-I 1 (52):	00000001000000010000002c01010001000000240101000080010001800200018003000180040002800b0001000c000400007080
-I CKY (8):	eac82ea45cbe59e6
-R CKY (8):	6d08132c8abb6931
-R 1 (52):	00000001000000010000002c01010001000000240101000080010001800200018003000180040002800b0001000c000400007080
-R 4 (128):	9c1e0e07828af45086a4eb559ad8dafb7d655bab38656609426653565ef7e332bed7212cf24a05048032240256a169a68ee304ca500abe073d150bc50239350446ab568132aebcf34acd25ce23b30d0de9f8e7a89c22ce0dec2dabf0409bc25f0988d5d956916dce220c630d2a1fda846667fdecb20b2dc2d5c5b8273a07095c
-R 10 (20):	502c0b3872518fa1e7ff8f5a28a3d797f65e2cb1
-R 5 (8):	01000000ac100202
-R 8 (16):	f995ec2968f695aeb1d4e4b437f49d26
-*/
