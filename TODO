@@ -1,8 +1,10 @@
 $Id$
 
 Write a user guide.  The README is getting too long now: a seperate document
-with proper formatting is required.  HTML and PDF seem to be the best formats
-for this.
+with proper formatting is required.  Docbook is one possible option as
+this can generate HTML, PDF and other output formats and is an open standard.
+Docbook details in docbook-info.txt.  LaTeX is another option - it can generate
+HTML and PDF as well.
 
 Write custom packet creation code.  This would allow an arbitary IKE packet
 to be created and sent.  The generation rules would be some sort of
@@ -14,7 +16,20 @@ define the packet such as --aggressive, --auth, --trans, --dhgroup Etc.
 Add option for XML output for easier machine readability.
 
 Decode the currently unhandled ID types: ID_IPV6_ADDR, ID_IPV6_ADDR_SUBNET,
-ID_IPV6_ADDR_RANGE, ID_DER_ASN1_DN, and ID_DER_ASN1_GN (never seen these used).
+ID_IPV6_ADDR_RANGE, ID_DER_ASN1_DN, and ID_DER_ASN1_GN (I've never seen these
+used though).
 
-Move the various utility functions in ike-scan.c into utils.c as ike-scan.c
-is getting a bit too big.
+Use Token Bucket algorithm for packet transmission to allow higher output
+rates, esp. when minimum select() wait is relatively large.
+
+Add option to grab and attempt to crack PSK in aggressive mode hash.
+
+Allow --trans options to be specified as inclusive ranges.  This would add
+a host entry for each transform attribute in the range, which could be used
+to determine which attributes a server supports.
+
+Add an option to include all known vendor IDs to the outgoing packet.
+Suggested by Max Kosmach.  This would require a more complex structure to
+hold the vendor IDs as the current one only contains the pattern to match
+which cannot simply be used as the outgoing VendorID as it may contain
+metacharacters.

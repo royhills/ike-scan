@@ -1,15 +1,44 @@
 $Id$
 
+2004-07-08 Roy Hills <Roy.Hills@nta-monitor.com>
+
+	* configure.ac: Incremented version number from 1.6.1 to 1.6.2.
+
+	* configure.ac: Added checks for headers netinet/tcp.h and signal.h
+	  for TCP support.
+
+	* ike-scan.c: Added experimental support for Cisco encapsulated
+	  IKE over TCP as used by Cisco VPN Concentrator.  Changed --tcp (-T)
+	  option to take an optional numeric argument: 1 (default) meaning
+	  raw IKE over TCP, and 2 meaning Cisco propriatary encapsulation.
+
+	* ike-scan.c: Add timeout for TCP connect() when using the --tcp (-T)
+	  option.  This uses the alarm() call to interrupt connect() which
+	  has a granularity of seconds.  Currently, the timeout is defined
+	  by the macro TCP_CONNECT_TIMEOUT in ike-scan.h.
+
+2004-06-23 Roy Hills <Roy.Hills@nta-monitor.com>
+
+	* ike-scan.c: Added experimental support for TCP with --tcp (-T)
+	  option.
+
 2004-06-16 Roy Hills <Roy.Hills@nta-monitor.com>
 
 	* ike-vendor-ids: Added several new Vendor ID patterns bringing the
 	  total to 68.
 
+	* ike-scan.h, ike-scan.c: Merge in timing error smoothing code.  This
+	  is based on the TCP RTT smoothing algorithm in RFC 793.  It is only
+	  used if ALPHA is defined in ike-scan.h.  Currently, this is disabled
+	  because ALPHA is #undef'ed in ike-scan.h.
+
 2004-05-25 Roy Hills <Roy.Hills@nta-monitor.com>
 
 	* ike-scan.c: Allow identification value specified with --id option
 	  to be either a string e.g. --id=test or a hex value with a leading
-	  0x e.g. --id=0xdeadbeef.
+	  0x e.g. --id=0xdeadbeef.  Note that because previous versions always
+	  interpreted the value as hex, you will need to add a leading 0x to
+	  the values or re-code them as text strings.
 
 2004-05-19 Roy Hills <Roy.Hills@nta-monitor.com>
 
