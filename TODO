@@ -1,10 +1,7 @@
 $Id$
 
 Write a user guide.  The README is getting too long now: a seperate document
-with proper formatting is required.  Docbook is one possible option as
-this can generate HTML, PDF and other output formats and is an open standard.
-Docbook details in docbook-info.txt.  LaTeX is another option - it can generate
-HTML and PDF as well.
+with proper formatting is required.  This will probably be written in LyX.
 
 Write custom packet creation code.  This would allow an arbitary IKE packet
 to be created and sent.  The generation rules would be some sort of
@@ -40,3 +37,5 @@ Add support for Nortel Contivity PSK cracking.  This system uses a non-
 standard algorithm for calculating the hash, which is a variant of Mamro's
 method.  This support can be merged from the file: psk-crack-nortel.c
 
+Add support for Main Mode PSK cracking using a MitM attack.  Suggested by
+Anton Rager.
