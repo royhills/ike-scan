@@ -20,6 +20,10 @@
  * Change History:
  *
  * $Log$
+ * Revision 1.15  2002/10/28 16:05:26  rsh
+ * icookie is now md5 hash rather than random no to ensure unique.
+ * added dump_list() function.
+ *
  * Revision 1.14  2002/10/25 08:55:51  rsh
  * Added vendor id support.  Not fully tested yet.
  *
@@ -204,7 +208,6 @@ int main(int argc, char *argv[]) {
       {"interval", required_argument, 0, 'i'},
       {"backoff", required_argument, 0, 'b'},
       {"selectwait", required_argument, 0, 'w'},
-      {"random", required_argument, 0, 'a'},
       {"verbose", no_argument, 0, 'v'},
       {"lifetime", required_argument, 0, 'l'},
       {"auth", required_argument, 0, 'm'},
@@ -212,7 +215,7 @@ int main(int argc, char *argv[]) {
       {"vendor", required_argument, 0, 'e'},
       {0, 0, 0, 0}
    };
-   char *short_options = "f:hr:t:i:b:w:a:vl:m:Ve:";
+   char *short_options = "f:hr:t:i:b:w:vl:m:Ve:";
    int arg;
    int options_index=0;
    char filename[MAXLINE];
@@ -226,7 +229,6 @@ int main(int argc, char *argv[]) {
    struct host_entry *temp_cursor;
    unsigned long loop_timediff;
    unsigned long host_timediff;
-   unsigned seed = 0;
 /*
  *	Process options and arguments.
  */
@@ -261,9 +263,6 @@ int main(int argc, char *argv[]) {
             break;
          case 'w':
             select_timeout=atoi(optarg);
-            break;
-         case 'a':
-            seed=atoi(optarg);
             break;
          case 'v':
             verbose++;
@@ -301,17 +300,6 @@ int main(int argc, char *argv[]) {
    if (!filename_flag) 
       if ((argc - optind) < 1)
          usage();
-/*
- *	Seed RNG using the specified seed or time since epoch if random
- *	seed was not specified.
- */
-   if (!seed) {
-      if ((gettimeofday(&now,NULL)) != 0) {
-         err_sys("gettimeofday");
-      }
-      seed=(now.tv_sec & 0xffff) + (now.tv_usec & 0xffff);
-   }
-   srandom(seed);
 /*
  *	Populate the list from the specified file if --file was specified, or
  *	otherwise from the remaining command line arguments.
@@ -373,6 +361,11 @@ int main(int argc, char *argv[]) {
    last_packet_time.tv_sec=0;
    last_packet_time.tv_usec=0;
    initialise_ike_packet();
+/*
+ *	Display the list if verbose setting is 2 or more.
+ */
+   if (verbose > 1)
+      dump_list();
 /*
  *	Main loop: send packets to all hosts in order until a response
  *	has been received or the host has exhausted it's retry limit.
@@ -478,6 +471,10 @@ int main(int argc, char *argv[]) {
 void add_host(char *name) {
    struct hostent *hp;
    struct host_entry *he;
+   char str[MAXLINE];
+   struct timeval now;
+   MD5_CTX context;
+   unsigned char cookie_md5[16];	/* Cookie data - md5 digest */
 
    if ((hp = gethostbyname(name)) == NULL)
       err_sys("gethostbyname");
@@ -487,6 +484,10 @@ void add_host(char *name) {
 
    num_hosts++;
 
+   if ((gettimeofday(&now,NULL)) != 0) {
+      err_sys("gettimeofday");
+   }
+
    he->n = num_hosts;
    memcpy(&(he->addr), hp->h_addr_list[0], sizeof(struct in_addr));
    he->live = 1;
@@ -495,8 +496,11 @@ void add_host(char *name) {
    he->num_recv = 0;
    he->last_send_time.tv_sec=0;
    he->last_send_time.tv_usec=0;
-   he->icookie[0] = random();
-   he->icookie[1] = random();
+   sprintf(str, "%lu %lu %d %s", now.tv_sec, now.tv_usec, num_hosts, inet_ntoa(he->addr));
+   MD5Init(&context);
+   MD5Update(&context, str, strlen(str));
+   MD5Final(&cookie_md5,&context);
+   memcpy(he->icookie, cookie_md5, sizeof(he->icookie));
 
    if (rrlist) {	/* List is not empty so add entry */
       he->next = rrlist;
@@ -1064,6 +1068,22 @@ void initialise_ike_packet(void) {
 }
 
 /*
+ *	dump_list -- Display contents of list for debugging
+ */
+void dump_list(void) {
+   struct host_entry *p;
+
+   p = rrlist;
+
+   printf("Entry\tIP Address\tCookie\n");
+   do {
+      printf("%d\t%s\t%0x%0x\n", p->n, inet_ntoa(p->addr), htonl(p->icookie[0]), htonl(p->icookie[1]));
+      p = p->next;
+   } while (p != rrlist);
+   printf("\nTotal of %d entries\n\n", num_hosts);
+}
+
+/*
  *	usage -- display usage message and exit
  */
 void usage(void) {
@@ -1084,7 +1104,6 @@ void usage(void) {
    fprintf(stderr, "--interval=<n> or -i <n> Set packet interval to <n> ms, default=%d\n", DEFAULT_INTERVAL);
    fprintf(stderr, "--backoff=<b> or -b <b>\tSet backoff factor to <b>, default=%.2f\n", DEFAULT_BACKOFF_FACTOR);
    fprintf(stderr, "--selectwait=<n> or -w <n> Set select wait to <n> ms, default=%d\n", DEFAULT_SELECT_TIMEOUT);
-   fprintf(stderr, "--random=<n> or -a <n>\tSet random seed to <n>.  Default is based on time\n");
    fprintf(stderr, "--verbose or -v\t\tDisplay verbose progress messages.\n");
    fprintf(stderr, "--lifetime=<s> or -l <s> Set IKE lifetime to <s> seconds, default=%d\n", DEFAULT_LIFETIME);
    fprintf(stderr, "--auth=<n> or -m <n>\tSet auth. method to <n>, default=%d (%s)\n", DEFAULT_AUTH_METHOD, auth_methods[DEFAULT_AUTH_METHOD]);
