@@ -110,7 +110,10 @@ Watchguard Firebox	0, 10, 10, 10, 10, 10
 
 # Discovered by: Roy Hills, December 2002
 # Observed on: Windows 2000 Server SP1
-Windows-2000	0, 1, 2, 4, 8, 16, 32
+# Observed on: Windows XP Pro SP1
+# Note: Backoff fingerprinting cannot distinguish between 2000 and XP, but
+#	vendor IDs can.
+Windows-2000 or XP	0, 1, 2, 4, 8, 16, 32
 
 # 1st pattern Discovered by: Thomas Walpuski, Jan 2003
 # Observed on: Various OpenBSD systems running isakmpd
@@ -149,3 +152,13 @@ watchguard-soho	0, 1/500, 9.5/3000, 1.5/2000, 9.5/3000, 1.5/2000, 9.5/3000, 1.5/
 # Note:	There is quite a bit of variation with this pattern, hence the
 #	per-entry fuzz specifications.
 sonicwall-pro	0, 6.5/1500, 9/1000, 13/2000, 22/3000
+
+# Discovered by: Roy Hills, December 2003
+# Observed on: Windows 2003 Server Enterprise Edition, Intel platform
+# Note: The 2nd packet delay has been observed to vary between 0.5 and 1.5 sec.
+#       Otherwise, this is the same pattern as Windows 2000.  Note that if the
+#	Win-2003 server happens to pick a delay of around 1 sec for the 2nd
+#	Packet, then ike-scan will mis-identify as Win-2000.  Vendor ID
+#	payloads can distinguish Win-2003 from Win-2000 in any event, but
+#	that's another story.
+Windows-2003	0, 1/600, 2, 4, 8, 16, 32
