@@ -34,6 +34,40 @@
 
 static char rcsid[] = "$Id$";	/* RCS ID for ident(1) */
 
+const char *notification_msg[] = { /* Notify Message Types from RFC 2408 3.14.1 */
+   "UNSPECIFIED",                    /* 0 */
+   "INVALID-PAYLOAD-TYPE",           /* 1 */
+   "DOI-NOT-SUPPORTED",              /* 2 */
+   "SITUATION-NOT-SUPPORTED",        /* 3 */
+   "INVALID-COOKIE",                 /* 4 */
+   "INVALID-MAJOR-VERSION",          /* 5 */
+   "INVALID-MINOR-VERSION",          /* 6 */
+   "INVALID-EXCHANGE-TYPE",          /* 7 */
+   "INVALID-FLAGS",                  /* 8 */
+   "INVALID-MESSAGE-ID",             /* 9 */
+   "INVALID-PROTOCOL-ID",            /* 10 */
+   "INVALID-SPI",                    /* 11 */
+   "INVALID-TRANSFORM-ID",           /* 12 */
+   "ATTRIBUTES-NOT-SUPPORTED",       /* 13 */
+   "NO-PROPOSAL-CHOSEN",             /* 14 */
+   "BAD-PROPOSAL-SYNTAX",            /* 15 */
+   "PAYLOAD-MALFORMED",              /* 16 */
+   "INVALID-KEY-INFORMATION",        /* 17 */
+   "INVALID-ID-INFORMATION",         /* 18 */
+   "INVALID-CERT-ENCODING",          /* 19 */
+   "INVALID-CERTIFICATE",            /* 20 */
+   "CERT-TYPE-UNSUPPORTED",          /* 21 */
+   "INVALID-CERT-AUTHORITY",         /* 22 */
+   "INVALID-HASH-INFORMATION",       /* 23 */
+   "AUTHENTICATION-FAILED",          /* 24 */
+   "INVALID-SIGNATURE",              /* 25 */
+   "ADDRESS-NOTIFICATION",           /* 26 */
+   "NOTIFY-SA-LIFETIME",             /* 27 */
+   "CERTIFICATE-UNAVAILABLE",        /* 28 */
+   "UNSUPPORTED-EXCHANGE-TYPE",      /* 29 */
+   "UNEQUAL-PAYLOAD-LENGTHS"         /* 30 */
+};
+
 /*
  *	make_isakmp_hdr -- Construct an ISAKMP Header
  *
@@ -525,6 +559,241 @@ make_id(int *length, uint8_t next, uint8_t idtype, unsigned char *id_data,
    return payload;
 }
 
-void isakmp_use_rcsid(void) {
+/*
+ *	skip_payload -- Skip an ISAMKP payload
+ *
+ *	Inputs:
+ *
+ *	cp	Pointer to start of payload to skip
+ *	len	Packet length remaining
+ *	next	Next payload type.
+ *
+ *	Returns:
+ *
+ *	Pointer to start of next payload, or NULL if no next payload.
+ */
+unsigned char *
+skip_payload(unsigned char *cp, int *len, int *next) {
+   struct isakmp_generic *hdr = (struct isakmp_generic *) cp;
+/*
+ *	Signal no more payloads by setting length to zero if:
+ *
+ *	The packet length is less than the ISAKMP generic header size; or
+ *	The payload length is greater than the packet length; or
+ *	The payload length is less than the size of the generic header; or
+ *	There is no next payload.
+ *
+ *	Also set *next to none and return null.
+ */
+   if (*len < sizeof(struct isakmp_generic) ||
+       ntohs(hdr->isag_length) >= *len ||
+       ntohs(hdr->isag_length) < sizeof(struct isakmp_generic) ||
+       hdr->isag_np == ISAKMP_NEXT_NONE) {
+      *len=0;
+      *next=ISAKMP_NEXT_NONE;
+      return NULL;
+   }
+/*
+ *	There is another payload after this one, so adjust length and
+ *	return pointer to next payload.
+ */
+   *len = *len - ntohs(hdr->isag_length);
+   *next = hdr->isag_np;
+   return cp + ntohs(hdr->isag_length);
+}
+
+/*
+ *	process_isakmp_hdr -- Process ISAKMP header
+ *
+ *	Inputs:
+ *
+ *	cp	Pointer to start of ISAKMP header
+ *	len	Packet length remaining
+ *	next	Next payload type.
+ *	type	Exchange type
+ *
+ *	Returns:
+ *
+ *	Pointer to start of next payload, or NULL if no next payload.
+ */
+unsigned char *
+process_isakmp_hdr(unsigned char *cp, int *len, int *next, int *type) {
+   struct isakmp_hdr *hdr = (struct isakmp_hdr *) cp;
+/*
+ *	Signal no more payloads by setting length to zero if:
+ *
+ *	The packet length is less than the ISAKMP header size; or
+ *	The payload length is less than the size of the header; or
+ *	There is no next payload.
+ *
+ *	Also set *next to none and return null.
+ */
+   if (*len < sizeof(struct isakmp_hdr) ||
+       ntohl(hdr->isa_length) < sizeof(struct isakmp_hdr) ||
+       hdr->isa_np == ISAKMP_NEXT_NONE) {
+      *len=0;
+      *next=ISAKMP_NEXT_NONE;
+      *type=ISAKMP_XCHG_NONE;
+      return NULL;
+   }
+/*
+ *	There is another payload after this one, so adjust length and
+ *	return pointer to next payload.
+ */
+   *len = *len - sizeof(struct isakmp_hdr);
+   *next = hdr->isa_np;
+   *type = hdr->isa_xchg;
+   return cp + sizeof(struct isakmp_hdr);
+}
+
+/*
+ *	process_sa -- Process SA Payload
+ *
+ *	Inputs:
+ *
+ *	cp	Pointer to start of SA payload
+ *	len	Packet length remaining
+ *	type	Exchange type.
+ *
+ *	Returns:
+ *
+ *	Pointer to SA description string.
+ *
+ *	The description string pointer returned points to malloc'ed storage
+ *	which should be free'ed by the caller when it's no longer needed.
+ */
+char *
+process_sa(unsigned char *cp, int len, int type) {
+   struct isakmp_sa *sa_hdr = (struct isakmp_sa *) cp;
+   struct isakmp_proposal *prop_hdr =
+      (struct isakmp_proposal *) (cp + sizeof(struct isakmp_sa));
+   char *msg;
+   char *msg2;
+
+   if (len < sizeof(struct isakmp_sa) + sizeof(struct isakmp_proposal) ||
+        ntohs(sa_hdr->isasa_length) < sizeof(struct isakmp_sa) +
+        sizeof(struct isakmp_proposal))
+      return make_message("IKE Handshake returned (packet too short to decode)");
+
+   if (type == ISAKMP_XCHG_IDPROT) {		/* Main Mode */
+      msg = make_message("Main Mode Handshake returned");
+   } else if (type == ISAKMP_XCHG_AGGR) {	/* Aggressive Mode */
+      msg = make_message("Aggressive Mode Handshake returned");
+   } else {
+      msg = make_message("UNKNOWN Mode Handshake returned (%u)", type);
+   }
+   if (prop_hdr->isap_notrans != 1) {
+      msg2 = msg;
+      msg = make_message("%s (%d transforms)", msg2, prop_hdr->isap_notrans);
+      free(msg2);
+   }
+   return msg;
+}
+
+/*
+ *	process_vid -- Process Vendor ID Payload
+ *
+ *	Inputs:
+ *
+ *	cp	Pointer to start of Vendor ID payload
+ *	len	Packet length remaining
+ *
+ *	Returns:
+ *
+ *	Pointer to Vendor ID description string.
+ *
+ *	The description string pointer returned points to malloc'ed storage
+ *	which should be free'ed by the caller when it's no longer needed.
+ */
+char *
+process_vid(unsigned char *cp, int len) {
+   struct isakmp_vid *hdr = (struct isakmp_vid *) cp;
+   char *msg;
+   char *p;
+   unsigned char *vid_data;
+   int data_len;
+   int i;
+
+   if (len < sizeof(struct isakmp_vid) ||
+        ntohs(hdr->isavid_length) < sizeof(struct isakmp_vid))
+      return make_message("VID (packet too short to decode)");
+
+   vid_data = cp + sizeof(struct isakmp_vid);  /* Points to start of VID data */
+   data_len = ntohs(hdr->isavid_length) < len ? ntohs(hdr->isavid_length) : len;
+
+   msg = Malloc(2*data_len + 1);	/* 2 hex chars/byte + end NULL */
+   p = msg;
+   for (i=0; i<data_len; i++) {
+      sprintf(p, "%.2x", (unsigned char) *(vid_data++));
+      p += 2;
+   }
+   *p = '\0';
+
+   p = msg;
+   msg=make_message("VID=%s", p);
+   free(p);
+
+   return msg;
+}
+
+/*
+ *	process_notify -- Process notify Payload
+ *
+ *	Inputs:
+ *
+ *	cp	Pointer to start of notify payload
+ *	len	Packet length remaining
+ *
+ *	Returns:
+ *
+ *	Pointer to notify description string.
+ *
+ *	The description string pointer returned points to malloc'ed storage
+ *	which should be free'ed by the caller when it's no longer needed.
+ */
+char *
+process_notify(unsigned char *cp, int len) {
+   struct isakmp_notification *hdr = (struct isakmp_notification *) cp;
+   char *msg;
+   int msg_type;
+   int msg_len;
+   unsigned char *msg_data;
+   unsigned char *notify_msg;
+
+   if (len < sizeof(struct isakmp_notification) ||
+        ntohs(hdr->isan_length) < sizeof(struct isakmp_notification))
+      return make_message("Notify message (packet too short to decode)");
+
+   msg_type = ntohs(hdr->isan_type);
+   msg_len = ntohs(hdr->isan_length) - sizeof(struct isakmp_notification);
+   msg_data = cp + sizeof(struct isakmp_notification);
+
+   if (msg_type < 31) {			/* RFC Defined Message Types */
+      msg=make_message("Notify message %d (%s)", msg_type,
+                       notification_msg[msg_type]);
+   } else if (msg_type == 9101) {	/* Firewall-1 4.x/NG Base msg */
+      char *p;
+      notify_msg = Malloc(msg_len + 1);	/* Allow extra byte for NULL */
+      memcpy(notify_msg, msg_data, msg_len);
+      *(notify_msg+msg_len) = '\0';	/* Ensure string is null terminated */
+/*
+ *      Replace any non-printable characters with "."
+ */
+      for (p=notify_msg; *p != '\0'; p++) {
+         if (!isprint(*p))
+            *p='.';
+      }
+      msg=make_message("Notify message %d [Checkpoint Firewall-1 4.x or NG Base] (%s)",
+                       msg_type, notify_msg);
+      free(notify_msg);
+   } else {
+      msg=make_message("Notify message %d (UNKNOWN MESSAGE TYPE)", msg_type);
+   }
+
+   return msg;
+}
+
+void
+isakmp_use_rcsid(void) {
    printf("%s\n", rcsid);	/* Use rcsid to stop compiler optimising away */
 }
