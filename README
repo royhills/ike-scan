@@ -1,8 +1,43 @@
 $Id$
 
-ike-scan - The IKE Scanner
+ike-scan - Discover and fingerprint IKE hosts
 
-Usage:
+BUILDING AND INSTALLING:
+
+ike-scan uses the standard GNU autoconf and automake tools, so installation
+involves the normal unzip/untar, ./configure, make, make install process.
+
+It should build on most modern Unix-like OSes.  It will not work on Windows,
+sorry.  The program is known to build and run on Linux, FreeBSD, OpenBSD and
+Solaris.  For more details see the section "SUPPORTED PLATFORMS" below.
+
+For installation instructions, see the file INSTALL.
+
+OVERVIEW:
+
+ike-scan discovers IKE hosts and can also fingerprint them using the
+retransmission backoff pattern.
+
+The program sends IKE main mode requests to the specified hosts and displays
+any responses that are received.  It handles retry and retransmission with
+backoff to cope with packet loss.  It also limits the amount of bandwidth
+used by the outbound IKE packets.
+
+IKE is the Internet Key Exchange protocol which is the key exchange and
+authentication mechanism used by IPsec.  Just about all modern VPN systems
+implement IPsec, and the vast majority of IPsec VPNs use IKE for key exchange.
+
+ike-scan can do two things:
+
+a) Discovery: Determine which hosts are running IKE.
+   This is done by displaying those hosts which respond to the IKE requests
+   sent by ike-scan.
+
+b) Fingerprinting: Determine which IKE implementation the hosts are using.
+   This is done by recording the times of the IKE response packets from the
+   target hosts and comparing the backoff pattern against known patterns.
+
+USAGE:
 
 Below is the output from "ike-scan --help".  Use ike-scan --help to display
 information on the usage and options for your version.
@@ -118,28 +153,7 @@ Options:
 Report bugs or send suggestions to ike-scan@nta-monitor.com
 See the ike-scan homepage at http://www.nta-monitor.com/ike-scan/
 
-Overview:
-
-ike-scan sends IKE main mode requests to the specified hosts and displays
-any responses that are received.  It handles retry and retransmission with
-backoff to cope with packet loss.  It also limits the amount of bandwidth
-used by the outbound IKE packets.
-
-IKE is the Internet Key Exchange protocol which is the key exchange and
-authentication mechanism used by IPsec.  Just about all modern VPN systems
-implement IPsec, and the vast majority of IPsec VPNs use IKE for key exchange.
-
-ike-scan can do two things:
-
-a) Determine which hosts are running IKE.
-   This is done by displaying those hosts which respond to the IKE requests
-   sent by ike-scan.
-
-b) Try to determine which IKE implementation the hosts are using.
-   This is done by recording the times of the IKE response packets from the
-   target hosts and comparing the backoff pattern against known patterns.
-
-Implementation Details:
+IMPLEMENTATION DETAILS:
 
 The hosts to scan can be specified on the command line or read from an
 input file using the --file=<fn> option.  The program can cope with
@@ -164,6 +178,14 @@ cookies to determine which host the response packets belong to.  Note that
 it does not rely on the source IP address of the response packets because
 it is possible for a response packet to be sent from a different IP address
 than it was originally sent to.
+
+ike-scan does not respond to any of the IKE responses it receives, so the
+IKE main mode handshake will never complete.  Some IKE implementations do
+not log handshakes that don't complete; these implementations will not
+log the scanning and therefore the owners of these systems will not be
+aware of the scanning.  It is possible to use ike-scan to determine if
+a given implementation will log these scanning attempts if you have access
+to the system logs.
 
 By default, the main mode packets sent contain one proposal which contains
 8 transforms.  These 8 transforms represent all possible combinations of:
@@ -238,9 +260,9 @@ can be determined by trying all possible combinations with --trans.
 Note however, that the user can usually change the transform set, so this
 cannot be relied upon by itself.
 
-d) By sniffing the returned IKE packets, the IP ID and IP TTL can be
-determined.  These can be useful in fingerprinting the IP stack which
-can help to determine the IKE implementation.
+d) By using another tool (e.g. tcpdump) to sniff the returned IKE packets,
+the IP ID and IP TTL can be determined.  These can be useful in
+fingerprinting the IP stack which can help to determine the IKE implementation.
 
 If you discover IKE hosts with backoff patterns which are not recognised by
 ike-scan, then you are encouraged to submit the pattern and details of
@@ -251,7 +273,7 @@ so I can incorporate it into future versions of the software.
 Note that any packet loss will prevent the backoff fingerprinting from working
 because the program needs to see all of the responses.
 
-Program Output:
+PROGRAM OUTPUT:
 
 The program output consists of two sections:
 
@@ -308,7 +330,7 @@ time column shows the absolute time when the packet was received
 in seconds and microseconds since the epoch; delta time shows the
 elapsed time between packets in seconds and microseconds.
 
-Examples:
+EXAMPLES:
 
 1) ike-scan 172.16.2.2
 
@@ -325,9 +347,9 @@ This will read the target hosts from the file "hostlist.txt".
 This reads the hosts from stdin and performs both IKE detection and backoff
 fingerprinting.  The backoff wait is specified as 20 seconds.
 
-Porting:
+SUPPORTED PLATFORMS:
 
-ike-scan has been tested on the following platforms:
+ike-scan has been built and tested on the following platforms:
 
 Debian Linux 2.2 (Potato) with 2.2 Kernel
 Debian Linux 3.0 (Woody) with 2.4 Kernel
@@ -340,10 +362,40 @@ supports sockets and has the system calls malloc, gethostbyname, gettimeofday,
 inet_ntoa, memset, select, socket, and strerror.
 
 As this is the first time I've used the GNU autoconf & automake tools, it
-may not be as portable as it could be.  If you find a platform which is
+may not be as portable as it could be.  If you use a platform which is
 not listed above, I would be grateful if you could let me know if it compiles
 or not.  The outputs from "./configure" and "make" would be helpful in the
-cases where it doesn't work.  Mail to ike-scan@nta-monitor.com.
+cases where it doesn't work.  Mail to: ike-scan@nta-monitor.com.
 
-Roy Hills <Roy.Hills@nta-monitor.com>
+FURTHER READING AND RFCS:
+
+For an in-depth coverage of IPsec including IKE, I recommend the book
+"IPsec The New Security Standard for the Internet, Intranets and Virtual
+Private Networks" by Doraswamy and Harkins, ISBN 0-13-011898-2.
+
+The following RFCs relate to IKE:
+
+RFC 2407  The Internet IP Security Domain of Interpretation for ISAKMP
+RFC 2408  Internet Security Association and Key Management Protocol (ISAKMP)
+RFC 2409  The Internet Key Exchange (IKE)
+
+All of these RFCs can be obtained from: http://www.ietf.org/rfc
+
+CONTACT ADDRESS:
+
+Please use the following Email address for any correspondence on ike-scan:
+
+Roy Hills <ike-scan@nta-monitor.com>
+
+I would like to hear from you if you have any of the following:
+
+1.  A modern Unix-like OS which ike-scan won't build on;
+
+2.  An OS not listed in the list above which ike-scan builds and runs OK on;
+
+3.  Any IKE implementation patterns that are not already in the
+    ike-backoff-patterns file.  Please include details of the pattern and
+    also details of the IKE implementation; or
+
+4.  Any comments or suggestions about the program.
 
