@@ -79,5 +79,11 @@ AC_CHECK_FUNC(getopt_long_only, ,
   [ COMPAT_SRCS="$COMPAT_SRCS getopt.c getopt1.c"
     COMPAT_OBJS="$COMPAT_OBJS getopt.o getopt1.o" ])
 
+dnl Do we have inet_aton?  Most systems do, but some e.g. Solaris don't
+dnl If we don't have it, then use a replacement function.
+AC_CHECK_FUNC(inet_aton, ,
+  [ COMPAT_SRCS="$COMPAT_SRCS inet_aton.c"
+    COMPAT_OBJS="$COMPAT_OBJS inet_aton.o" ])
+
 AC_CONFIG_FILES([Makefile])
 AC_OUTPUT
