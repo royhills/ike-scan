@@ -34,6 +34,7 @@
  */
 
 #include "ike-scan.h"
+#define NUM_HMAC_TESTS 1
 
 int
 main(void) {
@@ -71,9 +72,27 @@ main(void) {
       "a9993e364706816aba3e25717850c26c9cd0d89d",
       "84983e441c3bd26ebaae4aa1f95129e5e54670f1",
    };
+/*
+ *	HMAC-MD5 test vectors from RFC 2104
+ *	"HMAC: Keyed-Hashing for Message Authentication"
+ */
+   static const struct hmac_md5_test_struct {
+      unsigned char key[16];
+      int key_len;
+      unsigned char data[64];
+      int data_len;
+      char *digest;
+   } hmac_md5_tests[NUM_HMAC_TESTS] = {
+      {"Jefe",
+       4,
+       "what do ya want for nothing?",
+       28,
+       "750c783e6ab0b503eaa86e310a5db738"}
+   };
 
    unsigned const char **testp;
    const char **resultp;
+   int i;
 
    int error=0;
 
@@ -113,6 +132,25 @@ main(void) {
       }
       testp++;
       resultp++;
+   }
+
+   printf("\nChecking HMAC-MD5 keyed hash function...\n");
+   for (i=0; i<NUM_HMAC_TESTS; i++) {
+      const char *expected;
+      char *actual;
+      printf("\"%s\" \"%s\"\t", hmac_md5_tests[i].key, hmac_md5_tests[i].data);
+      expected=hmac_md5_tests[i].digest;
+      actual=hexstring(hmac_md5(hmac_md5_tests[i].data,
+                                hmac_md5_tests[i].data_len,
+                                hmac_md5_tests[i].key,
+                                hmac_md5_tests[i].key_len,
+                                NULL), 16);
+      if (strcmp(actual, expected)) {
+         error++;
+         printf("FAIL (expected %s, got %s)\n", expected, actual);
+      } else {
+         printf("ok\n");
+      }
    }
 
    if (error)
