@@ -1143,17 +1143,38 @@ process_id(unsigned char *cp, size_t len) {
    idtype = hdr->isaid_idtype;
 
    switch(idtype) {
-      char *id;
+      char *id;			/* Printable ID */
+      struct in_addr in;	/* IPv4 Address */
+      struct in_addr in2;	/* IPv4 Address */
+      unsigned char *mask;	/* Netmask */
 
       case ID_IPV4_ADDR:
+         if (data_len >= sizeof(struct in_addr)) {
+            memcpy(&in, id_data, sizeof(struct in_addr));
+            msg=make_message("Value=%s", inet_ntoa(in));
+         } else {
+            msg=make_message("Value too short to decode");
+         }
+         break;
       case ID_IPV4_ADDR_SUBNET:
-      case ID_IPV6_ADDR:
-      case ID_IPV6_ADDR_SUBNET:
+         if (data_len >= sizeof(struct in_addr) + 4) {
+            memcpy(&in, id_data, sizeof(struct in_addr));
+            mask = id_data + sizeof(struct in_addr);
+            msg=make_message("Value=%s/%u.%u.%u.%u", inet_ntoa(in),
+                             mask[0], mask[1], mask[2], mask[3]);
+         } else {
+            msg=make_message("Value too short to decode");
+         }
+         break;
       case ID_IPV4_ADDR_RANGE:
-      case ID_IPV6_ADDR_RANGE:
-      case ID_DER_ASN1_DN:
-      case ID_DER_ASN1_GN:
-         msg=make_message("Decode not supported for this type");
+         if (data_len >=  2 * sizeof(struct in_addr)) {
+            memcpy(&in, id_data, sizeof(struct in_addr));
+            memcpy(&in2, id_data+sizeof(struct in_addr),
+                   sizeof(struct in_addr));
+            msg=make_message("Value=%s-%s", inet_ntoa(in), inet_ntoa(in2));
+         } else {
+            msg=make_message("Value too short to decode");
+         }
          break;
       case ID_FQDN:
       case ID_USER_FQDN:
@@ -1165,6 +1186,13 @@ process_id(unsigned char *cp, size_t len) {
          id = hexstring(id_data, data_len);
          msg = make_message("Value=%s", id);
          free(id);
+         break;
+      case ID_IPV6_ADDR:
+      case ID_IPV6_ADDR_SUBNET:
+      case ID_IPV6_ADDR_RANGE:
+      case ID_DER_ASN1_DN:
+      case ID_DER_ASN1_GN:
+         msg=make_message("Decode not supported for this type");
          break;
       default:
          msg = make_message("Unknown ID Type");
