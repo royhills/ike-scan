@@ -1,5 +1,11 @@
 $Id$
 
+2004-11-19 Roy Hills <Roy.Hills@nta-monitor.com>
+
+	* sha1.c: define SHA1HANDSOFF to 1 to prevent the SHA1 functions from
+	  modifying the input buffer.  If this is not defined, then pre-shared
+	  key cracking for SHA1 hashes using this SHA1 function fails.
+
 2004-11-18 Roy Hills <Roy.Hills@nta-monitor.com>
 
 	* utils.c: printable() should quote the backslash itself to make
