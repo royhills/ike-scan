@@ -51,17 +51,21 @@ main (int argc, char *argv[]) {
       {"version", no_argument, 0, 'V'},
       {"md5", no_argument, 0, 'm'},
       {"sha1", no_argument, 0, 's'},
+      {"bruteforce", required_argument, 0, 'B'},
+      {"charset", required_argument, 0, 'c'},
       {0, 0, 0, 0}
    };
-   const char *short_options = "hvVms";
+   const char *short_options = "hvVmsB:c:";
    int arg;
    int options_index=0;
    int verbose=0;
    int hash_type=HASH_TYPE_AUTO;	/* Hash type: Auto, MD5 or SHA1 */
    size_t hash_len=0;	/* Set to 0 to avoid uninitialised warning */
    char *hash_name=NULL; /* Hash name: MD5 or SHA1 */
+   unsigned brute_len=0; /* Bruteforce len.  0=dictionary attack (default) */
+   char *charset="0123456789abcdefghijklmnopqrstuvwxyz"; /* bruteforce set */
 
-   FILE *dictionary_file;	/* Dictionary file, one word per line */
+   FILE *dictionary_file=NULL;	/* Dictionary file, one word per line */
    FILE *data_file;	/* PSK parameters in colon separated format */
    int iterations=0;
    int found=0;
@@ -153,22 +157,36 @@ main (int argc, char *argv[]) {
             hash_len=SHA1_HASH_LEN;
             hash_name="SHA1";
             break;
+         case 'B':      /* --bruteforce */
+            brute_len=strtoul(optarg, (char **)NULL, 10);
+            break;
+         case 'c':      /* --charset */
+            charset=make_message("%s", optarg);
+            break;
          default:       /* Unknown option */
             psk_crack_usage(EXIT_FAILURE);
             break;
       }
    } /* End While */
 
-   if ((argc - optind) < 2) {
-      psk_crack_usage(EXIT_FAILURE);
+   if (brute_len) {	/* Must have one argument for bruteforcing */
+      if ((argc - optind) != 1) {
+         psk_crack_usage(EXIT_FAILURE);
+      }
+   } else {		/* Otherwise must have two arguments */
+      if ((argc - optind) != 2) {
+         psk_crack_usage(EXIT_FAILURE);
+      }
    }
 /*
  *	Open data files.
  */
    if ((data_file = fopen(argv[optind], "r")) == NULL)
       err_sys("fopen data file");
-   if ((dictionary_file = fopen(argv[optind+1], "r")) == NULL)
-      err_sys("fopen dictionary file");
+   if (!brute_len) {
+      if ((dictionary_file = fopen(argv[optind+1], "r")) == NULL)
+         err_sys("fopen dictionary file");
+   }
 
    fgets(psk_data, MAXLEN, data_file);
 
@@ -242,24 +260,65 @@ main (int argc, char *argv[]) {
 /*
  *	Cracking loop.
  */
-   while (fgets(line, MAXLINE, dictionary_file)) {
-      char *line_p;
-      for (line_p = line; !isspace(*line_p) && *line_p != '\0'; line_p++)
-         ;
-      *line_p = '\0';
-      if (hash_type == HASH_TYPE_MD5) {
-         hmac_md5(skeyid_data, skeyid_data_len, line, strlen(line), skeyid);
-         hmac_md5(hash_r_data, hash_r_data_len, skeyid, hash_len, hash_r);
-      } else if (hash_type == HASH_TYPE_SHA1) {
-         hmac_sha1(skeyid_data, skeyid_data_len, line, strlen(line), skeyid);
-         hmac_sha1(hash_r_data, hash_r_data_len, skeyid, hash_len, hash_r);
-      } else {
-         err_msg("Unknown hash_type: %d\n", hash_type);
+   if (brute_len) {
+      unsigned max;
+      unsigned base;
+      unsigned i;
+      unsigned val;
+      unsigned digit;
+   
+      base = strlen(charset);
+      max = base;
+      for (i=1; i<brute_len; i++)
+         max *= base;	/* max = base^brute_len without using pow() */
+      printf("Brute force with %u chars up to length %u will take %u iterations\n", base, brute_len, max);
+   
+      for (i=0; i<max; i++) {
+         char *line_p;
+
+         val = i;
+         line_p = line;
+         do {
+            digit = val % base;
+            val /= base;
+            *line_p++ = charset[digit];
+         } while (val);
+         *line_p = '\0';
+         if (hash_type == HASH_TYPE_MD5) {
+            hmac_md5(skeyid_data, skeyid_data_len, line, strlen(line), skeyid);
+            hmac_md5(hash_r_data, hash_r_data_len, skeyid, hash_len, hash_r);
+         } else if (hash_type == HASH_TYPE_SHA1) {
+            hmac_sha1(skeyid_data, skeyid_data_len, line, strlen(line), skeyid);
+            hmac_sha1(hash_r_data, hash_r_data_len, skeyid, hash_len, hash_r);
+         } else {
+            err_msg("Unknown hash_type: %d\n", hash_type);
+         }
+         iterations++;
+         if (!memcmp(hash_r, expected_hash_r, expected_hash_r_len)) {
+            found=1;
+            break;
+         }
       }
-      iterations++;
-      if (!memcmp(hash_r, expected_hash_r, expected_hash_r_len)) {
-         found=1;
-         break;
+   } else {
+      while (fgets(line, MAXLINE, dictionary_file)) {
+         char *line_p;
+         for (line_p = line; !isspace(*line_p) && *line_p != '\0'; line_p++)
+            ;
+         *line_p = '\0';
+         if (hash_type == HASH_TYPE_MD5) {
+            hmac_md5(skeyid_data, skeyid_data_len, line, strlen(line), skeyid);
+            hmac_md5(hash_r_data, hash_r_data_len, skeyid, hash_len, hash_r);
+         } else if (hash_type == HASH_TYPE_SHA1) {
+            hmac_sha1(skeyid_data, skeyid_data_len, line, strlen(line), skeyid);
+            hmac_sha1(hash_r_data, hash_r_data_len, skeyid, hash_len, hash_r);
+         } else {
+            err_msg("Unknown hash_type: %d\n", hash_type);
+         }
+         iterations++;
+         if (!memcmp(hash_r, expected_hash_r, expected_hash_r_len)) {
+            found=1;
+            break;
+         }
       }
    }
 /*
@@ -279,7 +338,8 @@ main (int argc, char *argv[]) {
    printf("Ending psk-crack: %d iterations in %.3f seconds (%.2f iterations/sec)\n",
           iterations, elapsed_seconds, iterations/elapsed_seconds);
    fclose(data_file);
-   fclose(dictionary_file);
+   if (!brute_len)
+      fclose(dictionary_file);
 
    return 0;
 }
@@ -297,7 +357,7 @@ main (int argc, char *argv[]) {
  */
 void
 psk_crack_usage(int status) {
-   fprintf(stderr, "Usage: psk-crack [options] <psk-parameters-file> <dictionary-file>\n");
+   fprintf(stderr, "Usage: psk-crack [options] <psk-parameters-file> [<dictionary-file>]\n");
    fprintf(stderr, "\n");
    fprintf(stderr, "<psk-parameters-file> is a file containing the parameters for the pre-shared\n");
    fprintf(stderr, "key cracking process in the format:\n");
@@ -315,6 +375,8 @@ psk_crack_usage(int status) {
    fprintf(stderr, "\n--sha1 or -s\t\tForce SHA1 hash type.\n");
    fprintf(stderr, "\t\t\tNormally this is not required because the hash type\n");
    fprintf(stderr, "\t\t\tis automatically determined from the hash length.\n");
+   fprintf(stderr, "\n--bruteforce=n or -B n\tSelect bruteforce cracking up to n characters.\n");
+   fprintf(stderr, "\n--charset=s or -c s\t\tSet bruteforce character set to <s>\n");
    fprintf(stderr, "\n");
    fprintf(stderr, "Report bugs or send suggestions to %s\n", PACKAGE_BUGREPORT);
    fprintf(stderr, "See the ike-scan homepage at http://www.nta-monitor.com/ike-scan/\n");
