@@ -93,7 +93,7 @@ struct transform
 };
 struct transform trans[8];		/* Transform payload */
 struct isakmp_vid vid_hdr;		/* Vendor ID header */
-unsigned char vid_md5[16];		/* Vendor ID data - md5 digest */
+md5_byte_t vid_md5[16];			/* Vendor ID data - md5 digest */
 
 const char *auth_methods[] = { /* Authentication methods from RFC 2409 Appendix A */
    "UNSPECIFIED",		/* 0 */
@@ -222,7 +222,7 @@ main(int argc, char *argv[]) {
  */
    while ((arg=getopt_long_only(argc, argv, short_options, long_options, &options_index)) != -1) {
       switch (arg) {
-         MD5_CTX context;
+         md5_state_t context;
          int i;
          case 'f':
             strncpy(filename, optarg, MAXLINE);
@@ -276,9 +276,9 @@ main(int argc, char *argv[]) {
          case 'e':
             strncpy(vendor_id, optarg, MAXLINE);
             vendor_id_flag=1;
-            MD5Init(&context);
-            MD5Update(&context, vendor_id, strlen(vendor_id));
-            MD5Final(&vid_md5,&context);
+            md5_init(&context);
+            md5_append(&context, (const md5_byte_t *)vendor_id, strlen(vendor_id));
+            md5_finish(&context, vid_md5);
             printf("vid_md5: ");
             for (i=0; i<16; i++)
                printf("%.2x",vid_md5[i]);
@@ -525,8 +525,8 @@ add_host(char *name) {
    struct host_entry *he;
    char str[MAXLINE];
    struct timeval now;
-   MD5_CTX context;
-   unsigned char cookie_md5[16];	/* Cookie data - md5 digest */
+   md5_state_t context;
+   md5_byte_t cookie_md5[16];	/* Cookie data - md5 digest */
 
    if ((hp = gethostbyname(name)) == NULL)
       err_sys("gethostbyname");
@@ -550,9 +550,9 @@ add_host(char *name) {
    he->last_send_time.tv_usec=0;
    he->recv_times = NULL;
    sprintf(str, "%lu %lu %u %s", now.tv_sec, now.tv_usec, num_hosts, inet_ntoa(he->addr));
-   MD5Init(&context);
-   MD5Update(&context, str, strlen(str));
-   MD5Final(&cookie_md5,&context);
+   md5_init(&context);
+   md5_append(&context, (const md5_byte_t *)str, strlen(str));
+   md5_finish(&context, cookie_md5);
    memcpy(he->icookie, cookie_md5, sizeof(he->icookie));
 
    if (rrlist) {	/* List is not empty so add entry */
