@@ -1241,14 +1241,33 @@ print_payload(unsigned char *cp, unsigned payload, int dir) {
       data_len = ntohs(hdr->isag_length);
       data_len -= sizeof(struct isakmp_generic);
       hexdata = hexstring(data, data_len);
-      printf("%c %u (%u):\t%s\n", dir, payload, data_len, hexdata);
+      switch (payload) {
+         case ISAKMP_NEXT_SA:
+            printf("sa%c_b_hex=\"%s\"\n", (dir=='I')?'i':'r', hexdata);
+            break;
+         case ISAKMP_NEXT_KE:
+            printf("g_x%c_hex=\"%s\"\n", (dir=='I')?'i':'r', hexdata);
+            break;
+         case ISAKMP_NEXT_ID:
+            printf("idi%c_b_hex=\"%s\"\n", (dir=='I')?'i':'r', hexdata);
+            break;
+         case ISAKMP_NEXT_HASH:
+            printf("expected_hash_%c_hex=\"%s\"\n", (dir=='I')?'i':'r', hexdata);
+            break;
+         case ISAKMP_NEXT_NONCE:
+            printf("n%c_b_hex=\"%s\"\n", (dir=='I')?'i':'r', hexdata);
+            break;
+         default:
+            printf("UNKNOWN PAYLOAD TYPE: %d\n", payload);
+            break;
+      }
       free(hexdata);
    } else {	/* ISAKMP Header */
       hexdata = hexstring((unsigned char *)ihdr->isa_icookie, 8);
-      printf("I CKY (8):\t%s\n", hexdata);
+      printf("cky_i_hex=\"%s\"\n", hexdata);
       free(hexdata);
       hexdata = hexstring((unsigned char *)ihdr->isa_rcookie, 8);
-      printf("R CKY (8):\t%s\n", hexdata);
+      printf("cky_r_hex=\"%s\"\n", hexdata);
       free(hexdata);
    }
 }
