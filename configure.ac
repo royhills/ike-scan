@@ -2,7 +2,7 @@ dnl $Id$
 dnl Process this file with autoconf to produce a configure script.
 
 AC_INIT(ike-scan.c)
-AM_INIT_AUTOMAKE(ike-scan, 1.0, nodefine)
+AM_INIT_AUTOMAKE(ike-scan, 1.1, nodefine)
 
 AM_CONFIG_HEADER(config.h)
 
@@ -18,13 +18,15 @@ dnl Checks for libraries.
 dnl Solaris 8 needs nsl and socket.  Linux and {Free,Open}BSD do not.
 AC_CHECK_LIB(nsl, t_open)
 AC_CHECK_LIB(socket, socket)
+dnl We only use "abs" and "floor" from the maths library
+AC_CHECK_LIB(m, floor)
 
 AC_SUBST(COMPAT_OBJS)
 AC_SUBST(COMPAT_SRCS)
 
 dnl Checks for header files.
 AC_HEADER_STDC
-AC_CHECK_HEADERS([arpa/inet.h netdb.h netinet/in.h stdlib.h string.h sys/socket.h sys/time.h syslog.h unistd.h getopt.h libgen.h stdarg.h])
+AC_CHECK_HEADERS([arpa/inet.h netdb.h netinet/in.h stdlib.h string.h sys/socket.h sys/time.h syslog.h unistd.h getopt.h])
 
 dnl Checks for typedefs, structures, and compiler characteristics.
 AC_C_CONST
