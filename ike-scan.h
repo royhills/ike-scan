@@ -166,15 +166,16 @@ void err_msg(const char *, ...);
 void warn_msg(const char *, ...);
 void info_syslog(const char *, ...);
 void err_print(int, int, const char *, va_list);
-char *cpystr(char *string);
 void usage(void);
-void add_host(char *, unsigned);
-void send_packet(int, struct host_entry *, int, struct timeval *);
+void add_host(const char *, unsigned);
+void send_packet(int, unsigned char*, int, struct host_entry *, int,
+                 struct timeval *);
 int recvfrom_wto(int, unsigned char *, int, struct sockaddr *, int);
 void remove_host(struct host_entry *);
 void timeval_diff(struct timeval *, struct timeval *, struct timeval *);
-void initialise_ike_packet(unsigned, unsigned, int, int, int, unsigned char *,
-                           int, int, int, int, int, unsigned char *, int);
+unsigned char *initialise_ike_packet(int *, unsigned, unsigned, int, int, int,
+                                     unsigned char *, int, int, int, int, int,
+                                     unsigned char *, int);
 struct host_entry *find_host_by_cookie(struct host_entry *, unsigned char *,
                                        int);
 void display_packet(int, unsigned char *, struct host_entry *,
@@ -182,13 +183,13 @@ void display_packet(int, unsigned char *, struct host_entry *,
 void advance_cursor(void);
 void dump_list(void);
 void dump_times(int);
-void add_recv_time(struct host_entry *);
+void add_recv_time(struct host_entry *, struct timeval *);
 void add_pattern(char *, unsigned);
 char *match_pattern(struct host_entry *);
 int times_close_enough(struct timeval *, struct timeval *, unsigned);
 void dump_backoff(unsigned);
 void check_struct_sizes(void);
-unsigned int hstr_i(char *);
+unsigned int hstr_i(const char *);
 struct isakmp_hdr* make_isakmp_hdr(uint8_t, uint8_t, uint32_t);
 struct isakmp_sa* make_sa_hdr(uint8_t, uint32_t);
 struct isakmp_proposal* make_prop(uint32_t, uint8_t);
