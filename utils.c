@@ -807,6 +807,41 @@ void sig_alarm(int signo) {
    return;      /* just interrupt the current system call */
 }
 
+/*
+ *	str_or_id -- Return name associated with given id, or id number
+ *
+ *	Inputs:
+ *
+ *	id		The id to find in the map
+ *	id_name_map	Pointer to the id-to-name map
+ *
+ *	Returns:
+ *
+ *	A pointer to the name associated with the id if an association is
+ *	found in the map, otherwise the numeric id.  Returns NULL on error.
+ *
+ */
+char *str_or_id(int id, const id_name_map map[]) {
+   int found = 0;
+   int i = 0;
+
+   if (map == NULL)
+      return NULL;
+
+   while (map[i].id) {
+      if (id == map[i].id) {
+         found = 1;
+         break;
+      }
+      i++;
+   }
+
+   if (found)
+      return map[i].name;
+   else
+      return numstr(id);
+}
+
 void utils_use_rcsid(void) {
    fprintf(stderr, "%s\n", rcsid);	/* Use rcsid to stop compiler optimising away */
 }
