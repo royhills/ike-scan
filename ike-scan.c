@@ -585,7 +585,6 @@ main(int argc, char *argv[]) {
       dump_vid();
       warn_msg("This ike-scan binary was not compiled with Posix regular expression support.");
       warn_msg("Vendor ID Fingerprinting will not be possible.");
-#endif
    }
 /*
  *	Main loop: send packets to all hosts in order until a response
