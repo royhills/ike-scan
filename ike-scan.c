@@ -102,13 +102,13 @@ main(int argc, char *argv[]) {
       {"quiet", no_argument, 0, 'q'},
       {"multiline", no_argument, 0, 'M'},
       {"random", no_argument, 0, 'R'},
-      {"tcp", no_argument, 0, 'T'},
+      {"tcp", optional_argument, 0, 'T'},
       {"pskcrack", no_argument, 0, 'P'},
       {"experimental", no_argument, 0, 'X'},
       {0, 0, 0, 0}
    };
    const char *short_options =
-      "f:hs:d:r:t:i:b:w:vl:z:m:Ve:a:o::u:n:y:g:p:AG:I:qMRTXP";
+      "f:hs:d:r:t:i:b:w:vl:z:m:Ve:a:o::u:n:y:g:p:AG:I:qMRT::XP";
    int arg;
    char arg_str[MAXLINE];	/* Args as string for syslog */
    int options_index=0;
@@ -337,7 +337,11 @@ main(int argc, char *argv[]) {
             random_flag=1;
             break;
          case 'T':	/* --tcp */
-            tcp_flag=1;
+            if (optarg == NULL) {
+               tcp_flag = TCP_PROTO_RAW;
+            } else {
+               tcp_flag = strtoul(optarg, (char **)NULL, 10);
+            }
             break;
          case 'P':	/* --pskcrack */
             psk_crack_flag=1;
@@ -487,6 +491,42 @@ main(int argc, char *argv[]) {
       if (errno == EADDRINUSE)
          warn_msg("Only one process may bind to the source port at any one time.");
       err_sys("bind");
+   }
+/*
+ *	If we are using TCP transport, then connect the socket to the peer.
+ *	We know that there is only one entry in the host list if we're using
+ *	TCP.
+ */
+   if (tcp_flag) {
+      struct sockaddr_in sa_peer;
+      NET_SIZE_T sa_peer_len;
+      struct sigaction act, oact;  /* For sigaction */
+/*
+ *      Set signal handler for alarm.
+ *      Must use sigaction() rather than signal() to prevent SA_RESTART
+ */
+      act.sa_handler=sig_alarm;
+      sigemptyset(&act.sa_mask);
+      act.sa_flags=0;
+      sigaction(SIGALRM,&act,&oact);
+/*
+ *	Set alarm
+ */
+      alarm(TCP_CONNECT_TIMEOUT);
+/*
+ *	Connect to peer
+ */
+      memset(&sa_peer, '\0', sizeof(sa_peer));
+      sa_peer.sin_family = AF_INET;
+      sa_peer.sin_addr.s_addr = helist->addr.s_addr;
+      sa_peer.sin_port = htons(dest_port);
+      sa_peer_len = sizeof(sa_peer);
+      if ((connect(sockfd, (struct sockaddr *) &sa_peer, sa_peer_len)) != 0)
+         err_sys("connect");
+/*
+ *	Cancel alarm
+ */
+      alarm(0);
    }
 /*
  *	Set current host pointer (cursor) to start of list, zero
@@ -1180,18 +1220,57 @@ send_packet(int s, unsigned char *packet_out, size_t packet_out_len,
    he->last_send_time.tv_usec = last_packet_time->tv_usec;
    he->num_sent++;
 /*
+ *	Experimental Cisco TCP encapsulation.
+ */
+   if (tcp_flag == TCP_PROTO_ENCAP) {
+      unsigned char *orig_packet_out = packet_out;
+      unsigned char *udphdr;
+      size_t udphdr_len;
+      unsigned char *cp;
+
+/* The two bits of extra data below were observed using Cisco VPN Client */
+      unsigned char udpextra[16] = {	/* extra data covered by UDP */
+         0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
+         0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00
+      };
+      unsigned char tcpextra[16] = {	/* extra data covered by TCP */
+         0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
+         0x21,0x45,0x6c,0x69,0x10,0x11,0x01,0x00
+      };
+
+      packet_out=Malloc(packet_out_len+40);	/* 8 for udphdr + 32 extra */
+      cp = packet_out;
+
+      udphdr = make_udphdr(&udphdr_len, 500, 500, packet_out_len+8+16);
+      memcpy(cp, udphdr, udphdr_len);
+      cp += udphdr_len;
+
+      memcpy(cp, orig_packet_out, packet_out_len);
+      cp += packet_out_len;
+
+      memcpy(cp, udpextra, 16);
+      cp += 16;
+
+      memcpy(cp, tcpextra, 16);
+      cp += 16;
+
+      packet_out_len += 40;
+   }
+/*
  *	Send the packet.
  */
    if (verbose > 1)
       warn_msg("---\tSending packet #%u to host entry %u (%s) tmo %d us",
                he->num_sent, he->n, inet_ntoa(he->addr), he->timeout);
-   if (tcp_flag) {
-      if ((connect(s, (struct sockaddr *) &sa_peer, sa_peer_len)) != 0)
-         err_sys("connect");
-   }
    if ((sendto(s, packet_out, packet_out_len, 0, (struct sockaddr *) &sa_peer,
        sa_peer_len)) < 0) {
       err_sys("sendto");
+   }
+/*
+ *	Experimental Cisco TCP encapsulation.
+ */
+   if (tcp_flag == TCP_PROTO_ENCAP) {
+      free(packet_out);
    }
 }
 
@@ -1241,6 +1320,25 @@ recvfrom_wto(int s, unsigned char *buf, size_t len, struct sockaddr *saddr,
          err_sys("recvfrom");
       }
    }
+/*
+ *	Experimental Cisco TCP encapsulation.
+ *	Remove encapsulated UDP header from TCP segment.
+ */
+   if (tcp_flag == TCP_PROTO_ENCAP && n > 8) {
+      struct ike_udphdr *udphdr;
+      unsigned char *tmpbuf;
+
+      udphdr = (struct ike_udphdr*) buf;
+      if (ntohs(udphdr->source) == 500 &&
+          ntohs(udphdr->dest) == 500) {
+
+         tmpbuf=Malloc(n-8);	/* could we use memmove() instead ? */
+         memcpy(tmpbuf, buf+8, n-8);
+         memcpy(buf, tmpbuf, n-8);
+         free(tmpbuf);
+      }
+   }
+
    return n;
 }
 
@@ -2377,10 +2475,17 @@ usage(int status) {
    fprintf(stderr, "\t\t\tThis option randomises the order of the hosts in the\n");
    fprintf(stderr, "\t\t\thost list, so the IKE probes are sent to the hosts in\n");
    fprintf(stderr, "\t\t\ta random order.  It uses the Knuth shuffle algorithm.\n");
-   fprintf(stderr, "\n--tcp or -T\t\tUse TCP transport instead of UDP.\n");
+   fprintf(stderr, "\n--tcp[=n] or -T[n]\tUse TCP transport instead of UDP.\n");
    fprintf(stderr, "\t\t\tThis allows you to test a host running IKE over TCP.\n");
    fprintf(stderr, "\t\t\tYou won't normally need this option because the vast\n");
    fprintf(stderr, "\t\t\tmajority of IPsec systems only support IKE over UDP.\n");
+   fprintf(stderr, "\t\t\tThe optional value <n> specifies the type of IKE over\n");
+   fprintf(stderr, "\t\t\tTCP.  There are currently two possible values:\n");
+   fprintf(stderr, "\t\t\t1 = RAW IKE over TCP as used by Checkpoint (default);\n");
+   fprintf(stderr, "\t\t\t2 = Encapsulated IKE over TCP as used by Cisco.\n");
+   fprintf(stderr, "\t\t\tIf you are using the short form of the option (-T)\n");
+   fprintf(stderr, "\t\t\tthen the value must immediately follow the option\n");
+   fprintf(stderr, "\t\t\tletter with no spaces, e.g. -T2 not -T 2.\n");
    fprintf(stderr, "\t\t\tYou can only specify a single target host if you use\n");
    fprintf(stderr, "\t\t\tthis option.\n");
    fprintf(stderr, "\n--pskcrack or -P\tCrack aggressive mode pre-shared keys (experimental).\n");
