@@ -1,6 +1,37 @@
 $Id$
 
+2004-07-19 Roy Hills <Roy.Hills@nta-monitor.com>
+
+	* psk-crack.c: New program to crack Aggressive Mode Pre-Shared Keys
+	  using dictionary attack.  This uses the output from "ike-scan -P"
+	  together with a dictionary.  This program is not very polished, but
+	  it works OK.
+
+2004-07-16 Roy Hills <Roy.Hills@nta-monitor.com>
+
+	* ike-scan.c: Display the rcsid for all important source files
+	  for the --version option rather than just for ike-scan.c.
+
+2004-07-12 Roy Hills <Roy.Hills@nta-monitor.com>
+
+	* ike-scan.c: Added new --tcptimeout (-O) option.  TCP Connect()
+	  timeout can now be changed without having to change the #define.
+
+2004-07-09 Roy Hills <Roy.Hills@nta-monitor.com>
+
+	* ike-scan.c: Added experimental support for Aggressive Mode
+	  Pre-Shared Key (PSK) cracking with --pskcrack (-P) option.
+	  This outputs the PSK parameters as colon-separated hex values
+	  for input into a seperate cracking program (which has not yet
+	  been written).
+
 2004-07-08 Roy Hills <Roy.Hills@nta-monitor.com>
+
+	* configure.ac: Incremented version number from 1.6.2 to 1.6.3 in
+	  preparation for next batch of changes.
+
+	* Internal release on 1.6.2.  NTA Monitor internal use only.
+	  No tarballs generated.
 
 	* configure.ac: Incremented version number from 1.6.1 to 1.6.2.
 
