@@ -184,3 +184,4 @@ char *match_pattern(struct host_entry *);
 int times_close_enough(struct timeval *, struct timeval *, unsigned);
 void dump_backoff(void);
 void check_struct_sizes(void);
+unsigned int hstr_i(char *);
