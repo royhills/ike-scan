@@ -193,15 +193,13 @@ Any per-pattern-entry fuzz specifications in the
 patterns file will override the value set here.
 .TP
 .B --patterns=<f> or -p <f>
-Use IKE patterns file <f>,
-default=/usr/local/share/ike-scan/ike-backoff-patterns.
+Use IKE patterns file <f>, default=/usr/local/share/ike-scan/ike-backoff-patterns.
 This specifies the name of the file containing
 IKE backoff patterns.  This file is only used when
 --showbackoff is specified.
 .TP
 .B --vidpatterns=<f> or -I <f>
-Use Vendor ID patterns file <f>,
-default=/usr/local/share/ike-scan/ike-vendor-ids.
+Use Vendor ID patterns file <f>, default=/usr/local/share/ike-scan/ike-vendor-ids.
 This specifies the name of the file containing
 Vendor ID patterns.  These patterns are used for
 Vendor ID fingerprinting.
@@ -215,10 +213,11 @@ option, note that all transforms should have the same
 DH Group and this should match the group specified
 with --dhgroup or the default if --dhgroup is not used.
 .TP
-.B --id <id> or -n <id>
+.B --id=<id> or -n <id>
 Use <id> as the identification value.
 This option is only applicable to Aggressive Mode.
-<id> should be specified in hex, e.g. --id=deadbeef.
+<id> can be specified as a string, e.g. --id=test or as
+a hex value with a leading "0x", e.g. --id=0xdeadbeef.
 .TP
 .B --idtype=n or -y n
 Use identification type <n>.  Default 3 (ID_USER_FQDN).
@@ -227,7 +226,9 @@ See RFC 2407 4.6.2 for details of Identification types.
 .TP
 .B --dhgroup=n or -g n
 Use Diffie Hellman Group <n>.  Default 2.
-This option is only applicable to Aggressive Mode.
+This option is only applicable to Aggressive Mode where
+it is used to determine the size of the key exchange
+payload.
 Acceptable values are 1,2,5,14,15,16,17,18 (MODP only).
 .TP
 .B --gssid=<n> or -G <n>
@@ -237,6 +238,51 @@ in draft-ietf-ipsec-isakmp-gss-auth-07.txt, although
 Windows-2000 has been observed to use 32001 as well.
 For Windows 2000, you'll need to use --auth=65001 to
 specify Kerberos (GSS) authentication.
+.TP
+.B --random or -R
+Randomise the host list.
+This option randomises the order of the hosts in the
+host list, so the IKE probes are sent to the hosts in
+a random order.  It uses the Knuth shuffle algorithm.
+.TP
+.B --tcp[=n] or -T[n]
+Use TCP transport instead of UDP.
+This allows you to test a host running IKE over TCP.
+You won't normally need this option because the vast
+majority of IPsec systems only support IKE over UDP.
+The optional value <n> specifies the type of IKE over
+TCP.  There are currently two possible values:
+1 = RAW IKE over TCP as used by Checkpoint (default);
+2 = Encapsulated IKE over TCP as used by Cisco.
+If you are using the short form of the option (-T)
+then the value must immediately follow the option
+letter with no spaces, e.g. -T2 not -T 2.
+You can only specify a single target host if you use
+this option.
+.TP
+.B --tcptimeout=n or -O n
+Set TCP connect timeout to n seconds (default=10).
+This is only applicable to TCP transport mode.
+.TP
+.B --pskcrack[=f] or -P[f]
+Crack aggressive mode pre-shared keys.
+This option outputs the aggressive mode pre-shared key
+(PSK) parameters for offline cracking using the
+"psk-crack" program that is supplied with ike-scan.
+You can optionally specify a filename, "f", to write
+the PSK parameters to.  If you do not specify a filename
+then the PSK parameters are written to standard output.
+If you are using the short form of the option (-P)
+then the value must immediately follow the option
+letter with no spaces, e.g. -Pfile not -P file.
+You can only specify a single target host if you use
+this option.
+This option is only applicable to IKE aggressive mode.
+.TP
+.B --nodns or -N
+Do not use DNS to resolve names.
+If you use this option, then all hosts must be
+specified as IP addresses.
 .SH FILES
 .TP
 .I /usr/local/share/ike-scan/ike-backoff-patterns
