@@ -1,5 +1,30 @@
 $Id$
 
+2004-12-20 Roy Hills <Roy.Hills@nta-monitor.com>
+
+	* check-hash.c: Correct unsigned/signed char * pointers which were
+	  giving warnings on Tru64 Alpha with Compaq C.
+
+	* psk-crack.c: Avoid division by zero if elapsed_seconds is zero.
+	  I've seen this problem occur on Tru64/Alpha with few iterations,
+	  probably because the granularity of gettimeofday() is not small
+	  enough on this platform.
+
+	* sha1.c: Change "unsigned long" to "uint32_t" where a 32-bit
+	  unsigned quantity is required.  This allows sha1 to work on systems
+	  where "unsigned long" is not 32-bits e.g. Alpha.
+
+	* psk-crack.c: cast argument to isspace() to unsigned char to avoid
+	  "subscript has type char" warning on some OSes e.g. HP-UX.
+
+2004-12-19 Roy Hills <Roy.Hills@nta-monitor.com>
+
+	* configure.ac: Improve detection and location of OpenSSL libraries.
+	  configure will now search several standard locations for the
+	  OpenSSL libraries if the --with-openssl option is supplied.  If a
+	  directory argument is given, then that will be added to the search
+	  list.
+
 2004-12-09 Roy Hills <Roy.Hills@nta-monitor.com>
 
 	* psk-crack.c: Remove options to manually specify hash type (MD5 or
