@@ -48,14 +48,7 @@ dnl Check to see if we have a working 64-bit integer type.
 dnl This breaks down into two steps:
 dnl (1) figure out if the compiler has a 64-bit int type with working
 dnl arithmetic, and if so
-dnl (2) see whether snprintf() can format the type correctly.  (Currently,
-dnl snprintf is the only library routine we really need for int8 support.)
-dnl It's entirely possible to have a compiler that handles a 64-bit type
-dnl when the C library doesn't; this is fairly likely when using gcc on
-dnl an older platform, for example.
-dnl If there is no native snprintf() or it does not handle the 64-bit type,
-dnl we force our own version of snprintf() to be used instead.
-dnl Note this test must be run after our initial check for snprintf/vsnprintf.
+dnl (2) see whether snprintf() can format the type correctly.
 
 PGAC_TYPE_64BIT_INT([long int])
 
@@ -138,27 +131,45 @@ dnl If we don't have it, then use Russ Allbery's implementation as a
 dnl replacement function.
 AC_CHECK_FUNC(inet_aton, , [ AC_LIBOBJ(inet_aton) ])
 
-dnl Check for OpenSSL headers and libraries if the --with-openssl=PATH
-dnl option was specified
+dnl The big OpenSSL hunt.
+dnl Check for OpenSSL headers and libraries if the --with-openssl[=PATH]
+dnl option was specified.
+dnl We search for "include/openssl/ssl.h" and "openssl/ssl.h" in the
+dnl given path (if specified) plus a number of standard locations.
+dnl When we find it, we use the directory we found it in to add the
+dnl required -I option to CPPFLAGS (so we can find the include files),
+dnl the -L option to LDFLAGS (so we can find the libraries), and add
+dnl "-lcrypto" to LIBS (so we link against the OpenSSL libraries).
 have_openssl="no"
+AC_MSG_CHECKING([if OpenSSL libraries are required])
 AC_ARG_WITH(openssl,
-	AC_HELP_STRING([--with-openssl=PATH],
-                       [Specify path to OpenSSL installation]),
-	[
-		if test "x$withval" != "xno" ; then
-			if test -d "$withval/lib"; then
-				LDFLAGS="-L${withval}/lib ${LDFLAGS}"
-			else
-				LDFLAGS="-L${withval} ${LDFLAGS}"
-			fi
-			if test -d "$withval/include"; then
-				CPPFLAGS="-I${withval}/include ${CPPFLAGS}"
-			else
-				CPPFLAGS="-I${withval} ${CPPFLAGS}"
-			fi
-                        LIBS="-lcrypto $LIBS"
-                        AC_MSG_CHECKING([for OpenSSL in $withval])
-                        AC_LINK_IFELSE([AC_LANG_PROGRAM(
+   AC_HELP_STRING([--with-openssl],
+                  [Use the OpenSSL MD5 and SHA1 hash functions]),
+   [
+      if test "x$withval" != "xno" ; then
+         AC_MSG_RESULT(yes)
+         for ssldir in $withval /usr/local/ssl /usr/lib/ssl /usr/ssl /usr/pkg /usr/local /usr; do
+            if test -f "${ssldir}/include/openssl/ssl.h"; then
+               found_openssl="yes"
+               CPPFLAGS="-I${ssldir}/include ${CPPFLAGS}"
+               break
+            fi
+            if test -f "${ssldir}/openssl/ssl.h"; then
+               found_openssl="yes"
+               CPPFLAGS="-I${ssldir} ${CPPFLAGS}"
+               break
+            fi
+         done
+         if test x$found_openssl != xyes; then
+            AC_MSG_ERROR([Cannot find OpenSSL libraries])
+         else
+            AC_MSG_NOTICE([OpenSSL libraries found in $ssldir])
+         fi
+         LDFLAGS="-L${ssldir}/lib ${LDFLAGS}"
+         LIBS="-lcrypto $LIBS"
+
+         AC_MSG_CHECKING([that OpenSSL libraries in ${ssldir} work])
+         AC_LINK_IFELSE([AC_LANG_PROGRAM(
 [[
 #include <openssl/md5.h>
 #include <openssl/sha.h>
@@ -174,11 +185,16 @@ have_openssl="yes"
 ],
 [
 AC_MSG_RESULT(no)
-AC_MSG_ERROR([cannot find OpenSSL headers & libraries in $withval])
+AC_MSG_ERROR([OpenSSL libraries in ${ssldir} do not appear to work])
 ] )
 
-		fi
-	]
+      else
+         AC_MSG_RESULT(no)
+      fi
+   ],
+   [
+      AC_MSG_RESULT(no)
+   ]
 )
 
 dnl If we're not using OpenSSL, then use the replacement functions instead.
@@ -196,8 +212,9 @@ else
    AC_MSG_NOTICE([])
    AC_MSG_NOTICE([To use the OpenSSL hash functions, specify the following option])
    AC_MSG_NOTICE([to configure:])
-   AC_MSG_NOTICE([   --with-openssl=<PATH>])
-   AC_MSG_NOTICE([where <PATH> is the directory path to the OpenSSL installation.])
+   AC_MSG_NOTICE([   --with-openssl])
+   AC_MSG_NOTICE([If the OpenSSL libraries are in a non-standard location, you can])
+   AC_MSG_NOTICE([specify the base directory as an argument to --with-openssl.])
    AC_MSG_NOTICE([])
    AC_LIBOBJ(md5)
    AC_LIBSOURCE(md5.h)
