@@ -67,7 +67,7 @@ main (int argc, char *argv[]) {
 
    FILE *dictionary_file=NULL;	/* Dictionary file, one word per line */
    FILE *data_file;	/* PSK parameters in colon separated format */
-   int iterations=0;
+   unsigned iterations=0;
    int found=0;
    struct timeval start_time;	/* Program start time */
    struct timeval end_time;	/* Program end time */
@@ -284,6 +284,8 @@ main (int argc, char *argv[]) {
             *line_p++ = charset[digit];
          } while (val);
          *line_p = '\0';
+         if (verbose)
+            printf("Trying key \"%s\"\n", line);
          if (hash_type == HASH_TYPE_MD5) {
             hmac_md5(skeyid_data, skeyid_data_len, line, strlen(line), skeyid);
             hmac_md5(hash_r_data, hash_r_data_len, skeyid, hash_len, hash_r);
@@ -305,6 +307,8 @@ main (int argc, char *argv[]) {
          for (line_p = line; !isspace(*line_p) && *line_p != '\0'; line_p++)
             ;
          *line_p = '\0';
+         if (verbose)
+            printf("Trying key \"%s\"\n", line);
          if (hash_type == HASH_TYPE_MD5) {
             hmac_md5(skeyid_data, skeyid_data_len, line, strlen(line), skeyid);
             hmac_md5(hash_r_data, hash_r_data_len, skeyid, hash_len, hash_r);
@@ -335,7 +339,7 @@ main (int argc, char *argv[]) {
    } else {
       printf("no match found\n");
    }
-   printf("Ending psk-crack: %d iterations in %.3f seconds (%.2f iterations/sec)\n",
+   printf("Ending psk-crack: %u iterations in %.3f seconds (%.2f iterations/sec)\n",
           iterations, elapsed_seconds, iterations/elapsed_seconds);
    fclose(data_file);
    if (!brute_len)
@@ -369,14 +373,15 @@ psk_crack_usage(int status) {
    fprintf(stderr, "Options:\n");
    fprintf(stderr, "\n--help or -h\t\tDisplay this usage message and exit.\n");
    fprintf(stderr, "\n--version or -V\t\tDisplay program version and exit.\n");
+   fprintf(stderr, "\n--verbose or -v\t\tDisplay verbose progress messages.\n");
    fprintf(stderr, "\n--md5 or -m\t\tForce MD5 hash type.\n");
    fprintf(stderr, "\t\t\tNormally this is not required because the hash type\n");
    fprintf(stderr, "\t\t\tis automatically determined from the hash length.\n");
    fprintf(stderr, "\n--sha1 or -s\t\tForce SHA1 hash type.\n");
    fprintf(stderr, "\t\t\tNormally this is not required because the hash type\n");
    fprintf(stderr, "\t\t\tis automatically determined from the hash length.\n");
-   fprintf(stderr, "\n--bruteforce=n or -B n\tSelect bruteforce cracking up to n characters.\n");
-   fprintf(stderr, "\n--charset=s or -c s\t\tSet bruteforce character set to <s>\n");
+   fprintf(stderr, "\n--bruteforce=<n> or -B <n> Select bruteforce cracking up to <n> characters.\n");
+   fprintf(stderr, "\n--charset=<s> or -c <s>\tSet bruteforce character set to <s>\n");
    fprintf(stderr, "\n");
    fprintf(stderr, "Report bugs or send suggestions to %s\n", PACKAGE_BUGREPORT);
    fprintf(stderr, "See the ike-scan homepage at http://www.nta-monitor.com/ike-scan/\n");
