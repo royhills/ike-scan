@@ -490,7 +490,8 @@ fingerprinting the IP stack which can help to determine the IKE implementation.
 f) The IKE host may send Vendor ID payloads which uniquely identify the
 implementation.  This Vendor ID fingerprinting method was first proposed by
 Brett Eldridge <beldridg@pobox.com>.  ike-scan will display any vendor ID
-payloads which it receives.
+payloads that it receives, and will attempt to match these against known
+Vendor ID patterns.
 
 4.6. Syslog
 
