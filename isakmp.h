@@ -14,6 +14,9 @@
  * Revision history:
  *
  * $Log$
+ * Revision 1.4  2002/10/25 08:54:48  rsh
+ * Changed vendor ID header definition.
+ *
  * Revision 1.3  2002/09/04 10:07:33  rsh
  * Added notification payload.
  *
@@ -369,11 +372,13 @@ struct isakmp_notification
 
 extern struct_desc isakmp_notification_desc;
 
+/*
+ *	Vendor ID (VID) payload - header only
+ */
 struct isakmp_vid
 {
     u_int8_t    isavid_np;
     u_int8_t    isavid_reserved;
     u_int16_t   isavid_length;
-    u_int32_t	isavid_data[10];
 };
 
