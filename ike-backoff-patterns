@@ -107,7 +107,10 @@ Nortel Contivity	0, 16, 16, 16
 
 # Discovered by: Roy Hills, December 2002
 # Observed on: Watchguard Firebox 700 v6.1
-Watchguard Firebox	0, 10, 10, 10, 10, 10
+# Observed on: Gnat Box (version unknown)
+# Note that the Gnat box has a much larger variance than the watchguard, but
+# they are both essentially the same pattern.
+Watchguard Firebox or Gnat Box	0, 10/1000, 10/1000, 10/1000, 10/1000, 10/1000
 
 # Discovered by: Roy Hills, December 2002
 # Observed on: Windows 2000 Server SP1
