@@ -1,5 +1,5 @@
 .\" $Id$
-.TH IKE-SCAN 1 "November 11, 2003"
+.TH IKE-SCAN 1 "January 13, 2004"
 .\" Please adjust this date whenever revising the manpage.
 .SH NAME
 ike-scan \- Discover and fingerprint IKE hosts (IPsec VPN servers)
@@ -28,14 +28,14 @@ There are several ways to do this: (a) Backoff fingerprinting - recording
 the times of the IKE response packets from the target hosts and comparing
 the observed retransmission backoff pattern against known patterns; (b) vendor
 id fingerprinting - matching the vendor-specific vendor IDs against known
-vendor IDs; and (c) proprietary notify message codes.
+vendor ID patterns; and (c) proprietary notify message codes.
 .PP
 The retransmission backoff fingerprinting concept is discussed in more
 detail in the UDP backoff fingerprinting paper which should be included
 in the ike-scan kit as
 .I udp-backoff-fingerprinting-paper.txt.
 .PP
-The program sends IKE main mode requests to the specified hosts and displays
+The program sends IKE Phase-1 requests to the specified hosts and displays
 any responses that are received.  It handles retry and retransmission with
 backoff to cope with packet loss.  It also limits the amount of bandwidth
 used by the outbound IKE packets.
@@ -43,10 +43,11 @@ used by the outbound IKE packets.
 IKE is the Internet Key Exchange protocol which is the key exchange and
 authentication mechanism used by IPsec.  Just about all modern VPN systems
 implement IPsec, and the vast majority of IPsec VPNs use IKE for key exchange.
-Main mode is one of the modes defined for phase-1 of the IKE exchange (the
-other defined mode is aggressive mode).  RFC 2409 section 5 specifies that
-main mode must be implemented, therefore all IKE implementations can
-be expected to support main mode.
+.PP
+Phase-1 has two modes: Main Mode and Aggressive Mode.  ike-scan supports both
+Main and Aggressive mode, and uses Main Mode by default.  RFC 2409 (IKE)
+section 5 specifies that main mode must be implemented, therefore all IKE
+implementations can be expected to support main mode.
 .SH OPTIONS
 .TP
 .B --help or -h
@@ -105,11 +106,24 @@ backoff factor is 1.5, then the first timeout will be
 .B --verbose or -v
 Display verbose progress messages.
 Use more than once for greater effect:
-1 - Show when hosts are removed from the list and
-when packets with invalid cookies are received;
-2 - Show each packet sent and received; and
-3 - Display the host and backoff lists before
-scanning starts.
+1 - Show when each pass is completed and when
+packets with invalid cookies are received.
+2 - Show each packet sent and received and when
+hosts are removed from the list.
+3 - Display the host, Vendor ID and backoff lists
+before scanning starts.
+.TP
+.B --quiet or -q
+Don't decode the returned packet.
+This prints less protocol information so the
+output lines are shorter.
+.TP
+.B --multiline or -M
+Split the payload decode across multiple lines.
+With this option, the decode for each payload is
+printed on a seperate line starting with a TAB.
+This option makes the output easier to read, especially
+when there are many payloads.
 .TP
 .B --lifetime=<s> or -l <s>
 Set IKE lifetime to <s> seconds, default=28800.
@@ -121,10 +135,20 @@ with the --trans options to produce multiple transform
 payloads with different lifetimes.  Each --trans option
 will use the previously specified lifetime value.
 .TP
+.B --lifesize=<s> or -z <s>
+Set IKE lifesize to <s> Kilobytes, default=0.
+If you specify 0, then no lifesize will be specified.
+You can use this option more than once in conjunction
+with the --trans options to produce multiple transform
+payloads with different lifesizes.  Each --trans option
+will use the previously specified lifesize value.
+.TP
 .B --auth=<n> or -m <n>
 Set auth. method to <n>, default=1 (pre-shared key).
 RFC defined values are 1 to 5.  See RFC 2409 Appendix A.
 Checkpoint hybrid mode is 64221.
+GSS (Windows "Kerberos") is 65001.
+XAUTH uses 65001 to 65010.
 .TP
 .B --version or -V
 Display program version and exit.
@@ -144,7 +168,7 @@ See RFC 2409 Appendix A for details of which values
 to use.  For example, --trans=5,2,1,2 specifies
 Enc=3DES-CBC, Hash=SHA1, Auth=shared key, DH Group=2
 and --trans=7/256,1,1,5 specifies
-Enc=AES-256, Hash=MD5, Auth=shared key, DH Group=5.
+Enc=AES-256, Hash=MD5, Auth=shared key, DH Group=5
 You can use this option more than once to send
 an arbitary number of custom transforms.
 .TP
@@ -175,6 +199,13 @@ This specifies the name of the file containing
 IKE backoff patterns.  This file is only used when
 --showbackoff is specified.
 .TP
+.B --vidpatterns=<f> or -I <f>
+Use Vendor ID patterns file <f>,
+default=/usr/local/share/ike-scan/ike-vendor-ids.
+This specifies the name of the file containing
+Vendor ID patterns.  These patterns are used for
+Vendor ID fingerprinting.
+.TP
 .B --aggressive or -A
 Use IKE Aggressive Mode (The default is Main Mode)
 If you specify --aggressive, then you may also
@@ -197,6 +228,22 @@ See RFC 2407 4.6.2 for details of Identification types.
 .B --dhgroup=n or -g n
 Use Diffie Hellman Group <n>.  Default 2.
 This option is only applicable to Aggressive Mode.
-
+Acceptable values are 1,2,5,14,15,16,17,18 (MODP only).
+.TP
+.B --gssid=<n> or -G <n>
+Use GSS ID <n> where <n> is a hex string.
+This uses transform attribute type 16384 as specified
+in draft-ietf-ipsec-isakmp-gss-auth-07.txt, although
+Windows-2000 has been observed to use 32001 as well.
+For Windows 2000, you'll need to use --auth=65001 to
+specify Kerberos (GSS) authentication.
+.SH FILES
+.TP
+.I /usr/local/share/ike-scan/ike-backoff-patterns
+List of UDP backoff patterns.  Used when the --showbackoff option is
+specified.
+.TP
+.I /usr/local/share/ike-scan/ike-vendor-ids
+List of known Vendor ID patterns.
 .SH AUTHOR
 Roy Hills <Roy.Hills@nta-monitor.com>
