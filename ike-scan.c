@@ -99,11 +99,12 @@ main(int argc, char *argv[]) {
       {"random", no_argument, 0, 'R'},
       {"tcp", optional_argument, 0, 'T'},
       {"pskcrack", no_argument, 0, 'P'},
+      {"tcptimeout", required_argument, 0, 'O'},
       {"experimental", no_argument, 0, 'X'},
       {0, 0, 0, 0}
    };
    const char *short_options =
-      "f:hs:d:r:t:i:b:w:vl:z:m:Ve:a:o::u:n:y:g:p:AG:I:qMRT::XP";
+      "f:hs:d:r:t:i:b:w:vl:z:m:Ve:a:o::u:n:y:g:p:AG:I:qMRT::PO:X";
    int arg;
    char arg_str[MAXLINE];	/* Args as string for syslog */
    int options_index=0;
@@ -125,6 +126,7 @@ main(int argc, char *argv[]) {
    unsigned idtype = DEFAULT_IDTYPE;		/* IKE Identification type */
    unsigned pattern_fuzz = DEFAULT_PATTERN_FUZZ; /* Pattern matching fuzz in ms */
    unsigned exchange_type = DEFAULT_EXCHANGE_TYPE; /* Main or Aggressive mode */
+   unsigned tcp_connect_timeout = DEFAULT_TCP_CONNECT_TIMEOUT;
    struct sockaddr_in sa_local;
    struct sockaddr_in sa_peer;
    struct timeval now;
@@ -341,6 +343,9 @@ main(int argc, char *argv[]) {
          case 'P':	/* --pskcrack */
             psk_crack_flag=1;
             break;
+         case 'O':	/* --tcptimeout */
+            tcp_connect_timeout = strtoul(optarg, (char **)NULL, 10);
+            break;
          case 'X':	/* --experimental */
             experimental_flag=1;
             break;
@@ -507,7 +512,7 @@ main(int argc, char *argv[]) {
 /*
  *	Set alarm
  */
-      alarm(TCP_CONNECT_TIMEOUT);
+      alarm(tcp_connect_timeout);
 /*
  *	Connect to peer
  */
@@ -516,8 +521,11 @@ main(int argc, char *argv[]) {
       sa_tcp.sin_addr.s_addr = helist->addr.s_addr;
       sa_tcp.sin_port = htons(dest_port);
       sa_tcp_len = sizeof(sa_tcp);
-      if ((connect(sockfd, (struct sockaddr *) &sa_tcp, sa_tcp_len)) != 0)
-         err_sys("connect");
+      if ((connect(sockfd, (struct sockaddr *) &sa_tcp, sa_tcp_len)) != 0) {
+         if (errno == EINTR)
+            errno = ETIMEDOUT;
+         err_sys("TCP connect");
+      }
 /*
  *	Cancel alarm
  */
@@ -2492,6 +2500,8 @@ usage(int status) {
    fprintf(stderr, "\t\t\tYou can only specify a single target host if you use\n");
    fprintf(stderr, "\t\t\tthis option.\n");
    fprintf(stderr, "\n--pskcrack or -P\tCrack aggressive mode pre-shared keys (experimental).\n");
+   fprintf(stderr, "\n--tcptimeout=n or -O n\tSet TCP connect timeout to n seconds\n");
+   fprintf(stderr, "\t\t\tThis is only applicable to TCP transport mode.\n");
    fprintf(stderr, "\n");
    fprintf(stderr, "Report bugs or send suggestions to %s\n", PACKAGE_BUGREPORT);
    fprintf(stderr, "See the ike-scan homepage at http://www.nta-monitor.com/ike-scan/\n");
