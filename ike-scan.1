@@ -1,0 +1,178 @@
+.\" $Id$
+.TH IKE-SCAN 1 "June 17, 2003"
+.\" Please adjust this date whenever revising the manpage.
+.SH NAME
+ike-scan \- Discover and fingerprint IKE hosts (IPsec VPN servers)
+.SH SYNOPSIS
+.B ike-scan
+.RI [ options ] " " [ hosts ...]
+.PP
+Target hosts must be specified on the command line unless the
+.B --file
+option is specified.
+.SH DESCRIPTION
+.B ike-scan
+discovers IKE hosts and can also fingerprint them using the
+retransmission backoff pattern.
+.PP
+.B ike-scan
+does two things:
+.IP a)
+Discovery: Determine which hosts are running IKE.
+This is done by displaying those hosts which respond to the IKE requests
+sent by
+.B ike-scan.
+.IP b)
+Fingerprinting: Determine which IKE implementation the hosts are using.
+This is done by recording the times of the IKE response packets from the
+target hosts and comparing the observed retransmission backoff pattern
+against known patterns.
+.PP
+The retransmission backoff fingerprinting concept is discussed in more
+detail in the UDP backoff fingerprinting paper which should be included
+in the ike-scan kit as
+.I udp-backoff-fingerprinting-paper.txt.
+.PP
+The program sends IKE main mode requests to the specified hosts and displays
+any responses that are received.  It handles retry and retransmission with
+backoff to cope with packet loss.  It also limits the amount of bandwidth
+used by the outbound IKE packets.
+.PP
+IKE is the Internet Key Exchange protocol which is the key exchange and
+authentication mechanism used by IPsec.  Just about all modern VPN systems
+implement IPsec, and the vast majority of IPsec VPNs use IKE for key exchange.
+Main mode is one of the modes defined for phase-1 of the IKE exchange (the
+other defined mode is aggressive mode).  RFC 2409 section 5 specifies that
+main mode must be implemented, therefore all IKE implementations can
+be expected to support main mode.
+.SH OPTIONS
+.TP
+.B --help or -h
+Display this usage message and exit.
+.TP
+.B --file=<fn> or -f <fn>
+Read hostnames or addresses from the specified file
+instead of from the command line. One name or IP
+address per line.  Use "-" for standard input.
+.TP
+.B --sport=<p> or -s <p>
+Set UDP source port to <p>, default=500, 0=random.
+Some IKE implementations require the client to use
+UDP source port 500 and will not talk to other ports.
+Note that superuser privileges are normally required
+to use non-zero source ports below 1024.  Also only
+one process on a system may bind to a given source port
+at any one time.
+.TP
+.B --dport=<p> or -d <p>
+Set UDP destination port to <p>, default=500.
+UDP port 500 is the assigned port number for ISAKMP
+and this is the port used by most if not all IKE
+implementations.
+.TP
+.B --retry=<n> or -r <n>
+Set total number of attempts per host to <n>,
+default=3.
+.TP
+.B --timeout=<n> or -t <n>
+Set initial per host timeout to <n> ms, default=500.
+This timeout is for the first packet sent to each host.
+subsequent timeouts are multiplied by the backoff
+factor which is set with --backoff.
+.TP
+.B --interval=<n> or -i <n>
+Set minimum packet interval to <n> ms, default=75.
+This controls the outgoing bandwidth usage by limiting
+the rate at which packets can be sent.  The packet
+interval will be greater than or equal to this number
+and will be a multiple of the select wait specified
+with --selectwait.  Thus --interval=75 --selectwait=10
+will result in a packet interval of 80ms.
+The outgoing packets have a total size of 364 bytes
+(20 bytes IP hdr + 8 bytes UDP hdr + 336 bytes data)
+when the default transform set is used, or 112 bytes
+if a custom transform is specified.  Therefore
+for default transform set: 50=58240bps, 80=36400bps and
+for custom transform: 15=59733bps, 30=35840bps.
+.TP
+.B --backoff=<b> or -b <b>
+Set timeout backoff factor to <b>, default=1.50.
+The per-host timeout is multiplied by this factor
+after each timeout.  So, if the number of retrys
+is 3, the initial per-host timeout is 500ms and the
+backoff factor is 1.5, then the first timeout will be
+500ms, the second 750ms and the third 1125ms.
+.TP
+.B --selectwait=<n> or -w <n>
+Set select wait to <n> ms, default=10.
+This controls the timeout used in the select(2) call.
+It defines the lower bound and granularity of the
+packet interval set with --interval.  Smaller values
+allow more accurate and lower packet intervals;
+larger values reduce CPU usage.  You don't need
+to change this unless you want to reduce the packet
+interval close to or below the default selectwait time.
+.TP
+.B --verbose or -v
+Display verbose progress messages.
+Use more than once for greater effect:
+.IP 1
+Show when hosts are removed from the list and when packets with invalid cookies are received.
+.IP 2
+Show each packet sent and received.
+.IP 3
+Display the host and backoff lists before scanning starts.
+.TP
+.B --lifetime=<s> or -l <s>
+Set IKE lifetime to <s> seconds, default=28800.
+RFC 2407 specifies 28800 as the default, but some
+implementations may require different values.
+.TP
+.B --auth=<n> or -m <n>
+Set auth. method to <n>, default=1 (pre-shared key).
+RFC defined values are 1 to 5.  See RFC 2409 Appendix A.
+.TP
+.B --version or -V
+Display program version and exit.
+.TP
+.B --vendor=<v> or -e <v>
+Set vendor id string to MD5 hash of <v>.
+Note: this is currently experimental.
+.TP
+.B --trans=<t> or -a <t>
+Use custom transform <t> instead of default set.
+<t> is specified as enc,hash,auth,group. e.g. 2,3,1,5.
+See RFC 2409 Appendix A for details of which values
+to use.  For example, --trans=2,3,1,5 specifies
+Enc=IDEA-CBC, Hash=Tiger, Auth=shared key, DH Group=5
+If this option is specified, then only the single
+custom transform is used rather than the default set
+of 8 transforms.  As a result, the IP packet size
+is 112 bytes rather than the default of 364.
+.TP
+.B --showbackoff[=<n>] or -o[<n>]
+Display the backoff fingerprint table.
+Display the backoff table to fingerprint the IKE
+implementation on the remote hosts.
+The optional argument specifies time to wait in seconds
+after receiving the last packet, default=60.
+If you are using the short form of the option (-o)
+then the value must immediately follow the option
+letter with no spaces, e.g. -o25 not -o 25.
+.TP
+.B --fuzz=<n> or -u <n>
+Set pattern matching fuzz to <n> ms, default=100.
+This sets the maximum acceptable difference between
+the observed backoff times and the reference times in
+the backoff patterns file.  Larger values allow for
+higher variance but also increase the risk of
+false positive identifications.
+.TP
+.B --patterns=<f> or -p <f>
+Use IKE patterns file <f>,
+default=/usr/local/share/ike-backoff-patterns.
+This specifies the name of the file containing
+IKE backoff patterns.  This file is only used when
+--showbackoff is specified.
+.SH AUTHOR
+Roy Hills <Roy.Hills@nta-monitor.com>
