@@ -20,6 +20,9 @@
  * Change History:
  *
  * $Log$
+ * Revision 1.17  2002/10/28 16:55:32  rsh
+ * Added support for --trans option to specify single custom transform.
+ *
  * Revision 1.16  2002/10/28 16:24:35  rsh
  * Only use cookie to find host in list.
  * Removed find_host_by_ip() - not needed now.
@@ -127,6 +130,12 @@ int auth_method = DEFAULT_AUTH_METHOD;	/* Authentication method */
 int verbose=0;
 char vendor_id[MAXLINE];		/* Vendor ID string */
 int vendor_id_flag = 0;			/* Indicates if VID to be used */
+char trans_str[MAXLINE];		/* Custom transform string */
+int trans_flag = 0;
+int trans_enc;				/* Custom transform encrypt */
+int trans_hash;				/* Custom transform hash */
+int trans_auth;				/* Custom transform auth */
+int trans_group;			/* Custom transform group */
 struct timeval last_packet_time;	/* Time last packet was sent */
 struct isakmp_hdr hdr;			/* ISAKMP Header */
 struct isakmp_sa sa_hdr;		/* SA Header */
@@ -217,9 +226,10 @@ int main(int argc, char *argv[]) {
       {"auth", required_argument, 0, 'm'},
       {"version", no_argument, 0, 'V'},
       {"vendor", required_argument, 0, 'e'},
+      {"trans", required_argument, 0, 'a'},
       {0, 0, 0, 0}
    };
-   char *short_options = "f:hr:t:i:b:w:vl:m:Ve:";
+   char *short_options = "f:hr:t:i:b:w:vl:m:Ve:a:";
    int arg;
    int options_index=0;
    char filename[MAXLINE];
@@ -291,6 +301,11 @@ int main(int argc, char *argv[]) {
             for (i=0; i<16; i++)
                printf("%.2x",vid_md5[i]);
             printf("\n");
+            break;
+         case 'a':
+            strncpy(trans_str, optarg, MAXLINE);
+            trans_flag=1;
+            sscanf(trans_str, "%d,%d,%d,%d", &trans_enc, &trans_hash, &trans_auth, &trans_group);
             break;
          default:
             usage();
@@ -718,9 +733,16 @@ void send_packet(int s, struct host_entry *he) {
    cp += sizeof(sa_hdr);
    memcpy(cp,&sa_prop,sizeof(sa_prop));
    cp += sizeof(sa_prop);
-   memcpy(cp,&trans,sizeof(trans));
-   cp += sizeof(trans);
-   buflen = sizeof(hdr)+sizeof(sa_hdr)+sizeof(sa_prop)+sizeof(trans);
+   buflen = sizeof(hdr)+sizeof(sa_hdr)+sizeof(sa_prop);
+   if (trans_flag) {
+      memcpy(cp,&trans[0],sizeof(trans[0]));
+      cp += sizeof(trans[0]);
+      buflen += sizeof(trans[0]);
+   } else {
+      memcpy(cp,&trans,sizeof(trans));
+      cp += sizeof(trans);
+      buflen += sizeof(trans);
+   }
    if (vendor_id_flag) {
       memcpy(cp, &vid_hdr, sizeof(vid_hdr));
       cp += sizeof(vid_hdr);
@@ -818,6 +840,7 @@ int timeval_diff(struct timeval *a,struct timeval *b) {
  *	initialise_ike_packet	-- Initialise IKE packet structures
  */
 void initialise_ike_packet(void) {
+   int len;
 /*
  *	Zero all header fields to start with.
  */
@@ -839,11 +862,16 @@ void initialise_ike_packet(void) {
    hdr.isa_xchg = ISAKMP_XCHG_IDPROT;   /* Identity Protection (main mode) */
    hdr.isa_flags = 0;                   /* No flags */
    hdr.isa_msgid = 0;                   /* MBZ for phase-1 */
+   len=sizeof(hdr)+sizeof(sa_hdr)+sizeof(sa_prop);
    if (vendor_id_flag) {
-      hdr.isa_length = htonl(sizeof(hdr)+sizeof(sa_hdr)+sizeof(sa_prop)+sizeof(trans)+sizeof(vid_hdr)+sizeof(vid_md5));
-   } else {
-      hdr.isa_length = htonl(sizeof(hdr)+sizeof(sa_hdr)+sizeof(sa_prop)+sizeof(trans));
+      len += (sizeof(vid_hdr) + sizeof(vid_md5));
    }
+   if (trans_flag) {
+      len += sizeof(trans[0]);
+   } else {
+      len += sizeof(trans);
+   }
+   hdr.isa_length = htonl(len);
 /*
  *	SA Header
  */
@@ -852,33 +880,65 @@ void initialise_ike_packet(void) {
    } else {
       sa_hdr.isasa_np = ISAKMP_NEXT_NONE;  /* No Next payload */
    }
-   sa_hdr.isasa_length = htons(sizeof(sa_hdr)+sizeof(sa_prop)+sizeof(trans));
+   if (trans_flag) {
+      sa_hdr.isasa_length = htons(sizeof(sa_hdr)+sizeof(sa_prop)+sizeof(trans[0]));
+   } else {
+      sa_hdr.isasa_length = htons(sizeof(sa_hdr)+sizeof(sa_prop)+sizeof(trans));
+   }
    sa_hdr.isasa_doi = htonl(ISAKMP_DOI_IPSEC);  /* IPsec DOI */
    sa_hdr.isasa_situation = htonl(SIT_IDENTITY_ONLY);
 /*
  *	Proposal payload
  */
    sa_prop.isap_np = 0;                 /* No more proposals */
-   sa_prop.isap_length = htons(sizeof(sa_prop)+sizeof(trans));
+   if (trans_flag) {
+      sa_prop.isap_length = htons(sizeof(sa_prop)+sizeof(trans[0]));
+   } else {
+      sa_prop.isap_length = htons(sizeof(sa_prop)+sizeof(trans));
+   }
    sa_prop.isap_proposal = 1;           /* Proposal #1 (should this start at 0)*/
    sa_prop.isap_protoid = PROTO_ISAKMP;
    sa_prop.isap_spisize = 0;            /* No SPI */
-   sa_prop.isap_notrans = 8;            /* Eight Transforms */
+   if (trans_flag) {
+      sa_prop.isap_notrans = 1;            /* One Transforms */
+   } else {
+      sa_prop.isap_notrans = 8;            /* Eight Transforms */
+   }
 /*
  *	Transform payload
  */
-   trans[0].trans_hdr.isat_np = 3;                      /* More transforms */
+   if (trans_flag) {
+      trans[0].trans_hdr.isat_np = 0;                  /* No More transforms */
+   } else {
+      trans[0].trans_hdr.isat_np = 3;                  /* More transforms */
+   }
    trans[0].trans_hdr.isat_length = htons(sizeof(trans[0]));
    trans[0].trans_hdr.isat_transnum = 1;                /* Transform #1 */
    trans[0].trans_hdr.isat_transid = KEY_IKE;
    trans[0].attr[0].isaat_af_type = htons(0x8001);      /* Encrypt */
-   trans[0].attr[0].isaat_lv = htons(OAKLEY_3DES_CBC);
+   if (trans_flag) {
+      trans[0].attr[0].isaat_lv = htons(trans_enc);
+   } else {
+      trans[0].attr[0].isaat_lv = htons(OAKLEY_3DES_CBC);
+   }
    trans[0].attr[1].isaat_af_type = htons(0x8002);      /* Hash */
-   trans[0].attr[1].isaat_lv = htons(OAKLEY_SHA);
+   if (trans_flag) {
+      trans[0].attr[1].isaat_lv = htons(trans_hash);
+   } else {
+      trans[0].attr[1].isaat_lv = htons(OAKLEY_SHA);
+   }
    trans[0].attr[2].isaat_af_type = htons(0x8003);      /* Auth */
-   trans[0].attr[2].isaat_lv = htons(auth_method);
+   if (trans_flag) {
+      trans[0].attr[2].isaat_lv = htons(trans_auth);
+   } else {
+      trans[0].attr[2].isaat_lv = htons(auth_method);
+   }
    trans[0].attr[3].isaat_af_type = htons(0x8004);      /* Group */
-   trans[0].attr[3].isaat_lv = htons(2);                /* group 2 */
+   if (trans_flag) {
+      trans[0].attr[3].isaat_lv = htons(trans_group);   /* custom group */
+   } else {
+      trans[0].attr[3].isaat_lv = htons(2);             /* group 2 */
+   }
    trans[0].attr[4].isaat_af_type = htons(0x800b);      /* Life Type */
    trans[0].attr[4].isaat_lv = htons(1);                /* Seconds */
    trans[0].attr2.isaat_af_type = htons(0x000c);        /* Life Duration */
@@ -1060,6 +1120,8 @@ void usage(void) {
    fprintf(stderr, "\t\t\tRFC defined values are 1 to 5.  See RFC 2409 Appendix A.\n");
    fprintf(stderr, "--version or -V\t\tDisplay program version and exit.\n");
    fprintf(stderr, "--vendor or -e\t\tSet vendor id string (experimental).\n");
+   fprintf(stderr, "--trans=<t> or -a <t>\tUse transform <t> instead of default set.\n");
+   fprintf(stderr, "\t\t\t<t> is specified as enc,hash,auth,group. e.g. 1,1,1,1\n");
    fprintf(stderr, "\n");
    fprintf(stderr, "%s\n", rcsid);
    fprintf(stderr, "\n");
