@@ -69,6 +69,12 @@ unsigned lifetime = DEFAULT_LIFETIME;	/* Lifetime in seconds */
 int auth_method = DEFAULT_AUTH_METHOD;	/* Authentication method */
 unsigned end_wait = DEFAULT_END_WAIT;	/* Time to wait after all done */
 unsigned pattern_fuzz = DEFAULT_PATTERN_FUZZ; /* Pattern matching fuzz in ms */
+int dhgroup = DEFAULT_DH_GROUP;		/* Diffie Hellman Group */
+int idtype = DEFAULT_IDTYPE;		/* IKE Identification type */
+char id_string[MAXLINE];
+int id_data_len;
+uint32_t kx_data[48];		/* Key exchange data.  48 is largest needed */
+int kx_data_len;		/* Key exchange data len in 32bit longwords */
 int verbose=0;
 char vendor_id[MAXLINE];		/* Vendor ID string */
 int vendor_id_flag = 0;			/* Indicates if VID to be used */
@@ -79,12 +85,15 @@ int patterns_loaded = 0;		/* Indicates if backoff patterns loaded */
 int trans_enc;				/* Custom transform encrypt */
 int trans_hash;				/* Custom transform hash */
 int trans_auth;				/* Custom transform auth */
-int trans_group;			/* Custom transform group */
+int trans_group;			/* Custom transform DH group */
 struct timeval last_packet_time;	/* Time last packet was sent */
 struct timeval last_recv_time;		/* Time last packet was received */
 struct isakmp_hdr hdr;			/* ISAKMP Header */
 struct isakmp_sa sa_hdr;		/* SA Header */
 struct isakmp_proposal sa_prop;		/* Proposal payload */
+struct isakmp_kx kx;			/* Key exchange for agg. mode */
+struct isakmp_nonce nonce;		/* Nonce for agg. mode */
+struct isakmp_id id;			/* ID for agg. mode */
 struct transform
 {
    struct isakmp_transform trans_hdr;
@@ -175,9 +184,13 @@ main(int argc, char *argv[]) {
       {"trans", required_argument, 0, 'a'},
       {"showbackoff", optional_argument, 0, 'o'},
       {"fuzz", required_argument, 0, 'u'},
+      {"id", required_argument, 0, 'n'},
+      {"idtype", required_argument, 0, 'y'},
+      {"dhgroup", required_argument, 0, 'g'},
+      {"patterns", required_argument, 0, 'p'},
       {0, 0, 0, 0}
    };
-   const char *short_options = "f:hs:d:r:t:i:b:w:vl:m:Ve:a:o::u:";
+   const char *short_options = "f:hs:d:r:t:i:b:w:vl:m:Ve:a:o::u:n:y:g:p:";
    int arg;
    char arg_str[MAXLINE];	/* Args as string for syslog */
    int options_index=0;
@@ -196,6 +209,7 @@ main(int argc, char *argv[]) {
    unsigned long host_timediff;
    unsigned long end_timediff=0;
    int arg_str_space;		/* Used to avoid buffer overruns when copying */
+   char patfile[MAXLINE];	/* IKE Backoff pattern file name */
 /*
  *	Open syslog channel and log arguments if required.
  *	We must be careful here to avoid overflowing the arg_str buffer
@@ -217,6 +231,10 @@ main(int argc, char *argv[]) {
    }
    info_syslog("Starting: %s", arg_str);
 #endif
+/*
+ *	Initialise IKE pattern file name to the empty string.
+ */
+   patfile[0] = '\0';
 /*
  *	Process options and arguments.
  */
@@ -300,6 +318,9 @@ main(int argc, char *argv[]) {
          case 'u':
             pattern_fuzz=atoi(optarg);
             break;
+         case 'p':
+            strncpy(patfile, optarg, MAXLINE);
+            break;
          default:
             usage();
             break;
@@ -352,10 +373,12 @@ main(int argc, char *argv[]) {
    if (showbackoff_flag) {
       FILE *fp;
       char line[MAXLINE];
-      char patfile[MAXLINE];
       int line_no;
 
-      sprintf(patfile, "%s/%s", DATADIR, PATTERNS_FILE);
+      if (patfile[0] == '\0') {
+         sprintf(patfile, "%s/%s", DATADIR, PATTERNS_FILE);
+      }
+
       if ((fp = fopen(patfile, "r")) == NULL) {
          warn_msg("WARNING: Cannot open IKE backoff patterns file.  ike-scan will still display");
          warn_msg("the backoff patterns, but it will not be able to identify the fingerprints.");
@@ -1547,6 +1570,10 @@ usage(void) {
    fprintf(stderr, "\t\t\tthe backoff patterns file.  Larger values allow for\n");
    fprintf(stderr, "\t\t\thigher variance but also increase the risk of\n");
    fprintf(stderr, "\t\t\tfalse positive identifications.\n");
+   fprintf(stderr, "\n--patterns=<f> or -p <f> Use IKE patterns file <f>, default=%s/%s.\n", DATADIR, PATTERNS_FILE);
+   fprintf(stderr, "\t\t\tThis specifies the name of the file containing\n");
+   fprintf(stderr, "\t\t\tIKE backoff patterns.  This file is only used when\n");
+   fprintf(stderr, "\t\t\t--showbackoff is specified.\n");
    fprintf(stderr, "\n");
    fprintf(stderr, "Report bugs or send suggestions to ike-scan@nta-monitor.com\n");
    fprintf(stderr, "See the ike-scan homepage at http://www.nta-monitor.com/ike-scan/\n");
