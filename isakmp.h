@@ -32,6 +32,10 @@
  * Revision history:
  *
  * $Log$
+ * Revision 1.7  2003/01/02 12:32:35  rsh
+ * Changed all occurrances of u_int{8,16,32}_t to uint8,16,32}_t as
+ * the latter is more portable.
+ *
  * Revision 1.6  2002/11/26 16:55:03  rsh
  * Minor comment change.
  *
@@ -184,14 +188,14 @@ typedef const struct field_desc {
 
 struct isakmp_hdr
 {
-    u_int32_t   isa_icookie[COOKIE_SIZE];
-    u_int32_t   isa_rcookie[COOKIE_SIZE];
-    u_int8_t    isa_np;                 /* Next payload */
-    u_int8_t	isa_version;	/* high-order 4 bits: Major; low order 4: Minor */
-    u_int8_t    isa_xchg;		/* Exchange type */
-    u_int8_t    isa_flags;
-    u_int32_t   isa_msgid;		/* Message ID (RAW) */
-    u_int32_t   isa_length;		/* Length of message */
+    uint32_t   isa_icookie[COOKIE_SIZE];
+    uint32_t   isa_rcookie[COOKIE_SIZE];
+    uint8_t    isa_np;                 /* Next payload */
+    uint8_t	isa_version;	/* high-order 4 bits: Major; low order 4: Minor */
+    uint8_t    isa_xchg;		/* Exchange type */
+    uint8_t    isa_flags;
+    uint32_t   isa_msgid;		/* Message ID (RAW) */
+    uint32_t   isa_length;		/* Length of message */
 };
 
 /* Generic portion of all ISAKMP payloads.
@@ -206,9 +210,9 @@ struct isakmp_hdr
  */
 struct isakmp_generic
 {
-    u_int8_t    isag_np;
-    u_int8_t    isag_reserved;
-    u_int16_t   isag_length;
+    uint8_t    isag_np;
+    uint8_t    isag_reserved;
+    uint16_t   isag_length;
 };
 
 /* ISAKMP Data Attribute (generic representation within payloads)
@@ -227,8 +231,8 @@ struct isakmp_generic
  */
 struct isakmp_attribute
 {
-    u_int16_t isaat_af_type;   /* high order bit: AF; lower 15: rtype */
-    u_int16_t isaat_lv;			/* Length or value */
+    uint16_t isaat_af_type;   /* high order bit: AF; lower 15: rtype */
+    uint16_t isaat_lv;			/* Length or value */
 };
 /*
  *	This is a bodge for SA Attributes with 32-bit length.
@@ -237,9 +241,9 @@ struct isakmp_attribute
  */
 struct isakmp_attribute_l32
 {
-    u_int16_t isaat_af_type;   /* high order bit: AF; lower 15: rtype */
-    u_int16_t isaat_l;			/* Length - MUST BE 4 BYTES */
-    u_int32_t isaat_v;		/* 32-bit value */
+    uint16_t isaat_af_type;   /* high order bit: AF; lower 15: rtype */
+    uint16_t isaat_l;			/* Length - MUST BE 4 BYTES */
+    uint32_t isaat_v;		/* 32-bit value */
 };
 
 /* ISAKMP Security Association Payload
@@ -260,11 +264,11 @@ struct isakmp_attribute_l32
  */
 struct isakmp_sa
 {
-    u_int8_t  isasa_np;			/* Next payload */
-    u_int8_t  isasa_reserved;
-    u_int16_t isasa_length;		/* Payload length */
-    u_int32_t isasa_doi;		/* DOI */
-    u_int32_t isasa_situation;		/* Situation - 32 bits for IPsec DOI */
+    uint8_t  isasa_np;			/* Next payload */
+    uint8_t  isasa_reserved;
+    uint16_t isasa_length;		/* Payload length */
+    uint32_t isasa_doi;		/* DOI */
+    uint32_t isasa_situation;		/* Situation - 32 bits for IPsec DOI */
 };
 
 /* ISAKMP Proposal Payload
@@ -283,13 +287,13 @@ struct isakmp_sa
  */
 struct isakmp_proposal
 {
-    u_int8_t    isap_np;
-    u_int8_t    isap_reserved;
-    u_int16_t   isap_length;
-    u_int8_t    isap_proposal;
-    u_int8_t    isap_protoid;
-    u_int8_t    isap_spisize;
-    u_int8_t    isap_notrans;		/* Number of transforms */
+    uint8_t    isap_np;
+    uint8_t    isap_reserved;
+    uint16_t   isap_length;
+    uint8_t    isap_proposal;
+    uint8_t    isap_protoid;
+    uint8_t    isap_spisize;
+    uint8_t    isap_notrans;		/* Number of transforms */
 };
 
 /* ISAKMP Transform Payload
@@ -310,27 +314,27 @@ struct isakmp_proposal
  */
 struct isakmp_transform
 {
-    u_int8_t    isat_np;
-    u_int8_t    isat_reserved;
-    u_int16_t   isat_length;
-    u_int8_t    isat_transnum;		/* Number of the transform */
-    u_int8_t    isat_transid;
-    u_int16_t   isat_reserved2;
+    uint8_t    isat_np;
+    uint8_t    isat_reserved;
+    uint16_t   isat_length;
+    uint8_t    isat_transnum;		/* Number of the transform */
+    uint8_t    isat_transid;
+    uint16_t   isat_reserved2;
 };
 
 struct isakmp_kx
 {
-    u_int8_t    isakx_np;
-    u_int8_t    isakx_reserved;
-    u_int16_t   isakx_length;
+    uint8_t    isakx_np;
+    uint8_t    isakx_reserved;
+    uint16_t   isakx_length;
 };
 
 struct isakmp_nonce
 {
-    u_int8_t    isanonce_np;
-    u_int8_t    isanonce_reserved;
-    u_int16_t   isanonce_length;
-    u_int32_t	isanonce_data[5];
+    uint8_t    isanonce_np;
+    uint8_t    isanonce_reserved;
+    uint16_t   isanonce_length;
+    uint32_t	isanonce_data[5];
 };
 
 /* ISAKMP Identification Payload
@@ -352,12 +356,12 @@ struct isakmp_nonce
  */
 struct isakmp_id
 {
-    u_int8_t    isaid_np;
-    u_int8_t    isaid_reserved;
-    u_int16_t   isaid_length;
-    u_int8_t    isaid_idtype;
-    u_int8_t    isaid_doi_specific_a;
-    u_int16_t   isaid_doi_specific_b;
+    uint8_t    isaid_np;
+    uint8_t    isaid_reserved;
+    uint16_t   isaid_length;
+    uint8_t    isaid_idtype;
+    uint8_t    isaid_doi_specific_a;
+    uint16_t   isaid_doi_specific_b;
 };
 
 /* ISAKMP Notification Payload
@@ -385,13 +389,13 @@ struct isakmp_id
  */
 struct isakmp_notification
 {
-    u_int8_t    isan_np;
-    u_int8_t    isan_reserved;
-    u_int16_t   isan_length;
-    u_int32_t   isan_doi;
-    u_int8_t    isan_protoid;
-    u_int8_t    isan_spisize;
-    u_int16_t   isan_type;
+    uint8_t    isan_np;
+    uint8_t    isan_reserved;
+    uint16_t   isan_length;
+    uint32_t   isan_doi;
+    uint8_t    isan_protoid;
+    uint8_t    isan_spisize;
+    uint16_t   isan_type;
 };
 
 extern struct_desc isakmp_notification_desc;
@@ -401,8 +405,8 @@ extern struct_desc isakmp_notification_desc;
  */
 struct isakmp_vid
 {
-    u_int8_t    isavid_np;
-    u_int8_t    isavid_reserved;
-    u_int16_t   isavid_length;
+    uint8_t    isavid_np;
+    uint8_t    isavid_reserved;
+    uint16_t   isavid_length;
 };
 
