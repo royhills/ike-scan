@@ -176,6 +176,11 @@ A GSS-API Authentication Method for IKE	^ad2c0dd0b9c32083ccba25b8861ec455
 A GSS-API Authentication Method for IKE\n	^b46d8914f3aaa3f2fedeb7c7db2943ca
 GSSAPI	^621b04bb09882ac1e15935fefa24aeee
 
+# Nortel Contivity VPN Router (was Bay Networks Enterprise Switch)
+# The first 4 bytes are ASCII "BNES" (Bay Networks Enterprise Switch)
+# The second 4 bytes are probably a version number or similar.
+Nortel Contivity	^424e4553000000..
+
 # Other things I've seen but not fully classified yet.
 # If anyone can confirm any of these, please let me know.
 Maybe Cisco IOS	^bdb41038a7ec5e5534dd004d0f91f927
