@@ -35,7 +35,8 @@
 
 static char rcsid[] = "$Id$";	/* RCS ID for ident(1) */
 
-extern int experimental;
+extern int experimental_flag;
+extern struct psk_crack psk_values;
 
 /*
  *	make_isakmp_hdr -- Construct an ISAKMP Header
@@ -1322,52 +1323,121 @@ print_payload(unsigned char *cp, unsigned payload, int dir) {
  *
  *	This function is used for debugging.  It trusts the length in the
  *	generic ISAKMP header, and so could misbehave with corrupted packets.
- *
- *	THIS FUNCTION IS NOT USED YET
  */
 void
 add_psk_crack_payload(unsigned char *cp, unsigned payload, int dir) {
    struct isakmp_generic *hdr = (struct isakmp_generic *) cp;
    struct isakmp_hdr *ihdr = (struct isakmp_hdr *) cp;
-   char *hexdata;
    unsigned char *data;
    size_t data_len;
 
    if (payload) {	/* Some other payload */
-      data = cp + sizeof(struct isakmp_generic);  /* Points to start of data */
-      data_len = ntohs(hdr->isag_length);
-      data_len -= sizeof(struct isakmp_generic);
-      hexdata = hexstring(data, data_len);
+      data_len = ntohs(hdr->isag_length) - sizeof(struct isakmp_generic);
+      data = Malloc(data_len);
+      memcpy(data, cp + sizeof(struct isakmp_generic), data_len);
+
       switch (payload) {
          case ISAKMP_NEXT_SA:
-            printf("sa%c_b_hex=\"%s\"\n", (dir=='I')?'i':'r', hexdata);
+            if (dir == 'I') {
+               psk_values.sai_b = data;
+               psk_values.sai_b_len = data_len;
+            }
             break;
          case ISAKMP_NEXT_KE:
-            printf("g_x%c_hex=\"%s\"\n", (dir=='I')?'i':'r', hexdata);
+            if (dir == 'I') {
+               psk_values.g_xi = data;
+               psk_values.g_xi_len = data_len;
+            } else {
+               psk_values.g_xr = data;
+               psk_values.g_xr_len = data_len;
+            }
             break;
          case ISAKMP_NEXT_ID:
-            printf("idi%c_b_hex=\"%s\"\n", (dir=='I')?'i':'r', hexdata);
+            if (dir == 'R') {
+               psk_values.idir_b = data;
+               psk_values.idir_b_len = data_len;
+            }
             break;
          case ISAKMP_NEXT_HASH:
-            printf("expected_hash_%c_hex=\"%s\"\n", (dir=='I')?'i':'r', hexdata);
+            if (dir == 'R') {
+               psk_values.hash_r = data;
+               psk_values.hash_r_len = data_len;
+            }
             break;
          case ISAKMP_NEXT_NONCE:
-            printf("n%c_b_hex=\"%s\"\n", (dir=='I')?'i':'r', hexdata);
+            if (dir == 'I') {
+               psk_values.ni_b = data;
+               psk_values.ni_b_len = data_len;
+            } else {
+               psk_values.nr_b = data;
+               psk_values.nr_b_len = data_len;
+            }
             break;
          default:
             warn_msg("add_psk_crack_payload: UNKNOWN PAYLOAD TYPE: %d\n",
                      payload);
             break;
       }
-      free(hexdata);
    } else {	/* ISAKMP Header */
-      hexdata = hexstring((unsigned char *)ihdr->isa_icookie, 8);
-      printf("cky_i_hex=\"%s\"\n", hexdata);
-      free(hexdata);
-      hexdata = hexstring((unsigned char *)ihdr->isa_rcookie, 8);
-      printf("cky_r_hex=\"%s\"\n", hexdata);
-      free(hexdata);
+      data_len=8;	/* ISAKMP cookies are 8 bytes long */
+      data=Malloc(data_len);
+      memcpy(data, (unsigned char *)ihdr->isa_rcookie, 8);
+      psk_values.cky_r = data;
+      psk_values.cky_r_len = data_len;
+
+      data=Malloc(data_len);
+      memcpy(data, (unsigned char *)ihdr->isa_icookie, 8);
+      psk_values.cky_i = data;
+      psk_values.cky_i_len = data_len;
    }
+}
+
+/*
+ *	print_psk_crack_values -- Display the PSK crack values
+ *
+ *	Inputs:
+ *
+ *	None
+ *
+ *	Returns:
+ *
+ *	None
+ *
+ *	This function prints the PSK crack values in the following format:
+ *
+ *	g_xr:g_xi:cky_r:cky_i:sai_b:idir_b:ni_b:nr_b:hash_r
+ */
+void
+print_psk_crack_values(void) {
+   char *hexdata;
+
+   hexdata=hexstring(psk_values.g_xr, psk_values.g_xr_len);
+   printf("%s:", hexdata);
+   free(hexdata);
+   hexdata=hexstring(psk_values.g_xi, psk_values.g_xi_len);
+   printf("%s:", hexdata);
+   free(hexdata);
+   hexdata=hexstring(psk_values.cky_r, psk_values.cky_r_len);
+   printf("%s:", hexdata);
+   free(hexdata);
+   hexdata=hexstring(psk_values.cky_i, psk_values.cky_i_len);
+   printf("%s:", hexdata);
+   free(hexdata);
+   hexdata=hexstring(psk_values.sai_b, psk_values.sai_b_len);
+   printf("%s:", hexdata);
+   free(hexdata);
+   hexdata=hexstring(psk_values.idir_b, psk_values.idir_b_len);
+   printf("%s:", hexdata);
+   free(hexdata);
+   hexdata=hexstring(psk_values.ni_b, psk_values.ni_b_len);
+   printf("%s:", hexdata);
+   free(hexdata);
+   hexdata=hexstring(psk_values.nr_b, psk_values.nr_b_len);
+   printf("%s:", hexdata);
+   free(hexdata);
+   hexdata=hexstring(psk_values.hash_r, psk_values.hash_r_len);
+   printf("%s\n", hexdata);
+   free(hexdata);
 }
 
 void
