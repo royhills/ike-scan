@@ -154,6 +154,7 @@ unsigned char *SHA1(const unsigned char *, size_t, unsigned char *);
 #define DEFAULT_DH_GROUP 2		/* Default DH group for agg. mode */
 #define DEFAULT_IDTYPE ID_USER_FQDN	/* Default ID Type for agg. mode */
 #define DEFAULT_EXCHANGE_TYPE ISAKMP_XCHG_IDPROT	/* Main Mode */
+#define DEFAULT_NONCE_LEN 20		/* Default Nonce length in bytes */
 #define SYSLOG 1			/* Use syslog if defined */
 #define SYSLOG_FACILITY LOG_USER	/* Syslog facility to use */
 #define PATTERNS_FILE "ike-backoff-patterns" /* Backoff patterns filename */
@@ -163,6 +164,7 @@ unsigned char *SHA1(const unsigned char *, size_t, unsigned char *);
 #define DEFAULT_TCP_CONNECT_TIMEOUT 10	/* TCP connect timeout in seconds */
 #define TCP_PROTO_RAW 1			/* Raw IKE over TCP (Checkpoint) */
 #define TCP_PROTO_ENCAP 2		/* Encapsulated IKE over TCP (cisco) */
+#define PACKET_OVERHEAD 28		/* 20 bytes for IP hdr + 8 for UDP */
 #undef DEBUG_TIMINGS			/* Define to 1 to debug timing code */
 /*
  * If ALPHA is defined, then it is used as the smoothing factor for the
@@ -270,9 +272,10 @@ void send_packet(int, unsigned char *, size_t, struct host_entry *, unsigned,
 int recvfrom_wto(int, unsigned char *, size_t, struct sockaddr *, int);
 void remove_host(struct host_entry **, unsigned *, unsigned);
 void timeval_diff(struct timeval *, struct timeval *, struct timeval *);
-unsigned char *initialise_ike_packet(size_t *, unsigned, unsigned, unsigned, unsigned,
-                                     unsigned, unsigned char *, size_t, int, int,
-                                     unsigned, int, unsigned char *, size_t);
+unsigned char *initialise_ike_packet(size_t *, unsigned, unsigned, unsigned,
+                                     unsigned, unsigned, unsigned char *,
+                                     size_t, int, int, unsigned, int,
+                                     unsigned char *, size_t, size_t);
 struct host_entry *find_host_by_cookie(struct host_entry **, unsigned char *,
                                        int, unsigned);
 void display_packet(int, unsigned char *, struct host_entry *,
