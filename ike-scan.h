@@ -184,8 +184,22 @@ unsigned char *SHA1(const unsigned char *, size_t, unsigned char *);
 #undef ALPHA				/* Smoothing factor */
 
 /* Structures */
-struct host_entry {
-   struct time_list *recv_times; /* List of receive times */
+typedef struct time_list_ {
+   struct timeval time;
+   struct time_list_ *next;
+} time_list;
+
+typedef struct {
+   int id;
+   union {
+      void *ptr;
+      int val;
+   } un;
+} misc_data;
+
+typedef struct {
+   time_list *recv_times; 	/* List of receive times */
+   misc_data *extra;		/* Extra data for this entry */ 
    unsigned n;			/* Ordinal number for this entry */
    unsigned timeout;		/* Timeout for this host */
    uint32_t icookie[COOKIE_SIZE];	/* IKE Initiator cookie */
@@ -194,34 +208,29 @@ struct host_entry {
    unsigned short num_sent;	/* Number of packets sent */
    unsigned short num_recv;	/* Number of packets received */
    unsigned char live;		/* Set when awaiting response */
-};
+} host_entry;
 
-struct time_list {
-   struct timeval time;
-   struct time_list *next;
-};
-
-struct pattern_entry_list {
+typedef struct pattern_entry_list_ {
    struct timeval time;
    unsigned fuzz;
-   struct pattern_entry_list *next;
-};
+   struct pattern_entry_list_ *next;
+} pattern_entry_list;
 
-struct pattern_list {
+typedef struct pattern_list_ {
    char *name;			/* Name of this backoff pattern */
    unsigned num_times;		/* Number of time entries in this pattern */
-   struct pattern_entry_list *recv_times;	/* Pointer to list of times */
-   struct pattern_list *next;
-};
+   pattern_entry_list *recv_times;	/* Pointer to list of times */
+   struct pattern_list_ *next;
+} pattern_list;
 
-struct vid_pattern_list {
+typedef struct vid_pattern_list_ {
    char *name;
    char *pattern;	/* Text regular expression */
    regex_t *regex;	/* Compiled regular expression */
-   struct vid_pattern_list *next;
-};
+   struct vid_pattern_list_ *next;
+} vid_pattern_list;
 
-struct psk_crack {
+typedef struct {
    unsigned char *g_xr;		/* Responder DH public value */
    size_t g_xr_len;
    unsigned char *g_xi;		/* Initiator DH public value */
@@ -240,20 +249,19 @@ struct psk_crack {
    size_t nr_b_len;
    unsigned char *hash_r;	/* Responder hash */
    size_t hash_r_len;
-};
+} psk_crack;
 
 typedef struct {
    int id;			/* IKE IDs are generally 8 or 16-bits */
    char *name;
 } id_name_map;
 
-struct ike_udphdr {
+typedef struct {		/* Used for encapsulated IKE */
   uint16_t     source;
   uint16_t     dest;
   uint16_t     len;
   uint16_t     check;
-};
-
+} ike_udphdr;
 
 /* Functions */
 
@@ -267,28 +275,28 @@ void usage(int);
 void psk_crack_usage(int);
 void add_host_pattern(const char *, unsigned, unsigned *);
 void add_host(const char *, unsigned, unsigned *);
-void send_packet(int, unsigned char *, size_t, struct host_entry *, unsigned,
+void send_packet(int, unsigned char *, size_t, host_entry *, unsigned,
                  struct timeval *);
 int recvfrom_wto(int, unsigned char *, size_t, struct sockaddr *, int);
-void remove_host(struct host_entry **, unsigned *, unsigned);
+void remove_host(host_entry **, unsigned *, unsigned);
 void timeval_diff(struct timeval *, struct timeval *, struct timeval *);
 unsigned char *initialise_ike_packet(size_t *, unsigned, unsigned, unsigned,
                                      unsigned, unsigned, unsigned char *,
                                      size_t, int, int, unsigned, int,
                                      unsigned char *, size_t, size_t);
-struct host_entry *find_host_by_cookie(struct host_entry **, unsigned char *,
+host_entry *find_host_by_cookie(host_entry **, unsigned char *,
                                        int, unsigned);
-void display_packet(int, unsigned char *, struct host_entry *,
+void display_packet(int, unsigned char *, host_entry *,
                     struct in_addr *, unsigned *, unsigned *, int, int);
 void advance_cursor(unsigned, unsigned);
 void dump_list(unsigned);
 void dump_times(unsigned);
-void add_recv_time(struct host_entry *, struct timeval *);
+void add_recv_time(host_entry *, struct timeval *);
 void load_backoff_patterns(const char *, unsigned);
 void add_pattern(char *, unsigned);
 void load_vid_patterns(const char *);
 void add_vid_pattern(char *);
-char *match_pattern(struct host_entry *);
+char *match_pattern(host_entry *);
 int times_close_enough(struct timeval *, struct timeval *, unsigned);
 void dump_backoff(unsigned);
 void dump_vid(void);
@@ -323,7 +331,7 @@ unsigned char *process_isakmp_hdr(unsigned char *, size_t *, unsigned *,
                                   unsigned *);
 char *process_sa(unsigned char *, size_t, unsigned, int, int);
 char *process_attr(unsigned char **, size_t *);
-char *process_vid(unsigned char *, size_t, struct vid_pattern_list *);
+char *process_vid(unsigned char *, size_t, vid_pattern_list *);
 char *process_notify(unsigned char *, size_t);
 char *process_id(unsigned char *, size_t);
 void print_payload(unsigned char *cp, unsigned payload, int);
