@@ -1,5 +1,21 @@
 $Id$
 
+2003-11-08 Roy Hills <Roy.Hills@nta-monitor.com>
+
+	* wrappers.c: New file containing system/library call wrappers
+	  for those calls which are not expected to fail.  Wrappers have
+	  the same name as the underlying call but with initial capital
+	  letter.  This convention is from W. Richard Stevens' Unix Network
+	  Programming book.
+	* ike-scan.c: Changed to use wrapper functions for Gettimeofday,
+	  Malloc and Realloc.
+	* isakmp.c: Changed to use wrapper function for Malloc.
+	* isakmp.c: Wrote new add_trans() function.  This allows a multi-
+	  transform payload to be built, it calls make_trans.
+	* ike-scan.c: Use new add_trans() function in intialise_ike_packet()
+	  rather than manually building the transform payload using
+	  make_trans().
+
 2003-11-07 Roy Hills <Roy.Hills@nta-monitor.com>
 
 	* isakmp.c: Wrote ISAKMP payload construction functions.
