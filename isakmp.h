@@ -6,7 +6,7 @@
  * Author:	Roy Hills
  * Date:	31 July 2001
  *
- * Definitions for ISAKMP packet.  Adapted from FreeS/WAN "packet.h"
+ * Definitions for ISAKMP packet.  Adapted from FreeS/WAN "pluto/packet.h"
  *
  * Many of the types used come from <sys/types.h> which needs to be
  * included before this include file.
@@ -14,6 +14,9 @@
  * Revision history:
  *
  * $Log$
+ * Revision 1.3  2002/09/04 10:07:33  rsh
+ * Added notification payload.
+ *
  * Revision 1.2  2001/08/10 09:28:48  rsh
  * Remove id_data from id struct.
  *
@@ -96,6 +99,42 @@
 /*
  * Define packet structures
  */
+
+/* a struct_desc describes a structure for the struct I/O routines.
+ * This requires arrays of field_desc values to describe struct fields.
+ */
+
+typedef const struct struct_desc {
+    const char *name;
+    const struct field_desc *fields;
+    size_t size;
+} struct_desc;
+
+/* Note: if an ft_af_enum field has the ISAKMP_ATTR_AF_TV bit set,
+ * the subsequent ft_lv field will be interpreted as an immediate value.
+ * This matches how attributes are encoded.
+ * See draft-ietf-ipsec-isakmp-09.txt 3.3
+ */
+
+enum field_type {
+    ft_mbz,     /* must be zero */
+    ft_nat,     /* natural number (may be 0) */
+    ft_len,     /* length of this struct and any following crud */
+    ft_lv,      /* length/value field of attribute */
+    ft_enum,    /* value from an enumeration */
+    ft_loose_enum,      /* value from an enumeration with only some names known */
+    ft_af_enum, /* Attribute Format + value from an enumeration */
+    ft_set,     /* bits representing set */
+    ft_raw,     /* bytes to be left in network-order */
+    ft_end,     /* end of field list */
+};
+
+typedef const struct field_desc {
+    enum field_type field_type;
+    int size;   /* size, in bytes, of field */
+    const char *name;
+    const void *desc;   /* enum_names for enum or char *[] for bits */
+} field_desc;
 
 /* ISAKMP Header: for all messages
  * layout from draft-ietf-ipsec-isakmp-09.txt section 3.1
@@ -257,7 +296,6 @@ struct isakmp_kx
     u_int8_t    isakx_np;
     u_int8_t    isakx_reserved;
     u_int16_t   isakx_length;
-    u_int32_t	isakx_data[32];
 };
 
 struct isakmp_nonce
@@ -295,6 +333,42 @@ struct isakmp_id
     u_int16_t   isaid_doi_specific_b;
 };
 
+/* ISAKMP Notification Payload
+ * layout from draft-ietf-ipsec-isakmp-09.txt section 3.14
+ * This is followed by a variable length SPI
+ * and then possibly by variable length Notification Data.
+ * Previous next payload: ISAKMP_NEXT_N
+ *                      1                   2                   3
+ *  0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+ * +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+ * ! Next Payload  !   RESERVED    !         Payload Length        !
+ * +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+ * !              Domain of Interpretation  (DOI)                  !
+ * +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+ * !  Protocol-ID  !   SPI Size    !      Notify Message Type      !
+ * +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+ * !                                                               !
+ * ~                Security Parameter Index (SPI)                 ~
+ * !                                                               !
+ * +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+ * !                                                               !
+ * ~                       Notification Data                       ~
+ * !                                                               !
+ * +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+ */
+struct isakmp_notification
+{
+    u_int8_t    isan_np;
+    u_int8_t    isan_reserved;
+    u_int16_t   isan_length;
+    u_int32_t   isan_doi;
+    u_int8_t    isan_protoid;
+    u_int8_t    isan_spisize;
+    u_int16_t   isan_type;
+};
+
+extern struct_desc isakmp_notification_desc;
+
 struct isakmp_vid
 {
     u_int8_t    isavid_np;
@@ -302,3 +376,4 @@ struct isakmp_vid
     u_int16_t   isavid_length;
     u_int32_t	isavid_data[10];
 };
+
