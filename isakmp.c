@@ -226,21 +226,25 @@ make_trans(int *length, uint8_t next, uint8_t number, uint16_t cipher,
 
    cp = payload;
    memcpy(cp, hdr, sizeof(struct isakmp_transform));
+   free(hdr);
    cp += sizeof(struct isakmp_transform);
    memcpy(cp, attr1, 4 * sizeof(struct isakmp_attribute));
+   free(attr1);
    cp += 4 * sizeof(struct isakmp_attribute);
    if (keylen) {
       memcpy(cp, attr2, sizeof(struct isakmp_attribute));
+      free(attr2);
       cp += sizeof(struct isakmp_attribute);
    }
    if (lifetime) {
       memcpy(cp, attr3, sizeof(struct isakmp_attribute));
+      free(attr3);
       cp += sizeof(struct isakmp_attribute);
       memcpy(cp, attr4, sizeof(struct isakmp_attribute_l32));
+      free(attr4);
       cp += sizeof(struct isakmp_attribute_l32);
    }
 
-/* We could free the structures at this point */
 
    return payload;
 }
@@ -341,6 +345,52 @@ make_vid(int *length, uint8_t next, unsigned char *vid_data, int vid_data_len) {
    *length = sizeof(struct isakmp_vid) + vid_data_len;
 
    return payload;
+}
+
+/*
+ *	add_vid -- Add a vendor ID payload to the set of VIDs.
+ *
+ *	Inputs:
+ *
+ *      finished        0 if adding a new VIDs; 1 if finalising.
+ *      length  (output) length of entire VID payload set.
+ *      vid_data        Vendor ID data
+ *      vid_data_len    Vendor ID data length
+ */
+unsigned char*
+add_vid(int finished, int *length, unsigned char *vid_data, int vid_data_len) {
+   static int first_vid = 1;
+   static unsigned char *vid_start=NULL;	/* Start of set of VIDs */
+   static int cur_offset;			/* Start of current VID */
+   static int end_offset;			/* End of VIDs */
+   unsigned char *vid;				/* VID payload */
+   int len;					/* VID length */
+/*
+ * Construct a VID if we are not finalising.
+ */
+   if (!finished) {
+      vid = make_vid(&len, ISAKMP_NEXT_VID, vid_data, vid_data_len);
+      if (first_vid) {
+         cur_offset = 0;
+         end_offset = len;
+         vid_start = Malloc(end_offset);
+         memcpy(vid_start, vid, len);
+         first_vid = 0;
+      } else {
+         cur_offset = end_offset;
+         end_offset += len;
+         vid_start = Realloc(vid_start, end_offset);
+         memcpy(vid_start+cur_offset, vid, len);
+      }
+      return NULL;
+   } else {
+      struct isakmp_vid* hdr =
+         (struct isakmp_vid*) (vid_start+cur_offset);   /* Overlay */
+
+      hdr->isavid_np = ISAKMP_NEXT_NONE;         /* No more payloads */
+      *length = end_offset;
+      return vid_start;
+   }
 }
 
 void isakmp_use_rcsid(void) {
