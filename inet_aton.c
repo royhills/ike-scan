@@ -11,8 +11,9 @@
 */
 
 #include "config.h"
-#include "clibrary.h"
+#ifdef HAVE_NETINET_IN_H
 #include <netinet/in.h>
+#endif
 
 /* If we're running the test suite, rename inet_ntoa to avoid conflicts with
    the system version. */
