@@ -748,12 +748,15 @@ process_sa(unsigned char *cp, int len, int type) {
  *	which should be free'ed by the caller when it's no longer needed.
  */
 char *
-process_vid(unsigned char *cp, int len) {
+process_vid(unsigned char *cp, int len, struct vid_pattern_list *vidlist) {
    struct isakmp_vid *hdr = (struct isakmp_vid *) cp;
+   struct vid_pattern_list *ve;
    char *msg;
    char *p;
    unsigned char *vid_data;
+   unsigned char *ucp;
    int data_len;
+   int checklen;
    int i;
 
    if (len < sizeof(struct isakmp_vid) ||
@@ -765,8 +768,9 @@ process_vid(unsigned char *cp, int len) {
 
    msg = Malloc(2*data_len + 1);	/* 2 hex chars/byte + end NULL */
    p = msg;
+   ucp=vid_data;
    for (i=0; i<data_len; i++) {
-      sprintf(p, "%.2x", (unsigned char) *(vid_data++));
+      sprintf(p, "%.2x", (unsigned char) *ucp++);
       p += 2;
    }
    *p = '\0';
@@ -774,6 +778,20 @@ process_vid(unsigned char *cp, int len) {
    p = msg;
    msg=make_message("VID=%s", p);
    free(p);
+/*
+ *	Try to find a match in the Vendor ID pattern list.
+ */
+   ve = vidlist;
+   while(ve != NULL) {
+      checklen = (data_len<ve->len)?data_len:ve->len;
+      if (!(memcmp(vid_data, ve->data, checklen))) {
+         p=msg;
+         msg=make_message("%s (%s)", p, ve->name);
+         free(p);
+         break;	/* Stop looking after first match */
+      }
+      ve=ve->next;
+   }
 
    return msg;
 }
