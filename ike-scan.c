@@ -484,9 +484,8 @@ main(int argc, char *argv[]) {
  *	Obtain current time and calculate deltas since last packet and
  *	last packet to this host.
  */
-      if ((gettimeofday(&now, NULL)) != 0) {
+      if ((gettimeofday(&now, NULL)) != 0)
          err_sys("gettimeofday");
-      }
       timeval_diff(&now, &last_recv_time, &diff);
       end_timediff = 1000*diff.tv_sec + diff.tv_usec/1000;
 /*
@@ -513,7 +512,7 @@ main(int argc, char *argv[]) {
             if (cursor->num_sent >= retry) {
                if (verbose)
                   warn_msg("---\tRemoving host entry %u (%s) - Timeout", cursor->n, inet_ntoa(cursor->addr));
-               remove_host(cursor);
+               remove_host(cursor);	/* Will call advance_cursor() */
             } else {	/* Retry limit not reached for this host */
                if (cursor->num_sent) {
                   cursor->timeout *= backoff;
@@ -522,15 +521,21 @@ main(int argc, char *argv[]) {
                advance_cursor();
             }
          } else {	/* We can't send a packet to this host yet */
-            advance_cursor();
+/*
+ *      Note that there is no point calling advance_cursor() here because if
+ *      host n is not ready to send, then host n+1 will not be ready either.
+ */
          } /* End If */
       } /* End If */
       n=recvfrom_wto(sockfd, packet_in, MAXUDP, (struct sockaddr *)&sa_peer, select_timeout);
       if (n > 0) {
 /*
  *	We've received a response try to match up the packet by cookie
+ *
+ *      Note: We start at cursor->prev because we call advance_cursor() after
+ *            each send_packet().
  */
-         temp_cursor=find_host_by_cookie(cursor, packet_in, n);
+         temp_cursor=find_host_by_cookie(cursor->prev, packet_in, n);
          if (temp_cursor) {
 /*
  *	We found a cookie match for the returned packet.
