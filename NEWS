@@ -10,8 +10,28 @@ ike-scan v1.6:
   ignore the others.
 
 * Added support for ISAKMP lifetime size transform attribute with the
-  --lifesize (-z) option.  Default is 0 which means don't include the
-  lifetime size attribute.
+  --lifesize (-z) option.  This is specified as kilobytes.  The default is
+  0 which means don't include the lifetime size attribute.
+
+* Added support for GSS IDs with --gssid (-G) option.  GSS IDs are described in
+  draft-ietf-ipsec-isakmp-gss-auth-07.txt.  This is used by Windows-2000
+  IPsec for Kerberos authentication.
+
+* Allow target hosts to be specified as IPnet/bits to include all hosts in
+  the given network, or IPstart-IPend to include all hosts in the inclusive
+  range as well as single hostnames or IP addresses.
+
+* Added support for Vendor ID fingerprinting.  The file "ike-vendor-ids"
+  contains a list of known Vendor ID patterns, specified as Posix extended
+  regular expressions.  These are used to match against the ascii hex
+  representation of any returned Vendor IDs, and the name of the entry is
+  displayed if a match is found.
+
+* SA transform attributes and ID payloads are now decoded, and basic details
+  (name and size) are displayed for payload types that we don't decode yet.
+  Added --quiet option to prevent this decoding if it's not required.
+  Added --multiline option to split the decode over multiple lines - one line
+  per payload.  With --multiline, each payload decode line starts with a TAB.
 
 ike-scan v1.5.1:
 
