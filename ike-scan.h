@@ -123,9 +123,10 @@
 #define SYSLOG_FACILITY LOG_USER	/* Syslog facility to use */
 #define PATTERNS_FILE "ike-backoff-patterns" /* Backoff patterns filename */
 #define VID_FILE "ike-vendor-ids"	/* Vendor ID patterns filename */
-#define MAX_PAYLOAD 13			/* Maximum defined payload number */
-#define MAX_ATTR 16			/* Maximum defined attribute number */
 #define EXPECTED_TOTAL 72		/* Expected ISAKMP header size total */
+
+#define STR_OR_ID(x, tab) \
+        (((x) < sizeof(tab)/sizeof(tab[0]) && tab[(x)]) ? tab[(x)] : numstr(x))
 
 /* Structures */
 struct host_entry {
@@ -229,6 +230,7 @@ char *process_attr(unsigned char **, size_t *);
 char *process_vid(unsigned char *, size_t, struct vid_pattern_list *);
 char *process_notify(unsigned char *, size_t);
 char *make_message(const char *, ...);
+char *numstr(int);
 /* The following functions are just to prevent rcsid being optimised away */
 void error_use_rcsid(void);
 void isakmp_use_rcsid(void);
