@@ -133,14 +133,13 @@
 #define PATTERNS_FILE "ike-backoff-patterns" /* Backoff patterns filename */
 #define VID_FILE "ike-vendor-ids"	/* Vendor ID patterns filename */
 #define EXPECTED_TOTAL 72		/* Expected ISAKMP header size total */
+#define REALLOC_COUNT	1000		/* Entries to realloc at once */
 
 #define STR_OR_ID(x, tab) \
         (((x) < sizeof(tab)/sizeof(tab[0]) && tab[(x)]) ? tab[(x)] : numstr(x))
 
 /* Structures */
 struct host_entry {
-   struct host_entry *prev;	/* Previous pointer */
-   struct host_entry *next;	/* Next pointer */
    struct time_list *recv_times; /* List of receive times */
    unsigned n;			/* Ordinal number for this entry */
    unsigned timeout;		/* Timeout for this host */
@@ -193,18 +192,18 @@ void add_host(const char *, unsigned, unsigned *);
 void send_packet(int, unsigned char *, size_t, struct host_entry *, unsigned,
                  struct timeval *);
 int recvfrom_wto(int, unsigned char *, size_t, struct sockaddr *, int);
-void remove_host(struct host_entry *, unsigned *);
+void remove_host(struct host_entry **, unsigned *, unsigned);
 void timeval_diff(struct timeval *, struct timeval *, struct timeval *);
 unsigned char *initialise_ike_packet(size_t *, unsigned, unsigned, unsigned, unsigned,
                                      unsigned, unsigned char *, size_t, int, int,
                                      unsigned, int, unsigned char *, size_t);
-struct host_entry *find_host_by_cookie(struct host_entry *, unsigned char *,
-                                       int);
+struct host_entry *find_host_by_cookie(struct host_entry **, unsigned char *,
+                                       int, unsigned);
 void display_packet(int, unsigned char *, struct host_entry *,
                     struct in_addr *, unsigned *, unsigned *, int, int);
-void advance_cursor(unsigned);
+void advance_cursor(unsigned, unsigned);
 void dump_list(unsigned);
-void dump_times(void);
+void dump_times(unsigned);
 void add_recv_time(struct host_entry *, struct timeval *);
 void load_backoff_patterns(const char *, unsigned);
 void add_pattern(char *, unsigned);
