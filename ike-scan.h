@@ -130,7 +130,7 @@ struct host_entry {
    struct host_entry *next;	/* Next pointer */
    unsigned n;			/* Ordinal number for this entry */
    struct in_addr addr;		/* Host IP address */
-   u_char live;			/* Set when awaiting response */
+   unsigned char live;		/* Set when awaiting response */
    struct timeval last_send_time; /* Time when last packet sent to this addr */
    struct time_list *recv_times; /* List of receive times */
    unsigned timeout;		/* Timeout for this host */
