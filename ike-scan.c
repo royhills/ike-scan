@@ -1913,6 +1913,7 @@ usage(void) {
    fprintf(stderr, "\t\t\tSee RFC 2407 4.6.2 for details of Identification types.\n");
    fprintf(stderr, "\n--dhgroup=n or -g n\tUse Diffie Hellman Group <n>.  Default %d.\n", DEFAULT_DH_GROUP);
    fprintf(stderr, "\t\t\tThis option is only applicable to Aggressive Mode.\n");
+   fprintf(stderr, "\t\t\tAcceptable values are 1,2,5,14,15,16,17,18 (MODP only).\n");
    fprintf(stderr, "\n");
    fprintf(stderr, "Report bugs or send suggestions to %s\n", PACKAGE_BUGREPORT);
    fprintf(stderr, "See the ike-scan homepage at http://www.nta-monitor.com/ike-scan/\n");
