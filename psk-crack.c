@@ -1,19 +1,51 @@
-/* $Id$
+/*
+ * The IKE Scanner (ike-scan) is Copyright (C) 2003-2004 Roy Hills,
+ * NTA Monitor Ltd.
  *
- * psk-crack.c -- IKE Aggressive Mode Pre-Shared Key cracker
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
+ * as published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+ *
+ * If this license is unacceptable to you, I may be willing to negotiate
+ * alternative licenses (contact ike-scan@nta-monitor.com).
+ *
+ * You are encouraged to send comments, improvements or suggestions to
+ * me at ike-scan@nta-monitor.com.
+ *
+ * $Id$
+ *
+ * psk-crack.c -- IKE Aggressive Mode Pre-Shared Key cracker for ike-scan
  *
  * Author: Roy Hills
  * Date: 8 July 2004
+ *
+ * Usage:
+ *	psk-crack <psk-parameters-file> <dictionary-file>
+ *
  */
 #include "ike-scan.h"
 #define MAXLEN 4096
 
 int
 main (int argc, char *argv[]) {
-   FILE *dictionary_file;
+   FILE *dictionary_file;	/* Dictionary file, one word per line */
    FILE *data_file;	/* PSK parameters in colon separated format */
    int iterations=0;
    int found=0;
+   struct timeval start_time;	/* Program start time */
+   struct timeval end_time;	/* Program end time */
+   struct timeval elapsed_time; /* Elapsed time as timeval */
+   double elapsed_seconds;	/* Elapsed time in seconds */
    int n;
 
    char g_xr_hex[MAXLEN];
@@ -79,8 +111,6 @@ main (int argc, char *argv[]) {
       exit(1);
    }
 
-   print_times();
-
    fgets(psk_data, 4096, data_file);
 
    n=sscanf(psk_data, "%[^:]:%[^:]:%[^:]:%[^:]:%[^:]:%[^:]:%[^:]:%[^:]:%[^:\r\n]",
@@ -125,8 +155,12 @@ main (int argc, char *argv[]) {
    cp += sai_b_len;
    memcpy(cp, idir_b, idir_b_len);
    hash_r = Malloc(16);
-
-   print_times();
+     
+/*
+ *	Get program start time for statistics displayed on completion.
+ */
+   Gettimeofday(&start_time);
+   printf("Starting psk-crack\n");
    while (fgets(line, MAXLINE, dictionary_file)) {
       char *line_p;
       for (line_p = line; !isspace(*line_p) && *line_p != '\0'; line_p++)
@@ -136,17 +170,26 @@ main (int argc, char *argv[]) {
       hmac_md5(hash_r_data, hash_r_data_len, skeyid, 16, hash_r);
       iterations++;
       if (!memcmp(hash_r, expected_hash_r, expected_hash_r_len)) {
-         hash_r_hex = hexstring(hash_r, 16);
-         printf("key \"%s\" matches hash %s after %d iterations\n",
-                line, hash_r_hex, iterations);
-         free(hash_r_hex);
          found=1;
          break;
       }
    }
-   if (!found)
-      printf("no match found after %d iterations\n", iterations);
-   print_times();
+/*
+ *      Get program end time and calculate elapsed time.
+ */
+   Gettimeofday(&end_time);
+   timeval_diff(&end_time, &start_time, &elapsed_time);
+   elapsed_seconds = (elapsed_time.tv_sec*1000 +
+                      elapsed_time.tv_usec/1000.0) / 1000.0;
+   if (found) {
+      hash_r_hex = hexstring(hash_r, 16);
+      printf("key \"%s\" matches hash %s\n", line, hash_r_hex);
+      free(hash_r_hex);
+   } else {
+      printf("no match found\n");
+   }
+   printf("Ending psk-crack: %d iterations in %.3f seconds (%.2f iterations/sec)\n",
+          iterations, elapsed_seconds, iterations/elapsed_seconds);
    fclose(data_file);
    fclose(dictionary_file);
 
