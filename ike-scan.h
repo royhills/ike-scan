@@ -46,9 +46,19 @@
 #error This program requires the ANSI C Headers
 #endif
 
+#include <sys/types.h>  /* FreeBSD needs explicit include for sys/types.h */
+
+#ifdef HAVE_UNISTD_H
 #include <unistd.h>
+#endif
+
+#ifdef HAVE_NETDB_H
 #include <netdb.h>
+#endif
+
+#ifdef HAVE_SYSLOG_H
 #include <syslog.h>
+#endif
 
 #ifdef HAVE_GETOPT_H
 #include <getopt.h>
@@ -61,11 +71,28 @@
 #undef getopt
 #endif
 
-#include <sys/types.h>  /* FreeBSD needs explicit include for sys/types.h */
+#ifdef HAVE_NETINET_IN_H
 #include <netinet/in.h>
-#include <sys/time.h>
+#endif
+
+#ifdef TIME_WITH_SYS_TIME
+# include <sys/time.h>
+# include <time.h>
+#else
+# ifdef HAVE_SYS_TIME_H
+#  include <sys/time.h>
+# else
+#  include <time.h>
+# endif
+#endif
+
+#ifdef HAVE_SYS_SOCKET_H
 #include <sys/socket.h>	/* For struct sockaddr */
+#endif
+
+#ifdef HAVE_ARPA_INET_H
 #include <arpa/inet.h>
+#endif
 
 #include "global.h"
 #include "md5.h"
