@@ -1403,7 +1403,7 @@ add_psk_crack_payload(unsigned char *cp, unsigned payload, int dir) {
  *
  *	Inputs:
  *
- *	None
+ *	psk_crack_file	Name of PSK data output file, or NULL for stdout
  *
  *	Returns:
  *
@@ -1414,35 +1414,45 @@ add_psk_crack_payload(unsigned char *cp, unsigned payload, int dir) {
  *	g_xr:g_xi:cky_r:cky_i:sai_b:idir_b:ni_b:nr_b:hash_r
  */
 void
-print_psk_crack_values(void) {
+print_psk_crack_values(const char *psk_crack_file) {
    char *hexdata;
+   FILE *fp;
+
+   if (psk_crack_file[0]) {
+      if ((fp = fopen(psk_crack_file, "w")) == NULL) {
+         err_sys("ERROR: fopen");
+      }
+   } else {
+      fp = stdout;
+      printf("IKE PSK parameters (g_xr:g_xi:cky_r:cky_i:sai_b:idir_b:ni_b:nr_b:hash_r):\n");
+   }
 
    hexdata=hexstring(psk_values.g_xr, psk_values.g_xr_len);
-   printf("%s:", hexdata);
+   fprintf(fp, "%s:", hexdata);
    free(hexdata);
    hexdata=hexstring(psk_values.g_xi, psk_values.g_xi_len);
-   printf("%s:", hexdata);
+   fprintf(fp, "%s:", hexdata);
    free(hexdata);
    hexdata=hexstring(psk_values.cky_r, psk_values.cky_r_len);
-   printf("%s:", hexdata);
+   fprintf(fp, "%s:", hexdata);
    free(hexdata);
    hexdata=hexstring(psk_values.cky_i, psk_values.cky_i_len);
-   printf("%s:", hexdata);
+   fprintf(fp, "%s:", hexdata);
    free(hexdata);
    hexdata=hexstring(psk_values.sai_b, psk_values.sai_b_len);
-   printf("%s:", hexdata);
+   fprintf(fp, "%s:", hexdata);
    free(hexdata);
    hexdata=hexstring(psk_values.idir_b, psk_values.idir_b_len);
-   printf("%s:", hexdata);
+   fprintf(fp, "%s:", hexdata);
    free(hexdata);
    hexdata=hexstring(psk_values.ni_b, psk_values.ni_b_len);
-   printf("%s:", hexdata);
+   fprintf(fp, "%s:", hexdata);
    free(hexdata);
    hexdata=hexstring(psk_values.nr_b, psk_values.nr_b_len);
-   printf("%s:", hexdata);
+   fprintf(fp, "%s:", hexdata);
    free(hexdata);
    hexdata=hexstring(psk_values.hash_r, psk_values.hash_r_len);
-   printf("%s\n", hexdata);
+   fprintf(fp, "%s\n", hexdata);
    free(hexdata);
 }
 
