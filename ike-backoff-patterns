@@ -42,15 +42,21 @@
 # beyond millisecond resolution is not really practical.  ike-scan uses
 # a timeval struct to store the backoff pattern entries.
 #
+# You may also specify an per-pattern-entry "fuzz" value in milliseconds
+# by appending /<fuzz> to the backoff time.  This will override the default
+# fuzz for that time only.  The fuzz value specifies how close the specified
+# time must be to the observed time for a match.  E.g. a fuzz of 0 means that
+# the observed timing must match exactly and a fuzz of 1000 means that the
+# times must be within one second of each other (1000ms = 1sec).  If no
+# per-pattern-entry fuzz value is specified then a default fuzz value of 100ms
+# (defined by DEFAULT_PATTERN_FUZZ in ike-scan.h) is applied.  This default
+# value may be changed with the --fuzz option to ike-scan.
+#
 # Lines beginning with '#' and blank lines are ignored.
 #
 # The input format is quite strict.  In particular, the separator between
 # the implementation name and the backoff pattern must be a single TAB and
 # not a space, multiple tabs or spaces, or a mixture of tabs and spaces.
-#
-# I plan to change the format of this file in the future because at present it
-# cannot deal with different backoff variances for each pattern or different
-# variances between entries in patterns, both of which are needed.
 #
 # If you have problems adding entries, run ike-scan as:
 # ike-scan -v -v -v -o <any-target>
@@ -59,8 +65,7 @@
 # You are encouraged to send comments, improvements or suggestions to
 # me at ike-scan@nta-monitor.com.
 # In particular, I would like you to submit any new patterns that you
-# discover.  See:
-# http://www.nta-monitor.com/ike-scan/submit.htm
+# discover.  See: http://www.nta-monitor.com/ike-scan/submit.htm
 # For details of how to submit new backoff patterns.
 #
 
@@ -132,3 +137,15 @@ FreeBSD-racoon	0, 20, 20, 20, 20, 20
 # Discovered by: Iain Lewis, February 2003
 # Observed on: Netscreen 500
 netscreen	0, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4
+
+# Discovered by: Doug Monroe, January 2003
+# Observed on: Watchguard SOHO v5.1.7
+# Note:	There is quite a bit of variation with this pattern, hence the
+#	per-entry fuzz specifications.
+watchguard-soho	0, 1/500, 9.5/3000, 1.5/2000, 9.5/3000, 1.5/2000, 9.5/3000, 1.5/2000, 9.5/3000, 1.5/2000, 9.5/3000, 1.5/2000
+
+# Discovered by: Christopher Harrington, February 2003
+# Observed on: SonicWall Pro 200
+# Note:	There is quite a bit of variation with this pattern, hence the
+#	per-entry fuzz specifications.
+sonicwall-pro	0, 6.5/1500, 9/1000, 13/2000, 22/3000
