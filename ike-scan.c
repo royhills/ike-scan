@@ -1357,9 +1357,9 @@ recvfrom_wto(int s, unsigned char *buf, size_t len, struct sockaddr *saddr,
    }
    saddr_len = sizeof(struct sockaddr);
    if ((n = recvfrom(s, buf, len, 0, saddr, &saddr_len)) < 0) {
-      if (errno == ECONNREFUSED) {
+      if (errno == ECONNREFUSED || errno == ECONNRESET) {
 /*
- *	Treat connection refused as timeout.
+ *	Treat connection refused and connection reset as timeout.
  *	It would be nice to remove the associated host, but we can't because
  *	we cannot tell which host the connection refused relates to.
  */
