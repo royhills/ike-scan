@@ -69,8 +69,8 @@ main() {
 
    printf("Structure\t\tExpect\tObserved\n\n");
 
-   printf("isakmp_hdr\t\t%u\t%u\t", EXPECTED_ISAKMP_HDR,
-          octets_per_char * sizeof(struct isakmp_hdr));
+   printf("isakmp_hdr\t\t%u\t%lu\t", EXPECTED_ISAKMP_HDR,
+          (unsigned long) (octets_per_char * sizeof(struct isakmp_hdr)));
    if (octets_per_char * sizeof(struct isakmp_hdr) != EXPECTED_ISAKMP_HDR) {
       error++;
       printf("ERROR\n");
@@ -78,8 +78,8 @@ main() {
       printf("ok\n");
    }
 
-   printf("isakmp_sa\t\t%u\t%u\t", EXPECTED_ISAKMP_SA,
-          octets_per_char * sizeof(struct isakmp_sa));
+   printf("isakmp_sa\t\t%u\t%lu\t", EXPECTED_ISAKMP_SA,
+          (unsigned long) (octets_per_char * sizeof(struct isakmp_sa)));
    if (octets_per_char * sizeof(struct isakmp_sa) != EXPECTED_ISAKMP_SA) {
       error++;
       printf("ERROR\n");
@@ -87,8 +87,8 @@ main() {
       printf("ok\n");
    }
 
-   printf("isakmp_proposal\t\t%u\t%u\t", EXPECTED_ISAKMP_PROPOSAL,
-          octets_per_char * sizeof(struct isakmp_proposal));
+   printf("isakmp_proposal\t\t%u\t%lu\t", EXPECTED_ISAKMP_PROPOSAL,
+          (unsigned long) (octets_per_char * sizeof(struct isakmp_proposal)));
    if (octets_per_char * sizeof(struct isakmp_proposal) != EXPECTED_ISAKMP_PROPOSAL) {
       error++;
       printf("ERROR\n");
@@ -96,8 +96,8 @@ main() {
       printf("ok\n");
    }
 
-   printf("isakmp_transform\t%u\t%u\t", EXPECTED_ISAKMP_TRANSFORM,
-          octets_per_char * sizeof(struct isakmp_transform));
+   printf("isakmp_transform\t%u\t%lu\t", EXPECTED_ISAKMP_TRANSFORM,
+          (unsigned long) (octets_per_char * sizeof(struct isakmp_transform)));
    if (octets_per_char * sizeof(struct isakmp_transform) != EXPECTED_ISAKMP_TRANSFORM) {
       error++;
       printf("ERROR\n");
@@ -105,8 +105,8 @@ main() {
       printf("ok\n");
    }
 
-   printf("isakmp_vid\t\t%u\t%u\t", EXPECTED_ISAKMP_VID,
-          octets_per_char * sizeof(struct isakmp_vid));
+   printf("isakmp_vid\t\t%u\t%lu\t", EXPECTED_ISAKMP_VID,
+          (unsigned long) (octets_per_char * sizeof(struct isakmp_vid)));
    if (octets_per_char * sizeof(struct isakmp_vid) != EXPECTED_ISAKMP_VID) {
       error++;
       printf("ERROR\n");
@@ -114,8 +114,8 @@ main() {
       printf("ok\n");
    }
 
-   printf("isakmp_notification\t%u\t%u\t", EXPECTED_ISAKMP_NOTIFICATION,
-          octets_per_char * sizeof(struct isakmp_notification));
+   printf("isakmp_notification\t%u\t%lu\t", EXPECTED_ISAKMP_NOTIFICATION,
+          (unsigned long) (octets_per_char * sizeof(struct isakmp_notification)));
    if (octets_per_char * sizeof(struct isakmp_notification) != EXPECTED_ISAKMP_NOTIFICATION) {
       error++;
       printf("ERROR\n");
@@ -123,8 +123,8 @@ main() {
       printf("ok\n");
    }
 
-   printf("isakmp_kx\t\t%u\t%u\t", EXPECTED_ISAKMP_KX,
-          octets_per_char * sizeof(struct isakmp_kx));
+   printf("isakmp_kx\t\t%u\t%lu\t", EXPECTED_ISAKMP_KX,
+          (unsigned long) (octets_per_char * sizeof(struct isakmp_kx)));
    if (octets_per_char * sizeof(struct isakmp_kx) != EXPECTED_ISAKMP_KX) {
       error++;
       printf("ERROR\n");
@@ -132,8 +132,8 @@ main() {
       printf("ok\n");
    }
 
-   printf("isakmp_nonce\t\t%u\t%u\t", EXPECTED_ISAKMP_NONCE,
-          octets_per_char * sizeof(struct isakmp_nonce));
+   printf("isakmp_nonce\t\t%u\t%lu\t", EXPECTED_ISAKMP_NONCE,
+          (unsigned long) (octets_per_char * sizeof(struct isakmp_nonce)));
    if (octets_per_char * sizeof(struct isakmp_nonce) != EXPECTED_ISAKMP_NONCE) {
       error++;
       printf("ERROR\n");
@@ -141,8 +141,8 @@ main() {
       printf("ok\n");
    }
 
-   printf("isakmp_id\t\t%u\t%u\t", EXPECTED_ISAKMP_ID,
-          octets_per_char * sizeof(struct isakmp_id));
+   printf("isakmp_id\t\t%u\t%lu\t", EXPECTED_ISAKMP_ID,
+          (unsigned long) (octets_per_char * sizeof(struct isakmp_id)));
    if (octets_per_char * sizeof(struct isakmp_id) != EXPECTED_ISAKMP_ID) {
       error++;
       printf("ERROR\n");
@@ -152,8 +152,8 @@ main() {
 
    printf("\nType\t\t\tExpect\tObserved\n\n");
 
-   printf("uint8_t\t\t\t%u\t%u\t", EXPECTED_UINT8_T,
-          octets_per_char * sizeof(uint8_t));
+   printf("uint8_t\t\t\t%u\t%lu\t", EXPECTED_UINT8_T,
+          (unsigned long) (octets_per_char * sizeof(uint8_t)));
    if (octets_per_char * sizeof(uint8_t) != EXPECTED_UINT8_T) {
       error++;
       printf("ERROR\n");
@@ -161,8 +161,8 @@ main() {
       printf("ok\n");
    }
 
-   printf("uint16_t\t\t%u\t%u\t", EXPECTED_UINT16_T,
-          octets_per_char * sizeof(uint16_t));
+   printf("uint16_t\t\t%u\t%lu\t", EXPECTED_UINT16_T,
+          (unsigned long) (octets_per_char * sizeof(uint16_t)));
    if (octets_per_char * sizeof(uint16_t) != EXPECTED_UINT16_T) {
       error++;
       printf("ERROR\n");
@@ -170,8 +170,8 @@ main() {
       printf("ok\n");
    }
 
-   printf("uint32_t\t\t%u\t%u\t", EXPECTED_UINT32_T,
-          octets_per_char * sizeof(uint32_t));
+   printf("uint32_t\t\t%u\t%lu\t", EXPECTED_UINT32_T,
+          (unsigned long) (octets_per_char * sizeof(uint32_t)));
    if (octets_per_char * sizeof(uint32_t) != EXPECTED_UINT32_T) {
       error++;
       printf("ERROR\n");
