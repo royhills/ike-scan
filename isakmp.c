@@ -256,8 +256,6 @@ make_trans(int *length, uint8_t next, uint8_t number, uint16_t cipher,
  *
  *	finished	0 if adding a new transform; 1 if finalising.
  *	length	(output) length of entire transform payload.
- *	next    Next Payload Type (3 = More transforms; 0=No more transforms)
- *	number	Transform number
  *	cipher	The encryption algorithm
  *	keylen	Key length for variable length keys (0=fixed key length)
  *	hash	Hash algorithm
@@ -268,6 +266,13 @@ make_trans(int *length, uint8_t next, uint8_t number, uint16_t cipher,
  *	Returns:
  *
  *	Pointer to new set of transform payloads.
+ *
+ *	This function can either be called with finished = 0, in which case
+ *	cipher, keylen, hash, auth, group and lifetime must be specified, and
+ *	the function will return NULL, OR it can be called with finished = 1
+ *	in which case cipher, keylen, hash, auth, group and lifetime are
+ *	ignored and the function will return a pointer to the finished
+ *	payload and will set *length to the length of this payload.
  */
 unsigned char*
 add_trans(int finished, int *length,
@@ -317,7 +322,7 @@ add_trans(int finished, int *length,
  *
  *	Inputs:
  *
- *	length	(output) length of entire transform payload.
+ *	length	(output) length of Vendor ID payload.
  *	next		Next Payload Type
  *	vid_data	Vendor ID data
  *	vid_data_len	Vendor ID data length
@@ -356,6 +361,17 @@ make_vid(int *length, uint8_t next, unsigned char *vid_data, int vid_data_len) {
  *      length  (output) length of entire VID payload set.
  *      vid_data        Vendor ID data
  *      vid_data_len    Vendor ID data length
+ *
+ *	Returns:
+ *
+ *	Pointer to the VID payload.
+ *
+ *	This function can either be called with finished = 0, in which case
+ *	vid_data and vid_data_len must be specified, and
+ *	the function will return NULL, OR it can be called with finished = 1
+ *	in which case vid_data and vid_data_len are
+ *	ignored and the function will return a pointer to the finished
+ *	payload and will set *length to the length of this payload.
  */
 unsigned char*
 add_vid(int finished, int *length, unsigned char *vid_data, int vid_data_len) {
@@ -391,6 +407,121 @@ add_vid(int finished, int *length, unsigned char *vid_data, int vid_data_len) {
       *length = end_offset;
       return vid_start;
    }
+}
+
+/*
+ *	make_ke	-- Make a Key Exchange payload
+ *
+ *	Inputs:
+ *
+ *      length		(output) length of key exchange payload.
+ *      next		Next Payload Type
+ *      kx_data_len	Key exchange data length
+ *
+ *	Returns:
+ *
+ *	Pointer to key exchange payload.
+ *
+ *	A real implementation would fill in the key exchange payload with the
+ *	Diffie Hellman public value.  However, we just use random data.
+ */
+unsigned char*
+make_ke(int *length, uint8_t next, int kx_data_len) {
+   unsigned char *payload;
+   struct isakmp_kx* hdr;
+   unsigned char *kx_data;
+   int i;
+
+   if (kx_data_len % 4)
+      err_msg("Key exchange data length %d is not a multiple of 4",
+              kx_data_len);
+
+   payload = Malloc(sizeof(struct isakmp_kx)+kx_data_len);
+   hdr = (struct isakmp_kx*) payload;	/* Overlay kx struct on payload */
+   memset(hdr, '\0', sizeof(struct isakmp_kx));
+
+   kx_data = payload + sizeof(struct isakmp_kx);
+   for (i=0; i<kx_data_len; i++)
+      *(kx_data++) = (unsigned char) (rand() & 0xff);
+
+   hdr->isakx_np = next;		/* Next payload type */
+   hdr->isakx_length = htons(sizeof(struct isakmp_kx)+kx_data_len);
+
+   *length = sizeof(struct isakmp_kx) + kx_data_len;
+
+   return payload;
+}
+
+/*
+ *	make_nonce	-- Make a Nonce payload
+ *
+ *	Inputs:
+ *
+ *	length		(output) length of nonce payload.
+ *      next		Next Payload Type
+ *	nonce_len	Length of nonce data.
+ *
+ *	Returns:
+ *
+ *	Pointer to nonce payload.
+ *
+ *	For a real implementation, the nonce should use strong random numbers.
+ *	However, we just use rand() because we don't care about the quality of
+ *	the random numbers for this tool.
+ */
+unsigned char*
+make_nonce(int *length, uint8_t next, int nonce_len) {
+   unsigned char *payload;
+   struct isakmp_nonce* hdr;
+   unsigned char *cp;
+   int i;
+
+   payload = Malloc(sizeof(struct isakmp_nonce)+nonce_len);
+   hdr = (struct isakmp_nonce*) payload;  /* Overlay nonce struct on payload */
+   memset(hdr, '\0', sizeof(struct isakmp_nonce));
+
+   hdr->isanonce_np = next;		/* Next payload type */
+   hdr->isanonce_length = htons(sizeof(struct isakmp_nonce)+nonce_len);
+
+   cp = payload+sizeof(struct isakmp_vid);
+   for (i=0; i<nonce_len; i++)
+      *(cp++) = (unsigned char) (rand() & 0xff);
+
+   return payload;
+}
+
+/*
+ *	make_id	-- Make an Identification payload
+ *
+ *	Inputs:
+ *
+ *      length		(output) length of ID payload.
+ *      next		Next Payload Type
+ *	idtype		Identification Type
+ *      id_data		ID data
+ *      id_data_len	ID data length
+ *
+ */
+unsigned char*
+make_id(int *length, uint8_t next, uint8_t idtype, unsigned char *id_data,
+        int id_data_len) {
+   unsigned char *payload;
+   struct isakmp_id* hdr;
+
+   payload = Malloc(sizeof(struct isakmp_id)+id_data_len);
+   hdr = (struct isakmp_id*) payload;	/* Overlay ID struct on payload */
+   memset(hdr, '\0', sizeof(struct isakmp_id));
+
+   hdr->isaid_np = next;		/* Next payload type */
+   hdr->isaid_length = htons(sizeof(struct isakmp_id)+id_data_len);
+   hdr->isaid_idtype = idtype;
+   hdr->isaid_doi_specific_a = 17;		/* Protocol: UDP */
+   hdr->isaid_doi_specific_b = htons(500);	/* Port: 500 */
+
+   memcpy(payload+sizeof(struct isakmp_id), id_data, id_data_len);
+   *length = sizeof(struct isakmp_id) + id_data_len;
+
+   return payload;
 }
 
 void isakmp_use_rcsid(void) {
