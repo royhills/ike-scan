@@ -206,6 +206,10 @@ main(int argc, char *argv[]) {
    unsigned long loop_timediff;	/* Time since last packet sent in ms */
    unsigned long host_timediff; /* Time since last packet sent to this host */
    unsigned long end_timediff=0; /* Time since last packet received in ms */
+   struct timeval start_time;	/* Program start time */
+   struct timeval end_time;	/* Program end time */
+   struct timeval elapsed_time;	/* Elapsed time as timeval */
+   double elapsed_seconds;	/* Elapsed time in seconds */
    int arg_str_space;		/* Used to avoid buffer overruns when copying */
    char patfile[MAXLINE];	/* IKE Backoff pattern file name */
    unsigned char *cp;
@@ -231,6 +235,11 @@ main(int argc, char *argv[]) {
    info_syslog("Starting: %s", arg_str);
 #endif
 /*
+ *      Get program start time for statistics displayed on completion.
+ */
+   if ((gettimeofday(&start_time, NULL)) != 0)
+      err_sys("gettimeofday");
+/*
  *	Initialise IKE pattern file name to the empty string.
  */
    patfile[0] = '\0';
@@ -254,25 +263,25 @@ main(int argc, char *argv[]) {
             dest_port=atoi(optarg);
             break;
          case 'r':	/* --retry */
-            retry=atoi(optarg);
+            retry=strtoul(optarg, (char **)NULL, 10);
             break;
          case 't':	/* --timeout */
-            timeout=atoi(optarg);
+            timeout=strtoul(optarg, (char **)NULL, 10);
             break;
          case 'i':	/* --interval */
-            interval=atoi(optarg);
+            interval=strtoul(optarg, (char **)NULL, 10);
             break;
          case 'b':	/* --backoff */
             backoff=atof(optarg);
             break;
          case 'w':	/* --selectwait */
-            select_timeout=atoi(optarg);
+            select_timeout=strtoul(optarg, (char **)NULL, 10);
             break;
          case 'v':	/* --verbose */
             verbose++;
             break;
          case 'l':	/* --lifetime */
-            lifetime=atoi(optarg);
+            lifetime=strtoul(optarg, (char **)NULL, 10);
             break;
          case 'm':	/* --auth */
             auth_method=atoi(optarg);
@@ -311,11 +320,11 @@ main(int argc, char *argv[]) {
             if (optarg == NULL) {
                end_wait=1000 * DEFAULT_END_WAIT;
             } else {
-               end_wait=1000 * atoi(optarg);
+               end_wait=1000 * strtoul(optarg, (char **)NULL, 10);
             }
             break;
          case 'u':	/* --fuzz */
-            pattern_fuzz=atoi(optarg);
+            pattern_fuzz=strtoul(optarg, (char **)NULL, 10);
             break;
          case 'n':	/* --id */
             /* Not implemented yet */
@@ -572,11 +581,25 @@ main(int argc, char *argv[]) {
    }
 
    close(sockfd);
+/*
+ *	Get program end time and calculate elapsed time.
+ */
+   if ((gettimeofday(&end_time, NULL)) != 0)
+      err_sys("gettimeofday");
+   timeval_diff(&end_time, &start_time, &elapsed_time);
+   elapsed_seconds = (elapsed_time.tv_sec*1000 +
+                      elapsed_time.tv_usec/1000) / 1000.0;
+
 #ifdef SYSLOG
-   info_syslog("Ending: %u hosts scanned. %u returned handshake; %u returned notify", num_hosts, transform_responders, notify_responders);
+   info_syslog("Ending: %u hosts scanned in %.3f seconds (%.2f hosts/sec). %u returned handshake; %u returned notify",
+               num_hosts, elapsed_seconds, num_hosts/elapsed_seconds,
+               transform_responders, notify_responders);
 #endif
-   printf("Ending %s: %u hosts scanned.  %u returned handshake; %u returned notify\n", PACKAGE_STRING, num_hosts, transform_responders, notify_responders);
-   return(0);
+   printf("Ending %s: %u hosts scanned in %.3f seconds (%.2f hosts/sec).  %u returned handshake; %u returned notify\n",
+          PACKAGE_STRING, num_hosts, elapsed_seconds,
+          num_hosts/elapsed_seconds,transform_responders, notify_responders);
+
+   return 0;
 }
 
 /*
@@ -1681,7 +1704,7 @@ unsigned int hstr_i(char *cptr)
             j <<= 4;
             j |= (i & 0x0f);
       }
-      return(j);
+      return j;
 }
 
 /*
