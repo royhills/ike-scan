@@ -18,6 +18,9 @@ $Id$
 	* isakmp.c: Add new add_vid() function.
 	* ike-scan.c: Use new add_vid() function to allow multiple VIDs to
 	  be specified.
+	* ike-scan.c: Add new function decode_trans.  Use this function to
+	  parse the --trans argument which allows the specification of
+	  encryption key length.
 
 2003-11-07 Roy Hills <Roy.Hills@nta-monitor.com>
 
