@@ -129,9 +129,10 @@ main(int argc, char *argv[]) {
       {"dhgroup", required_argument, 0, 'g'},
       {"patterns", required_argument, 0, 'p'},
       {"aggressive", no_argument, 0, 'A'},
+      {"gssid", required_argument, 0, 'G'},
       {0, 0, 0, 0}
    };
-   const char *short_options = "f:hs:d:r:t:i:b:w:vl:z:m:Ve:a:o::u:n:y:g:p:A";
+   const char *short_options = "f:hs:d:r:t:i:b:w:vl:z:m:Ve:a:o::u:n:y:g:p:AG:";
    int arg;
    char arg_str[MAXLINE];	/* Args as string for syslog */
    int options_index=0;
@@ -178,9 +179,12 @@ main(int argc, char *argv[]) {
    int first_timeout=1;
    unsigned char *vid_data;	/* Binary Vendor ID data */
    int vid_data_len;		/* Vendor ID data length */
+   unsigned char *gss_data=NULL;	/* Binary GSSID data */
+   int gss_data_len=0;		/* GSSID data length */
    unsigned char *id_data=NULL;	/* Identity data */
    int id_data_len=0;		/* Identity data length */
    int vendor_id_flag = 0;	/* Indicates if VID to be used */
+   int gss_id_flag = 0;		/* Indicates if GSSID to be used */
    int trans_flag = 0;		/* Indicates custom transform */
    int showbackoff_flag = 0;	/* Display backoff table? */
    int patterns_loaded = 0;	/* Indicates if backoff patterns loaded */
@@ -300,7 +304,8 @@ main(int argc, char *argv[]) {
             decode_trans(trans_str, &trans_enc, &trans_keylen, &trans_hash,
                          &trans_auth, &trans_group);
             add_trans(0, NULL, trans_enc, trans_keylen, trans_hash,
-                      trans_auth, trans_group, lifetime, lifesize);
+                      trans_auth, trans_group, lifetime, lifesize,
+                      gss_id_flag, gss_data, gss_data_len);
             break;
          case 'o':	/* --showbackoff */
             showbackoff_flag=1;
@@ -334,6 +339,17 @@ main(int argc, char *argv[]) {
             break;
          case 'A':	/* --aggressive */
             exchange_type = ISAKMP_XCHG_AGGR;
+            break;
+         case 'G':	/* --gssid */
+            if (strlen(optarg) % 2) {	/* Length is odd */
+               err_msg("Length of --gssid argument must be even (multiple of 2).");
+            }
+            gss_id_flag=1;
+            gss_data_len=strlen(optarg)/2;
+            gss_data = Malloc(gss_data_len);
+            cp = gss_data;
+            for (i=0; i<gss_data_len; i++)
+               *cp++=hstr_i(&optarg[i*2]);
             break;
          default:	/* Unknown option */
             usage();
@@ -459,7 +475,7 @@ main(int argc, char *argv[]) {
    Gettimeofday(&last_recv_time, NULL);
    initialise_ike_packet(lifetime, lifesize, auth_method, dhgroup, idtype,
                          id_data, id_data_len, vendor_id_flag, trans_flag,
-                         exchange_type);
+                         exchange_type, gss_id_flag, gss_data, gss_data_len);
 /*
  *	Check ISAKMP structure sizes.
  */
@@ -1034,7 +1050,8 @@ void
 initialise_ike_packet(unsigned lifetime, unsigned lifesize, int auth_method,
                       int dhgroup, int idtype, unsigned char *id_data,
                       int id_data_len, int vendor_id_flag, int trans_flag,
-                      int exchange_type) {
+                      int exchange_type, int gss_id_flag,
+                      unsigned char *gss_data, int gss_data_len) {
    struct isakmp_hdr *hdr;
    struct isakmp_sa *sa;
    struct isakmp_proposal *prop;
@@ -1108,33 +1125,33 @@ initialise_ike_packet(unsigned lifetime, unsigned lifesize, int auth_method,
    if (!trans_flag) {	/* Use standard transform set if none specified */
       if (exchange_type == ISAKMP_XCHG_IDPROT) {	/* Main Mode */
          add_trans(0, NULL, OAKLEY_3DES_CBC, 0, OAKLEY_SHA, auth_method,
-                   2, lifetime, lifesize);
+                   2, lifetime, lifesize, gss_id_flag, gss_data, gss_data_len);
          add_trans(0, NULL, OAKLEY_3DES_CBC, 0, OAKLEY_MD5, auth_method,
-                   2, lifetime, lifesize);
+                   2, lifetime, lifesize, gss_id_flag, gss_data, gss_data_len);
          add_trans(0, NULL, OAKLEY_DES_CBC,  0, OAKLEY_SHA, auth_method,
-                   2, lifetime, lifesize);
+                   2, lifetime, lifesize, gss_id_flag, gss_data, gss_data_len);
          add_trans(0, NULL, OAKLEY_DES_CBC,  0, OAKLEY_MD5, auth_method,
-                   2, lifetime, lifesize);
+                   2, lifetime, lifesize, gss_id_flag, gss_data, gss_data_len);
          add_trans(0, NULL, OAKLEY_3DES_CBC, 0, OAKLEY_SHA, auth_method,
-                   1, lifetime, lifesize);
+                   1, lifetime, lifesize, gss_id_flag, gss_data, gss_data_len);
          add_trans(0, NULL, OAKLEY_3DES_CBC, 0, OAKLEY_MD5, auth_method,
-                   1, lifetime, lifesize);
+                   1, lifetime, lifesize, gss_id_flag, gss_data, gss_data_len);
          add_trans(0, NULL, OAKLEY_DES_CBC,  0, OAKLEY_SHA, auth_method,
-                   1, lifetime, lifesize);
+                   1, lifetime, lifesize, gss_id_flag, gss_data, gss_data_len);
          add_trans(0, NULL, OAKLEY_DES_CBC,  0, OAKLEY_MD5, auth_method,
-                   1, lifetime, lifesize);
+                   1, lifetime, lifesize, gss_id_flag, gss_data, gss_data_len);
       } else {	/* presumably aggressive mode */
          add_trans(0, NULL, OAKLEY_3DES_CBC, 0, OAKLEY_SHA, auth_method,
-                   dhgroup, lifetime, lifesize);
+                   dhgroup, lifetime, lifesize, gss_id_flag, gss_data, gss_data_len);
          add_trans(0, NULL, OAKLEY_3DES_CBC, 0, OAKLEY_MD5, auth_method,
-                   dhgroup, lifetime, lifesize);
+                   dhgroup, lifetime, lifesize, gss_id_flag, gss_data, gss_data_len);
          add_trans(0, NULL, OAKLEY_DES_CBC,  0, OAKLEY_SHA, auth_method,
-                   dhgroup, lifetime, lifesize);
+                   dhgroup, lifetime, lifesize, gss_id_flag, gss_data, gss_data_len);
          add_trans(0, NULL, OAKLEY_DES_CBC,  0, OAKLEY_MD5, auth_method,
-                   dhgroup, lifetime, lifesize);
+                   dhgroup, lifetime, lifesize, gss_id_flag, gss_data, gss_data_len);
       }
    }
-   transforms = add_trans(1, &trans_len, 0,  0, 0, 0, 0, 0, 0);
+   transforms = add_trans(1, &trans_len, 0,  0, 0, 0, 0, 0, 0, 0, NULL, 0);
    buflen += trans_len;
 /*
  *	Proposal payload
@@ -1858,6 +1875,9 @@ usage(void) {
    fprintf(stderr, "\n--dhgroup=n or -g n\tUse Diffie Hellman Group <n>.  Default %d.\n", DEFAULT_DH_GROUP);
    fprintf(stderr, "\t\t\tThis option is only applicable to Aggressive Mode.\n");
    fprintf(stderr, "\t\t\tAcceptable values are 1,2,5,14,15,16,17,18 (MODP only).\n");
+   fprintf(stderr, "\n--gssid=<n> or -G <n>\tUse GSS ID <n> where <n> is a hex string.\n");
+   fprintf(stderr, "\t\t\tThis uses transform attribute type 16384.\n");
+   fprintf(stderr, "\t\t\tThis is currently experimental.\n");
    fprintf(stderr, "\n");
    fprintf(stderr, "Report bugs or send suggestions to %s\n", PACKAGE_BUGREPORT);
    fprintf(stderr, "See the ike-scan homepage at http://www.nta-monitor.com/ike-scan/\n");
