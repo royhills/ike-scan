@@ -911,6 +911,11 @@ recvfrom_wto(int s, char *buf, int len, struct sockaddr *saddr, int tmo) {
    fd_set readset;
    struct timeval to;
    int n;
+/*
+ * Portability note:
+ * Some systems (e.g. HP-UX and Tru64) want saddr_len below to be an int
+ * or size_t rather than socklen_t.
+ */
    socklen_t saddr_len;
 
    FD_ZERO(&readset);
