@@ -87,6 +87,8 @@ Firewall-1 Unknown Vsn	^f4ed19e0c114eb516faaac0ee37daf2807b4381f
 Dead Peer Detection	^afcad71368a1f1c96b8696fc7757....
 
 # XAUTH
+# This is a truncated MD5 hash of "draft-ietf-ipsra-isakmp-xauth-06.txt"
+# Why "ipsra" and not "ipsec" as in the draft name I wonder?
 XAUTH	^09002689dfd6b712
 
 # SSH Communications Security IPSEC Express
