@@ -1,5 +1,20 @@
 $Id$
 
+2003-02-18 Roy Hills <Roy.Hills@nta-monitor.com>
+
+	* Released version v1.1.  Tarball size 91606 bytes, Zip size 578034.
+	  tarball md5sum: b87fe14043c43c2897cf309c364574b7
+	  zip md5sum: 59db0f1f170aaf50dfb2c05f4f950d00
+
+2003-02-03 Roy Hills <Roy.Hills@nta-monitor.com>
+
+	* Makefile.am: Changed DATADIR to IKEDATADIR.
+	* ike-scan.h: Include <windows.h> if compiling under Cygwin.
+	* ike-scan.c: Use ike-scan.exe dir as default patterns file dir
+	  if compiling under Cygwin.
+	* ike-scan now compiles under Cygwin and can be used as a Windows EXE
+	  if CYGWIN1.DLL is present.
+
 2003-01-30 Roy Hills <Roy.Hills@nta-monitor.com>
 
 	* Minor changes to --help output to make use of <> brackets
