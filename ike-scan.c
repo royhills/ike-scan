@@ -145,6 +145,8 @@ struct host_entry *rrlist = NULL;	/* Round-robin linked list "the list" */
 struct host_entry *cursor;		/* Pointer to current list entry */
 struct pattern_list *patlist = NULL;	/* Backoff pattern list */
 unsigned num_hosts = 0;			/* Number of entries in the list */
+unsigned transform_responders = 0;	/* Number of hosts giving handshake */
+unsigned notify_responders = 0;		/* Number of hosts giving notify msg */
 unsigned live_count;			/* Number of entries awaiting reply */
 unsigned retry = DEFAULT_RETRY;		/* Number of retries */
 unsigned timeout = DEFAULT_TIMEOUT;	/* Per-host timeout */
@@ -489,9 +491,6 @@ main(int argc, char *argv[]) {
 /*
  *	Display initial message.
  */
-#ifdef SYSLOG
-   info_syslog("%d hosts in list", num_hosts);
-#endif
    printf("Starting %s with %d hosts (http://www.nta-monitor.com/ike-scan/)\n", VERSION, num_hosts);
 /*
  *	Display the lists if verbose setting is 3 or more.
@@ -594,7 +593,7 @@ main(int argc, char *argv[]) {
 
    close(sockfd);
 #ifdef SYSLOG
-   info_syslog("Ending");
+   info_syslog("Ending: %d hosts scanned. %d returned transform; %d returned notify", num_hosts, transform_responders, notify_responders);
 #endif
    return(0);
 }
@@ -782,6 +781,7 @@ display_packet(int n, char *packet_in, struct host_entry *he, struct in_addr *re
 /*
  *	1st payload is SA -- IKE handshake
  */
+      transform_responders++;
       if (n >= sizeof(hdr_in) + sizeof(sa_hdr_in) + sizeof(sa_prop_in)) {
          packet_in += sizeof(hdr_in);
          memcpy(&sa_hdr_in, packet_in, sizeof(sa_hdr_in));
@@ -797,6 +797,7 @@ display_packet(int n, char *packet_in, struct host_entry *he, struct in_addr *re
 /*
  *	1st payload is notification -- Informational message
  */
+      notify_responders++;
       if (n >= sizeof(hdr_in) + sizeof(notification_in)) {
          packet_in += sizeof(hdr_in);
          memcpy(&notification_in, packet_in, sizeof(notification_in));
