@@ -2468,7 +2468,7 @@ usage(int status) {
    fprintf(stderr, "\t\t\toption, note that all transforms should have the same\n");
    fprintf(stderr, "\t\t\tDH Group and this should match the group specified\n");
    fprintf(stderr, "\t\t\twith --dhgroup or the default if --dhgroup is not used.\n");
-   fprintf(stderr, "\n--id <id> or -n <id>\tUse <id> as the identification value.\n");
+   fprintf(stderr, "\n--id=<id> or -n <id>\tUse <id> as the identification value.\n");
    fprintf(stderr, "\t\t\tThis option is only applicable to Aggressive Mode.\n");
    fprintf(stderr, "\t\t\t<id> can be specified as a string, e.g. --id=test or as\n");
    fprintf(stderr, "\t\t\ta hex value with a leading \"0x\", e.g. --id=0xdeadbeef.\n");
