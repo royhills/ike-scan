@@ -1035,9 +1035,7 @@ process_vid(unsigned char *cp, size_t len, struct vid_pattern_list *vidlist) {
    char *p;
    unsigned char *vid_data;
    size_t data_len;
-#ifdef HAVE_REGEX_H
    struct vid_pattern_list *ve;
-#endif
 
    if (len < sizeof(struct isakmp_vid) ||
         ntohs(hdr->isavid_length) < sizeof(struct isakmp_vid))
@@ -1052,7 +1050,6 @@ process_vid(unsigned char *cp, size_t len, struct vid_pattern_list *vidlist) {
 /*
  *	Try to find a match in the Vendor ID pattern list.
  */
-#ifdef HAVE_REGEX_H
    ve = vidlist;
    while(ve != NULL) {
       if (!(regexec(ve->regex, hexvid, 0, NULL, 0))) {
@@ -1063,7 +1060,6 @@ process_vid(unsigned char *cp, size_t len, struct vid_pattern_list *vidlist) {
       }
       ve=ve->next;
    }
-#endif
    free(hexvid);
    return msg;
 }
