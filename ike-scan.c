@@ -67,7 +67,7 @@ int source_port = DEFAULT_SOURCE_PORT;	/* UDP source port */
 int dest_port = DEFAULT_DEST_PORT;	/* UDP destination port */
 unsigned lifetime = DEFAULT_LIFETIME;	/* Lifetime in seconds */
 int auth_method = DEFAULT_AUTH_METHOD;	/* Authentication method */
-unsigned end_wait = DEFAULT_END_WAIT;	/* Time to wait after all done */
+unsigned end_wait = DEFAULT_END_WAIT;	/* Time to wait after all done in ms */
 unsigned pattern_fuzz = DEFAULT_PATTERN_FUZZ; /* Pattern matching fuzz in ms */
 int dhgroup = DEFAULT_DH_GROUP;		/* Diffie Hellman Group */
 int idtype = DEFAULT_IDTYPE;		/* IKE Identification type */
@@ -205,9 +205,9 @@ main(int argc, char *argv[]) {
    struct host_entry *temp_cursor;
    struct hostent *hp;
    struct timeval diff;		/* Difference between two timevals */
-   unsigned long loop_timediff;
-   unsigned long host_timediff;
-   unsigned long end_timediff=0;
+   unsigned long loop_timediff;	/* Time since last packet sent in ms */
+   unsigned long host_timediff; /* Time since last packet sent to this host */
+   unsigned long end_timediff=0; /* Time since last packet received in ms */
    int arg_str_space;		/* Used to avoid buffer overruns when copying */
    char patfile[MAXLINE];	/* IKE Backoff pattern file name */
 /*
@@ -446,9 +446,11 @@ main(int argc, char *argv[]) {
  *
  *	The loop exits when all hosts have either responded or timed out
  *	and, if showbackoff_flag is set, at least end_wait ms have elapsed
- *	since the last packet was received.
+ *	since the last packet was received and we have received at least one
+ *	transform response.
  */
-   while (live_count || (showbackoff_flag && end_timediff < end_wait)) {
+   while (live_count ||
+          (showbackoff_flag && transform_responders && (end_timediff < end_wait))) {
 /*
  *	Obtain current time and calculate deltas since last packet and
  *	last packet to this host.
@@ -516,8 +518,8 @@ main(int argc, char *argv[]) {
          } else {
             struct isakmp_hdr hdr_in;
 /*
- *	The received cookie doesn't match any entry in the list
- *	so just issue a message to that effect and ignore the packet.
+ *	The received cookie doesn't match any entry in the list.
+ *	Issue a message to that effect if verbose is on and ignore the packet.
  */
             if (verbose && n >= sizeof(hdr_in)) {
                memcpy(&hdr_in, packet_in, sizeof(hdr_in));
@@ -527,15 +529,18 @@ main(int argc, char *argv[]) {
       } /* End If */
    } /* End While */
 /*
- *	Display the backoff times if --showbackoff option was specified.
+ *	Display the backoff times if --showbackoff option was specified
+ *	and we have at least one system returning a handshake.
  */
-   if (showbackoff_flag)
+   if (showbackoff_flag && transform_responders) {
       dump_times();
+   }
 
    close(sockfd);
 #ifdef SYSLOG
-   info_syslog("Ending: %u hosts scanned. %u returned transform; %u returned notify", num_hosts, transform_responders, notify_responders);
+   info_syslog("Ending: %u hosts scanned. %u returned handshake; %u returned notify", num_hosts, transform_responders, notify_responders);
 #endif
+   printf("Ending %s: %u hosts scanned.  %u returned handshake; %u returned notify\n", VERSION, num_hosts, transform_responders, notify_responders);
    return(0);
 }
 
@@ -754,7 +759,7 @@ display_packet(int n, char *packet_in, struct host_entry *he, struct in_addr *re
          msg_type = ntohs(notification_in.isan_type);
          if (msg_type < 31) {                /* RFC Defined message types */
             printf("%sNotify message %d (%s)\n", ip_str, msg_type, notification_msg[msg_type]);
-         } else if (msg_type == 9101) {      /* Firewall-1 4.x message */
+         } else if (msg_type == 9101) {      /* Firewall-1 4.x/NG Base msg */
             char *p;
             msg_len = ntohs(notification_in.isan_length) - sizeof(notification_in);
             packet_in += sizeof(notification_in);
@@ -768,7 +773,7 @@ display_packet(int n, char *packet_in, struct host_entry *he, struct in_addr *re
                if (!isprint(*p))
                   *p='.';
             }
-            printf("%sNotify message %d (%s)\n", ip_str, msg_type, msg_in);
+            printf("%sNotify message %d [Checkpoint Firewall-1 4.x or NG Base] (%s)\n", ip_str, msg_type, msg_in);
          } else {                            /* Unknown message type */
             printf("%sNotify message %d (UNKNOWN MESSAGE TYPE)\n", ip_str, msg_type);
          }
