@@ -181,9 +181,6 @@ unsigned char *SHA1(const unsigned char *, size_t, unsigned char *);
  */
 #undef ALPHA				/* Smoothing factor */
 
-#define STR_OR_ID(x, tab) \
-        (((x) < sizeof(tab)/sizeof(tab[0]) && tab[(x)]) ? tab[(x)] : numstr(x))
-
 /* Structures */
 struct host_entry {
    struct time_list *recv_times; /* List of receive times */
