@@ -134,7 +134,7 @@ enum field_type {
     ft_af_enum, /* Attribute Format + value from an enumeration */
     ft_set,     /* bits representing set */
     ft_raw,     /* bytes to be left in network-order */
-    ft_end,     /* end of field list */
+    ft_end      /* end of field list */
 };
 
 typedef const struct field_desc {
