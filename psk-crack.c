@@ -43,7 +43,7 @@ static const char rcsid[] = "$Id$";	/* RCS ID for ident(1) */
 #define MD5_HASH_LEN 16
 #define SHA1_HASH_LEN 20
 
-const char *default_charset =
+char *default_charset =
    "0123456789abcdefghijklmnopqrstuvwxyz"; /* default bruteforce charset */
 
 int
