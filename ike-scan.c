@@ -49,7 +49,7 @@
 static char rcsid[] = "$Id$";   /* RCS ID for ident(1) */
 
 /* Global variables */
-struct host_entry *rrlist = NULL;	/* Round-robin linked list "the list" */
+struct host_entry *rrlist = NULL;	/* Round-robin linked list of hosts */
 struct host_entry *cursor;		/* Pointer to current list entry */
 struct pattern_list *patlist = NULL;	/* Backoff pattern list */
 unsigned num_hosts = 0;			/* Number of entries in the list */
@@ -57,10 +57,6 @@ unsigned transform_responders = 0;	/* Number of hosts giving handshake */
 unsigned notify_responders = 0;		/* Number of hosts giving notify msg */
 unsigned live_count;			/* Number of entries awaiting reply */
 int verbose=0;
-struct timeval last_recv_time;		/* Time last packet was received */
-/* These two should be made local.  Used by initialise and send_packet */
-unsigned char *buf;
-int buflen;
 
 const char *auth_methods[] = { /* Authentication methods from RFC 2409 Appendix A */
    "UNSPECIFIED",		/* 0 */
@@ -188,7 +184,10 @@ main(int argc, char *argv[]) {
    int trans_flag = 0;		/* Indicates custom transform */
    int showbackoff_flag = 0;	/* Display backoff table? */
    int patterns_loaded = 0;	/* Indicates if backoff patterns loaded */
+   struct timeval last_recv_time;	/* Time last packet was received */
    unsigned char *cp;
+   unsigned char *packet_out;	/* IKE packet to send */
+   int packet_out_len;		/* Length of IKE packet to send */
 /*
  *	Open syslog channel and log arguments if required.
  *	We must be careful here to avoid overflowing the arg_str buffer
@@ -473,9 +472,11 @@ main(int argc, char *argv[]) {
    last_packet_time.tv_sec=0;
    last_packet_time.tv_usec=0;
    Gettimeofday(&last_recv_time, NULL);
-   initialise_ike_packet(lifetime, lifesize, auth_method, dhgroup, idtype,
-                         id_data, id_data_len, vendor_id_flag, trans_flag,
-                         exchange_type, gss_id_flag, gss_data, gss_data_len);
+   packet_out=initialise_ike_packet(&packet_out_len, lifetime, lifesize,
+                                    auth_method, dhgroup, idtype,
+                                    id_data, id_data_len, vendor_id_flag,
+                                    trans_flag, exchange_type, gss_id_flag,
+                                    gss_data, gss_data_len);
 /*
  *	Check ISAKMP structure sizes.
  */
@@ -574,7 +575,8 @@ main(int argc, char *argv[]) {
             } else {	/* Retry limit not reached for this host */
                if (cursor->num_sent)
                   cursor->timeout *= backoff_factor;
-               send_packet(sockfd, cursor, dest_port, &last_packet_time);
+               send_packet(sockfd, packet_out, packet_out_len, cursor,
+                           dest_port, &last_packet_time);
                advance_cursor();
             }
          } else {	/* We can't send a packet to this host yet */
@@ -591,7 +593,8 @@ main(int argc, char *argv[]) {
       } else {		/* We can't send a packet yet */
          select_timeout = req_interval - loop_timediff;
       } /* End If */
-      n=recvfrom_wto(sockfd, packet_in, MAXUDP, (struct sockaddr *)&sa_peer, select_timeout);
+      n=recvfrom_wto(sockfd, packet_in, MAXUDP, (struct sockaddr *)&sa_peer,
+                     select_timeout);
       if (n != -1) {
 /*
  *	We've received a response try to match up the packet by cookie
@@ -604,7 +607,7 @@ main(int argc, char *argv[]) {
 /*
  *	We found a cookie match for the returned packet.
  */
-            add_recv_time(temp_cursor);
+            add_recv_time(temp_cursor, &last_recv_time);
             if (verbose > 1)
                warn_msg("---\tReceived packet #%u from %s",temp_cursor->num_recv ,inet_ntoa(sa_peer.sin_addr));
             if (temp_cursor->live) {
@@ -667,7 +670,7 @@ main(int argc, char *argv[]) {
  *	Returns: None
  */
 void
-add_host(char *name, unsigned timeout) {
+add_host(const char *name, unsigned timeout) {
    struct hostent *hp;
    struct host_entry *he;
    char str[MAXLINE];
@@ -911,6 +914,8 @@ display_packet(int n, unsigned char *packet_in, struct host_entry *he,
  *	Inputs:
  *	
  *	s               UDP socket file descriptor
+ *	packet_out	IKE packet to send
+ *	packet_out_len	Length of IKE packet to send
  *	he              Host entry to send to
  *	dest_port       Destination UDP port
  *	last_packet_time        Time when last packet was sent
@@ -924,11 +929,12 @@ display_packet(int n, unsigned char *packet_in, struct host_entry *he,
  *	It must also update the "last_send_time" field for this host entry.
  */
 void
-send_packet(int s, struct host_entry *he, int dest_port,
+send_packet(int s, unsigned char *packet_out, int packet_out_len,
+            struct host_entry *he, int dest_port,
             struct timeval *last_packet_time) {
    struct sockaddr_in sa_peer;
    NET_SIZE_T sa_peer_len;
-   struct isakmp_hdr *hdr = (struct isakmp_hdr *) buf;
+   struct isakmp_hdr *hdr = (struct isakmp_hdr *) packet_out;
 /*
  *	Set up the sockaddr_in structure for the host.
  */
@@ -954,7 +960,8 @@ send_packet(int s, struct host_entry *he, int dest_port,
  */
    if (verbose > 1)
       warn_msg("---\tSending packet #%u to host entry %u (%s) tmo %d", he->num_sent, he->n, inet_ntoa(he->addr), he->timeout);
-   if ((sendto(s, buf, buflen, 0, (struct sockaddr *) &sa_peer, sa_peer_len)) < 0) {
+   if ((sendto(s, packet_out, packet_out_len, 0, (struct sockaddr *) &sa_peer,
+       sa_peer_len)) < 0) {
       err_sys("sendto");
    }
 }
@@ -1046,12 +1053,13 @@ timeval_diff(struct timeval *a, struct timeval *b, struct timeval *diff) {
  *	This ensures that we know the "next payload" value for the previous
  *	payload, and also that we know the total length for the ISAKMP header.
  */
-void
-initialise_ike_packet(unsigned lifetime, unsigned lifesize, int auth_method,
-                      int dhgroup, int idtype, unsigned char *id_data,
-                      int id_data_len, int vendor_id_flag, int trans_flag,
-                      int exchange_type, int gss_id_flag,
-                      unsigned char *gss_data, int gss_data_len) {
+unsigned char *
+initialise_ike_packet(int *packet_out_len, unsigned lifetime,
+                      unsigned lifesize, int auth_method, int dhgroup,
+                      int idtype, unsigned char *id_data, int id_data_len,
+                      int vendor_id_flag, int trans_flag, int exchange_type,
+                      int gss_id_flag, unsigned char *gss_data,
+                      int gss_data_len) {
    struct isakmp_hdr *hdr;
    struct isakmp_sa *sa;
    struct isakmp_proposal *prop;
@@ -1061,6 +1069,7 @@ initialise_ike_packet(unsigned lifetime, unsigned lifesize, int auth_method,
    unsigned char *nonce=NULL;
    unsigned char *ke=NULL;	/* Key Exchange */
    unsigned char *cp;
+   unsigned char *packet_out;	/* Constructed IKE packet */
    int vid_len;
    int trans_len;
    int id_len;
@@ -1068,12 +1077,14 @@ initialise_ike_packet(unsigned lifetime, unsigned lifesize, int auth_method,
    int nonce_data_len=20;
    int ke_len;
    int kx_data_len;
+
+   *packet_out_len = 0;
 /*
  *	Vendor ID Payload (Optional)
  */
    if (vendor_id_flag) {
       vid = add_vid(1, &vid_len, NULL, 0);
-      buflen += vid_len;
+      *packet_out_len += vid_len;
    }
 /*
  *	Key Exchange, Nonce and ID for aggressive mode only.
@@ -1084,40 +1095,40 @@ initialise_ike_packet(unsigned lifetime, unsigned lifesize, int auth_method,
       } else {
          id = make_id(&id_len, ISAKMP_NEXT_NONE, idtype, id_data, id_data_len);
       }
-      buflen += id_len;
+      *packet_out_len += id_len;
       nonce = make_nonce(&nonce_len, ISAKMP_NEXT_ID, nonce_data_len);
-      buflen += nonce_len;
+      *packet_out_len += nonce_len;
       switch (dhgroup) {
          case 1:
-            kx_data_len = 96;
+            kx_data_len = 96;	/* Group 1 - 768 bits */
             break;
          case 2:
-            kx_data_len = 128;
+            kx_data_len = 128;	/* Group 2 - 1024 bits */
             break;
          case 5:
-            kx_data_len = 192;
+            kx_data_len = 192;	/* Group 5 - 1536 bits */
             break;
          case 14:
-            kx_data_len = 256;
+            kx_data_len = 256;	/* Group 14 - 2048 bits */
             break;
          case 15:
-            kx_data_len = 384;
+            kx_data_len = 384;	/* Group 15 - 3072 bits */
             break;
          case 16:
-            kx_data_len = 512;
+            kx_data_len = 512;	/* Group 16 - 4096 bits */
             break;
          case 17:
-            kx_data_len = 768;
+            kx_data_len = 768;	/* Group 17 - 6144 bits */
             break;
          case 18:
-            kx_data_len = 1024;
+            kx_data_len = 1024;	/* Group 18 - 8192 bits */
             break;
          default:
             err_msg("Bad Diffie Hellman group: %d, should be 1,2,5,14,15,16,17 or 18", dhgroup);
             exit(1);
       }
       ke = make_ke(&ke_len, ISAKMP_NEXT_NONCE, kx_data_len);
-      buflen += ke_len;
+      *packet_out_len += ke_len;
    }
 /*
  *	Transform payloads
@@ -1152,7 +1163,7 @@ initialise_ike_packet(unsigned lifetime, unsigned lifesize, int auth_method,
       }
    }
    transforms = add_trans(1, &trans_len, 0,  0, 0, 0, 0, 0, 0, 0, NULL, 0);
-   buflen += trans_len;
+   *packet_out_len += trans_len;
 /*
  *	Proposal payload
  */
@@ -1161,7 +1172,7 @@ initialise_ike_packet(unsigned lifetime, unsigned lifesize, int auth_method,
    } else {
       prop = make_prop(trans_len+sizeof(struct isakmp_proposal), 8);
    }
-   buflen += sizeof(struct isakmp_proposal);
+   *packet_out_len += sizeof(struct isakmp_proposal);
 /*
  *	SA Header
  */
@@ -1180,17 +1191,17 @@ initialise_ike_packet(unsigned lifetime, unsigned lifesize, int auth_method,
                        sizeof(struct isakmp_proposal)+
                        sizeof(struct isakmp_sa));
    }
-   buflen += sizeof(struct isakmp_sa);
+   *packet_out_len += sizeof(struct isakmp_sa);
 /*
  *	ISAKMP Header
  */
-   buflen += sizeof(struct isakmp_hdr);
-   hdr = make_isakmp_hdr(exchange_type, ISAKMP_NEXT_SA, buflen);
+   *packet_out_len += sizeof(struct isakmp_hdr);
+   hdr = make_isakmp_hdr(exchange_type, ISAKMP_NEXT_SA, *packet_out_len);
 /*
  *	Allocate packet and copy payloads into packet.
  */
-   buf=Malloc(buflen);
-   cp = buf;
+   packet_out=Malloc(*packet_out_len);
+   cp = packet_out;
    memcpy(cp, hdr, sizeof(struct isakmp_hdr));
    cp += sizeof(struct isakmp_hdr);
    memcpy(cp, sa, sizeof(struct isakmp_sa));
@@ -1211,6 +1222,8 @@ initialise_ike_packet(unsigned lifetime, unsigned lifesize, int auth_method,
       memcpy(cp, vid, vid_len);
       cp += vid_len;
    }
+
+   return packet_out;
 }
 
 /*
@@ -1423,7 +1436,7 @@ int diff_ms;
  *	add_recv_time -- Add current time to the recv_times list
  */
 void
-add_recv_time(struct host_entry *he) {
+add_recv_time(struct host_entry *he, struct timeval *last_recv_time) {
    struct time_list *p;		/* Temp pointer */
    struct time_list *te;	/* New timeentry pointer */
 /*
@@ -1431,8 +1444,8 @@ add_recv_time(struct host_entry *he) {
  */   
    te = Malloc(sizeof(struct time_list));
    Gettimeofday(&(te->time), NULL);
-   last_recv_time.tv_sec = te->time.tv_sec;
-   last_recv_time.tv_usec = te->time.tv_usec;
+   last_recv_time->tv_sec = te->time.tv_sec;
+   last_recv_time->tv_usec = te->time.tv_usec;
    te->next = NULL;
 /*
  *	Insert new time structure on the tail of the recv_times list.
@@ -1631,7 +1644,7 @@ check_struct_sizes() {
  *
  *	This function is a modified version of hstr_i at www.snippets.org.
  */
-unsigned int hstr_i(char *cptr)
+unsigned int hstr_i(const char *cptr)
 {
       unsigned int i;
       unsigned int j = 0;
