@@ -48,7 +48,6 @@ int recvfrom_wto(int, char *, int, struct sockaddr *, int);
 void remove_host(struct host_entry *);
 int timeval_diff(struct timeval *, struct timeval *);
 void initialise_ike_packet(void);
-struct host_entry *find_host_by_ip(struct host_entry *, struct in_addr *);
 struct host_entry *find_host_by_cookie(struct host_entry *, char *, int);
 void display_packet(int, char *, struct host_entry *, struct in_addr *);
 void advance_cursor(void);
