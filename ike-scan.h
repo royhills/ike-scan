@@ -6,7 +6,6 @@
 
 /* Defines */
 
-#define VERSION "ike-scan version 1.0 2002-09-11 <Roy.Hills@nta-monitor.com>"
 #define MAXLINE 255			/* Max line length for input files */
 #define MAXUDP 65507			/* Max UDP data size = 64k - 20 - 8 */
 #define DEFAULT_SELECT_TIMEOUT 10	/* Default select timeout in ms */
