@@ -1226,6 +1226,10 @@ dump_list(void) {
 
 /*
  *	dump_backoff -- Display contents of backoff list for debugging
+ *
+ *	This displays the contents of the backoff pattern list.  It is useful
+ *	when debugging to check that the patterns have been loaded correctly
+ *	from the backoff patterns file.
  */
 void
 dump_backoff(void) {
@@ -1241,11 +1245,28 @@ dump_backoff(void) {
       printf("%d\t%s\t%d\t", i, pl->name, pl->num_times);
       pp = pl->recv_times;
       while (pp != NULL) {
-         printf("%ld.%.6ld, ", (long)pp->time.tv_sec, (long)pp->time.tv_usec);
+/*
+ *  Only print the fractional seconds part if required (generally it's not).
+ *  We cast to long because some OSes define tv_sec/tv_usec as long and
+ *  others define them as long.
+ */
+         if (pp->time.tv_usec) {
+            printf("%ld.%.6ld", (long)pp->time.tv_sec, (long)pp->time.tv_usec);
+         } else {
+            printf("%ld", (long)pp->time.tv_sec);
+         }
          pp = pp->next;
+/*
+ * Print a newline if we're at the end of this pattern, otherwise print a
+ * comma and space before the next time element.
+ */
+         if (pp == NULL) {
+            printf("\n");
+         } else {
+            printf(", ");
+         } 
       }
       pl = pl->next;
-      printf("\n");
       i++;
    } /* End While */
    printf("\nTotal of %d backoff pattern entries.\n\n", i-1);
@@ -1434,7 +1455,10 @@ add_pattern(char *line) {
    struct time_list *tp;
    char *endp;
    int i;
-   double back;
+   long back_sec;
+   long back_usec;
+   char back_usec_str[7];       /* Backoff microseconds as string */
+   int len;
 /*
  *	Allocate new pattern list entry and add to tail of patlist.
  */
@@ -1483,12 +1507,46 @@ add_pattern(char *line) {
    i=0;
    endp=pat;
    while (*endp != '\0') {
-      back=strtod(endp, &endp);
+/*
+ *      Convert the integer seconds part of the backoff pattern entry.
+ */
+      back_sec=strtol(endp, &endp, 10);
+/*
+ *      If there is a "." after the integer part, then there are fractional
+ *      seconds to convert.  Convert the fractional seconds into a string
+ *      representation of milliseconds by zero-extending to 6 digits and
+ *      then convert to long.
+ */
+      if (*endp == '.') {
+         endp++;
+         len=0;
+         for (len=0; len<6; len++){
+            if (isdigit(*endp)) {
+               back_usec_str[len] = *endp;
+               endp++;
+            } else {
+               back_usec_str[len] = '0';
+            }
+         }
+         back_usec_str[len] = '\0';
+         back_usec=strtol(back_usec_str, NULL, 10);
+      } else {
+         back_usec=0;
+      }
+/*
+ *      If there is a "/" after the number, this represents a fuzz value
+ *      in milliseconds.
+ *	*NOT YET COMPLETE*
+ */
+/*
+ *      Allocate and fill in new time_list structure for this backoff pattern
+ *      entry and add it onto the tail of this pattern entry.
+ */
       if ((te = malloc(sizeof(struct time_list))) == NULL)
          err_sys("malloc");
       te->next=NULL;
-      te->time.tv_sec = floor(back);
-      te->time.tv_usec = (back - te->time.tv_sec) * 1000000;
+      te->time.tv_sec = back_sec;
+      te->time.tv_usec = back_usec;
       tp = pe->recv_times;
       if (tp == NULL) {
          pe->recv_times = te;
