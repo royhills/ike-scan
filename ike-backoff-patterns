@@ -38,6 +38,10 @@
 # packet received.  For example, "0, 2, 2, 2" means that a total of four
 # packets are sent with a delay of two seconds between each one.
 #
+# The numbers in the backoff pattern can be decimal numbers e.g. 1.5 for
+# one and a half seconds.  ike-scan uses strtod(3) to convert the ascii
+# representation to a floating point number.
+#
 # Lines beginning with '#' and blank lines are ignored.
 #
 Cisco IOS / PIX	0, 15, 15
