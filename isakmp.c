@@ -1442,5 +1442,5 @@ print_psk_crack_values(void) {
 
 void
 isakmp_use_rcsid(void) {
-   printf("%s\n", rcsid);	/* Use rcsid to stop compiler optimising away */
+   fprintf(stderr, "%s\n", rcsid);	/* Use rcsid to stop compiler optimising away */
 }

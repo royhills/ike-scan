@@ -81,5 +81,5 @@ void *Realloc(void *ptr, size_t size) {
 }
 
 void wrappers_use_rcsid(void) {
-   printf("%s\n", rcsid);	/* Use rcsid to stop compiler optimising away */
+   fprintf(stderr, "%s\n", rcsid);	/* Use rcsid to stop compiler optimising away */
 }

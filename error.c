@@ -128,5 +128,5 @@ err_print (int errnoflag, int level, const char *fmt, va_list ap) {
 
 void
 error_use_rcsid(void) {
-   printf("%s\n", rcsid);       /* Use rcsid to stop compiler optimising away */
+   fprintf(stderr, "%s\n", rcsid);       /* Use rcsid to stop compiler optimising away */
 }
