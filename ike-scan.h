@@ -23,13 +23,12 @@ struct host_entry {
    struct host_entry *prev;	/* Previous pointer */
    struct host_entry *next;	/* Next pointer */
    int n;			/* Ordinal number for this entry */
-   char *name;			/* System name as originally specified */
-   struct in_addr addr;		/* System address */
+   struct in_addr addr;		/* Host IP address */
    struct timeval last_send_time; /* Time when last packet sent to this addr */
    unsigned timeout;		/* Timeout for this host */
    unsigned num_sent;		/* Number of packets sent */
    unsigned num_recv;		/* Number of packets received */
-   u_int32_t icookie[COOKIE_SIZE];	/* Initiator cookie */
+   u_int32_t icookie[COOKIE_SIZE];	/* IKE Initiator cookie */
 };
 
 /* Functions */
