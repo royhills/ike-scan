@@ -46,7 +46,6 @@
 
 #include "ike-scan.h"
 
-#define VERSION "ike-scan v1.2"
 #define MAX_PAYLOAD 13	/* Maximum defined payload number */
 static char rcsid[] = "$Id$";   /* RCS ID for ident(1) */
 
@@ -280,7 +279,7 @@ main(int argc, char *argv[]) {
             auth_method=atoi(optarg);
             break;
          case 'V':	/* --version */
-            fprintf(stderr, "%s\n\n", VERSION);
+            fprintf(stderr, "%s\n\n", PACKAGE_STRING);
             fprintf(stderr, "Copyright (C) 2003 Roy Hills, NTA Monitor Ltd.\n");
             fprintf(stderr, "ike-scan comes with NO WARRANTY to the extent permitted by law.\n");
             fprintf(stderr, "You may redistribute copies of ike-scan under the terms of the GNU\n");
@@ -458,7 +457,7 @@ main(int argc, char *argv[]) {
 /*
  *	Display initial message.
  */
-   printf("Starting %s with %u hosts (http://www.nta-monitor.com/ike-scan/)\n", VERSION, num_hosts);
+   printf("Starting %s with %u hosts (http://www.nta-monitor.com/ike-scan/)\n", PACKAGE_STRING, num_hosts);
 /*
  *	Display the lists if verbose setting is 3 or more.
  */
@@ -567,7 +566,7 @@ main(int argc, char *argv[]) {
 #ifdef SYSLOG
    info_syslog("Ending: %u hosts scanned. %u returned handshake; %u returned notify", num_hosts, transform_responders, notify_responders);
 #endif
-   printf("Ending %s: %u hosts scanned.  %u returned handshake; %u returned notify\n", VERSION, num_hosts, transform_responders, notify_responders);
+   printf("Ending %s: %u hosts scanned.  %u returned handshake; %u returned notify\n", PACKAGE_STRING, num_hosts, transform_responders, notify_responders);
    return(0);
 }
 
@@ -1613,7 +1612,7 @@ usage(void) {
    fprintf(stderr, "\t\t\tIKE backoff patterns.  This file is only used when\n");
    fprintf(stderr, "\t\t\t--showbackoff is specified.\n");
    fprintf(stderr, "\n");
-   fprintf(stderr, "Report bugs or send suggestions to ike-scan@nta-monitor.com\n");
+   fprintf(stderr, "Report bugs or send suggestions to %s\n", PACKAGE_BUGREPORT);
    fprintf(stderr, "See the ike-scan homepage at http://www.nta-monitor.com/ike-scan/\n");
    exit(1);
 }
