@@ -46,7 +46,6 @@
 
 #include "ike-scan.h"
 
-#define MAX_PAYLOAD 13	/* Maximum defined payload number */
 static char rcsid[] = "$Id$";   /* RCS ID for ident(1) */
 
 /* Global variables */
@@ -454,6 +453,10 @@ main(int argc, char *argv[]) {
       err_sys("gettimeofday");
    }
    initialise_ike_packet();
+/*
+ *	Check ISAKMP structure sizes.
+ */
+   check_struct_sizes();
 /*
  *	Display initial message.
  */
@@ -1588,6 +1591,45 @@ add_pattern(char *line) {
       i++;
    }	/* End While */
    pe->num_times=i;
+}
+
+/*
+ *	Check that the sizes of the various structs are what we expect them
+ *	to be.  Issue a warning message if they are not.
+ *
+ *	There are several places in the ike-scan code where we copy structs
+ *	to character arrays and vice versa.  E.g. send_packet().
+ *
+ *	Although this is not condoned in C in practice it is OK in practice
+ *	providing that the sizes of the fields is correct and there is no
+ *	padding between fields (e.g. for alignment purposes).  This function
+ *	checks for both of these problems.
+ *
+ *	All of the potential problems that this functions checks for occur at
+ *	compile time, so any given ike-scan binary will always behave in the
+ *	same way.  Perhaps this function would be better written as a
+ *	"make test" check.  However, as it's just a single comparison, it
+ *	doesn't add any significant overhead to run it every time.
+ */
+void
+check_struct_sizes() {
+   int actual_total;
+
+   actual_total = sizeof(struct isakmp_hdr) +
+                  sizeof(struct isakmp_sa) +
+                  sizeof(struct isakmp_proposal) +
+                  sizeof(struct transform) +
+                  sizeof(struct isakmp_vid) +
+                  sizeof(struct isakmp_notification);
+
+   if (actual_total != EXPECTED_TOTAL) {
+      fprintf(stderr, "WARNING: Total size of ISAKMP structures is %d bytes, expected %d bytes\n", actual_total, EXPECTED_TOTAL);
+      fprintf(stderr, "\tThis will probably cause ike-scan to fail because the IKE packet\n");
+      fprintf(stderr, "\tstructure will not be correct.\n");
+      fprintf(stderr, "\tThis problem can be caused by incorrect type sizes for the various\n");
+      fprintf(stderr, "\ttypes used in the ISAKMP structures (e.g. u_int_8, u_int_16\n");
+      fprintf(stderr, "\tand u_int_32) or by alignment padding.\n");
+   }
 }
 
 /*
