@@ -107,12 +107,13 @@ SSH IPSEC Express 3.0.0	^0e58d5774df602007d0b02443660f7eb
 SSH IPSEC Express 3.0.1	^f5ce31ebc210f44350cf71265b57380f
 SSH IPSEC Express 4.0.0	^f64260af2e2742daddd56987068a99a0
 SSH IPSEC Express 4.0.1	^7a54d3bdb3b1e6d923892064be2d981c
+SSH IPSEC Express 4.1.0	^9aa1f3b43472a45d5f506aeb260cf214
 SSH IPSEC Express 4.2.0	^6880c7d026099114e486c55430e7abee
 
-# Cisco Unity compliant peer
+# Cisco Unity compliant peer. VID is the MD5 hash of "CISCO-UNITY"
 Cisco Unity	^12f5f28c457168a9702d9fe274cc0100
 
-# IKE Fragmentation.  VID is an MD5 hash of the text "FRAGMENTATION"
+# IKE Fragmentation.  VID is the MD5 hash of the text "FRAGMENTATION"
 # I've seen extra bytes on the end of a fragmentation VID payload, e.g.
 # c0000000.  I don't know what these represent.
 IKE Fragmentation	^4048b7d56ebce88525e7de7f00d6c2d3
@@ -120,8 +121,8 @@ IKE Fragmentation	^4048b7d56ebce88525e7de7f00d6c2d3
 # Various IKE internet drafts.  The VID payload is the MD5 hash of the
 # implementation name given below.
 draft-stenberg-ipsec-nat-traversal-01	^27bab5dc01ea0760ea4e3190ac27c0d0
-draft-ietf-ipsec-nat-t-ike-00	^4485152d18b6bbcd0be8a8469579ddcc
 draft-stenberg-ipsec-nat-traversal-02	^6105c422e76847e43f9684801292aecd
+draft-ietf-ipsec-nat-t-ike-00	^4485152d18b6bbcd0be8a8469579ddcc
 draft-huttunen-ipsec-esp-in-udp-00.txt	^6a7434c19d7e36348090a02334c9c805
 
 # Extra data has been observed at the end of this VID payload.
@@ -143,6 +144,7 @@ SSH Sentinel 1.4	^63d9a1a7009491b5a0a6fdeb2a8284f0
 SSH Sentinel 1.4.1	^eb4b0d96276b4e220ad16221a7b2a5e6
 
 Timestep	^54494d4553544550
+# VID is MD5 hash of "KAME/racoon"
 KAME/racoon	^7003cbc1097dbe9c2600ba6983bc8b35
 
 # Negotiation of NAT-Traversal in the IKE - Currently IETF draft.
@@ -177,7 +179,7 @@ Unknown 1	^1f07f70eaa6514d3b0fa96542a500306
 Unknown 3	^edea53a3c15d45cafb11e59ea68db2aa99c1470e0000000400000303
 Unknown 4	^bedc86dabf0ab7973870b5e6c4b87d3ee824de310000001000000401
 Unknown 5	^ac5078c25cabb9523979978e76a3d0d2426bc9260000000400000401
-Unknown 6	^9aa1f3b43472a45d5f506aeb260cf214
+# Unknown 6 was classified as SSH IPSEC Express 4.1.0
 Unknown 7	^69b761a173cc1471dc4547d2a5e94812
 Unknown 8	^4c5647362e303a627269636b3a362e302e353732
 Unknown 9	^3499691eb82f9eaefed378f5503671debd0663b4000000040000023c
