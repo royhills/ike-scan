@@ -168,10 +168,35 @@ false positive identifications.
 Any per-pattern-entry fuzz specifications in the
 patterns file will override the value set here.
 .TP
-.B --patterns=<f> or -p <f> Use IKE patterns file <f>,
+.B --patterns=<f> or -p <f>
+Use IKE patterns file <f>,
 default=/usr/local/share/ike-scan/ike-backoff-patterns.
 This specifies the name of the file containing
 IKE backoff patterns.  This file is only used when
 --showbackoff is specified.
+.TP
+.B --aggressive or -A
+Use IKE Aggressive Mode (The default is Main Mode)
+If you specify --aggressive, then you may also
+specify --dhgroup, --id and --idtype.  If you use
+custom transforms with aggressive mode with the --trans
+option, note that all transforms should have the same
+DH Group and this should match the group specified
+with --dhgroup or the default if --dhgroup is not used.
+.TP
+.B --id <id> or -n <id>
+Use <id> as the identification value.
+This option is only applicable to Aggressive Mode.
+<id> should be specified in hex, e.g. --id=deadbeef.
+.TP
+.B --idtype=n or -y n
+Use identification type <n>.  Default 3 (ID_USER_FQDN).
+This option is only applicable to Aggressive Mode.
+See RFC 2407 4.6.2 for details of Identification types.
+.TP
+.B --dhgroup=n or -g n
+Use Diffie Hellman Group <n>.  Default 2.
+This option is only applicable to Aggressive Mode.
+
 .SH AUTHOR
 Roy Hills <Roy.Hills@nta-monitor.com>
