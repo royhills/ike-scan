@@ -292,16 +292,12 @@ main(int argc, char *argv[]) {
          case 'e':	/* --vendor */
             strncpy(vendor_id, optarg, MAXLINE);
             if (strlen(vendor_id) % 2) {	/* Length is odd */
-               err_msg("Length of --vendor argument must be even.");
+               err_msg("Length of --vendor argument must be even (multiple of 2).");
             }
             vendor_id_flag=1;
             vid_data_len=strlen(vendor_id)/2;
             for (i=0; i<vid_data_len; i++)
                vid_data[i]=hstr_i(&vendor_id[i*2]);
-            printf("vid_data_len=%d.  vid_data: ", vid_data_len);
-            for (i=0; i<vid_data_len; i++)
-               printf("%.2x",vid_data[i]);
-            printf("\n");
             break;
          case 'a':	/* --trans */
             strncpy(trans_str, optarg, MAXLINE);
@@ -1731,7 +1727,6 @@ usage(void) {
    fprintf(stderr, "\t\t\tRFC defined values are 1 to 5.  See RFC 2409 Appendix A.\n");
    fprintf(stderr, "\n--version or -V\t\tDisplay program version and exit.\n");
    fprintf(stderr, "\n--vendor=<v> or -e <v>\tSet vendor id string to hex value <v>.\n");
-   fprintf(stderr, "\t\t\tNote: this is currently experimental.\n");
    fprintf(stderr, "\n--trans=<t> or -a <t>\tUse custom transform <t> instead of default set.\n");
    fprintf(stderr, "\t\t\t<t> is specified as enc,hash,auth,group. e.g. 2,3,1,5.\n");
    fprintf(stderr, "\t\t\tSee RFC 2409 Appendix A for details of which values\n");
