@@ -1,13 +1,6 @@
 $Id$
 
-Write body of decode_transforms() function so that we can display details of
-the transform picked by the remote IKE implementation rather than just
-printing "%d transforms" (where the number is always 1).
-
 Allow specification of GSS identities in the transforms as used by Windows 2000.
-
-Allow display of multiple vendor ID payloads.  Time to re-write the ISAKMP
-packet parsing: display_packet() is an absolute mess.
 
 Use "const" for function args that are not modified, and strutures/arrays
 that are constant.
