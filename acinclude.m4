@@ -55,7 +55,7 @@ AC_DEFUN(AC_NTA_NET_SIZE_T,
 	int result;
 	result=accept(s, &addr, &addrlen)],
 	   ac_nta_net_size_t=socklen_t,ac_nta_net_size_t=no)
-   if test ac_nta_net_size_t = no; then
+   if test $ac_nta_net_size_t = no; then
    AC_TRY_COMPILE([
 #	include "confdefs.h"
 #	include <sys/types.h>
@@ -69,7 +69,7 @@ AC_DEFUN(AC_NTA_NET_SIZE_T,
 	result=accept(s, &addr, &addrlen)],
 	ac_nta_net_size_t=size_t,ac_nta_net_size_t=no)
    fi
-   if test ac_nta_net_size_t = no; then
+   if test $ac_nta_net_size_t = no; then
    AC_TRY_COMPILE([
 #	include "confdefs.h"
 #	include <sys/types.h>
@@ -83,7 +83,7 @@ AC_DEFUN(AC_NTA_NET_SIZE_T,
 	result=accept(s, &addr, &addrlen)],
 	ac_nta_net_size_t=int,ac_nta_net_size_t=no)
    fi
-   if test ac_nta_net_size_t = no; then
+   if test $ac_nta_net_size_t = no; then
       AC_MSG_ERROR([Cannot find acceptable type for 3rd arg to accept()])
    else
       AC_MSG_RESULT($ac_nta_net_size_t)
