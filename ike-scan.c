@@ -67,6 +67,24 @@ int no_dns_flag=0;			/* No DNS flag */
 char *header_length=NULL;		/* ISAKMP header length modifier */
 int mbz_value=0;			/* Value for MBZ fields */
 int header_version=0x10;		/* ISAKMP header version */
+unsigned char *cr_data=NULL;		/* Cert req. data */
+size_t cr_data_len;
+const id_name_map payload_map[] = {	/* Payload types RFC 2408 3.1 */
+   {1, "SecurityAssociation"},
+   {2, "Proposal"},
+   {3, "Transform"},
+   {4, "KeyExchange"},
+   {5, "Identification"},
+   {6, "Certificate"},
+   {7, "CertificateRequest"},
+   {8, "Hash"},
+   {9, "Signature"},
+   {10, "Nonce"},
+   {11, "Notification"},
+   {12, "Delete"},
+   {13, "VendorID"},
+   {-1, NULL}
+};
 
 int
 main(int argc, char *argv[]) {
@@ -108,11 +126,12 @@ main(int argc, char *argv[]) {
       {"headerlen", required_argument, 0, 'L'},
       {"mbz", required_argument, 0, 'Z'},
       {"headerver", required_argument, 0, 'E'},
+      {"certreq", required_argument, 0, 'C'},
       {"experimental", required_argument, 0, 'X'},
       {0, 0, 0, 0}
    };
    const char *short_options =
-      "f:hs:d:r:t:i:b:w:vl:z:m:Ve:a:o::u:n:y:g:p:AG:I:qMRT::P::O:Nc:B:L:Z:E:X:";
+      "f:hs:d:r:t:i:b:w:vl:z:m:Ve:a:o::u:n:y:g:p:AG:I:qMRT::P::O:Nc:B:L:Z:E:C:X:";
    int arg;
    char arg_str[MAXLINE];	/* Args as string for syslog */
    int options_index=0;
@@ -300,7 +319,7 @@ main(int argc, char *argv[]) {
                err_msg("ERROR: Length of --vendor argument must be even (multiple of 2).");
             vendor_id_flag=1;
             vid_data=hex2data(optarg, &vid_data_len);
-            add_vid(0, NULL, vid_data, vid_data_len);
+            add_vid(0, NULL, vid_data, vid_data_len, 0);
             free(vid_data);
             break;
          case 'a':	/* --trans */
@@ -403,6 +422,11 @@ main(int argc, char *argv[]) {
             break;
          case 'E':	/* --headerver */
             header_version = strtoul(optarg, (char **)NULL, 0);
+            break;
+         case 'C':	/* --certreq */
+            if (strlen(optarg) % 2)	/* Length is odd */
+               err_msg("ERROR: Length of --certreq argument must be even (multiple of 2).");
+            cr_data=hex2data(optarg, &cr_data_len);
             break;
          case 'X':	/* --experimental */
             experimental_value = strtoul(optarg, (char **)NULL, 10);
@@ -1205,22 +1229,6 @@ display_packet(int n, unsigned char *packet_in, host_entry *he,
    char *msg;			/* Message to display */
    char *msg2;
    unsigned char *pkt_ptr;
-   static const id_name_map payload_map[] = { /* Payload types RFC 2408 3.1 */
-      {1, "SecurityAssociation"},
-      {2, "Proposal"},
-      {3, "Transform"},
-      {4, "KeyExchange"},
-      {5, "Identification"},
-      {6, "Certificate"},
-      {7, "CertificateRequest"},
-      {8, "Hash"},
-      {9, "Signature"},
-      {10, "Nonce"},
-      {11, "Notification"},
-      {12, "Delete"},
-      {13, "VendorID"},
-      {-1, NULL}
-   };
 
 /*
  *	Set msg to the IP address of the host entry, plus the address of the
@@ -1290,6 +1298,12 @@ display_packet(int n, unsigned char *packet_in, host_entry *he,
             msg=make_message("%s%s%s", msg2, multiline?"\n\t":" ", cp);
             free(msg2);	/* Free old message */
             free(cp);	/* Free ID payload message */
+         } else if (next == ISAKMP_NEXT_CERT || next == ISAKMP_NEXT_CR) {
+            msg2=msg;
+            cp = process_cert(pkt_ptr, bytes_left, next);
+            msg=make_message("%s%s%s", msg2, multiline?"\n\t":" ", cp);
+            free(msg2);	/* Free old message */
+            free(cp);	/* Free Cert payload message */
          } else {
             if (psk_crack_flag)
                add_psk_crack_payload(pkt_ptr, next, 'R');
@@ -1526,6 +1540,7 @@ initialise_ike_packet(size_t *packet_out_len, unsigned lifetime,
    struct isakmp_sa *sa;
    struct isakmp_proposal *prop;
    unsigned char *transforms;	/* All transforms */
+   unsigned char *certreq=NULL;
    unsigned char *vid=NULL;
    unsigned char *id=NULL;
    unsigned char *nonce=NULL;
@@ -1533,6 +1548,7 @@ initialise_ike_packet(size_t *packet_out_len, unsigned lifetime,
    unsigned char *cp;
    unsigned char *packet_out;	/* Constructed IKE packet */
    unsigned char *sa_cp=NULL;	/* For experimental payload printing XXXXX */
+   size_t certreq_len;
    size_t vid_len;
    size_t trans_len;
    size_t id_len;
@@ -1540,31 +1556,40 @@ initialise_ike_packet(size_t *packet_out_len, unsigned lifetime,
    size_t ke_len;
    size_t kx_data_len=0;
    unsigned no_trans=0;	/* Number of transforms */
+   unsigned next_payload;
 
    *packet_out_len = 0;
+   next_payload = ISAKMP_NEXT_NONE;
+/*
+ *	Certificate request payload (Optional)
+ */
+   if (cr_data) {
+      certreq = make_cr(&certreq_len, next_payload, cr_data, cr_data_len);
+      *packet_out_len += certreq_len;
+      next_payload = ISAKMP_NEXT_CR;
+   }
 /*
  *	Vendor ID Payload (Optional)
  */
    if (vendor_id_flag) {
-      vid = add_vid(1, &vid_len, NULL, 0);
+      vid = add_vid(1, &vid_len, NULL, 0, next_payload);
       *packet_out_len += vid_len;
+      next_payload = ISAKMP_NEXT_VID;
    }
 /*
  *	Key Exchange, Nonce and ID for aggressive mode only.
  */
    if (exchange_type == ISAKMP_XCHG_AGGR) {
-      if (vendor_id_flag) {
-         id = make_id(&id_len, ISAKMP_NEXT_VID, idtype, id_data, id_data_len);
-      } else {
-         id = make_id(&id_len, ISAKMP_NEXT_NONE, idtype, id_data, id_data_len);
-      }
+      id = make_id(&id_len, next_payload, idtype, id_data, id_data_len);
       if (id_data)
          free(id_data);
       *packet_out_len += id_len;
-      nonce = make_nonce(&nonce_len, ISAKMP_NEXT_ID, nonce_data_len);
+      next_payload = ISAKMP_NEXT_ID;
+      nonce = make_nonce(&nonce_len, next_payload, nonce_data_len);
       if (psk_crack_flag)
          add_psk_crack_payload(nonce, 10, 'I');
       *packet_out_len += nonce_len;
+      next_payload = ISAKMP_NEXT_NONCE;
       switch (dhgroup) {
          case 1:
             kx_data_len = 96;	/* Group 1 - 768 bits */
@@ -1594,10 +1619,11 @@ initialise_ike_packet(size_t *packet_out_len, unsigned lifetime,
             err_msg("ERROR: Bad Diffie Hellman group: %u, should be 1,2,5,14,15,16,17 or 18", dhgroup);
             break;	/* NOTREACHED */
       }
-      ke = make_ke(&ke_len, ISAKMP_NEXT_NONCE, kx_data_len);
+      ke = make_ke(&ke_len, next_payload, kx_data_len);
       if (psk_crack_flag)
          add_psk_crack_payload(ke, 4, 'I');
       *packet_out_len += ke_len;
+      next_payload = ISAKMP_NEXT_KE;
    }
 /*
  *	Transform payloads
@@ -1647,22 +1673,11 @@ initialise_ike_packet(size_t *packet_out_len, unsigned lifetime,
 /*
  *	SA Header
  */
-   if (exchange_type == ISAKMP_XCHG_IDPROT) {	/* Main Mode */
-      if (vendor_id_flag) {
-         sa = make_sa_hdr(ISAKMP_NEXT_VID, trans_len+
-                          sizeof(struct isakmp_proposal)+
-                          sizeof(struct isakmp_sa));
-      } else {
-         sa = make_sa_hdr(ISAKMP_NEXT_NONE, trans_len+
-                          sizeof(struct isakmp_proposal)+
-                          sizeof(struct isakmp_sa));
-      }
-   } else {	/* Presumably aggressive mode */
-      sa = make_sa_hdr(ISAKMP_NEXT_KE, trans_len+
-                       sizeof(struct isakmp_proposal)+
-                       sizeof(struct isakmp_sa));
-   }
+   sa = make_sa_hdr(next_payload, trans_len+
+                    sizeof(struct isakmp_proposal)+
+                    sizeof(struct isakmp_sa));
    *packet_out_len += sizeof(struct isakmp_sa);
+   next_payload = ISAKMP_NEXT_SA;
 /*
  *	ISAKMP Header
  */
@@ -1680,9 +1695,9 @@ initialise_ike_packet(size_t *packet_out_len, unsigned lifetime,
       } else {
          fake_header_len = strtoul(cp, (char **)NULL, 0);
       }
-      hdr = make_isakmp_hdr(exchange_type, ISAKMP_NEXT_SA, fake_header_len);
+      hdr = make_isakmp_hdr(exchange_type, next_payload, fake_header_len);
    } else {		/* Use correct header length */
-      hdr = make_isakmp_hdr(exchange_type, ISAKMP_NEXT_SA, *packet_out_len);
+      hdr = make_isakmp_hdr(exchange_type, next_payload, *packet_out_len);
    }
 /*
  *	Allocate packet and copy payloads into packet.
@@ -1718,6 +1733,11 @@ initialise_ike_packet(size_t *packet_out_len, unsigned lifetime,
       memcpy(cp, vid, vid_len);
       free(vid);
       cp += vid_len;
+   }
+   if (cr_data) {
+      memcpy(cp, certreq, certreq_len);
+      free(certreq);
+      cp += certreq_len;
    }
    if (psk_crack_flag)
       add_psk_crack_payload(sa_cp, 1, 'I');
