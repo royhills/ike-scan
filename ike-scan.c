@@ -76,20 +76,6 @@ int trans_hash;				/* Custom transform hash */
 int trans_auth;				/* Custom transform auth */
 int trans_group;			/* Custom transform DH group */
 struct timeval last_recv_time;		/* Time last packet was received */
-struct isakmp_hdr hdr;			/* ISAKMP Header */
-struct isakmp_sa sa_hdr;		/* SA Header */
-struct isakmp_proposal sa_prop;		/* Proposal payload */
-struct isakmp_kx kx;			/* Key exchange for agg. mode */
-struct isakmp_nonce nonce;		/* Nonce for agg. mode */
-struct isakmp_id id;			/* ID for agg. mode */
-struct transform
-{
-   struct isakmp_transform trans_hdr;
-   struct isakmp_attribute attr[5];
-   struct isakmp_attribute_l32 attr2;
-};
-struct transform trans[8];		/* Transform payload */
-struct isakmp_vid vid_hdr;		/* Vendor ID header */
 unsigned char *vid_data;		/* Binary Vendor ID data */
 int vid_data_len;			/* Vendor ID data length */
 /* These two should be made local.  Used by initialise and send_packet */
@@ -245,8 +231,7 @@ main(int argc, char *argv[]) {
 /*
  *      Get program start time for statistics displayed on completion.
  */
-   if ((gettimeofday(&start_time, NULL)) != 0)
-      err_sys("gettimeofday");
+   Gettimeofday(&start_time, NULL);
 /*
  *	Initialise IKE pattern file name to the empty string.
  */
@@ -312,8 +297,7 @@ main(int argc, char *argv[]) {
             }
             vendor_id_flag=1;
             vid_data_len=strlen(optarg)/2;
-            if ((vid_data = malloc(vid_data_len)) == NULL)
-               err_sys("malloc");
+            vid_data = Malloc(vid_data_len);
             cp = vid_data;
             for (i=0; i<vid_data_len; i++)
                *cp++=hstr_i(&optarg[i*2]);
@@ -467,9 +451,7 @@ main(int argc, char *argv[]) {
    cursor = rrlist;
    last_packet_time.tv_sec=0;
    last_packet_time.tv_usec=0;
-   if ((gettimeofday(&last_recv_time, NULL)) != 0) {
-      err_sys("gettimeofday");
-   }
+   Gettimeofday(&last_recv_time, NULL);
    initialise_ike_packet();
 /*
  *	Check ISAKMP structure sizes.
@@ -504,8 +486,7 @@ main(int argc, char *argv[]) {
  *	Obtain current time and calculate deltas since last packet and
  *	last packet to this host.
  */
-      if ((gettimeofday(&now, NULL)) != 0)
-         err_sys("gettimeofday");
+      Gettimeofday(&now, NULL);
       timeval_diff(&now, &last_recv_time, &diff);
       end_timediff = 1000*diff.tv_sec + diff.tv_usec/1000;
 /*
@@ -566,8 +547,7 @@ main(int argc, char *argv[]) {
                   }
                   first_timeout=0;
                }
-               if ((gettimeofday(&last_packet_time, NULL)) != 0)
-                  err_sys("gettimeofday");
+               Gettimeofday(&last_packet_time, NULL);
             } else {	/* Retry limit not reached for this host */
                if (cursor->num_sent)
                   cursor->timeout *= backoff_factor;
@@ -633,8 +613,7 @@ main(int argc, char *argv[]) {
 /*
  *	Get program end time and calculate elapsed time.
  */
-   if ((gettimeofday(&end_time, NULL)) != 0)
-      err_sys("gettimeofday");
+   Gettimeofday(&end_time, NULL);
    timeval_diff(&end_time, &start_time, &elapsed_time);
    elapsed_seconds = (elapsed_time.tv_sec*1000 +
                       elapsed_time.tv_usec/1000.0) / 1000.0;
@@ -670,14 +649,11 @@ add_host(char *name) {
    if ((hp = gethostbyname(name)) == NULL)
       err_sys("gethostbyname");
 
-   if ((he = malloc(sizeof(struct host_entry))) == NULL)
-      err_sys("malloc");
+   he = Malloc(sizeof(struct host_entry));
 
    num_hosts++;
 
-   if ((gettimeofday(&now,NULL)) != 0) {
-      err_sys("gettimeofday");
-   }
+   Gettimeofday(&now,NULL);
 
    he->n = num_hosts;
    memcpy(&(he->addr), hp->h_addr_list[0], sizeof(struct in_addr));
@@ -1018,9 +994,7 @@ send_packet(int s, struct host_entry *he, int dest_port,
 /*
  *	Update the last send times for this host.
  */
-   if ((gettimeofday(last_packet_time, NULL)) != 0) {
-      err_sys("gettimeofday");
-   }
+   Gettimeofday(last_packet_time, NULL);
    he->last_send_time.tv_sec  = last_packet_time->tv_sec;
    he->last_send_time.tv_usec = last_packet_time->tv_usec;
    he->num_sent++;
@@ -1137,8 +1111,7 @@ initialise_ike_packet(void) {
  */
    trans = make_trans(&len, 3, 1, OAKLEY_3DES_CBC, 0, OAKLEY_SHA, auth_method,
                       2, lifetime);
-   if ((transforms=realloc(NULL, len)) == NULL)
-      err_sys("realloc");
+   transforms=Realloc(NULL, len);
    cp = transforms;
    memcpy(cp, trans, len);
    cp += len;
@@ -1147,8 +1120,7 @@ initialise_ike_packet(void) {
 
    trans = make_trans(&len, 3, 2, OAKLEY_3DES_CBC, 0, OAKLEY_MD5, auth_method,
                       2, lifetime);
-   if ((transforms=realloc(transforms, len)) == NULL)
-      err_sys("realloc");
+   transforms=Realloc(transforms, len);
    memcpy(cp, trans, len);
    cp += len;
    buflen += len;
@@ -1156,8 +1128,7 @@ initialise_ike_packet(void) {
 
    trans = make_trans(&len, 3, 3, OAKLEY_DES_CBC,  0, OAKLEY_SHA, auth_method,
                       2, lifetime);
-   if ((transforms=realloc(transforms, len)) == NULL)
-      err_sys("realloc");
+   transforms=Realloc(transforms, len);
    memcpy(cp, trans, len);
    cp += len;
    buflen += len;
@@ -1165,8 +1136,7 @@ initialise_ike_packet(void) {
 
    trans = make_trans(&len, 3, 4, OAKLEY_DES_CBC,  0, OAKLEY_MD5, auth_method,
                       2, lifetime);
-   if ((transforms=realloc(transforms, len)) == NULL)
-      err_sys("realloc");
+   transforms=Realloc(transforms, len);
    memcpy(cp, trans, len);
    cp += len;
    buflen += len;
@@ -1174,8 +1144,7 @@ initialise_ike_packet(void) {
 
    trans = make_trans(&len, 3, 5, OAKLEY_3DES_CBC, 0, OAKLEY_SHA, auth_method,
                       1, lifetime);
-   if ((transforms=realloc(transforms, len)) == NULL)
-      err_sys("realloc");
+   transforms=Realloc(transforms, len);
    memcpy(cp, trans, len);
    cp += len;
    buflen += len;
@@ -1183,8 +1152,7 @@ initialise_ike_packet(void) {
 
    trans = make_trans(&len, 3, 6, OAKLEY_3DES_CBC, 0, OAKLEY_MD5, auth_method,
                       1, lifetime);
-   if ((transforms=realloc(transforms, len)) == NULL)
-      err_sys("realloc");
+   transforms=Realloc(transforms, len);
    memcpy(cp, trans, len);
    cp += len;
    buflen += len;
@@ -1192,8 +1160,7 @@ initialise_ike_packet(void) {
 
    trans = make_trans(&len, 3, 7, OAKLEY_DES_CBC,  0, OAKLEY_SHA, auth_method,
                       1, lifetime);
-   if ((transforms=realloc(transforms, len)) == NULL)
-      err_sys("realloc");
+   transforms=Realloc(transforms, len);
    memcpy(cp, trans, len);
    cp += len;
    buflen += len;
@@ -1201,8 +1168,7 @@ initialise_ike_packet(void) {
 
    trans = make_trans(&len, 0, 8, OAKLEY_DES_CBC,  0, OAKLEY_MD5, auth_method,
                       1, lifetime);
-   if ((transforms=realloc(transforms, len)) == NULL)
-      err_sys("realloc");
+   transforms=Realloc(transforms, len);
    memcpy(cp, trans, len);
    cp += len;
    buflen += len;
@@ -1231,8 +1197,7 @@ initialise_ike_packet(void) {
 /*
  *	Allocate packet and copy payloads into packet.
  */
-   if ((buf=malloc(buflen)) == NULL)
-      err_sys("malloc");
+   buf=Malloc(buflen);
    cp = buf;
    memcpy(cp, hdr, sizeof(struct isakmp_hdr));
    cp += sizeof(struct isakmp_hdr);
@@ -1464,11 +1429,8 @@ add_recv_time(struct host_entry *he) {
 /*
  *	Allocate and initialise new time structure
  */   
-   if ((te = malloc(sizeof(struct time_list))) == NULL)
-      err_sys("malloc");
-   if ((gettimeofday(&(te->time), NULL)) != 0) {
-      err_sys("gettimeofday");
-   }
+   te = Malloc(sizeof(struct time_list));
+   Gettimeofday(&(te->time), NULL);
    last_recv_time.tv_sec = te->time.tv_sec;
    last_recv_time.tv_usec = te->time.tv_usec;
    te->next = NULL;
@@ -1514,8 +1476,7 @@ add_pattern(char *line) {
 /*
  *	Allocate new pattern list entry and add to tail of patlist.
  */
-   if ((pe = malloc(sizeof(struct pattern_list))) == NULL)
-      err_sys("malloc");
+   pe = Malloc(sizeof(struct pattern_list));
    pe->next = NULL;
    pe->recv_times = NULL;
    p = patlist;
@@ -1549,8 +1510,7 @@ add_pattern(char *line) {
 /*
  *	Copy name into malloc'ed storage and set pl->name to point to this.
  */
-   if ((cp = malloc(strlen(name)+1)) == NULL)
-      err_sys("malloc");
+   cp = Malloc(strlen(name)+1);
    strcpy(cp, name);
    pe->name = cp;
 /*
@@ -1601,8 +1561,7 @@ add_pattern(char *line) {
  *      Allocate and fill in new pattern_entry_list structure for this backoff
  *      pattern entry and add it onto the tail of this pattern entry.
  */
-      if ((te = malloc(sizeof(struct pattern_entry_list))) == NULL)
-         err_sys("malloc");
+      te = Malloc(sizeof(struct pattern_entry_list));
       te->next=NULL;
       te->time.tv_sec = back_sec;
       te->time.tv_usec = back_usec;
@@ -1650,7 +1609,7 @@ check_struct_sizes() {
    actual_total = sizeof(struct isakmp_hdr) +
                   sizeof(struct isakmp_sa) +
                   sizeof(struct isakmp_proposal) +
-                  sizeof(struct transform) +
+                  sizeof(struct isakmp_transform) +
                   sizeof(struct isakmp_vid) +
                   sizeof(struct isakmp_notification);
 
