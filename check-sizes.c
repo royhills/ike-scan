@@ -60,7 +60,7 @@
 
 int
 main() {
-   int octets_per_char;	/* Almost always 1 */
+   unsigned octets_per_char;	/* Almost always 1 */
    int error=0;
 
    if (CHAR_BIT % 8)
