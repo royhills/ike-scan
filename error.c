@@ -27,6 +27,9 @@
  * Revision History:
  *
  * $Log$
+ * Revision 1.4  2002/12/31 15:10:04  rsh
+ * Changed function definitions so return type is on a line by itself.
+ *
  * Revision 1.3  2002/11/26 16:54:24  rsh
  * Minor comment change.
  *
@@ -52,7 +55,8 @@ int daemon_proc;	/* Non-zero if process is a daemon */
 /*
  *	Function to handle fatal system call errors.
  */
-void err_sys(const char *fmt,...) {
+void
+err_sys(const char *fmt,...) {
    va_list ap;
 
    va_start(ap, fmt);
@@ -64,7 +68,8 @@ void err_sys(const char *fmt,...) {
 /*
  *	Function to handle non-fatal system call errors.
  */
-void warn_sys(const char *fmt,...) {
+void
+warn_sys(const char *fmt,...) {
    va_list ap;
 
    va_start(ap, fmt);
@@ -75,7 +80,8 @@ void warn_sys(const char *fmt,...) {
 /*
  *	Function to handle fatal errors not from system calls.
  */
-void err_msg(const char *fmt,...) {
+void
+err_msg(const char *fmt,...) {
    va_list ap;
 
    va_start(ap, fmt);
@@ -87,7 +93,8 @@ void err_msg(const char *fmt,...) {
 /*
  *	Function to handle non-fatal errors not from system calls.
  */
-void warn_msg(const char *fmt,...) {
+void
+warn_msg(const char *fmt,...) {
    va_list ap;
 
    va_start(ap, fmt);
@@ -98,7 +105,8 @@ void warn_msg(const char *fmt,...) {
 /*
  *	Function to handle infomational syslog messages
  */
-void info_syslog(const char *fmt,...) {
+void
+info_syslog(const char *fmt,...) {
    va_list ap;
 
    va_start(ap, fmt);
@@ -110,7 +118,8 @@ void info_syslog(const char *fmt,...) {
  *	General error printing function used by all the above
  *	functions.
  */
-void err_print (int errnoflag, int level, const char *fmt, va_list ap) {
+void
+err_print (int errnoflag, int level, const char *fmt, va_list ap) {
    int errno_save;
    int n;
    char buf[MAXLINE];
