@@ -5,7 +5,8 @@
  *  by the Free Software Foundation; Version 2.  This guarantees your
  *  right to use, modify, and redistribute this software under certain
  *  conditions.  If this license is unacceptable to you, I may be
- *  willing to sell alternative licenses (contact Roy.Hills@nta-monitor.com).
+ *  willing to negotiate alternative licenses (contact
+ *  Roy.Hills@nta-monitor.com).
  *
  *  You are encouraged to send comments, improvements or suggestions to
  *  me at Roy.Hills@nta-monitor.com.
@@ -46,6 +47,9 @@
  * Change History:
  *
  * $Log$
+ * Revision 1.25  2002/11/21 17:59:28  rsh
+ * Changed --endwait to --showbackoff.
+ *
  * Revision 1.24  2002/11/21 13:49:56  rsh
  * Added GPL and gethostbyname() call.
  *
@@ -183,7 +187,8 @@ int verbose=0;
 char vendor_id[MAXLINE];		/* Vendor ID string */
 int vendor_id_flag = 0;			/* Indicates if VID to be used */
 char trans_str[MAXLINE];		/* Custom transform string */
-int trans_flag = 0;
+int trans_flag = 0;			/* Indicates custom transform */
+int showbackoff_flag = 0;		/* Display backoff table? */
 int trans_enc;				/* Custom transform encrypt */
 int trans_hash;				/* Custom transform hash */
 int trans_auth;				/* Custom transform auth */
@@ -280,10 +285,10 @@ int main(int argc, char *argv[]) {
       {"version", no_argument, 0, 'V'},
       {"vendor", required_argument, 0, 'e'},
       {"trans", required_argument, 0, 'a'},
-      {"endwait", required_argument, 0, 'n'},
+      {"showbackoff", optional_argument, 0, 'o'},
       {0, 0, 0, 0}
    };
-   char *short_options = "f:hr:t:i:b:w:vl:m:Ve:a:n:";
+   char *short_options = "f:hr:t:i:b:w:vl:m:Ve:a:o::";
    int arg;
    char arg_str[MAXLINE];	/* Args as string for syslog */
    int options_index=0;
@@ -379,8 +384,13 @@ int main(int argc, char *argv[]) {
             trans_flag=1;
             sscanf(trans_str, "%d,%d,%d,%d", &trans_enc, &trans_hash, &trans_auth, &trans_group);
             break;
-         case 'n':
-            end_wait=atoi(optarg);
+         case 'o':
+            showbackoff_flag=1;
+            if (optarg == NULL) {
+               end_wait=DEFAULT_END_WAIT;
+            } else {
+               end_wait=atoi(optarg);
+            }
             break;
          default:
             usage();
@@ -471,9 +481,12 @@ int main(int argc, char *argv[]) {
 /*
  *	Main loop: send packets to all hosts in order until a response
  *	has been received or the host has exhausted it's retry limit.
- *	The loop exits when all hosts have either responded or timed out.
+ *
+ *	The loop exits when all hosts have either responded or timed out
+ *	and, if showbackoff_flag is set, at least end_wait ms have elapsed
+ *	since the last packet was received.
  */
-   while (live_count || end_timediff < end_wait) {
+   while (live_count || (showbackoff_flag && end_timediff < end_wait)) {
 /*
  *	Obtain current time and calculate deltas since last packet and
  *	last packet to this host.
@@ -551,8 +564,10 @@ int main(int argc, char *argv[]) {
          }
       } /* End If */
    } /* End While */
-
-   if (verbose > 1)
+/*
+ *	Display the backoff times if --showbackoff option was specified.
+ */
+   if (showbackoff_flag)
       dump_times();
 
    close(sockfd);
@@ -1205,7 +1220,7 @@ void dump_times(void) {
 
    p = rrlist;
 
-   printf("IP Address\tNo.\tRecv time\t\tDelta Time\n");
+   printf("\nIP Address\tNo.\tRecv time\t\tDelta Time\n");
    do {
       if (p->recv_times != NULL) {
          te = p->recv_times;
@@ -1294,7 +1309,10 @@ void usage(void) {
    fprintf(stderr, "\t\t\t<t> is specified as enc,hash,auth,group. e.g. 1,1,1,1\n");
    fprintf(stderr, "\t\t\tIf this option is specified, then the IP packet size\n");
    fprintf(stderr, "\t\t\tis 112 bytes rather than the default of 364.\n");
-   fprintf(stderr, "--endwait=<n> or -n <n>\tSet endwait to <n> ms, default=%d.\n", DEFAULT_END_WAIT);
+   fprintf(stderr, "--showbackoff[=<n>] or -o [<n>]\tDisplay the backoff table.\n");
+   fprintf(stderr, "\t\t\tDisplay the backoff table to fingerprint host.\n");
+   fprintf(stderr, "\t\t\tThe optional argument specifies time to wait\n");
+   fprintf(stderr, "\t\t\tafter last received packet in ms, default=%d\n", DEFAULT_END_WAIT);
    fprintf(stderr, "\n");
    fprintf(stderr, "%s\n", rcsid);
    fprintf(stderr, "\n");
