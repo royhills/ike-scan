@@ -20,6 +20,9 @@
  * Change History:
  *
  * $Log$
+ * Revision 1.6  2002/09/13 15:01:51  rsh
+ * Added support for changing authentication method.
+ *
  * Revision 1.5  2002/09/13 12:30:59  rsh
  * Added checks that returned packet is long enough before copying.
  * Added lifetime argument.
@@ -70,6 +73,7 @@ float backoff = DEFAULT_BACKOFF_FACTOR;	/* Backoff factor */
 int source_port = DEFAULT_SOURCE_PORT;	/* UDP source port */
 int dest_port = DEFAULT_DEST_PORT;	/* UDP destination port */
 unsigned lifetime = DEFAULT_LIFETIME;	/* Lifetime in seconds */
+int auth_method = DEFAULT_AUTH_METHOD;	/* Authentication method */
 int verbose=0;
 struct timeval last_packet_time;	/* Time last packet was sent */
 struct isakmp_hdr hdr;			/* ISAKMP Header */
@@ -82,6 +86,16 @@ struct transform
    struct isakmp_attribute_l32 attr2;
 };
 struct transform trans[8];		/* Transform payload */
+
+char *auth_methods[] = { /* Authentication methods from RFC 2409 Appendix A */
+   "UNSPECIFIED",		/* 0 */
+   "pre-shared key",		/* 1 */
+   "DSS signatures",		/* 2 */
+   "RSA signatures",		/* 3 */
+   "Encryption with RSA",	/* 4 */
+   "Revised encryption with RSA" /* 5 */
+};
+
 char *notification_msg[] = { /* Notify Message Types from RFC 2408 3.14.1 */
    "",                               /* 0 */
    "INVALID-PAYLOAD-TYPE",           /* 1 */
@@ -156,10 +170,11 @@ int main(int argc, char *argv[]) {
       {"random", required_argument, 0, 'a'},
       {"verbose", no_argument, 0, 'v'},
       {"lifetime", required_argument, 0, 'l'},
+      {"auth", required_argument, 0, 'm'},
       {"version", no_argument, 0, 'V'},
       {0, 0, 0, 0}
    };
-   char *short_options = "f:hr:t:i:b:w:a:vl:V";
+   char *short_options = "f:hr:t:i:b:w:a:vl:m:V";
    int arg;
    int options_index=0;
    char filename[MAXLINE];
@@ -215,6 +230,9 @@ int main(int argc, char *argv[]) {
             break;
          case 'l':
             lifetime=atoi(optarg);
+            break;
+         case 'm':
+            auth_method=atoi(optarg);
             break;
          case 'V':
             fprintf(stderr, "%s\n", VERSION);
@@ -735,7 +753,7 @@ void initialise_ike_packet(void) {
    trans[0].attr[1].isaat_af_type = htons(0x8002);      /* Hash */
    trans[0].attr[1].isaat_lv = htons(OAKLEY_SHA);
    trans[0].attr[2].isaat_af_type = htons(0x8003);      /* Auth */
-   trans[0].attr[2].isaat_lv = htons(1);                /* Shared Key */
+   trans[0].attr[2].isaat_lv = htons(auth_method);
    trans[0].attr[3].isaat_af_type = htons(0x8004);      /* Group */
    trans[0].attr[3].isaat_lv = htons(2);                /* group 2 */
    trans[0].attr[4].isaat_af_type = htons(0x800b);      /* Life Type */
@@ -753,7 +771,7 @@ void initialise_ike_packet(void) {
    trans[1].attr[1].isaat_af_type = htons(0x8002);      /* Hash */
    trans[1].attr[1].isaat_lv = htons(OAKLEY_MD5);
    trans[1].attr[2].isaat_af_type = htons(0x8003);      /* Auth */
-   trans[1].attr[2].isaat_lv = htons(1);                /* Shared Key */
+   trans[1].attr[2].isaat_lv = htons(auth_method);
    trans[1].attr[3].isaat_af_type = htons(0x8004);      /* Group */
    trans[1].attr[3].isaat_lv = htons(2);                /* group 2 */
    trans[1].attr[4].isaat_af_type = htons(0x800b);      /* Life Type */
@@ -771,7 +789,7 @@ void initialise_ike_packet(void) {
    trans[2].attr[1].isaat_af_type = htons(0x8002);      /* Hash */
    trans[2].attr[1].isaat_lv = htons(OAKLEY_SHA);
    trans[2].attr[2].isaat_af_type = htons(0x8003);      /* Auth */
-   trans[2].attr[2].isaat_lv = htons(1);                /* Shared Key */
+   trans[2].attr[2].isaat_lv = htons(auth_method);
    trans[2].attr[3].isaat_af_type = htons(0x8004);      /* Group */
    trans[2].attr[3].isaat_lv = htons(2);                /* group 2 */
    trans[2].attr[4].isaat_af_type = htons(0x800b);      /* Life Type */
@@ -789,7 +807,7 @@ void initialise_ike_packet(void) {
    trans[3].attr[1].isaat_af_type = htons(0x8002);      /* Hash */
    trans[3].attr[1].isaat_lv = htons(OAKLEY_MD5);
    trans[3].attr[2].isaat_af_type = htons(0x8003);      /* Auth */
-   trans[3].attr[2].isaat_lv = htons(1);                /* Shared Key */
+   trans[3].attr[2].isaat_lv = htons(auth_method);
    trans[3].attr[3].isaat_af_type = htons(0x8004);      /* Group */
    trans[3].attr[3].isaat_lv = htons(2);                /* group 2 */
    trans[3].attr[4].isaat_af_type = htons(0x800b);      /* Life Type */
@@ -807,7 +825,7 @@ void initialise_ike_packet(void) {
    trans[4].attr[1].isaat_af_type = htons(0x8002);      /* Hash */
    trans[4].attr[1].isaat_lv = htons(OAKLEY_SHA);
    trans[4].attr[2].isaat_af_type = htons(0x8003);      /* Auth */
-   trans[4].attr[2].isaat_lv = htons(1);                /* Shared Key */
+   trans[4].attr[2].isaat_lv = htons(auth_method);
    trans[4].attr[3].isaat_af_type = htons(0x8004);      /* Group */
    trans[4].attr[3].isaat_lv = htons(1);                /* group 1 */
    trans[4].attr[4].isaat_af_type = htons(0x800b);      /* Life Type */
@@ -825,7 +843,7 @@ void initialise_ike_packet(void) {
    trans[5].attr[1].isaat_af_type = htons(0x8002);      /* Hash */
    trans[5].attr[1].isaat_lv = htons(OAKLEY_MD5);
    trans[5].attr[2].isaat_af_type = htons(0x8003);      /* Auth */
-   trans[5].attr[2].isaat_lv = htons(1);                /* Shared Key */
+   trans[5].attr[2].isaat_lv = htons(auth_method);
    trans[5].attr[3].isaat_af_type = htons(0x8004);      /* Group */
    trans[5].attr[3].isaat_lv = htons(1);                /* group 1 */
    trans[5].attr[4].isaat_af_type = htons(0x800b);      /* Life Type */
@@ -843,7 +861,7 @@ void initialise_ike_packet(void) {
    trans[6].attr[1].isaat_af_type = htons(0x8002);      /* Hash */
    trans[6].attr[1].isaat_lv = htons(OAKLEY_SHA);
    trans[6].attr[2].isaat_af_type = htons(0x8003);      /* Auth */
-   trans[6].attr[2].isaat_lv = htons(1);                /* Shared Key */
+   trans[6].attr[2].isaat_lv = htons(auth_method);
    trans[6].attr[3].isaat_af_type = htons(0x8004);      /* Group */
    trans[6].attr[3].isaat_lv = htons(1);                /* group 1 */
    trans[6].attr[4].isaat_af_type = htons(0x800b);      /* Life Type */
@@ -861,7 +879,7 @@ void initialise_ike_packet(void) {
    trans[7].attr[1].isaat_af_type = htons(0x8002);      /* Hash */
    trans[7].attr[1].isaat_lv = htons(OAKLEY_MD5);
    trans[7].attr[2].isaat_af_type = htons(0x8003);      /* Auth */
-   trans[7].attr[2].isaat_lv = htons(1);                /* Shared Key */
+   trans[7].attr[2].isaat_lv = htons(auth_method);
    trans[7].attr[3].isaat_af_type = htons(0x8004);      /* Group */
    trans[7].attr[3].isaat_lv = htons(1);                /* group 1 */
    trans[7].attr[4].isaat_af_type = htons(0x800b);      /* Life Type */
@@ -889,12 +907,14 @@ void usage(void) {
    fprintf(stderr, "--dport=<p> or -d p\tSet UDP destination port to <p>, default=%d\n", DEFAULT_DEST_PORT);
    fprintf(stderr, "--retry=<n> or -r n\tSet number of attempts per host to <n>, default=%d\n", DEFAULT_RETRY);
    fprintf(stderr, "--timeout=<n> or -t n\tSet per host timeout to <n> ms, default=%d\n", DEFAULT_TIMEOUT);
-   fprintf(stderr, "--interval=<n> or -i <n>\tSet packet interval to <n> ms, default=%d\n", DEFAULT_INTERVAL);
+   fprintf(stderr, "--interval=<n> or -i <n> Set packet interval to <n> ms, default=%d\n", DEFAULT_INTERVAL);
    fprintf(stderr, "--backoff=<b> or -b <b>\tSet backoff factor to <b>, default=%.2f\n", DEFAULT_BACKOFF_FACTOR);
-   fprintf(stderr, "--selectwait=<n> or -w <b>\tSet select wait to <n> ms, default=%d\n", DEFAULT_SELECT_TIMEOUT);
+   fprintf(stderr, "--selectwait=<n> or -w <b> Set select wait to <n> ms, default=%d\n", DEFAULT_SELECT_TIMEOUT);
    fprintf(stderr, "--random=<n> or -a <n>\tSet random seed to <n>.  Default is based on time\n");
    fprintf(stderr, "--verbose or -v\t\tDisplay verbose progress messages.\n");
-   fprintf(stderr, "--lifetime=<s> or -l <s>\tSet IKE lifetime to <s> seconds, default=%d\n", DEFAULT_LIFETIME);
+   fprintf(stderr, "--lifetime=<s> or -l <s> Set IKE lifetime to <s> seconds, default=%d\n", DEFAULT_LIFETIME);
+   fprintf(stderr, "--auth=<n> or -m <n>\tSet auth. method to <n>, default=%d (%s)\n", DEFAULT_AUTH_METHOD, auth_methods[DEFAULT_AUTH_METHOD]);
+   fprintf(stderr, "\t\t\tRFC defined values are 1 to 5.  See RFC 2409 Appendix A.\n");
    fprintf(stderr, "--version or -V\t\tDisplay program version and exit.\n");
    fprintf(stderr, "\n");
    fprintf(stderr, "%s\n", rcsid);
