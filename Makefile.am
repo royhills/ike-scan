@@ -1,6 +1,6 @@
 # Process this file with automake to produce Makefile.in
 #
-CPPFLAGS = -DDATADIR=\"$(datadir)\" @CPPFLAGS@
+CPPFLAGS = -DIKEDATADIR=\"$(datadir)\" @CPPFLAGS@
 data_DATA = ike-backoff-patterns
 bin_PROGRAMS = ike-scan
 ike_scan_SOURCES = ike-scan.c ike-scan.h error.c md5.c md5.h isakmp.h
