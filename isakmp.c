@@ -192,10 +192,10 @@ make_prop(uint32_t length, uint8_t notrans) {
  *	Most of the values are defined in RFC 2409 Appendix A.
  */
 unsigned char*
-make_trans(int *length, uint8_t next, uint8_t number, uint16_t cipher,
+make_trans(size_t *length, uint8_t next, uint8_t number, uint16_t cipher,
            uint16_t keylen, uint16_t hash, uint16_t auth, uint16_t group,
            uint32_t lifetime, uint32_t lifesize, int gss_id_flag,
-           unsigned char *gss_data, int gss_data_len) {
+           unsigned char *gss_data, size_t gss_data_len) {
 
    struct isakmp_transform* hdr;	/* Transform header */
    struct isakmp_attribute* attr1;	/* Mandatory attributes */
@@ -207,7 +207,7 @@ make_trans(int *length, uint8_t next, uint8_t number, uint16_t cipher,
    unsigned char *gssid=NULL;		/* Optional GSSID attribute */
    unsigned char *payload;
    unsigned char *cp;
-   int len;				/* Payload Length */
+   size_t len;				/* Payload Length */
 
 /* Allocate and initialise the transform header */
 
@@ -349,18 +349,18 @@ make_trans(int *length, uint8_t next, uint8_t number, uint16_t cipher,
  *	payload and will set *length to the length of this payload.
  */
 unsigned char*
-add_trans(int finished, int *length,
+add_trans(int finished, size_t *length,
           uint16_t cipher, uint16_t keylen, uint16_t hash, uint16_t auth,
           uint16_t group, uint32_t lifetime, uint32_t lifesize,
-          int gss_id_flag, unsigned char *gss_data, int gss_data_len) {
+          int gss_id_flag, unsigned char *gss_data, size_t gss_data_len) {
 
    static int first_transform = 1;
    static unsigned char *trans_start=NULL;	/* Start of set of transforms */
-   static int cur_offset;			/* Start of current transform */
-   static int end_offset;			/* End of transforms */
+   static size_t cur_offset;			/* Start of current transform */
+   static size_t end_offset;			/* End of transforms */
    static int trans_no=1;
    unsigned char *trans;			/* Transform payload */
-   int len;					/* Transform length */
+   size_t len;					/* Transform length */
 /*
  * Construct a transform if we are not finalising.
  * Set next to 3 (more transforms), and increment trans_no for next time round.
@@ -411,7 +411,8 @@ add_trans(int finished, int *length,
  *	The next pointer value must be filled in later.
  */
 unsigned char*
-make_vid(int *length, uint8_t next, unsigned char *vid_data, int vid_data_len) {
+make_vid(size_t *length, uint8_t next, unsigned char *vid_data,
+         size_t vid_data_len) {
    unsigned char *payload;
    struct isakmp_vid* hdr;
 
@@ -450,13 +451,14 @@ make_vid(int *length, uint8_t next, unsigned char *vid_data, int vid_data_len) {
  *	payload and will set *length to the length of this payload.
  */
 unsigned char*
-add_vid(int finished, int *length, unsigned char *vid_data, int vid_data_len) {
+add_vid(int finished, size_t *length, unsigned char *vid_data,
+        size_t vid_data_len) {
    static int first_vid = 1;
    static unsigned char *vid_start=NULL;	/* Start of set of VIDs */
-   static int cur_offset;			/* Start of current VID */
-   static int end_offset;			/* End of VIDs */
+   static size_t cur_offset;			/* Start of current VID */
+   static size_t end_offset;			/* End of VIDs */
    unsigned char *vid;				/* VID payload */
-   int len;					/* VID length */
+   size_t len;					/* VID length */
 /*
  * Construct a VID if we are not finalising.
  */
@@ -502,7 +504,7 @@ add_vid(int finished, int *length, unsigned char *vid_data, int vid_data_len) {
  *	Diffie Hellman public value.  However, we just use random data.
  */
 unsigned char*
-make_ke(int *length, uint8_t next, int kx_data_len) {
+make_ke(size_t *length, uint8_t next, size_t kx_data_len) {
    unsigned char *payload;
    struct isakmp_kx* hdr;
    unsigned char *kx_data;
@@ -546,7 +548,7 @@ make_ke(int *length, uint8_t next, int kx_data_len) {
  *	the random numbers for this tool.
  */
 unsigned char*
-make_nonce(int *length, uint8_t next, int nonce_len) {
+make_nonce(size_t *length, uint8_t next, size_t nonce_len) {
    unsigned char *payload;
    struct isakmp_nonce* hdr;
    unsigned char *cp;
@@ -580,8 +582,8 @@ make_nonce(int *length, uint8_t next, int nonce_len) {
  *
  */
 unsigned char*
-make_id(int *length, uint8_t next, uint8_t idtype, unsigned char *id_data,
-        int id_data_len) {
+make_id(size_t *length, uint8_t next, uint8_t idtype, unsigned char *id_data,
+        size_t id_data_len) {
    unsigned char *payload;
    struct isakmp_id* hdr;
 
@@ -615,7 +617,7 @@ make_id(int *length, uint8_t next, uint8_t idtype, unsigned char *id_data,
  *	Pointer to start of next payload, or NULL if no next payload.
  */
 unsigned char *
-skip_payload(unsigned char *cp, int *len, int *next) {
+skip_payload(unsigned char *cp, size_t *len, int *next) {
    struct isakmp_generic *hdr = (struct isakmp_generic *) cp;
 /*
  *	Signal no more payloads by setting length to zero if:
@@ -659,7 +661,7 @@ skip_payload(unsigned char *cp, int *len, int *next) {
  *	Pointer to start of next payload, or NULL if no next payload.
  */
 unsigned char *
-process_isakmp_hdr(unsigned char *cp, int *len, int *next, int *type) {
+process_isakmp_hdr(unsigned char *cp, size_t *len, int *next, int *type) {
    struct isakmp_hdr *hdr = (struct isakmp_hdr *) cp;
 /*
  *	Signal no more payloads by setting length to zero if:
@@ -705,7 +707,7 @@ process_isakmp_hdr(unsigned char *cp, int *len, int *next, int *type) {
  *	which should be free'ed by the caller when it's no longer needed.
  */
 char *
-process_sa(unsigned char *cp, int len, int type) {
+process_sa(unsigned char *cp, size_t len, int type) {
    struct isakmp_sa *sa_hdr = (struct isakmp_sa *) cp;
    struct isakmp_proposal *prop_hdr =
       (struct isakmp_proposal *) (cp + sizeof(struct isakmp_sa));
@@ -739,6 +741,7 @@ process_sa(unsigned char *cp, int len, int type) {
  *
  *	cp	Pointer to start of Vendor ID payload
  *	len	Packet length remaining
+ *	vidlist	List of Vendor ID patterns.
  *
  *	Returns:
  *
@@ -748,15 +751,15 @@ process_sa(unsigned char *cp, int len, int type) {
  *	which should be free'ed by the caller when it's no longer needed.
  */
 char *
-process_vid(unsigned char *cp, int len, struct vid_pattern_list *vidlist) {
+process_vid(unsigned char *cp, size_t len, struct vid_pattern_list *vidlist) {
    struct isakmp_vid *hdr = (struct isakmp_vid *) cp;
    struct vid_pattern_list *ve;
    char *msg;
    char *p;
    unsigned char *vid_data;
    unsigned char *ucp;
-   int data_len;
-   int checklen;
+   size_t data_len;
+   size_t checklen;
    int i;
 
    if (len < sizeof(struct isakmp_vid) ||
@@ -812,11 +815,11 @@ process_vid(unsigned char *cp, int len, struct vid_pattern_list *vidlist) {
  *	which should be free'ed by the caller when it's no longer needed.
  */
 char *
-process_notify(unsigned char *cp, int len) {
+process_notify(unsigned char *cp, size_t len) {
    struct isakmp_notification *hdr = (struct isakmp_notification *) cp;
    char *msg;
    int msg_type;
-   int msg_len;
+   size_t msg_len;
    unsigned char *msg_data;
    unsigned char *notify_msg;
 
