@@ -523,7 +523,7 @@ main(int argc, char *argv[]) {
  */
             if (verbose && n >= sizeof(hdr_in)) {
                memcpy(&hdr_in, packet_in, sizeof(hdr_in));
-               warn_msg("---\tIgnoring %d bytes from %s with unknown cookie %.8x%.8x", n, inet_ntoa(sa_peer.sin_addr), htonl(hdr_in.isa_icookie[0]), htonl(hdr_in.isa_icookie[1]));
+               warn_msg("---\tIgnoring %d bytes from %s with unknown cookie %.8x%.8x", n, inet_ntoa(sa_peer.sin_addr), (uint32_t) htonl(hdr_in.isa_icookie[0]), (uint32_t) htonl(hdr_in.isa_icookie[1]));
             }
          }
       } /* End If */
@@ -720,8 +720,8 @@ display_packet(int n, char *packet_in, struct host_entry *he, struct in_addr *re
  */
    if (hdr_in.isa_icookie[0] != he->icookie[0] || hdr_in.isa_icookie[1] != he->icookie[1]) {
       printf("%sReturned icookie doesn't match (received %.8x%.8x; expected %.8x%.8x)\n",
-         ip_str, htonl(hdr_in.isa_icookie[0]), htonl(hdr_in.isa_icookie[1]),
-         htonl(he->icookie[0]), htonl(he->icookie[1]));
+         ip_str, (uint32_t) htonl(hdr_in.isa_icookie[0]), (uint32_t) htonl(hdr_in.isa_icookie[1]),
+         (uint32_t) htonl(he->icookie[0]), (uint32_t) htonl(he->icookie[1]));
       return;
    }
 
@@ -1192,7 +1192,7 @@ dump_list(void) {
    printf("Host List:\n\n");
    printf("Entry\tIP Address\tCookie\n");
    do {
-      printf("%u\t%s\t%.8x%.8x\n", p->n, inet_ntoa(p->addr), htonl(p->icookie[0]), htonl(p->icookie[1]));
+      printf("%u\t%s\t%.8x%.8x\n", p->n, inet_ntoa(p->addr), (uint32_t) htonl(p->icookie[0]), (uint32_t) htonl(p->icookie[1]));
       p = p->next;
    } while (p != rrlist);
    printf("\nTotal of %u host entries.\n\n", num_hosts);
