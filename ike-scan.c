@@ -567,8 +567,13 @@ main(int argc, char *argv[]) {
  *	Issue a message to that effect if verbose is on and ignore the packet.
  */
             if (verbose && n >= sizeof(hdr_in)) {
+               char *cp;
                memcpy(&hdr_in, packet_in, sizeof(hdr_in));
-               warn_msg("---\tIgnoring %d bytes from %s with unknown cookie %.8x%.8x", n, inet_ntoa(sa_peer.sin_addr), (uint32_t) htonl(hdr_in.isa_icookie[0]), (uint32_t) htonl(hdr_in.isa_icookie[1]));
+               cp = hexstring((unsigned char *)hdr_in.isa_icookie,
+                              sizeof(hdr_in.isa_icookie));
+               warn_msg("---\tIgnoring %d bytes from %s with unknown cookie %s",
+                        n, inet_ntoa(sa_peer.sin_addr), cp);
+               free(cp);
             }
          }
       } /* End If */
@@ -1384,13 +1389,16 @@ initialise_ike_packet(size_t *packet_out_len, unsigned lifetime,
 void
 dump_list(unsigned num_hosts) {
    struct host_entry *p;
+   char *cp;
 
    p = rrlist;
 
    printf("Host List:\n\n");
    printf("Entry\tIP Address\tCookie\n");
    do {
-      printf("%u\t%s\t%.8x%.8x\n", p->n, inet_ntoa(p->addr), (uint32_t) htonl(p->icookie[0]), (uint32_t) htonl(p->icookie[1]));
+      cp = hexstring((unsigned char *)p->icookie, sizeof(p->icookie));
+      printf("%u\t%s\t%s\n", p->n, inet_ntoa(p->addr), cp);
+      free(cp);
       p = p->next;
    } while (p != rrlist);
    printf("\nTotal of %u host entries.\n\n", num_hosts);
@@ -1834,14 +1842,14 @@ add_pattern(char *line, unsigned pattern_fuzz) {
          endp++;
          len=0;
          for (len=0; len<6; len++){
-            if (isdigit(*endp)) {
+            if (isdigit((unsigned char) *endp)) {
                back_usec_str[len] = *endp;
                endp++;
             } else {
                back_usec_str[len] = '0';
             }
          }
-         while (isdigit(*endp))
+         while (isdigit((unsigned char) *endp))
             endp++;	/* Skip any fractional digits past 6th */
          back_usec_str[len] = '\0';
          back_usec=strtol(back_usec_str, NULL, 10);
