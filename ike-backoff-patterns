@@ -17,13 +17,6 @@
 # If this license is unacceptable to you, I may be willing to negotiate
 # alternative licenses (contact ike-scan@nta-monitor.com).
 #
-# You are encouraged to send comments, improvements or suggestions to
-# me at ike-scan@nta-monitor.com.
-# In particular, I would like you to submit any new patterns that you
-# discover.  See:
-# http://www.nta-monitor.com/ike-scan/submit.htm
-# For details of how to submit new backoff patterns.
-#
 # $Id$
 #
 # backoff-patterns -- Backoff patterns file for ike-scan
@@ -51,6 +44,17 @@
 # The input format is quite strict.  In particular, the separator between
 # the implementation name and the backoff pattern must be a single TAB and
 # not a space, multiple tabs or spaces, or a mixture of tabs and spaces.
+#
+# If you have problems adding entries, run ike-scan as:
+# ike-scan -v -v -v -o <any-target>
+# To dump the backoff pattern table.
+#
+# You are encouraged to send comments, improvements or suggestions to
+# me at ike-scan@nta-monitor.com.
+# In particular, I would like you to submit any new patterns that you
+# discover.  See:
+# http://www.nta-monitor.com/ike-scan/submit.htm
+# For details of how to submit new backoff patterns.
 #
 
 # Discovered by: Roy Hills, November 2002
