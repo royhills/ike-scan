@@ -1212,6 +1212,47 @@ process_id(unsigned char *cp, size_t len) {
    return msg;
 }
 
+/*
+ *	print_payload -- Print an ISAKMP payload in hex
+ *
+ *	Inputs:
+ *
+ *	cp	Pointer to start of ISAKMP payload
+ *	payload	Numeric value of this payload type, 0 = ISAKMP header
+ *	dir	Direction: 'I' for initiator or 'R' for responder
+ *
+ *	Returns:
+ *
+ *	None
+ *
+ *	This function is used for debugging.  It trusts the length in the
+ *	generic ISAKMP header, and so could misbehave with corrupted packets.
+ */
+void
+print_payload(unsigned char *cp, unsigned payload, int dir) {
+   struct isakmp_generic *hdr = (struct isakmp_generic *) cp;
+   struct isakmp_hdr *ihdr = (struct isakmp_hdr *) cp;
+   char *hexdata;
+   unsigned char *data;
+   size_t data_len;
+
+   if (payload) {	/* Some other payload */
+      data = cp + sizeof(struct isakmp_generic);  /* Points to start of data */
+      data_len = ntohs(hdr->isag_length);
+      data_len -= sizeof(struct isakmp_generic);
+      hexdata = hexstring(data, data_len);
+      printf("%c %u (%u):\t%s\n", dir, payload, data_len, hexdata);
+      free(hexdata);
+   } else {	/* ISAKMP Header */
+      hexdata = hexstring((unsigned char *)ihdr->isa_icookie, 8);
+      printf("I CKY (8):\t%s\n", hexdata);
+      free(hexdata);
+      hexdata = hexstring((unsigned char *)ihdr->isa_rcookie, 8);
+      printf("R CKY (8):\t%s\n", hexdata);
+      free(hexdata);
+   }
+}
+
 void
 isakmp_use_rcsid(void) {
    printf("%s\n", rcsid);	/* Use rcsid to stop compiler optimising away */
