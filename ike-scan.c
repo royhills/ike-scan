@@ -52,10 +52,6 @@ static char rcsid[] = "$Id$";   /* RCS ID for ident(1) */
 struct host_entry *rrlist = NULL;	/* Round-robin linked list of hosts */
 struct host_entry *cursor;		/* Pointer to current list entry */
 struct pattern_list *patlist = NULL;	/* Backoff pattern list */
-unsigned num_hosts = 0;			/* Number of entries in the list */
-unsigned transform_responders = 0;	/* Number of hosts giving handshake */
-unsigned notify_responders = 0;		/* Number of hosts giving notify msg */
-unsigned live_count;			/* Number of entries awaiting reply */
 int verbose=0;
 
 const char *auth_methods[] = { /* Authentication methods from RFC 2409 Appendix A */
@@ -188,6 +184,10 @@ main(int argc, char *argv[]) {
    unsigned char *cp;
    unsigned char *packet_out;	/* IKE packet to send */
    int packet_out_len;		/* Length of IKE packet to send */
+   unsigned sa_responders = 0;	/* Number of hosts giving handshake */
+   unsigned notify_responders = 0;	/* Number of hosts giving notify msg */
+   unsigned num_hosts = 0;		/* Number of entries in the list */
+   unsigned live_count;			/* Number of entries awaiting reply */
 /*
  *	Open syslog channel and log arguments if required.
  *	We must be careful here to avoid overflowing the arg_str buffer
@@ -384,14 +384,14 @@ main(int argc, char *argv[]) {
 
       while (fgets(line, MAXLINE, fp)) {
          if ((sscanf(line, "%s", host)) == 1) {
-            add_host(host, timeout);
+            add_host(host, timeout, &num_hosts);
          }
       }
       fclose(fp);
    } else {		/* Populate list from command line arguments */
       argv=&argv[optind];
       while (*argv) {
-         add_host(*argv, timeout);
+         add_host(*argv, timeout, &num_hosts);
          argv++;
       }
    }
@@ -489,7 +489,7 @@ main(int argc, char *argv[]) {
  *	Display the lists if verbose setting is 3 or more.
  */
    if (verbose > 2)
-      dump_list();
+      dump_list(num_hosts);
    if (verbose > 2 && showbackoff_flag)
       dump_backoff(pattern_fuzz);
 /*
@@ -505,7 +505,7 @@ main(int argc, char *argv[]) {
    reset_cum_err = 1;
    req_interval = interval;
    while (live_count ||
-          (showbackoff_flag && transform_responders && (end_timediff < end_wait))) {
+          (showbackoff_flag && sa_responders && (end_timediff < end_wait))) {
 /*
  *	Obtain current time and calculate deltas since last packet and
  *	last packet to this host.
@@ -554,7 +554,7 @@ main(int argc, char *argv[]) {
             if (cursor->num_sent >= retry) {
                if (verbose)
                   warn_msg("---\tRemoving host entry %u (%s) - Timeout", cursor->n, inet_ntoa(cursor->addr));
-               remove_host(cursor);	/* Automatically calls advance_cursor() */
+               remove_host(cursor, &live_count);	/* Automatically calls advance_cursor() */
                if (first_timeout) {
                   timeval_diff(&now, &(cursor->last_send_time), &diff);
                   host_timediff = 1000000*diff.tv_sec + diff.tv_usec;
@@ -562,9 +562,9 @@ main(int argc, char *argv[]) {
                      if (cursor->live) {
                         if (verbose > 1)
                            warn_msg("---\tRemoving host %u (%s) - Catch-Up Timeout", cursor->n, inet_ntoa(cursor->addr));
-                        remove_host(cursor);
+                        remove_host(cursor, &live_count);
                      } else {
-                        advance_cursor();
+                        advance_cursor(live_count);
                      }
                      timeval_diff(&now, &(cursor->last_send_time), &diff);
                      host_timediff = 1000000*diff.tv_sec + diff.tv_usec;
@@ -577,7 +577,7 @@ main(int argc, char *argv[]) {
                   cursor->timeout *= backoff_factor;
                send_packet(sockfd, packet_out, packet_out_len, cursor,
                            dest_port, &last_packet_time);
-               advance_cursor();
+               advance_cursor(live_count);
             }
          } else {	/* We can't send a packet to this host yet */
 /*
@@ -611,10 +611,11 @@ main(int argc, char *argv[]) {
             if (verbose > 1)
                warn_msg("---\tReceived packet #%u from %s",temp_cursor->num_recv ,inet_ntoa(sa_peer.sin_addr));
             if (temp_cursor->live) {
-               display_packet(n, packet_in, temp_cursor, &(sa_peer.sin_addr));
+               display_packet(n, packet_in, temp_cursor, &(sa_peer.sin_addr),
+                              &sa_responders, &notify_responders);
                if (verbose)
                   warn_msg("---\tRemoving host entry %u (%s) - Received %d bytes", temp_cursor->n, inet_ntoa(sa_peer.sin_addr), n);
-               remove_host(temp_cursor);
+               remove_host(temp_cursor, &live_count);
             }
          } else {
             struct isakmp_hdr hdr_in;
@@ -634,7 +635,7 @@ main(int argc, char *argv[]) {
  *	and we have at least one system returning a handshake.
  */
    printf("\n");	/* Ensure we have a blank line */
-   if (showbackoff_flag && transform_responders) {
+   if (showbackoff_flag && sa_responders) {
       dump_times(patterns_loaded);
    }
 
@@ -650,11 +651,11 @@ main(int argc, char *argv[]) {
 #ifdef SYSLOG
    info_syslog("Ending: %u hosts scanned in %.3f seconds (%.2f hosts/sec). %u returned handshake; %u returned notify",
                num_hosts, elapsed_seconds, num_hosts/elapsed_seconds,
-               transform_responders, notify_responders);
+               sa_responders, notify_responders);
 #endif
    printf("Ending %s: %u hosts scanned in %.3f seconds (%.2f hosts/sec).  %u returned handshake; %u returned notify\n",
           PACKAGE_STRING, num_hosts, elapsed_seconds,
-          num_hosts/elapsed_seconds,transform_responders, notify_responders);
+          num_hosts/elapsed_seconds,sa_responders, notify_responders);
 
    return 0;
 }
@@ -666,11 +667,12 @@ main(int argc, char *argv[]) {
  *
  *	name	= The Name or IP address of the host.
  *	timeout	= Per-host timeout in ms.
+ *	num_hosts	The number of entries in the host list.
  *
  *	Returns: None
  */
 void
-add_host(const char *name, unsigned timeout) {
+add_host(const char *name, unsigned timeout, unsigned *num_hosts) {
    struct hostent *hp;
    struct host_entry *he;
    char str[MAXLINE];
@@ -683,11 +685,11 @@ add_host(const char *name, unsigned timeout) {
 
    he = Malloc(sizeof(struct host_entry));
 
-   num_hosts++;
+   (*num_hosts)++;
 
    Gettimeofday(&now,NULL);
 
-   he->n = num_hosts;
+   he->n = *num_hosts;
    memcpy(&(he->addr), hp->h_addr_list[0], sizeof(struct in_addr));
    he->live = 1;
    he->timeout = timeout * 1000;	/* Convert from ms to us */
@@ -696,7 +698,8 @@ add_host(const char *name, unsigned timeout) {
    he->last_send_time.tv_sec=0;
    he->last_send_time.tv_usec=0;
    he->recv_times = NULL;
-   sprintf(str, "%lu %lu %u %s", now.tv_sec, now.tv_usec, num_hosts, inet_ntoa(he->addr));
+   sprintf(str, "%lu %lu %u %s", now.tv_sec, now.tv_usec, *num_hosts,
+           inet_ntoa(he->addr));
    md5_init(&context);
    md5_append(&context, (const md5_byte_t *)str, strlen(str));
    md5_finish(&context, cookie_md5);
@@ -720,17 +723,18 @@ add_host(const char *name, unsigned timeout) {
  *	inputs:
  *
  *	he = Pointer to host entry to remove.
+ *	live_count	Number of hosts awaiting response.
  *
  *
  *	If the host being removed is the one pointed to by the cursor, this
  *	function updates cursor so that it points to the next entry.
  */
 void
-remove_host(struct host_entry *he) {
+remove_host(struct host_entry *he, unsigned *live_count) {
    he->live = 0;
-   live_count--;
+   (*live_count)--;
    if (he == cursor)
-      advance_cursor();
+      advance_cursor(*live_count);
 }
 
 /*
@@ -738,12 +742,12 @@ remove_host(struct host_entry *he) {
  *
  *	Inputs:
  *
- *	None.
+ *	live_count	Number of hosts awaiting reply.
  *
  *	Does nothing if there are no live entries in the list.
  */
 void
-advance_cursor(void) {
+advance_cursor(unsigned live_count) {
    if (live_count) {
       do {
          cursor = cursor->next;
@@ -819,6 +823,8 @@ find_host_by_cookie(struct host_entry *he, unsigned char *packet_in, int n) {
  *	packet_in       The received packet
  *	he              The host entry corresponding to the received packet
  *	recv_addr       IP address that the packet was received from
+ *	sa_responders	Number of hosts responding with SA
+ *	notify_responders	Number of hosts responding with NOTIFY
  *	
  *	Returns:
  *	
@@ -829,7 +835,8 @@ find_host_by_cookie(struct host_entry *he, unsigned char *packet_in, int n) {
  */
 void
 display_packet(int n, unsigned char *packet_in, struct host_entry *he,
-               struct in_addr *recv_addr) {
+               struct in_addr *recv_addr, unsigned *sa_responders,
+               unsigned *notify_responders) {
    char *cp;			/* Temp pointer */
    int bytes_left;		/* Remaining buffer size */
    int next;			/* Next Payload */
@@ -866,11 +873,11 @@ display_packet(int n, unsigned char *packet_in, struct host_entry *he,
  */
    switch (next) {
       case ISAKMP_NEXT_SA:	/* SA */
-         transform_responders++;
+         (*sa_responders)++;
          cp = process_sa(pkt_ptr, bytes_left, type);
          break;
       case ISAKMP_NEXT_N:	/* Notify */
-         notify_responders++;
+         (*notify_responders)++;
          cp = process_notify(pkt_ptr, bytes_left);
          break;
       default:
@@ -1231,10 +1238,14 @@ initialise_ike_packet(int *packet_out_len, unsigned lifetime,
  *
  *      Inputs:
  *
- *      None.
+ *      num_hosts	The number of entries in the host list.
+ *
+ *	Returns:
+ *
+ *	None.
  */
 void
-dump_list(void) {
+dump_list(unsigned num_hosts) {
    struct host_entry *p;
 
    p = rrlist;
