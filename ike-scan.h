@@ -141,15 +141,15 @@
 struct host_entry {
    struct host_entry *prev;	/* Previous pointer */
    struct host_entry *next;	/* Next pointer */
-   unsigned n;			/* Ordinal number for this entry */
-   struct in_addr addr;		/* Host IP address */
-   unsigned char live;		/* Set when awaiting response */
-   struct timeval last_send_time; /* Time when last packet sent to this addr */
    struct time_list *recv_times; /* List of receive times */
+   unsigned n;			/* Ordinal number for this entry */
    unsigned timeout;		/* Timeout for this host */
-   unsigned num_sent;		/* Number of packets sent */
-   unsigned num_recv;		/* Number of packets received */
    uint32_t icookie[COOKIE_SIZE];	/* IKE Initiator cookie */
+   struct in_addr addr;		/* Host IP address */
+   struct timeval last_send_time; /* Time when last packet sent to this addr */
+   unsigned short num_sent;	/* Number of packets sent */
+   unsigned short num_recv;	/* Number of packets received */
+   unsigned char live;		/* Set when awaiting response */
 };
 
 struct time_list {
