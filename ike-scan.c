@@ -1329,7 +1329,7 @@ match_pattern(struct host_entry *he) {
       pl = pl->next;
    } /* End While */
 /*
- *	If we reach here, then we havn't mached the pattern so return NULL.
+ *	If we reach here, then we haven't matched the pattern so return NULL.
  */
    return NULL;
 }
@@ -1421,7 +1421,7 @@ add_pattern(char *line) {
       p->next = pe;
    }
 /*
- *	Seperate line from patterns file into name and pattern.
+ *	Separate line from patterns file into name and pattern.
  */
    tabseen = 0;
    cp = line;

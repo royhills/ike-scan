@@ -94,7 +94,7 @@ warn_msg(const char *fmt,...) {
 }
 
 /*
- *	Function to handle infomational syslog messages
+ *	Function to handle informational syslog messages
  */
 void
 info_syslog(const char *fmt,...) {

@@ -43,7 +43,7 @@
 #define MAXLINE 255			/* Max line length for input files */
 #define MAXUDP 65507			/* Max UDP data size = 64k - 20 - 8 */
 #define DEFAULT_SELECT_TIMEOUT 10	/* Default select timeout in ms */
-#define DEFAULT_BACKOFF_FACTOR 1.5	/* Default timout backoff factor */
+#define DEFAULT_BACKOFF_FACTOR 1.5	/* Default timeout backoff factor */
 #define DEFAULT_RETRY 3			/* Default number of retries */
 #define DEFAULT_TIMEOUT 500		/* Default per-host timeout in ms */
 #define DEFAULT_INTERVAL 75		/* Default delay between packets (ms) */
