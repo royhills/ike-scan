@@ -808,16 +808,48 @@ add_host_pattern(const char *pattern, unsigned timeout, unsigned *num_hosts) {
    unsigned long hoststart;
    unsigned long hostend;
    unsigned i;
+   static int first_call=1;
+   static regex_t iprange_pat;
+   static regex_t ipslash_pat;
+   static const char *iprange_pat_str = 
+      "[0-9]+\\.[0-9]+\\.[0-9]+\\.[0-9]+-[0-9]+\\.[0-9]+\\.[0-9]+\\.[0-9]+";
+   static const char *ipslash_pat_str = 
+      "[0-9]+\\.[0-9]+\\.[0-9]+\\.[0-9]+/[0-9]+";
+/*
+ *	Compile regex patterns if this is the first time we've been called.
+ */
+   if (first_call) {
+      int result;
+
+      first_call = 0;
+      if ((result=regcomp(&iprange_pat, iprange_pat_str,
+                          REG_EXTENDED|REG_NOSUB))) {
+         char errbuf[MAXLINE];
+         size_t errlen;
+         errlen=regerror(result, &iprange_pat, errbuf, MAXLINE);
+         err_msg("ERROR: cannot compile regex pattern \"%s\": %s",
+                 iprange_pat_str, errbuf);
+      }
+      if ((result=regcomp(&ipslash_pat, ipslash_pat_str,
+                          REG_EXTENDED|REG_NOSUB))) {
+         char errbuf[MAXLINE];
+         size_t errlen;
+         errlen=regerror(result, &ipslash_pat, errbuf, MAXLINE);
+         err_msg("ERROR: cannot compile regex pattern \"%s\": %s",
+                 ipslash_pat_str, errbuf);
+      }
+   }
 /*
  *	Make a copy of pattern because we don't want to modify our argument.
  */
    patcopy=Malloc(strlen(pattern)+1);
    strcpy(patcopy, pattern);
 
-   if        ((cp=strchr(patcopy, '/'))) {	/* IPnet/bits */
+   if (!(regexec(&ipslash_pat, patcopy, 0, NULL, 0))) { /* IPnet/bits */
 /*
  *	Get IPnet and bits as integers.  Perform basic error checking.
  */
+      cp=strchr(patcopy, '/');
       *(cp++)='\0';	/* patcopy points to IPnet, cp points to bits */
       if (!(inet_aton(patcopy, &in_val)))
          err_msg("ERROR: %s is not a valid IP address", patcopy);
@@ -862,10 +894,11 @@ add_host_pattern(const char *pattern, unsigned timeout, unsigned *num_hosts) {
          sprintf(ipstr, "%d.%d.%d.%d", b1,b2,b3,b4);
          add_host(ipstr, timeout, num_hosts);
       }
-   } else if ((cp=strchr(patcopy, '-'))) {	/* IPstart-IPend */
+   } else if (!(regexec(&iprange_pat, patcopy, 0, NULL, 0))) { /* IPstart-IPend */
 /*
  *	Get IPstart and IPend as integers.
  */
+      cp=strchr(patcopy, '-');
       *(cp++)='\0';	/* patcopy points to IPstart, cp points to IPend */
       if (!(inet_aton(patcopy, &in_val)))
          err_msg("ERROR: %s is not a valid IP address", patcopy);
@@ -888,7 +921,7 @@ add_host_pattern(const char *pattern, unsigned timeout, unsigned *num_hosts) {
          sprintf(ipstr, "%d.%d.%d.%d", b1,b2,b3,b4);
          add_host(ipstr, timeout, num_hosts);
       }
-   } else {				/* Single host */
+   } else {				/* Single host or IP address */
       add_host(patcopy, timeout, num_hosts);
    }
    free(patcopy);
