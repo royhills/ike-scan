@@ -62,8 +62,8 @@ int auth_method = DEFAULT_AUTH_METHOD;	/* Authentication method */
 unsigned pattern_fuzz = DEFAULT_PATTERN_FUZZ; /* Pattern matching fuzz in ms */
 int dhgroup = DEFAULT_DH_GROUP;		/* Diffie Hellman Group */
 int idtype = DEFAULT_IDTYPE;		/* IKE Identification type */
-char id_string[MAXLINE];
-int id_data_len;
+unsigned char *id_data;
+int id_data_len=0;
 uint32_t kx_data[48];		/* Key exchange data.  48 is largest needed */
 int kx_data_len;		/* Key exchange data len in 32bit longwords */
 int verbose=0;
@@ -74,6 +74,7 @@ int patterns_loaded = 0;		/* Indicates if backoff patterns loaded */
 struct timeval last_recv_time;		/* Time last packet was received */
 unsigned char *vid_data;		/* Binary Vendor ID data */
 int vid_data_len;			/* Vendor ID data length */
+int exchange_type = DEFAULT_EXCHANGE_TYPE;	/* Main or Aggressive mode */
 /* These two should be made local.  Used by initialise and send_packet */
 unsigned char *buf;
 int buflen;
@@ -162,9 +163,10 @@ main(int argc, char *argv[]) {
       {"idtype", required_argument, 0, 'y'},
       {"dhgroup", required_argument, 0, 'g'},
       {"patterns", required_argument, 0, 'p'},
+      {"aggressive", no_argument, 0, 'A'},
       {0, 0, 0, 0}
    };
-   const char *short_options = "f:hs:d:r:t:i:b:w:vl:m:Ve:a:o::u:n:y:g:p:";
+   const char *short_options = "f:hs:d:r:t:i:b:w:vl:m:Ve:a:o::u:n:y:g:p:A";
    int arg;
    char arg_str[MAXLINE];	/* Args as string for syslog */
    int options_index=0;
@@ -328,16 +330,26 @@ main(int argc, char *argv[]) {
             pattern_fuzz=strtoul(optarg, (char **)NULL, 10);
             break;
          case 'n':	/* --id */
-            /* Not implemented yet */
+            if (strlen(optarg) % 2) {	/* Length is odd */
+               err_msg("Length of --id argument must be even (multiple of 2).");
+            }
+            id_data_len=strlen(optarg)/2;
+            id_data = Malloc(id_data_len);
+            cp = id_data;
+            for (i=0; i<id_data_len; i++)
+               *cp++=hstr_i(&optarg[i*2]);
             break;
          case 'y':	/* --idtype */
-            /* Not implemented yet */
+            idtype = atoi(optarg);
             break;
          case 'g':	/* --dhgroup */
-            /* Not implemented yet */
+            dhgroup = atoi(optarg);
             break;
          case 'p':	/* --patterns */
             strncpy(patfile, optarg, MAXLINE);
+            break;
+         case 'A':	/* --aggressive */
+            exchange_type = ISAKMP_XCHG_AGGR;
             break;
          default:	/* Unknown option */
             usage();
@@ -1096,6 +1108,10 @@ timeval_diff(struct timeval *a, struct timeval *b, struct timeval *diff) {
 
 /*
  *	initialise_ike_packet	-- Initialise IKE packet structures
+ *
+ *	We build the IKE packet backwards: from the last payload to the first.
+ *	This ensures that we know the "next payload" value for the previous
+ *	payload, and also that we know the total length for the ISAKMP header.
  */
 void
 initialise_ike_packet(void) {
@@ -1104,9 +1120,17 @@ initialise_ike_packet(void) {
    struct isakmp_proposal *prop;
    unsigned char *transforms;	/* All transforms */
    unsigned char *vid=NULL;
+   unsigned char *id=NULL;
+   unsigned char *nonce=NULL;
+   unsigned char *ke=NULL;	/* Key Exchange */
    unsigned char *cp;
    int vid_len;
    int trans_len;
+   int id_len;
+   int nonce_len;
+   int nonce_data_len=20;
+   int ke_len;
+   int kx_data_len;
 /*
  *	Vendor ID Payload (Optional)
  */
@@ -1115,25 +1139,80 @@ initialise_ike_packet(void) {
       buflen += vid_len;
    }
 /*
+ *	Key Exchange, Nonce and ID for aggressive mode only.
+ */
+   if (exchange_type == ISAKMP_XCHG_AGGR) {
+      if (vendor_id_flag) {
+         id = make_id(&id_len, ISAKMP_NEXT_VID, idtype, id_data, id_data_len);
+      } else {
+         id = make_id(&id_len, ISAKMP_NEXT_NONE, idtype, id_data, id_data_len);
+      }
+      buflen += id_len;
+      nonce = make_nonce(&nonce_len, ISAKMP_NEXT_ID, nonce_data_len);
+      buflen += nonce_len;
+      switch (dhgroup) {
+         case 1:
+            kx_data_len = 96;
+            break;
+         case 2:
+            kx_data_len = 128;
+            break;
+         case 5:
+            kx_data_len = 192;
+            break;
+         case 14:
+            kx_data_len = 256;
+            break;
+         case 15:
+            kx_data_len = 384;
+            break;
+         case 16:
+            kx_data_len = 512;
+            break;
+         case 17:
+            kx_data_len = 768;
+            break;
+         case 18:
+            kx_data_len = 1024;
+            break;
+         default:
+            err_msg("Bad Diffie Hellman group: %d, should be 1,2,5,14,15,16,17 or 18", dhgroup);
+            exit(1);
+      }
+      ke = make_ke(&ke_len, ISAKMP_NEXT_NONCE, kx_data_len);
+      buflen += ke_len;
+   }
+/*
  *	Transform payloads
  */
    if (!trans_flag) {	/* Use standard transform set if none specified */
-      add_trans(0, NULL, OAKLEY_3DES_CBC, 0, OAKLEY_SHA, auth_method,
-                        2, lifetime);
-      add_trans(0, NULL, OAKLEY_3DES_CBC, 0, OAKLEY_MD5, auth_method,
-                        2, lifetime);
-      add_trans(0, NULL, OAKLEY_DES_CBC,  0, OAKLEY_SHA, auth_method,
-                        2, lifetime);
-      add_trans(0, NULL, OAKLEY_DES_CBC,  0, OAKLEY_MD5, auth_method,
-                        2, lifetime);
-      add_trans(0, NULL, OAKLEY_3DES_CBC, 0, OAKLEY_SHA, auth_method,
-                        1, lifetime);
-      add_trans(0, NULL, OAKLEY_3DES_CBC, 0, OAKLEY_MD5, auth_method,
-                        1, lifetime);
-      add_trans(0, NULL, OAKLEY_DES_CBC,  0, OAKLEY_SHA, auth_method,
-                        1, lifetime);
-      add_trans(0, NULL, OAKLEY_DES_CBC,  0, OAKLEY_MD5, auth_method,
-                        1, lifetime);
+      if (exchange_type == ISAKMP_XCHG_IDPROT) {	/* Main Mode */
+         add_trans(0, NULL, OAKLEY_3DES_CBC, 0, OAKLEY_SHA, auth_method,
+                   2, lifetime);
+         add_trans(0, NULL, OAKLEY_3DES_CBC, 0, OAKLEY_MD5, auth_method,
+                   2, lifetime);
+         add_trans(0, NULL, OAKLEY_DES_CBC,  0, OAKLEY_SHA, auth_method,
+                   2, lifetime);
+         add_trans(0, NULL, OAKLEY_DES_CBC,  0, OAKLEY_MD5, auth_method,
+                   2, lifetime);
+         add_trans(0, NULL, OAKLEY_3DES_CBC, 0, OAKLEY_SHA, auth_method,
+                   1, lifetime);
+         add_trans(0, NULL, OAKLEY_3DES_CBC, 0, OAKLEY_MD5, auth_method,
+                   1, lifetime);
+         add_trans(0, NULL, OAKLEY_DES_CBC,  0, OAKLEY_SHA, auth_method,
+                   1, lifetime);
+         add_trans(0, NULL, OAKLEY_DES_CBC,  0, OAKLEY_MD5, auth_method,
+                   1, lifetime);
+      } else {	/* presumably aggressive mode */
+         add_trans(0, NULL, OAKLEY_3DES_CBC, 0, OAKLEY_SHA, auth_method,
+                   dhgroup, lifetime);
+         add_trans(0, NULL, OAKLEY_3DES_CBC, 0, OAKLEY_MD5, auth_method,
+                   dhgroup, lifetime);
+         add_trans(0, NULL, OAKLEY_DES_CBC,  0, OAKLEY_SHA, auth_method,
+                   dhgroup, lifetime);
+         add_trans(0, NULL, OAKLEY_DES_CBC,  0, OAKLEY_MD5, auth_method,
+                   dhgroup, lifetime);
+      }
    }
    transforms = add_trans(1, &trans_len, 0,  0, 0, 0, 0, 0);
    buflen += trans_len;
@@ -1149,19 +1228,27 @@ initialise_ike_packet(void) {
 /*
  *	SA Header
  */
-   if (vendor_id_flag) {
-      sa = make_sa_hdr(ISAKMP_NEXT_VID, trans_len+
-                       sizeof(struct isakmp_proposal)+sizeof(struct isakmp_sa));
-   } else {
-      sa = make_sa_hdr(ISAKMP_NEXT_NONE, trans_len+
-                       sizeof(struct isakmp_proposal)+sizeof(struct isakmp_sa));
+   if (exchange_type == ISAKMP_XCHG_IDPROT) {	/* Main Mode */
+      if (vendor_id_flag) {
+         sa = make_sa_hdr(ISAKMP_NEXT_VID, trans_len+
+                          sizeof(struct isakmp_proposal)+
+                          sizeof(struct isakmp_sa));
+      } else {
+         sa = make_sa_hdr(ISAKMP_NEXT_NONE, trans_len+
+                          sizeof(struct isakmp_proposal)+
+                          sizeof(struct isakmp_sa));
+      }
+   } else {	/* Presumably aggressive mode */
+      sa = make_sa_hdr(ISAKMP_NEXT_KE, trans_len+
+                       sizeof(struct isakmp_proposal)+
+                       sizeof(struct isakmp_sa));
    }
    buflen += sizeof(struct isakmp_sa);
 /*
  *	ISAKMP Header
  */
    buflen += sizeof(struct isakmp_hdr);
-   hdr = make_isakmp_hdr(ISAKMP_XCHG_IDPROT, ISAKMP_NEXT_SA, buflen);
+   hdr = make_isakmp_hdr(exchange_type, ISAKMP_NEXT_SA, buflen);
 /*
  *	Allocate packet and copy payloads into packet.
  */
@@ -1175,6 +1262,14 @@ initialise_ike_packet(void) {
    cp += sizeof(struct isakmp_proposal);
    memcpy(cp, transforms, trans_len);
    cp += trans_len;
+   if (exchange_type == ISAKMP_XCHG_AGGR) {
+      memcpy(cp, ke, ke_len);
+      cp += ke_len;
+      memcpy(cp, nonce, nonce_len);
+      cp += nonce_len;
+      memcpy(cp, id, id_len);
+      cp += id_len;
+   }
    if (vendor_id_flag) {
       memcpy(cp, vid, vid_len);
       cp += vid_len;
