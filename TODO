@@ -4,17 +4,11 @@ Write body of decode_transforms() function so that we can display details of
 the transform picked by the remote IKE implementation rather than just
 printing "%d transforms" (where the number is always 1).
 
-Add support for aggressive mode in addition to main mode.  Much of this is
-already written in fw1-ike-userguess and just needs to be merged into ike-scan.
-
 Allow specification of GSS identities in the transforms as used by Windows 2000.
-
-Add better comments for functions including details of parameters and return
-values.
-
-Reduce the number of global variables in use.  Many of these could be local to
-main.  Some functions should take additional parameters rather than using global
-vars.
 
 Allow display of multiple vendor ID payloads.  Time to improve the ISAKMP
 packet parsing.
+
+Use "const" for function args that are not modified, and strutures/arrays
+that are constant.
+

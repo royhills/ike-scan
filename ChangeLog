@@ -1,5 +1,13 @@
 $Id$
 
+2003-11-13 Roy Hills <Roy.Hills@nta-monitor.com>
+
+	* ike-scan.c: Added support for IKE Aggressive Mode.  New options:
+	  --aggressive, --id, --idtype, --dhgroup.
+	* isakmp.c: Added functions to build id, nonce and ke payloads for
+	  Aggressive Mode.
+	* ike-scan.1: Added details of Aggressive Mode options.
+
 2003-11-08 Roy Hills <Roy.Hills@nta-monitor.com>
 
 	* wrappers.c: New file containing system/library call wrappers
@@ -32,15 +40,6 @@ $Id$
 
 	* ike-scan.c: Change loop timing units from ms to us to improve
 	  accuracy.  This requires a 64-bit integer type.
-
-2003-10-30 Roy Hills <Roy.Hills@nta-monitor.com>
-
-	* Released version v1.5.  Tarball size 115814 bytes.
-	  tarball md5sum: df25aec3fea5aeae4d106d9fb721fe7c
-	  Note: This is only an internal release.  No Zip file was produced.
-	  This version is to test the improved scanning engine incorporating
-	  dynamic select timeout, cumulative error adjustment, and
-	  fast host timeout together with a few other minor improvements.
 
 2003-10-30 Roy Hills <Roy.Hills@nta-monitor.com>
 
