@@ -184,7 +184,7 @@ void err_print(int, int, const char *, va_list);
 void usage(int);
 void add_host_pattern(const char *, unsigned, unsigned *);
 void add_host(const char *, unsigned, unsigned *);
-void send_packet(int, unsigned char *, size_t, struct host_entry *, int,
+void send_packet(int, unsigned char *, size_t, struct host_entry *, unsigned,
                  struct timeval *);
 int recvfrom_wto(int, unsigned char *, size_t, struct sockaddr *, int);
 void remove_host(struct host_entry *, unsigned *);
