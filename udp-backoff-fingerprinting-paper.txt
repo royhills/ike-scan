@@ -5,7 +5,7 @@ Date:	17 January 2003
 
 This paper may be freely distributed providing that the contents are not
 altered in any way.  The latest version is available at:
-http://www.nta-monitor.com/ike-scan/udp-backoff-fingerprinting-paper.txt
+http://www.nta-monitor.com/ike-scan/
 
 1.  ABSTRACT
 
@@ -61,7 +61,7 @@ protocol framework used by IKE) Section 5.1 but the exact backoff strategy is
 not defined.  RFC 2408 suggests basing the retransmission times on measured
 round-trip times.  However this is not practical for the first transmitted
 packet because there are no previous round-trip times to use.  It is first
-packets transmitted by the IKE host which are used by the "ike-scan" program
+packets transmitted by the VPN server which are used by the "ike-scan" program
 to determine the backoff fingerprint.
 
 The retransmission and backoff strategy for various different IKE
@@ -146,11 +146,11 @@ a database of known patterns to "fingerprint" the IKE implementation.
 The program handles retry and retransmission with backoff to cope with packet
 loss.  It also limits the amount of bandwidth used by the outbound IKE packets.
 
-The IKE packet exchange between ike-scan and an IKE host which returns a
+The IKE packet exchange between ike-scan and a VPN server which returns a
 handshake response is shown below:
 
-Packet No.	ike-scan		IKE Host
-----------	--------		--------
+Packet No.	ike-scan		VPN Server
+----------	--------		----------
 
       1		Header, SA 	--->
       2				<---	Header, SA
@@ -158,16 +158,16 @@ Packet No.	ike-scan		IKE Host
       4				<---	Header, SA
 
 In this packet exchange, the ike-scan program sends a packet containing
-a Header and an SA (Security Association) to the IKE Host.  The IKE Host
+a Header and an SA (Security Association) to the VPN server.  The VPN server
 then responds with a Header and SA.  ike-scan records the time of this
 reponse packet for later fingerprinting, but it does not respond to it.
-Because the IKE Host does not receive a response from ike-scan, it assumes
+Because the VPN server does not receive a response from ike-scan, it assumes
 that the packet must have been lost, so it re-sends the packet after a
-delay.  As the IKE Host never received any response from ike-scan, it keeps
-resending the same packet using it's retransmission strategy until it gives
+delay.  As the VPN server never received any response from ike-scan, it keeps
+resending the same packet using its retransmission strategy until it gives
 up.
 
-When the last packet has been received from the IKE Host, ike-scan has
+When the last packet has been received from the VPN server, ike-scan has
 the receive times for all of the packets.  These receive times can be used
 to display the retransmission strategy and also attempt to match this
 strategy against known strategies.
@@ -207,10 +207,10 @@ discovers that both hosts are running IKE and that both of them will return
 an IKE handshake response as shown by the "IKE Handshake returned". lines.
 
 The program then records and displays the retransmission backoff pattern that
-the IKE hosts use when re-sending its response to the IKE packet sent by
+the VPN servers use when re-sending its response to the IKE packet sent by
 ike-scan.  The pattern responses contain the following four columns:
 
-IP Address	The IP address of the IKE host that this pattern relates to.
+IP Address	The IP address of the VPN server that this pattern relates to.
 
 No.		The number of the response packet from this host with the
 		first response packet being 1.
