@@ -185,3 +185,10 @@ int times_close_enough(struct timeval *, struct timeval *, unsigned);
 void dump_backoff(void);
 void check_struct_sizes(void);
 unsigned int hstr_i(char *);
+struct isakmp_hdr* make_isakmp_hdr(uint8_t, uint8_t, uint32_t);
+struct isakmp_sa* make_sa_hdr(uint8_t, uint32_t);
+struct isakmp_proposal* make_prop(uint32_t, uint8_t);
+unsigned char* make_trans(int *, uint8_t, uint8_t, uint16_t,
+                          uint16_t, uint16_t, uint16_t, uint16_t,
+                          uint32_t);
+unsigned char* make_vid(int *, uint8_t, unsigned char *, int);
