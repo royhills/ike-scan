@@ -1,7 +1,7 @@
 # Process this file with automake to produce Makefile.in
 #
 CPPFLAGS = -DIKEDATADIR=\"$(pkgdatadir)\" @CPPFLAGS@
-pkgdata_DATA = ike-backoff-patterns
+pkgdata_DATA = ike-backoff-patterns ike-vendor-ids
 bin_PROGRAMS = ike-scan
 man_MANS = ike-scan.1
 ike_scan_SOURCES = ike-scan.c ike-scan.h error.c md5.c md5.h isakmp.c isakmp.h wrappers.c
