@@ -41,7 +41,6 @@
 #include <ctype.h>
 #include <stdarg.h>
 #include <errno.h>
-#include <math.h>
 #else
 #error This program requires the ANSI C Headers
 #endif
