@@ -5,7 +5,7 @@ AC_INIT([ike-scan], [1.6.1], [ike-scan@nta-monitor.com])
 AC_PREREQ(2.59)
 AC_REVISION($Id$)
 AC_CONFIG_SRCDIR([ike-scan.c])
-AM_INIT_AUTOMAKE
+AM_INIT_AUTOMAKE(1.8)	dnl Require Automake 1.8 or later
 
 AM_CONFIG_HEADER([config.h])
 
