@@ -31,6 +31,10 @@ Modified by Roy Hills for ike-scan
 #endif
 #endif
 #endif
+/*
+ * We must define SHA1HANDSOFF, otherwise the input buffer gets modified.
+ */
+#define SHA1HANDSOFF 1
 
 /* #define LITTLE_ENDIAN * This should be #define'd if true. */
 /* #define SHA1HANDSOFF * Copies data before messing with it. */
