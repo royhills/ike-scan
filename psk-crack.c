@@ -215,12 +215,14 @@ main (int argc, char *argv[]) {
  *	Get program start time for statistics displayed on completion
  *	and print starting message.
  */
-   Gettimeofday(&start_time);
+   printf("Starting psk-crack [%s] (http://www.nta-monitor.com/ike-scan/)\n",
+          PACKAGE_STRING);
    if (brute_len) {
-      printf("Starting psk-crack in brute-force cracking mode\n");
+      printf("Running in brute-force cracking mode\n");
    } else {
-      printf("Starting psk-crack in dictionary cracking mode\n");
+      printf("Running in dictionary cracking mode\n");
    }
+   Gettimeofday(&start_time);
 
    while ((fgets(psk_data, MAXLEN, data_file)) != NULL) {
 
