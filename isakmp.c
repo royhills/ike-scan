@@ -182,6 +182,7 @@ make_prop(uint32_t length, uint8_t notrans) {
  *	auth	Authentication method
  *	group	DH Group number
  *	lifetime	Lifetime in seconds (0=no lifetime)
+ *	lifesize	Life in kilobytes (0=no life)
  *
  *	Returns:
  *
@@ -193,13 +194,15 @@ make_prop(uint32_t length, uint8_t notrans) {
 unsigned char*
 make_trans(int *length, uint8_t next, uint8_t number, uint16_t cipher,
            uint16_t keylen, uint16_t hash, uint16_t auth, uint16_t group,
-           uint32_t lifetime) {
+           uint32_t lifetime, uint32_t lifesize) {
 
    struct isakmp_transform* hdr;	/* Transform header */
    struct isakmp_attribute* attr1;	/* Mandatory attributes */
    struct isakmp_attribute* attr2=NULL;	/* Optional keylen attribute */
    struct isakmp_attribute* attr3=NULL;	/* Optional lifetype attribute */
    struct isakmp_attribute_l32* attr4=NULL; /* Optional lifetime attribute */
+   struct isakmp_attribute* attr5=NULL;	/* Optional lifetype attribute */
+   struct isakmp_attribute_l32* attr6=NULL; /* Optional lifesize attribute */
    unsigned char *payload;
    unsigned char *cp;
    int len;				/* Payload Length */
@@ -249,6 +252,18 @@ make_trans(int *length, uint8_t next, uint8_t number, uint16_t cipher,
              sizeof(struct isakmp_attribute_l32);
    }
 
+   if (lifesize) {
+      attr5 = Malloc(sizeof(struct isakmp_attribute));
+      attr6 = Malloc(sizeof(struct isakmp_attribute_l32));
+      attr5->isaat_af_type = htons(0x800b);	/* Life Type */
+      attr5->isaat_lv = htons(2);		/* Kilobytes */
+      attr6->isaat_af_type = htons(0x000c);	/* Life Duratiion */
+      attr6->isaat_l = htons(4);		/* 4 Bytes- CANT CHANGE */
+      attr6->isaat_v = htonl(lifesize);		/* Lifetime in seconds */
+      len += sizeof(struct isakmp_attribute) +
+             sizeof(struct isakmp_attribute_l32);
+   }
+
 /* Fill in length value now we know it */
 
    hdr->isat_length = htons(len);	/* Transform length */
@@ -276,6 +291,14 @@ make_trans(int *length, uint8_t next, uint8_t number, uint16_t cipher,
       cp += sizeof(struct isakmp_attribute);
       memcpy(cp, attr4, sizeof(struct isakmp_attribute_l32));
       free(attr4);
+      cp += sizeof(struct isakmp_attribute_l32);
+   }
+   if (lifesize) {
+      memcpy(cp, attr5, sizeof(struct isakmp_attribute));
+      free(attr5);
+      cp += sizeof(struct isakmp_attribute);
+      memcpy(cp, attr6, sizeof(struct isakmp_attribute_l32));
+      free(attr6);
       cp += sizeof(struct isakmp_attribute_l32);
    }
 
@@ -311,7 +334,7 @@ make_trans(int *length, uint8_t next, uint8_t number, uint16_t cipher,
 unsigned char*
 add_trans(int finished, int *length,
           uint16_t cipher, uint16_t keylen, uint16_t hash, uint16_t auth,
-          uint16_t group, uint32_t lifetime) {
+          uint16_t group, uint32_t lifetime, uint32_t lifesize) {
 
    static int first_transform = 1;
    static unsigned char *trans_start=NULL;	/* Start of set of transforms */
@@ -326,7 +349,7 @@ add_trans(int finished, int *length,
  */
    if (!finished) {
       trans = make_trans(&len, 3, trans_no, cipher, keylen, hash, auth,
-                         group, lifetime);
+                         group, lifetime, lifesize);
       trans_no++;
       if (first_transform) {
          cur_offset = 0;
