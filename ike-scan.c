@@ -1299,8 +1299,8 @@ display_packet(int n, unsigned char *packet_in, host_entry *he,
          (*notify_responders)++;
          cp = process_notify(pkt_ptr, bytes_left);
          break;
-      default:
-         cp=make_message("Unknown IKE payload returned: %s",
+      default:			/* Something else */
+         cp=make_message("Unexpected IKE payload returned: %s",
                          id_to_name(next, payload_map));
          break;
    }
@@ -2820,17 +2820,33 @@ usage(int status) {
    fprintf(stderr, "\t\t\tRFC 2048 states \"The Certificate Request payload MUST\n");
    fprintf(stderr, "\t\t\tbe accepted at any point during the exchange\"\n");
    fprintf(stderr, "\n--doi=<d> or -D <d>\tSet the SA DOI to <d>, default %u (%s).\n", DEFAULT_DOI, id_to_name(DEFAULT_DOI, doi_map));
+   fprintf(stderr, "\t\t\tYou will not normally want to change this unless you\n");
+   fprintf(stderr, "\t\t\twant to see how the VPN server responds to a\n");
+   fprintf(stderr, "\t\t\tnon-standard DOI.\n");
    fprintf(stderr, "\n--situation=<s> or -S <s> Set the SA Situation to <d>, default %u.\n", DEFAULT_SITUATION);
    fprintf(stderr, "\t\t\tThe meaning of the situation depends on the DOI, and\n");
    fprintf(stderr, "\t\t\tis detailed in the appropriate DOI document.  For the\n");
-   fprintf(stderr, "\t\t\tdefault DOI of %u (%s), the default Situation of %u\n", DEFAULT_DOI, id_to_name(DEFAULT_DOI, doi_map), DEFAULT_SITUATION);
-   fprintf(stderr, "\t\t\trepresents SIT_IDENTITY_ONLY.\n");
+   fprintf(stderr, "\t\t\tIPsec DOI, the default Situation of %u represents\n", DEFAULT_SITUATION);
+   fprintf(stderr, "\t\t\tSIT_IDENTITY_ONLY.\n");
+   fprintf(stderr, "\t\t\tYou will not normally want to change this unless you\n");
+   fprintf(stderr, "\t\t\twant to see how the VPN server responds to a\n");
+   fprintf(stderr, "\t\t\tnon-standard situation.\n");
    fprintf(stderr, "\n--protocol=<p> or -j <p> Set the Proposal protocol ID to <p>, default %u.\n", DEFAULT_PROTOCOL);
    fprintf(stderr, "\t\t\tThe meaning of the proposal protocol ID depends on\n");
    fprintf(stderr, "\t\t\tthe DOI, and is detailed in the appropriate DOI\n");
-   fprintf(stderr, "\t\t\tdocument.  For the default DOI of %u (%s), the default\n", DEFAULT_DOI, id_to_name(DEFAULT_DOI, doi_map));
-   fprintf(stderr, "\t\t\tproposal protocol id of %u represents %s\n", DEFAULT_PROTOCOL, id_to_name(DEFAULT_PROTOCOL, protocol_map));
+   fprintf(stderr, "\t\t\tdocument.  For the IPsec DOI, the default proposal\n");
+   fprintf(stderr, "\t\t\tprotocol id of %u represents %s.\n", DEFAULT_PROTOCOL, id_to_name(DEFAULT_PROTOCOL, protocol_map));
+   fprintf(stderr, "\t\t\tYou will not normally want to change this unless you\n");
+   fprintf(stderr, "\t\t\twant to see how the VPN server responds to a\n");
+   fprintf(stderr, "\t\t\tnon-standard protocol ID.\n");
    fprintf(stderr, "\n--transid=<t> or -k <t> Set the Transform ID to <t>, default %u.\n", DEFAULT_TRANS_ID);
+   fprintf(stderr, "\t\t\tThe meaning of the transform ID depends on the\n");
+   fprintf(stderr, "\t\t\tDOI, and is detailed in the appropriate DOI\n");
+   fprintf(stderr, "\t\t\tdocument.  For the IPsec DOI, the default\n");
+   fprintf(stderr, "\t\t\ttransform id of %u represents KEY_IKE.\n", DEFAULT_TRANS_ID);
+   fprintf(stderr, "\t\t\tYou will not normally want to change this unless you\n");
+   fprintf(stderr, "\t\t\twant to see how the VPN server responds to a\n");
+   fprintf(stderr, "\t\t\tnon-standard transform ID.\n");
    fprintf(stderr, "\n");
    fprintf(stderr, "Report bugs or send suggestions to %s\n", PACKAGE_BUGREPORT);
    fprintf(stderr, "See the ike-scan homepage at http://www.nta-monitor.com/ike-scan/\n");
