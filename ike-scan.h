@@ -94,7 +94,6 @@
 #include <arpa/inet.h>
 #endif
 
-#include "global.h"
 #include "md5.h"
 #include "isakmp.h"
 
