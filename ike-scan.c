@@ -583,6 +583,12 @@ main(int argc, char *argv[]) {
       alarm(0);
    }
 /*
+ *      Drop privileges if we are SUID.
+ */
+   if ((setuid(getuid())) < 0) {
+      err_sys("setuid");
+   }
+/*
  *	Set current host pointer (cursor) to start of list, zero
  *	last packet sent time, set last receive time to now and
  *	initialise static IKE header fields.
