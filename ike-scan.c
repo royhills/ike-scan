@@ -832,11 +832,14 @@ add_host(const char *name, unsigned timeout, unsigned *num_hosts) {
 /*
  * 	remove_host -- Remove the specified host from the list
  *
- *	inputs:
+ *	Inputs:
  *
- *	he = Pointer to host entry to remove.
+ *	he		Pointer to host entry to remove.
  *	live_count	Number of hosts awaiting response.
  *
+ *	Returns:
+ *
+ *	None.
  *
  *	If the host being removed is the one pointed to by the cursor, this
  *	function updates cursor so that it points to the next entry.
@@ -855,6 +858,10 @@ remove_host(struct host_entry *he, unsigned *live_count) {
  *	Inputs:
  *
  *	live_count	Number of hosts awaiting reply.
+ *
+ *	Returns:
+ *
+ *	None.
  *
  *	Does nothing if there are no live entries in the list.
  */
@@ -1143,6 +1150,10 @@ recvfrom_wto(int s, unsigned char *buf, int len, struct sockaddr *saddr,
  *	a       = First timeval
  *	b       = Second timeval
  *	diff    = Difference between timevals (a - b).
+ *
+ *	Returns:
+ *
+ *	None.
  */
 void
 timeval_diff(struct timeval *a, struct timeval *b, struct timeval *diff) {
@@ -1167,6 +1178,27 @@ timeval_diff(struct timeval *a, struct timeval *b, struct timeval *diff) {
 
 /*
  *	initialise_ike_packet	-- Initialise IKE packet structures
+ *
+ *	Inputs:
+ *
+ *	packet_out_len	Size of output packet.
+ *	lifetime	Lifetime in seconds.  Zero for no lifetime.
+ *	lifesize	Lifesize in KB.  Zero for no lifesize.
+ *	auth_method	Authentication method.
+ *	dhgroup		Diffie Hellman Group.
+ *	idtype		Identification Type (aggressive only).
+ *	id_data		Identification Data (aggressive only).
+ *	id_data_len	Identification Data Length (aggressive only).
+ *	vendor_id_flag	Vendor ID Present.
+ *	trans_flag	Custom Transforms Present.
+ *	exchange_type	ISAKMP Exchange Type (Main or Aggressive mode)
+ *	gss_id_flag	GSS Identification Present
+ *	gss_data	GSS ID Data
+ *	gss_data_len	GSS ID Length.
+ *
+ *	Returns:
+ *
+ *	Pointer to constructed packet.
  *
  *	We build the IKE packet backwards: from the last payload to the first.
  *	This ensures that we know the "next payload" value for the previous
@@ -1374,6 +1406,14 @@ dump_list(unsigned num_hosts) {
 /*
  *	dump_backoff -- Display contents of backoff list for debugging
  *
+ *	Inputs:
+ *
+ *	pattern_fuzz	Default pattern matching fuzz value in ms.
+ *
+ *	Returns:
+ *
+ *	None.
+ *
  *	This displays the contents of the backoff pattern list.  It is useful
  *	when debugging to check that the patterns have been loaded correctly
  *	from the backoff patterns file.
@@ -1426,6 +1466,14 @@ dump_backoff(unsigned pattern_fuzz) {
 
 /*
  *	dump_times -- Display packet times for backoff fingerprinting
+ *
+ *	Inputs:
+ *
+ *	patterns_loaded	Have backoff patterns been loaded from patterns file?
+ *
+ *	Returns:
+ *
+ *	None.
  */
 void
 dump_times(int patterns_loaded) {
@@ -1481,9 +1529,15 @@ dump_times(int patterns_loaded) {
 /*
  *	match_pattern -- Find backoff pattern match
  *
+ *	Inputs:
+ *
+ *	he	Pointer to the host entry which we are trying to match.
+ *
+ *	Returns:
+ *
+ *	Pointer to the implementation name, or NULL if no match.
+ *
  *	Finds the first match for the backoff pattern of the host entry *he.
- *	If a match is found, returns a pointer to the implementation name,
- *	otherwise returns NULL.
  */
 char *
 match_pattern(struct host_entry *he) {
@@ -1538,8 +1592,17 @@ match_pattern(struct host_entry *he) {
 }
 
 /*
- *	times_close_enough -- return 1 if t1 and t2 are within fuzz ms
- *	                      of each other.  Otherwise return 0.
+ *	times_close_enough -- Check if two times are less than fuzz ms apart
+ *
+ *	Inputs:
+ *
+ *	t1	First time value
+ *	t2	Second time value
+ *	fuzz	Fuzz value
+ *
+ *	Returns:
+ *
+ *	1 if t1 and t2 are within fuzz ms of each other.  Otherwise 0.
  */
 int
 times_close_enough(struct timeval *t1, struct timeval *t2, unsigned fuzz) {
@@ -1557,6 +1620,15 @@ int diff_ms;
 
 /*
  *	add_recv_time -- Add current time to the recv_times list
+ *
+ *	Inputs:
+ *
+ *	he	Pointer to host entry to add time to
+ *	last_recv_time	Time packet was received
+ *
+ *	Returns:
+ *
+ *	None.
  */
 void
 add_recv_time(struct host_entry *he, struct timeval *last_recv_time) {
@@ -1589,6 +1661,15 @@ add_recv_time(struct host_entry *he, struct timeval *last_recv_time) {
 
 /*
  *	add_pattern -- add a backoff pattern to the list.
+ *
+ *	Inputs:
+ *
+ *	line		Backoff pattern entry from the patterns file
+ *	pattern_fuzz	Default fuzz value in ms
+ *
+ *	Returns:
+ *
+ *	None.
  */
 void
 add_pattern(char *line, unsigned pattern_fuzz) {
@@ -1721,6 +1802,16 @@ add_pattern(char *line, unsigned pattern_fuzz) {
 }
 
 /*
+ *	check_struct_sizes -- Check sizes of structures.
+ *
+ *	Inputs:
+ *
+ *	None.
+ *
+ *	Returns:
+ *
+ *	None.
+ *
  *	Check that the sizes of the various structs are what we expect them
  *	to be.  Issue a warning message if they are not.
  *
@@ -1739,7 +1830,7 @@ add_pattern(char *line, unsigned pattern_fuzz) {
  *	doesn't add any significant overhead to run it every time.
  */
 void
-check_struct_sizes() {
+check_struct_sizes(void) {
    int actual_total;
 
    actual_total = sizeof(struct isakmp_hdr) +
@@ -1760,14 +1851,24 @@ check_struct_sizes() {
 }
 
 /*
- *	Convert a two-digit hex string with to unsigned int.
- *	E.g. "0A" would return 10.
+ *	hstr_i -- Convert two-digit hex string to unsigned integer
+ *
+ *	Inputs:
+ *
+ *	cptr	Two-digit hex string
+ *
+ *	Returns:
+ *
+ *	Number corresponding to input hex value.
+ *
+ *	An input of "0A" or "0a" would return 10.
  *	Note that this function does no sanity checking, it's up to the
  *	caller to ensure that *cptr points to at least two hex digits.
  *
  *	This function is a modified version of hstr_i at www.snippets.org.
  */
-unsigned int hstr_i(const char *cptr)
+unsigned int
+hstr_i(const char *cptr)
 {
       unsigned int i;
       unsigned int j = 0;
