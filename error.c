@@ -1,47 +1,32 @@
 /*
- *  The IKE security scanner is copyright (C) Roy Hills, NTA Monitor Ltd.
- *  This program is free software; you can redistribute it and/or modify
- *  it under the terms of the GNU General Public License as published
- *  by the Free Software Foundation; Version 2.  This guarantees your
- *  right to use, modify, and redistribute this software under certain
- *  conditions.  If this license is unacceptable to you, I may be
- *  willing to negotiate alternative licenses (contact
- *  Roy.Hills@nta-monitor.com).
+ * The IKE Scanner (ike-scan) is Copyright (C) 2003 Roy Hills, NTA Monitor Ltd.
  *
- *  You are encouraged to send comments, improvements or suggestions to
- *  me at Roy.Hills@nta-monitor.com.
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
+ * as published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
- *  This program is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- *  General Public License for more details:
- *  http://www.gnu.org/copyleft/gpl.html
+ * If this license is unacceptable to you, I may be willing to negotiate
+ * alternative licenses (contact ike-scan@nta-monitor.com).
+ *
+ * You are encouraged to send comments, improvements or suggestions to
+ * me at ike-scan@nta-monitor.com.
  *
  * $Id$
  *
- * error.c -- error routines for IKE scanner
+ * error.c -- error routines for IKE Scanner (ike-scan)
  *
- * Author: Roy Hills
- * Date: 1 December 2001
- *
- * Revision History:
- *
- * $Log$
- * Revision 1.5  2002/12/31 21:09:01  rsh
- * Add autoconf config.h
- *
- * Revision 1.4  2002/12/31 15:10:04  rsh
- * Changed function definitions so return type is on a line by itself.
- *
- * Revision 1.3  2002/11/26 16:54:24  rsh
- * Minor comment change.
- *
- * Revision 1.2  2002/11/21 13:51:38  rsh
- * Added GPL
- *
- * Revision 1.1  2002/09/12 17:58:11  rsh
- * Initial revision
- *
+ * Author:	Roy Hills
+ * Date:	1 December 2001
  *
  */
 #ifdef HAVE_CONFIG_H
