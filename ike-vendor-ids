@@ -124,7 +124,6 @@ IKE Fragmentation	^4048b7d56ebce88525e7de7f00d6c2d3
 # implementation name given below.
 draft-stenberg-ipsec-nat-traversal-01	^27bab5dc01ea0760ea4e3190ac27c0d0
 draft-stenberg-ipsec-nat-traversal-02	^6105c422e76847e43f9684801292aecd
-draft-ietf-ipsec-nat-t-ike-00	^4485152d18b6bbcd0be8a8469579ddcc
 draft-huttunen-ipsec-esp-in-udp-00.txt	^6a7434c19d7e36348090a02334c9c805
 
 # Extra data has been observed at the end of this VID payload.
