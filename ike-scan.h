@@ -15,6 +15,7 @@
 #define DEFAULT_INTERVAL 25		/* Default delay between packets (ms) */
 #define DEFAULT_SOURCE_PORT 500		/* Default UDP source port */
 #define DEFAULT_DEST_PORT 500		/* Default UDP destination port */
+#define DEFAULT_LIFETIME 28800		/* Default lifetime in seconds */
 
 /* Structures */
 struct host_entry {
