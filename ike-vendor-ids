@@ -182,7 +182,7 @@ GSSAPI	^621b04bb09882ac1e15935fefa24aeee
 Nortel Contivity	^424e4553000000..
 
 # Observed to be sent from SonicWall Firewalls
-SonicWall ^404bf439522ca3f6
+SonicWall	^404bf439522ca3f6
 
 # Other things I've seen but not fully classified yet.
 # If anyone can confirm any of these, please let me know.
