@@ -40,6 +40,28 @@
 
 #define	COOKIE_SIZE	2	/* Size in 32-bit longwords */
 
+#define OAKLEY_ENCRYPTION_ALGORITHM    1
+#define OAKLEY_HASH_ALGORITHM          2
+#define OAKLEY_AUTHENTICATION_METHOD   3
+#define OAKLEY_GROUP_DESCRIPTION       4
+#define OAKLEY_GROUP_TYPE              5
+#define OAKLEY_GROUP_PRIME             6        /* B/V */
+#define OAKLEY_GROUP_GENERATOR_ONE     7        /* B/V */
+#define OAKLEY_GROUP_GENERATOR_TWO     8        /* B/V */
+#define OAKLEY_GROUP_CURVE_A           9        /* B/V */
+#define OAKLEY_GROUP_CURVE_B          10        /* B/V */
+#define OAKLEY_LIFE_TYPE              11
+#define OAKLEY_LIFE_DURATION          12        /* B/V */
+#define OAKLEY_PRF                    13
+#define OAKLEY_KEY_LENGTH             14
+#define OAKLEY_FIELD_SIZE             15
+#define OAKLEY_GROUP_ORDER            16        /* B/V */
+#define OAKLEY_BLOCK_SIZE             17
+#define OAKLEY_GSS_ID	              16384	/* From draft-ietf-ipsec-isakmp-gss-auth-07.txt */
+
+#define SA_LIFE_TYPE_SECONDS   1
+#define SA_LIFE_TYPE_KBYTES    2
+
 #define ISAKMP_DOI_ISAKMP          0
 #define ISAKMP_DOI_IPSEC           1
 
