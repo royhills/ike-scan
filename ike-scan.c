@@ -58,18 +58,13 @@ struct pattern_list *patlist = NULL;	/* Backoff pattern list */
 struct vid_pattern_list *vidlist = NULL;	/* Vendor ID pattern list */
 #endif
 static int verbose=0;			/* Verbose level */
-int experimental=0;			/* Experimental flag */
+int experimental_flag=0;		/* Experimental flag */
 int tcp_flag=0;				/* TCP flag */
 int psk_crack_flag=0;			/* Pre-shared key cracking flag */
-/* The following variables are for psk hash cracking */
-char *g_xr;
-char *g_xi;
-char *cky_r;
-char *cky_i;
-char *sai_b;
-char *idir_b;
-char *ni_b;
-char *nr_b;
+struct psk_crack psk_values = {		/* Pre-shared key values */
+   NULL, 0, NULL, 0, NULL, 0, NULL, 0, NULL, 0, NULL, 0, NULL, 0, NULL, 0,
+   NULL, 0
+};
 
 int
 main(int argc, char *argv[]) {
@@ -347,7 +342,7 @@ main(int argc, char *argv[]) {
             psk_crack_flag=1;
             break;
          case 'X':	/* --experimental */
-            experimental=1;
+            experimental_flag=1;
             break;
          default:	/* Unknown option */
             usage(EXIT_FAILURE);
@@ -719,6 +714,7 @@ main(int argc, char *argv[]) {
          }
       } /* End If */
    } /* End While */
+   close(sockfd);
 /*
  *	Display the backoff times if --showbackoff option was specified
  *	and we have at least one system returning a handshake.
@@ -727,8 +723,13 @@ main(int argc, char *argv[]) {
    if (showbackoff_flag && sa_responders) {
       dump_times(num_hosts);
    }
-
-   close(sockfd);
+/*
+ *	Display PSK crack values if applicable
+ */
+   if (psk_crack_flag && psk_values.hash_r != NULL) {
+      printf("IKE PSK parameters (g_xr:g_xi:cky_r:cky_i:sai_b:idir_b:ni_b:nr_b:hash_r):\n");
+      print_psk_crack_values();
+   }
 /*
  *	Get program end time and calculate elapsed time.
  */
@@ -1095,8 +1096,8 @@ display_packet(int n, unsigned char *packet_in, struct host_entry *he,
  *	we report a short or malformed packet and return.
  */
    bytes_left = n;	/* Set remaining length to total packet len */
-   if (experimental)
-      print_payload(packet_in, 0, 'X');
+   if (psk_crack_flag)
+      add_psk_crack_payload(packet_in, 0, 'X');
    pkt_ptr = process_isakmp_hdr(packet_in, &bytes_left, &next, &type);
    if (!bytes_left) {
       printf("%sShort or malformed ISAKMP packet returned: %d bytes\n",
@@ -1109,8 +1110,8 @@ display_packet(int n, unsigned char *packet_in, struct host_entry *he,
  */
    switch (next) {
       case ISAKMP_NEXT_SA:	/* SA */
-         if (experimental)
-            print_payload(pkt_ptr, next, 'R');
+         if (psk_crack_flag)
+            add_psk_crack_payload(pkt_ptr, next, 'R');
          (*sa_responders)++;
          cp = process_sa(pkt_ptr, bytes_left, type, quiet, multiline);
          break;
@@ -1140,16 +1141,16 @@ display_packet(int n, unsigned char *packet_in, struct host_entry *he,
             free(msg2);	/* Free old message */
             free(cp);	/* Free VID payload message */
          } else if (next == ISAKMP_NEXT_ID ) {
-            if (experimental)
-               print_payload(pkt_ptr, next, 'R');
+            if (psk_crack_flag)
+               add_psk_crack_payload(pkt_ptr, next, 'R');
             msg2=msg;
             cp = process_id(pkt_ptr, bytes_left);
             msg=make_message("%s%s%s", msg2, multiline?"\n\t":" ", cp);
             free(msg2);	/* Free old message */
             free(cp);	/* Free ID payload message */
          } else {
-            if (experimental)
-               print_payload(pkt_ptr, next, 'R');
+            if (psk_crack_flag)
+               add_psk_crack_payload(pkt_ptr, next, 'R');
             msg2=msg;
             if (bytes_left >= sizeof(struct isakmp_generic)) {
                 struct isakmp_generic *hdr = (struct isakmp_generic *) pkt_ptr;
@@ -1420,8 +1421,8 @@ initialise_ike_packet(size_t *packet_out_len, unsigned lifetime,
          free(id_data);
       *packet_out_len += id_len;
       nonce = make_nonce(&nonce_len, ISAKMP_NEXT_ID, nonce_data_len);
-      if (experimental)
-         print_payload(nonce, 10, 'I');
+      if (psk_crack_flag)
+         add_psk_crack_payload(nonce, 10, 'I');
       *packet_out_len += nonce_len;
       switch (dhgroup) {
          case 1:
@@ -1453,8 +1454,8 @@ initialise_ike_packet(size_t *packet_out_len, unsigned lifetime,
             break;	/* NOTREACHED */
       }
       ke = make_ke(&ke_len, ISAKMP_NEXT_NONCE, kx_data_len);
-      if (experimental)
-         print_payload(ke, 4, 'I');
+      if (psk_crack_flag)
+         add_psk_crack_payload(ke, 4, 'I');
       *packet_out_len += ke_len;
    }
 /*
@@ -1534,7 +1535,7 @@ initialise_ike_packet(size_t *packet_out_len, unsigned lifetime,
    memcpy(cp, hdr, sizeof(struct isakmp_hdr));
    free(hdr);
    cp += sizeof(struct isakmp_hdr);
-   if (experimental)
+   if (psk_crack_flag)
       sa_cp = cp;	/* Remember position of SA payload */
    memcpy(cp, sa, sizeof(struct isakmp_sa));
    free(sa);
@@ -1561,8 +1562,8 @@ initialise_ike_packet(size_t *packet_out_len, unsigned lifetime,
       free(vid);
       cp += vid_len;
    }
-   if (experimental)
-      print_payload(sa_cp, 1, 'I');
+   if (psk_crack_flag)
+      add_psk_crack_payload(sa_cp, 1, 'I');
 
    return packet_out;
 }
