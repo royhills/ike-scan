@@ -873,80 +873,83 @@ process_attr(unsigned char **cp, size_t *len) {
    char *attr_value_str;
    size_t value_len;
    size_t size;
-   static const char *attr_classes[] = {	/* From RFC 2409 App. A */
-      NULL,					/*  0 */
-      "Enc",					/*  1 */
-      "Hash",					/*  2 */
-      "Auth",					/*  3 */
-      "Group",					/*  4 */
-      "GroupType",				/*  5 */
-      "GroupPrime/IrreduciblePolynomial",	/*  6 */
-      "GroupGeneratorOne",			/*  7 */
-      "GroupGeneratorTwo",			/*  8 */
-      "GroupCurve A",				/*  9 */
-      "GroupCurve B",				/* 10 */
-      "LifeType",				/* 11 */
-      "LifeDuration",				/* 12 */
-      "PRF",					/* 13 */
-      "KeyLength",				/* 14 */
-      "FieldSize",				/* 15 */
-      "GroupOrder"				/* 16 */
+   static const id_name_map attr_map[] = {	/* From RFC 2409 App. A */
+      {1, "Enc"},
+      {2, "Hash"},
+      {3, "Auth"},
+      {4, "Group"},
+      {5, "GroupType"},
+      {6, "GroupPrime/IrreduciblePolynomial"},
+      {7, "GroupGeneratorOne"},
+      {8, "GroupGeneratorTwo"},
+      {9, "GroupCurve A"},
+      {10, "GroupCurve B"},
+      {11, "LifeType"},
+      {12, "LifeDuration"},
+      {13, "PRF"},
+      {14, "KeyLength"},
+      {15, "FieldSize"},
+      {16, "GroupOrder"},
+      {-1, NULL}
    };
-   static const char *enc_names[] = {		/* From RFC 2409 App. A */
-      NULL,					/* and RFC 3602 */
-      "DES",					/*  1 */
-      "IDEA",					/*  2 */
-      "Blowfish",				/*  3 */
-      "RC5",					/*  4 */
-      "3DES",					/*  5 */
-      "CAST",					/*  6 */
-      "AES"					/*  7 */
+   static const id_name_map enc_map[] = {	/* From RFC 2409 App. A */
+      {1, "DES"},				/* and RFC 3602 */	
+      {2, "IDEA"},
+      {3, "Blowfish"},
+      {4, "RC5"},
+      {5, "3DES"},
+      {6, "CAST"},
+      {7, "AES"},
+      {-1, NULL}
    };
-   static const char *hash_names[] = {		/* From RFC 2409 App. A */
-      NULL,
-      "MD5",					/*  1 */
-      "SHA1",					/*  2 */
-      "Tiger",					/*  3 */
-      "SHA2-256",				/*  4 */
-      "SHA2-384",				/*  5 */
-      "SHA2-512"				/*  6 */
+   static const id_name_map hash_map[] = {	/* From RFC 2409 App. A */
+      {1, "MD5"},
+      {2, "SHA1"},
+      {3, "Tiger"},
+      {4, "SHA2-256"},
+      {5, "SHA2-384"},
+      {6, "SHA2-512"},
+      {-1, NULL}
    };
-   static const char *auth_names[] = {		/* From RFC 2409 App. A */
-      NULL,
-      "PSK",					/*  1 */
-      "DSS",					/*  2 */
-      "RSA_Sig",				/*  3 */
-      "RSA_Enc",				/*  4 */
-      "RSA_RevEnc",				/*  5 */
-      "ElGamel_Enc",				/*  6 */
-      "ElGamel_RevEnc",				/*  7 */
-      "ECDSA_Sig"				/*  8 */
+   static const id_name_map auth_map[] = {	/* From RFC 2409 App. A */
+      {1, "PSK"},
+      {2, "DSS"},
+      {3, "RSA_Sig"},
+      {4, "RSA_Enc"},
+      {5, "RSA_RevEnc"},
+      {6, "ElGamel_Enc"},
+      {7, "ElGamel_RevEnc"},
+      {8, "ECDSA_Sig"},
+      {64221, "Hybrid"},
+      {65001, "XAUTH"},
+      {-1, NULL}
    };
-   static const char *dh_names[] = {		/* From RFC 2409 App. A */
-      NULL,					/* and RFC 3526 */
-      "1:modp768",				/*  1 */
-      "2:modp1024",				/*  2 */
-      "3:ec2n155",				/*  3 */
-      "4:ec2n185",				/*  4 */
-      "5:modp1536",				/*  5 */
-      "6:ec2n163",				/*  6 */
-      "7:ec2n163",				/*  7 */
-      "8:ec2n283",				/*  8 */
-      "9:ec2n283",				/*  9 */
-      "10:ec2n409",				/* 10 */
-      "11:ec2n409",				/* 11 */
-      "12:ec2n571",				/* 12 */
-      "13:ec2n571",				/* 13 */
-      "14:modp2048",				/* 14 */
-      "15:modp3072",				/* 15 */
-      "16:modp4096",				/* 16 */
-      "17:modp6144",				/* 17 */
-      "18:modp8192"				/* 18 */
+
+   static const id_name_map dh_map[] = {	/* From RFC 2409 App. A */
+      {1, "1:modp768"},				/* and RFC 3526 */
+      {2, "2:modp1024"},
+      {3, "3:ec2n155"},
+      {4, "4:ec2n185"},
+      {5, "5:modp1536"},
+      {6, "6:ec2n163"},
+      {7, "7:ec2n163"},
+      {8, "8:ec2n283"},
+      {9, "9:ec2n283"},
+      {10, "10:ec2n409"},
+      {11, "11:ec2n409"},
+      {12, "12:ec2n571"},
+      {13, "13:ec2n571"},
+      {14, "14:modp2048"},
+      {15, "15:modp3072"},
+      {16, "16:modp4096"},
+      {17, "17:modp6144"},
+      {18, "18:modp8192"},
+      {-1, NULL}
    };
-   static const char *life_names[] = {		/* From RFC 2409 App. A */
-      NULL,
-      "Seconds",				/*  1 */
-      "Kilobytes"				/*  2 */
+   static const id_name_map life_map[] = {	/* From RFC 2409 App. A */
+      {1, "Seconds"},
+      {2, "Kilobytes"},
+      {-1, NULL}
    };
 
    if (ntohs(attr_hdr->isaat_af_type) & 0x8000) {	/* Basic attribute */
@@ -960,24 +963,24 @@ process_attr(unsigned char **cp, size_t *len) {
       value_len = ntohs (attr_hdr->isaat_lv);
    }
 
-   attr_class_str = make_message("%s", STR_OR_ID(attr_class, attr_classes));
+   attr_class_str = make_message("%s", id_to_name(attr_class, attr_map));
 
    if (attr_type == 'B') {
       switch (attr_class) {
       case 1:		/* Encryption Algorithm */
-         attr_value_str = make_message("%s", STR_OR_ID(attr_value, enc_names));
+         attr_value_str = make_message("%s", id_to_name(attr_value, enc_map));
          break;
       case 2:		/* Hash Algorithm */
-         attr_value_str = make_message("%s", STR_OR_ID(attr_value, hash_names));
+         attr_value_str = make_message("%s", id_to_name(attr_value, hash_map));
          break;
       case 3:		/* Authentication Method */
-         attr_value_str = make_message("%s", STR_OR_ID(attr_value, auth_names));
+         attr_value_str = make_message("%s", id_to_name(attr_value, auth_map));
          break;
       case 4:		/* Group Desription */
-         attr_value_str = make_message("%s", STR_OR_ID(attr_value, dh_names));
+         attr_value_str = make_message("%s", id_to_name(attr_value, dh_map));
          break;
       case 11:		/* Life Type */
-         attr_value_str = make_message("%s", STR_OR_ID(attr_value, life_names));
+         attr_value_str = make_message("%s", id_to_name(attr_value, life_map));
          break;
       default:
          attr_value_str = make_message("%u", attr_value);
@@ -1088,38 +1091,39 @@ process_notify(unsigned char *cp, size_t len) {
    size_t msg_len;
    unsigned char *msg_data;
    char *notify_msg;
-   static const char *notification_msg[] = { /* From RFC 2408 3.14.1 */
-      "UNSPECIFIED",                    /* 0 */
-      "INVALID-PAYLOAD-TYPE",           /* 1 */
-      "DOI-NOT-SUPPORTED",              /* 2 */
-      "SITUATION-NOT-SUPPORTED",        /* 3 */
-      "INVALID-COOKIE",                 /* 4 */
-      "INVALID-MAJOR-VERSION",          /* 5 */
-      "INVALID-MINOR-VERSION",          /* 6 */
-      "INVALID-EXCHANGE-TYPE",          /* 7 */
-      "INVALID-FLAGS",                  /* 8 */
-      "INVALID-MESSAGE-ID",             /* 9 */
-      "INVALID-PROTOCOL-ID",            /* 10 */
-      "INVALID-SPI",                    /* 11 */
-      "INVALID-TRANSFORM-ID",           /* 12 */
-      "ATTRIBUTES-NOT-SUPPORTED",       /* 13 */
-      "NO-PROPOSAL-CHOSEN",             /* 14 */
-      "BAD-PROPOSAL-SYNTAX",            /* 15 */
-      "PAYLOAD-MALFORMED",              /* 16 */
-      "INVALID-KEY-INFORMATION",        /* 17 */
-      "INVALID-ID-INFORMATION",         /* 18 */
-      "INVALID-CERT-ENCODING",          /* 19 */
-      "INVALID-CERTIFICATE",            /* 20 */
-      "CERT-TYPE-UNSUPPORTED",          /* 21 */
-      "INVALID-CERT-AUTHORITY",         /* 22 */
-      "INVALID-HASH-INFORMATION",       /* 23 */
-      "AUTHENTICATION-FAILED",          /* 24 */
-      "INVALID-SIGNATURE",              /* 25 */
-      "ADDRESS-NOTIFICATION",           /* 26 */
-      "NOTIFY-SA-LIFETIME",             /* 27 */
-      "CERTIFICATE-UNAVAILABLE",        /* 28 */
-      "UNSUPPORTED-EXCHANGE-TYPE",      /* 29 */
-      "UNEQUAL-PAYLOAD-LENGTHS"         /* 30 */
+   static const id_name_map notification_map[] = { /* From RFC 2408 3.14.1 */
+      {0, "UNSPECIFIED"},
+      {1, "INVALID-PAYLOAD-TYPE"},
+      {2, "DOI-NOT-SUPPORTED"},
+      {3, "SITUATION-NOT-SUPPORTED"},
+      {4, "INVALID-COOKIE"},
+      {5, "INVALID-MAJOR-VERSION"},
+      {6, "INVALID-MINOR-VERSION"},
+      {7, "INVALID-EXCHANGE-TYPE"},
+      {8, "INVALID-FLAGS"},
+      {9, "INVALID-MESSAGE-ID"},
+      {10, "INVALID-PROTOCOL-ID"},
+      {11, "INVALID-SPI"},
+      {12, "INVALID-TRANSFORM-ID"},
+      {13, "ATTRIBUTES-NOT-SUPPORTED"},
+      {14, "NO-PROPOSAL-CHOSEN"},
+      {15, "BAD-PROPOSAL-SYNTAX"},
+      {16, "PAYLOAD-MALFORMED"},
+      {17, "INVALID-KEY-INFORMATION"},
+      {18, "INVALID-ID-INFORMATION"},
+      {19, "INVALID-CERT-ENCODING"},
+      {20, "INVALID-CERTIFICATE"},
+      {21, "CERT-TYPE-UNSUPPORTED"},
+      {22, "INVALID-CERT-AUTHORITY"},
+      {23, "INVALID-HASH-INFORMATION"},
+      {24, "AUTHENTICATION-FAILED"},
+      {25, "INVALID-SIGNATURE"},
+      {26, "ADDRESS-NOTIFICATION"},
+      {27, "NOTIFY-SA-LIFETIME"},
+      {28, "CERTIFICATE-UNAVAILABLE"},
+      {29, "UNSUPPORTED-EXCHANGE-TYPE"},
+      {30, "UNEQUAL-PAYLOAD-LENGTHS"},
+      {-1, NULL}
    };
 
    if (len < sizeof(struct isakmp_notification) ||
@@ -1137,7 +1141,7 @@ process_notify(unsigned char *cp, size_t len) {
       free(notify_msg);
    } else {			/* All other Message Types */
       msg=make_message("Notify message %u (%s)", msg_type,
-                       STR_OR_ID(msg_type, notification_msg));
+                       id_to_name(msg_type, notification_map));
    }
 
    return msg;
@@ -1166,19 +1170,18 @@ process_id(unsigned char *cp, size_t len) {
    char *msg2;
    unsigned char *id_data;
    size_t data_len;
-   static const char *id_names[] = {	/* From RFC 2407 4.6.2.1 */
-      NULL,				/*  0 */
-      "ID_IPV4_ADDR",			/*  1 */
-      "ID_FQDN",			/*  2 */
-      "ID_USER_FQDN",			/*  3 */
-      "ID_IPV4_ADDR_SUBNET",		/*  4 */
-      "ID_IPV6_ADDR",			/*  5 */
-      "ID_IPV6_ADDR_SUBNET",		/*  6 */
-      "ID_IPV4_ADDR_RANGE",		/*  7 */
-      "ID_IPV6_ADDR_RANGE",		/*  8 */
-      "ID_DER_ASN1_DN",			/*  9 */
-      "ID_DER_ASN1_GN",			/* 10 */
-      "ID_KEY_ID",			/* 11 */
+   static const id_name_map id_map[] = {	/* From RFC 2407 4.6.2.1 */
+      {1, "ID_IPV4_ADDR"},
+      {2, "ID_FQDN"},
+      {3, "ID_USER_FQDN"},
+      {4, "ID_IPV4_ADDR_SUBNET"},
+      {5, "ID_IPV6_ADDR"},
+      {6, "ID_IPV6_ADDR_SUBNET"},
+      {7, "ID_IPV4_ADDR_RANGE"},
+      {8, "ID_IPV6_ADDR_RANGE"},
+      {9, "ID_DER_ASN1_DN"},
+      {10, "ID_DER_ASN1_GN"},
+      {11, "ID_KEY_ID"},
    };
 
    if (len < sizeof(struct isakmp_id) ||
@@ -1248,7 +1251,7 @@ process_id(unsigned char *cp, size_t len) {
    }
 
    msg2=msg;
-   msg=make_message("ID(Type=%s, %s)", STR_OR_ID(idtype,id_names), msg2);
+   msg=make_message("ID(Type=%s, %s)", id_to_name(idtype,id_map), msg2);
    free(msg2);
 
    return msg;
