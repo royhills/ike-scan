@@ -234,17 +234,6 @@ struct isakmp_attribute
     uint16_t isaat_af_type;   /* high order bit: AF; lower 15: rtype */
     uint16_t isaat_lv;			/* Length or value */
 };
-/*
- *	This is a bodge for SA Attributes with 32-bit length.
- *	It is defined like this because I can't work out how to define
- *	the general case structure properly -rsh.
- */
-struct isakmp_attribute_l32
-{
-    uint16_t isaat_af_type;   /* high order bit: AF; lower 15: rtype */
-    uint16_t isaat_l;			/* Length - MUST BE 4 BYTES */
-    uint32_t isaat_v;		/* 32-bit value */
-};
 
 /* ISAKMP Security Association Payload
  * layout from draft-ietf-ipsec-isakmp-09.txt section 3.4
