@@ -3,6 +3,19 @@ $Id$
 This file gives a brief overview of the major changes between each ike-scan
 release.  For more details please read the ChangeLog file.
 
+ike-scan v1.4:
+
+* Two additions to permit Vendor ID fingerprinting.
+  1. Allow the specification of an arbitary Vendor ID payload using the
+     --vendor option.
+  2. Display any Vendor ID payload returned by the target host.
+
+ike-scan v1.3:	(Unofficial release)
+
+* Added support for per-pattern-entry fuzz values in the backoff patterns
+  file which allows more complex backoff patterns to be matched.
+* Added new backoff patterns for "watchguard-soho" and "sonicwall-pro".
+
 ike-scan v1.2:
 
 * Fixed format string vulnerability in syslog() call.
