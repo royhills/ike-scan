@@ -1,5 +1,35 @@
 $Id$
 
+2003-10-30 Roy Hills <Roy.Hills@nta-monitor.com>
+
+	* Released version v1.5.  Tarball size X bytes.
+	  tarball md5sum: 
+
+2003-10-30 Roy Hills <Roy.Hills@nta-monitor.com>
+
+	* ike-scan.c: Added elapsed time statistics to "Ending:" line.
+	* ike-scan.c: Changed atoi(optarg) to
+          strtoul(optarg, (char **)NULL, 10) for unsigned options to allow
+	  full unsigned range.
+	* ike-scan.c: Dynamically adjust select_timeout based on requested
+          interval and cumulative error.
+	* ike-scan.c: Removed --selectwait option as it is now unneccesary.
+	* ike-scan.c: Renamed backoff variable to backoff_factor and changed
+          type from float to double.
+        * ike-scan.c: Timeout hosts immediately if possible when
+	  starting the timeout pass.  This reduces the scanning time,
+	  especially when scanning a large number of hosts.  Previously, the
+	  scanning time tended to <retries+1> * <num-hosts>; now it tends
+	  towards <retries> * <num-hosts>.
+	* ike-scan.c: Added pass number which is displayed if verbose >= 1.
+
+2003-10-29 Roy Hills <Roy.Hills@nta-monitor.com>
+
+	* ike-scan.c: Don't call advance_cursor() if we can't send to a host
+	  yet because the next host won't be ready either.
+	* ike-scan.c: Start the search for a matching cookie at cursor->prev
+	  rather than cursor.
+
 2003-08-05 Roy Hills <Roy.Hills@nta-monitor.com>
 
 	* Released version v1.4.  Tarball size 114410 bytes, Zip size 622630.
