@@ -205,7 +205,7 @@ main(int argc, char *argv[]) {
             filename_flag=1;
             break;
          case 'h':	/* --help */
-            usage();
+            usage(EXIT_SUCCESS);
             break;
          case 's':	/* --sport */
             source_port=atoi(optarg);
@@ -250,7 +250,7 @@ main(int argc, char *argv[]) {
             fprintf(stderr, "\n");
 /* We use rcsid here to prevent it being optimised away */
             fprintf(stderr, "%s\n", rcsid);
-            exit(0);
+            exit(EXIT_SUCCESS);
             break;
          case 'e':	/* --vendor */
             if (strlen(optarg) % 2) {	/* Length is odd */
@@ -332,7 +332,7 @@ main(int argc, char *argv[]) {
             experimental=1;
             break;
          default:	/* Unknown option */
-            usage();
+            usage(EXIT_FAILURE);
             break;
       }
    }
@@ -342,7 +342,7 @@ main(int argc, char *argv[]) {
  */
    if (!filename_flag) 
       if ((argc - optind) < 1)
-         usage();
+         usage(EXIT_FAILURE);
 /*
  *	Populate the list from the specified file if --file was specified, or
  *	otherwise from the remaining command line arguments.
@@ -1214,7 +1214,7 @@ initialise_ike_packet(size_t *packet_out_len, unsigned lifetime,
    size_t nonce_len;
    size_t nonce_data_len=20;
    size_t ke_len;
-   size_t kx_data_len;
+   size_t kx_data_len=0;
    unsigned no_trans=0;	/* Number of transforms */
 
    *packet_out_len = 0;
@@ -1266,7 +1266,7 @@ initialise_ike_packet(size_t *packet_out_len, unsigned lifetime,
             break;
          default:
             err_msg("Bad Diffie Hellman group: %d, should be 1,2,5,14,15,16,17 or 18", dhgroup);
-            exit(1);
+            break;	/* NOTREACHED */
       }
       ke = make_ke(&ke_len, ISAKMP_NEXT_NONCE, kx_data_len);
       *packet_out_len += ke_len;
@@ -2370,14 +2370,14 @@ hexstring(unsigned char *data, size_t size) {
  *
  *      Inputs:
  *
- *      None.
+ *      status	Status value to pass to exit()
  *
  *	Returns:
  *
- *	None.
+ *	None (this function never returns).
  */
 void
-usage(void) {
+usage(int status) {
 
    static const char *auth_methods[] = { /* Auth methods from RFC 2409 App. A */
       NULL,			/* 0 */
@@ -2566,5 +2566,5 @@ usage(void) {
    fprintf(stderr, "\n");
    fprintf(stderr, "Report bugs or send suggestions to %s\n", PACKAGE_BUGREPORT);
    fprintf(stderr, "See the ike-scan homepage at http://www.nta-monitor.com/ike-scan/\n");
-   exit(1);
+   exit(status);
 }
