@@ -1,7 +1,7 @@
 dnl $Id$
 dnl Process this file with autoconf to produce a configure script.
 
-AC_INIT([ike-scan],[1.7.1],[ike-scan@nta-monitor.com])
+AC_INIT([ike-scan],[1.7.2],[ike-scan@nta-monitor.com])
 AC_PREREQ(2.59)
 AC_REVISION($Revision$)
 AC_CONFIG_SRCDIR([ike-scan.c])
