@@ -6,9 +6,12 @@ printing "%d transforms" (where the number is always 1).
 
 Allow specification of GSS identities in the transforms as used by Windows 2000.
 
-Allow display of multiple vendor ID payloads.  Time to improve the ISAKMP
-packet parsing.
+Allow display of multiple vendor ID payloads.  Time to re-write the ISAKMP
+packet parsing: display_packet() is an absolute mess.
 
 Use "const" for function args that are not modified, and strutures/arrays
 that are constant.
+
+Write a user guide.  The README is getting too long now: a seperate document
+with proper formatting is required.
 
