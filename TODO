@@ -1,14 +1,14 @@
 $Id$
 
 Write body of decode_transforms() function so that we can display details of
-the transform picked by the remote IKE implementation rather thaj just
+the transform picked by the remote IKE implementation rather than just
 printing "%d transforms" (where the number is always 1).
 
 Allow the specification of backoff pattern matching fuzz on a per-pattern
 or perhaps even a per-backoff basis rather than a single value for all
-patterns.
+patterns because some observed patterns have more variation than others.
 
 Add support for aggressive mode in addition to main mode.  Much of this is
 already written in fw1-ike-userguess and just needs to be merged into ike-scan.
 
-Port to windows as command line client.
+Port to windows as command line client using Cygwin.
