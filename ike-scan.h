@@ -1,5 +1,6 @@
 /*
- * The IKE Scanner (ike-scan) is Copyright (C) 2003 Roy Hills, NTA Monitor Ltd.
+ * The IKE Scanner (ike-scan) is Copyright (C) 2003-2004 Roy Hills,
+ * NTA Monitor Ltd.
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -29,8 +30,8 @@
  * Date:	12 September 2002
  */
 
-#ifndef _IKE_SCAN_H
-#define _IKE_SCAN_H 1
+#ifndef IKE_SCAN_H
+#define IKE_SCAN_H 1
 
 /* Includes */
 #ifdef HAVE_CONFIG_H
@@ -245,4 +246,4 @@ void error_use_rcsid(void);
 void isakmp_use_rcsid(void);
 void wrappers_use_rcsid(void);
 
-#endif	/* _IKE_SCAN_H */
+#endif	/* IKE_SCAN_H */
