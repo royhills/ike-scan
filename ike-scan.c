@@ -29,6 +29,9 @@
  * Change History:
  *
  * $Log$
+ * Revision 1.23  2002/11/18 16:20:30  rsh
+ * Added endwait option and associated code.
+ *
  * Revision 1.22  2002/11/18 12:20:25  rsh
  * Changed timeval_diff() definition to return difference as timeval not int.
  *
@@ -166,6 +169,7 @@ int trans_hash;				/* Custom transform hash */
 int trans_auth;				/* Custom transform auth */
 int trans_group;			/* Custom transform group */
 struct timeval last_packet_time;	/* Time last packet was sent */
+struct timeval last_recv_time;		/* Time last packet was received */
 struct isakmp_hdr hdr;			/* ISAKMP Header */
 struct isakmp_sa sa_hdr;		/* SA Header */
 struct isakmp_proposal sa_prop;		/* Proposal payload */
@@ -256,9 +260,10 @@ int main(int argc, char *argv[]) {
       {"version", no_argument, 0, 'V'},
       {"vendor", required_argument, 0, 'e'},
       {"trans", required_argument, 0, 'a'},
+      {"endwait", required_argument, 0, 'n'},
       {0, 0, 0, 0}
    };
-   char *short_options = "f:hr:t:i:b:w:vl:m:Ve:a:";
+   char *short_options = "f:hr:t:i:b:w:vl:m:Ve:a:n:";
    int arg;
    char arg_str[MAXLINE];	/* Args as string for syslog */
    int options_index=0;
@@ -274,6 +279,7 @@ int main(int argc, char *argv[]) {
    struct timeval diff;		/* Difference between two timevals */
    unsigned long loop_timediff;
    unsigned long host_timediff;
+   unsigned long end_timediff=0;
 /*
  *	Open syslog channel and log arguments if required
  */
@@ -352,6 +358,9 @@ int main(int argc, char *argv[]) {
             trans_flag=1;
             sscanf(trans_str, "%d,%d,%d,%d", &trans_enc, &trans_hash, &trans_auth, &trans_group);
             break;
+         case 'n':
+            end_wait=atoi(optarg);
+            break;
          default:
             usage();
             break;
@@ -421,12 +430,16 @@ int main(int argc, char *argv[]) {
    }
 /*
  *	Set current host pointer (cursor) to start of list, zero
- *	last packet sent time and initialise static IKE header fields.
+ *	last packet sent time, set last receive time to now and
+ *	initialise static IKE header fields.
  */
    live_count = num_hosts;
    cursor = rrlist;
    last_packet_time.tv_sec=0;
    last_packet_time.tv_usec=0;
+   if ((gettimeofday(&last_recv_time, NULL)) != 0) {
+      err_sys("gettimeofday");
+   }
    initialise_ike_packet();
 /*
  *	Display the list if verbose setting is 3 or more.
@@ -438,7 +451,7 @@ int main(int argc, char *argv[]) {
  *	has been received or the host has exhausted it's retry limit.
  *	The loop exits when all hosts have either responded or timed out.
  */
-   while (live_count) {
+   while (live_count || end_timediff < end_wait) {
 /*
  *	Obtain current time and calculate deltas since last packet and
  *	last packet to this host.
@@ -446,6 +459,8 @@ int main(int argc, char *argv[]) {
       if ((gettimeofday(&now, NULL)) != 0) {
          err_sys("gettimeofday");
       }
+      timeval_diff(&now, &last_recv_time, &diff);
+      end_timediff = 1000*diff.tv_sec + diff.tv_usec/1000;
 /*
  *	If the last packet was sent more than interval ms ago, then we can
  *	potentially send a packet to the current host.
@@ -460,7 +475,7 @@ int main(int argc, char *argv[]) {
  */
          timeval_diff(&now, &(cursor->last_send_time), &diff);
          host_timediff = 1000*diff.tv_sec + diff.tv_usec/1000;
-         if (host_timediff > cursor->timeout) {
+         if (host_timediff > cursor->timeout && cursor->live) {
 /*
  *	If we've exceeded our retry limit, then this host has timed out so
  *	remove it from the list.  Otherwise, increase the timeout by the
@@ -492,7 +507,6 @@ int main(int argc, char *argv[]) {
 /*
  *	We found a cookie match for the returned packet.
  */
-            temp_cursor->num_recv++;
             add_recv_time(temp_cursor);
             if (verbose > 1)
                warn_msg("---\tReceived packet #%d from %s",temp_cursor->num_recv ,inet_ntoa(sa_peer.sin_addr));
@@ -510,7 +524,7 @@ int main(int argc, char *argv[]) {
  */
             if (verbose && n >= sizeof(hdr_in)) {
                memcpy(&hdr_in, packet_in, sizeof(hdr_in));
-               warn_msg("---\tReceived %d bytes from %s with unknown cookie %0x%0x", n, inet_ntoa(sa_peer.sin_addr),hdr_in.isa_icookie[0], hdr_in.isa_icookie[1]);
+               warn_msg("---\tIgnoring %d bytes from %s with unknown cookie %0x%0x", n, inet_ntoa(sa_peer.sin_addr),hdr_in.isa_icookie[0], hdr_in.isa_icookie[1]);
             }
          }
       } /* End If */
@@ -1179,7 +1193,7 @@ void dump_times(void) {
          while (te != NULL) {
             if (i > 1)
                timeval_diff(&(te->time), &prev_time, &diff);
-            printf("%s\t%d\t\%ld.%ld\t%ld.%ld\n", inet_ntoa(p->addr), i, (long)te->time.tv_sec, (long)te->time.tv_usec, (long)diff.tv_sec, (long)diff.tv_usec);
+            printf("%s\t%d\t\%ld.%.6ld\t%ld.%.6ld\n", inet_ntoa(p->addr), i, (long)te->time.tv_sec, (long)te->time.tv_usec, (long)diff.tv_sec, (long)diff.tv_usec);
             prev_time = te->time;
             te = te->next;
             i++;
@@ -1203,6 +1217,8 @@ void add_recv_time(struct host_entry *he) {
    if ((gettimeofday(&(te->time), NULL)) != 0) {
       err_sys("gettimeofday");
    }
+   last_recv_time.tv_sec = te->time.tv_sec;
+   last_recv_time.tv_usec = te->time.tv_usec;
    te->next = NULL;
 /*
  *	Insert new time structure on the tail of the recv_times list.
@@ -1215,6 +1231,10 @@ void add_recv_time(struct host_entry *he) {
          p = p->next;
       p->next = te;
    }
+/*
+ *	Increment num_received for this host
+ */
+   he->num_recv++;
 }
 
 /*
@@ -1252,6 +1272,7 @@ void usage(void) {
    fprintf(stderr, "\t\t\t<t> is specified as enc,hash,auth,group. e.g. 1,1,1,1\n");
    fprintf(stderr, "\t\t\tIf this option is specified, then the IP packet size\n");
    fprintf(stderr, "\t\t\tis 112 bytes rather than the default of 364.\n");
+   fprintf(stderr, "--endwait=<n> or -n <n>\tSet endwait to <n> ms, default=%d.\n", DEFAULT_END_WAIT);
    fprintf(stderr, "\n");
    fprintf(stderr, "%s\n", rcsid);
    fprintf(stderr, "\n");
