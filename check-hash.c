@@ -247,7 +247,7 @@ main(void) {
 
       unsigned char *cp;
 
-      unsigned char *psk = "abc123";	/* The correct pre-shared key */
+      unsigned char *psk = (unsigned char *) "abc123";	/* correct key */
       size_t psk_len = 6;
 
       struct timeval start_time;
@@ -348,7 +348,7 @@ main(void) {
 
       unsigned char *cp;
 
-      char *psk = "abc123";	/* The correct pre-shared key */
+      unsigned char *psk = (unsigned char *) "abc123";	/* correct key */
       size_t psk_len = 6;
 
       struct timeval start_time;
@@ -414,7 +414,7 @@ main(void) {
       unsigned char hash_speed_data[] = "12345678";
       size_t memcpy_len;
 
-      hash_data_len = strlen(hash_speed_data);	/* Printable at this point */
+      hash_data_len = strlen((char *) hash_speed_data);
       memcpy_len=hash_data_len>16?16:hash_data_len;
       Gettimeofday(&start_time);
       for (i=0; i<HASH_SPEED_ITERATIONS; i++) {
@@ -438,10 +438,10 @@ main(void) {
       struct timeval end_time;
       struct timeval elapsed_time;
       double elapsed_seconds;
-      char hash_speed_data[] = "12345678";
+      unsigned char hash_speed_data[] = "12345678";
       size_t memcpy_len;
 
-      hash_data_len = strlen(hash_speed_data);	/* Printable at this point */
+      hash_data_len = strlen((char *) hash_speed_data);
       memcpy_len=hash_data_len>20?20:hash_data_len;
       Gettimeofday(&start_time);
       for (i=0; i<HASH_SPEED_ITERATIONS; i++) {
