@@ -3,6 +3,18 @@ $Id$
 This file gives a brief overview of the major changes between each ike-scan
 release.  For more details please read the ChangeLog file.
 
+ike-scan v1.6:
+
+* ike-scan will now display multiple Vendor ID payloads if the server sends
+  more than one.  Previously, it would only display the first Vendor ID and
+  ignore the others.
+
+ike-scan v1.5.1:
+
+* Fixed a bug which could cause a negative value to be passed to select()
+  when collecting backoff fingerprints.  This would result in select()
+  returning EINVAL.
+
 ike-scan v1.5:
 
 * Aggressive mode is now supported.  The --aggressive (-A) option specifies
