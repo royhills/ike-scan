@@ -37,11 +37,12 @@ AC_C_CONST
 AC_TYPE_SIZE_T
 AC_HEADER_TIME
 
-dnl Check for the uint{8,16,32}_t types and, if we don't have them, define
+dnl Check for the uint{8,16,32,64}_t types and, if we don't have them, define
 dnl them using types which will work on most systems.
 AC_NTA_CHECK_TYPE(uint8_t, unsigned char)
 AC_NTA_CHECK_TYPE(uint16_t, unsigned short)
 AC_NTA_CHECK_TYPE(uint32_t, unsigned int)
+AC_NTA_CHECK_TYPE(uint64_t, unsigned long long)
 
 dnl Checks for library functions.
 AC_CHECK_FUNCS([malloc gethostbyname gettimeofday inet_ntoa memset select socket strerror])
