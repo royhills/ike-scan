@@ -97,8 +97,8 @@ main(int argc, char *argv[]) {
    char filename[MAXLINE];
    int filename_flag=0;
    int sockfd;			/* UDP socket file descriptor */
-   int source_port = DEFAULT_SOURCE_PORT;	/* UDP source port */
-   int dest_port = DEFAULT_DEST_PORT;	/* UDP destination port */
+   unsigned source_port = DEFAULT_SOURCE_PORT;	/* UDP source port */
+   unsigned dest_port = DEFAULT_DEST_PORT;	/* UDP destination port */
    unsigned retry = DEFAULT_RETRY;	/* Number of retries */
    unsigned interval = DEFAULT_INTERVAL;	/* Interval between packets */
    double backoff_factor = DEFAULT_BACKOFF_FACTOR;	/* Backoff factor */
@@ -106,11 +106,11 @@ main(int argc, char *argv[]) {
    unsigned timeout = DEFAULT_TIMEOUT;	/* Per-host timeout in ms */
    unsigned lifetime = DEFAULT_LIFETIME;	/* Lifetime in seconds */
    unsigned lifesize = DEFAULT_LIFESIZE;	/* Lifesize in KB */
-   int auth_method = DEFAULT_AUTH_METHOD;	/* Authentication method */
-   int dhgroup = DEFAULT_DH_GROUP;		/* Diffie Hellman Group */
-   int idtype = DEFAULT_IDTYPE;		/* IKE Identification type */
+   unsigned auth_method = DEFAULT_AUTH_METHOD;	/* Authentication method */
+   unsigned dhgroup = DEFAULT_DH_GROUP;		/* Diffie Hellman Group */
+   unsigned idtype = DEFAULT_IDTYPE;		/* IKE Identification type */
    unsigned pattern_fuzz = DEFAULT_PATTERN_FUZZ; /* Pattern matching fuzz in ms */
-   int exchange_type = DEFAULT_EXCHANGE_TYPE;	/* Main or Aggressive mode */
+   unsigned exchange_type = DEFAULT_EXCHANGE_TYPE; /* Main or Aggressive mode */
    struct sockaddr_in sa_local;
    struct sockaddr_in sa_peer;
    struct timeval now;
@@ -133,7 +133,7 @@ main(int argc, char *argv[]) {
    size_t arg_str_space;	/* Used to avoid buffer overruns when copying */
    char patfile[MAXLINE];	/* IKE Backoff pattern file name */
    char vidfile[MAXLINE];	/* IKE Vendor ID pattern file name */
-   int pass_no=0;
+   unsigned pass_no=0;
    int first_timeout=1;
    unsigned char *vid_data;	/* Binary Vendor ID data */
    size_t vid_data_len;		/* Vendor ID data length */
@@ -146,7 +146,6 @@ main(int argc, char *argv[]) {
    int trans_flag = 0;		/* Indicates custom transform */
    int showbackoff_flag = 0;	/* Display backoff table? */
    struct timeval last_recv_time;	/* Time last packet was received */
-   unsigned char *cp;
    unsigned char *packet_out;	/* IKE packet to send */
    size_t packet_out_len;	/* Length of IKE packet to send */
    unsigned sa_responders = 0;	/* Number of hosts giving handshake */
@@ -194,12 +193,11 @@ main(int argc, char *argv[]) {
  */
    while ((arg=getopt_long_only(argc, argv, short_options, long_options, &options_index)) != -1) {
       switch (arg) {
-         int i;
-         int trans_enc;		/* Custom transform cipher */
-         int trans_keylen;	/* Custom transform cipher key length */
-         int trans_hash;	/* Custom transform hash */
-         int trans_auth;	/* Custom transform auth */
-         int trans_group;	/* Custom transform DH group */
+         unsigned trans_enc;	/* Custom transform cipher */
+         unsigned trans_keylen;	/* Custom transform cipher key length */
+         unsigned trans_hash;	/* Custom transform hash */
+         unsigned trans_auth;	/* Custom transform auth */
+         unsigned trans_group;	/* Custom transform DH group */
          char trans_str[MAXLINE];	/* Custom transform string */
          case 'f':	/* --file */
             strncpy(filename, optarg, MAXLINE);
@@ -209,10 +207,10 @@ main(int argc, char *argv[]) {
             usage(EXIT_SUCCESS);
             break;
          case 's':	/* --sport */
-            source_port=atoi(optarg);
+            source_port=strtoul(optarg, (char **)NULL, 10);
             break;
          case 'd':	/* --dport */
-            dest_port=atoi(optarg);
+            dest_port=strtoul(optarg, (char **)NULL, 10);
             break;
          case 'r':	/* --retry */
             retry=strtoul(optarg, (char **)NULL, 10);
@@ -239,7 +237,7 @@ main(int argc, char *argv[]) {
             lifesize=strtoul(optarg, (char **)NULL, 10);
             break;
          case 'm':	/* --auth */
-            auth_method=atoi(optarg);
+            auth_method=strtoul(optarg, (char **)NULL, 10);
             break;
          case 'V':	/* --version */
             fprintf(stderr, "%s\n\n", PACKAGE_STRING);
@@ -254,15 +252,10 @@ main(int argc, char *argv[]) {
             exit(EXIT_SUCCESS);
             break;
          case 'e':	/* --vendor */
-            if (strlen(optarg) % 2) {	/* Length is odd */
+            if (strlen(optarg) % 2)	/* Length is odd */
                err_msg("Length of --vendor argument must be even (multiple of 2).");
-            }
             vendor_id_flag=1;
-            vid_data_len=strlen(optarg)/2;
-            vid_data = Malloc(vid_data_len);
-            cp = vid_data;
-            for (i=0; i<vid_data_len; i++)
-               *cp++=hstr_i(&optarg[i*2]);
+            vid_data=hex2data(optarg, &vid_data_len);
             add_vid(0, NULL, vid_data, vid_data_len);
             free(vid_data);
             break;
@@ -291,17 +284,13 @@ main(int argc, char *argv[]) {
                err_msg("You may only specify one identity payload with --id");
             if (strlen(optarg) % 2) 	/* Length is odd */
                err_msg("Length of --id argument must be even (multiple of 2).");
-            id_data_len=strlen(optarg)/2;
-            id_data = Malloc(id_data_len);
-            cp = id_data;
-            for (i=0; i<id_data_len; i++)
-               *cp++=hstr_i(&optarg[i*2]);
+            id_data=hex2data(optarg, &id_data_len);
             break;
          case 'y':	/* --idtype */
-            idtype = atoi(optarg);
+            idtype = strtoul(optarg, (char **)NULL, 10);
             break;
          case 'g':	/* --dhgroup */
-            dhgroup = atoi(optarg);
+            dhgroup = strtoul(optarg, (char **)NULL, 10);
             break;
          case 'p':	/* --patterns */
             strncpy(patfile, optarg, MAXLINE);
@@ -314,11 +303,7 @@ main(int argc, char *argv[]) {
                err_msg("Length of --gssid argument must be even (multiple of 2).");
             }
             gss_id_flag=1;
-            gss_data_len=strlen(optarg)/2;
-            gss_data = Malloc(gss_data_len);
-            cp = gss_data;
-            for (i=0; i<gss_data_len; i++)
-               *cp++=hstr_i(&optarg[i*2]);
+            gss_data=hex2data(optarg, &gss_data_len);
             break;
          case 'I':	/* --vidpatterns */
             strncpy(vidfile, optarg, MAXLINE);
@@ -354,9 +339,7 @@ main(int argc, char *argv[]) {
       char host[MAXLINE];
 
       if ((strcmp(filename, "-")) == 0) {	/* Filename "-" means stdin */
-         if ((fp = fdopen(0, "r")) == NULL) {
-            err_sys("fdopen");
-         }
+         fp = stdin;
       } else {
          if ((fp = fopen(filename, "r")) == NULL) {
             err_sys("fopen");
@@ -368,7 +351,8 @@ main(int argc, char *argv[]) {
             add_host_pattern(host, timeout, &num_hosts);
          }
       }
-      fclose(fp);
+      if (fp != stdin)
+         fclose(fp);
    } else {		/* Populate list from command line arguments */
       argv=&argv[optind];
       while (*argv) {
@@ -404,7 +388,7 @@ main(int argc, char *argv[]) {
    sa_local.sin_port = htons(source_port);
 
    if ((bind(sockfd, (struct sockaddr *)&sa_local, sizeof(sa_local))) < 0) {
-      warn_msg("ERROR: Could not bind UDP socket to local port %d", source_port);
+      warn_msg("ERROR: Could not bind UDP socket to local port %u", source_port);
       if (errno == EACCES)
          warn_msg("You need to be root, or ike-scan must be suid root to bind to ports below 1024.");
       if (errno == EADDRINUSE)
@@ -630,14 +614,14 @@ void
 add_host_pattern(const char *pattern, unsigned timeout, unsigned *num_hosts) {
    char *patcopy;
    struct in_addr in_val;
-   int numbits;
+   unsigned numbits;
    char *cp;
    uint32_t ipnet_val;
    uint32_t network;
    uint32_t mask;
    unsigned long hoststart;
    unsigned long hostend;
-   int i;
+   unsigned i;
 /*
  *	Make a copy of pattern because we don't want to modify our argument.
  */
@@ -652,7 +636,7 @@ add_host_pattern(const char *pattern, unsigned timeout, unsigned *num_hosts) {
       if (!(inet_aton(patcopy, &in_val)))
          err_msg("%s is not a valid IP address", patcopy);
       ipnet_val=ntohl(in_val.s_addr);	/* We need host byte order */
-      numbits=strtol(cp, (char **) NULL, 10);
+      numbits=strtoul(cp, (char **) NULL, 10);
       if (numbits<3 || numbits>32)
          err_msg("Number of bits in %s must be between 3 and 32", pattern);
 /*
@@ -911,8 +895,8 @@ display_packet(int n, unsigned char *packet_in, struct host_entry *he,
                unsigned *notify_responders, int quiet, int multiline) {
    char *cp;			/* Temp pointer */
    size_t bytes_left;		/* Remaining buffer size */
-   int next;			/* Next Payload */
-   int type;			/* Exchange Type */
+   unsigned next;		/* Next Payload */
+   unsigned type;		/* Exchange Type */
    char *msg;			/* Message to display */
    char *msg2;
    unsigned char *pkt_ptr;
@@ -1040,7 +1024,7 @@ display_packet(int n, unsigned char *packet_in, struct host_entry *he,
  */
 void
 send_packet(int s, unsigned char *packet_out, size_t packet_out_len,
-            struct host_entry *he, int dest_port,
+            struct host_entry *he, unsigned dest_port,
             struct timeval *last_packet_time) {
    struct sockaddr_in sa_peer;
    NET_SIZE_T sa_peer_len;
@@ -1191,9 +1175,9 @@ timeval_diff(struct timeval *a, struct timeval *b, struct timeval *diff) {
  */
 unsigned char *
 initialise_ike_packet(size_t *packet_out_len, unsigned lifetime,
-                      unsigned lifesize, int auth_method, int dhgroup,
-                      int idtype, unsigned char *id_data, size_t id_data_len,
-                      int vendor_id_flag, int trans_flag, int exchange_type,
+                      unsigned lifesize, unsigned auth_method, unsigned dhgroup,
+                      unsigned idtype, unsigned char *id_data, size_t id_data_len,
+                      int vendor_id_flag, int trans_flag, unsigned exchange_type,
                       int gss_id_flag, unsigned char *gss_data,
                       size_t gss_data_len) {
    struct isakmp_hdr *hdr;
@@ -1263,7 +1247,7 @@ initialise_ike_packet(size_t *packet_out_len, unsigned lifetime,
             kx_data_len = 1024;	/* Group 18 - 8192 bits */
             break;
          default:
-            err_msg("Bad Diffie Hellman group: %d, should be 1,2,5,14,15,16,17 or 18", dhgroup);
+            err_msg("Bad Diffie Hellman group: %u, should be 1,2,5,14,15,16,17 or 18", dhgroup);
             break;	/* NOTREACHED */
       }
       ke = make_ke(&ke_len, ISAKMP_NEXT_NONCE, kx_data_len);
@@ -1427,7 +1411,7 @@ dump_backoff(unsigned pattern_fuzz) {
    pl = patlist;
    i=1;
    while (pl != NULL) {
-      printf("%d\t%s\t%d\t", i, pl->name, pl->num_times);
+      printf("%d\t%s\t%u\t", i, pl->name, pl->num_times);
       pp = pl->recv_times;
       while (pp != NULL) {
 /*
@@ -1763,7 +1747,7 @@ add_pattern(char *line, unsigned pattern_fuzz) {
    struct pattern_entry_list *te;
    struct pattern_entry_list *tp;
    char *endp;
-   int i;
+   unsigned i;
    long back_sec;
    long back_usec;
    char back_usec_str[7];       /* Backoff microseconds as string */
@@ -1951,7 +1935,7 @@ add_vid_pattern(char *line) {
    struct vid_pattern_list *p;      /* Temp pointer */
    unsigned char *vid_data;
    size_t vid_data_len;
-   int i;
+   unsigned i;
 /*
  *      Allocate new pattern list entry and add to tail of vidlist.
  */
@@ -2040,6 +2024,44 @@ hstr_i(const char *cptr)
 }
 
 /*
+ *	hex2data -- Convert hex string to binary data
+ *
+ *	Inputs:
+ *
+ *	string		The string to convert
+ *	data_len	(output) The length of the resultant binary data
+ *
+ *	Returns:
+ *
+ *	Pointer to the binary data.
+ *
+ *	The returned pointer points to malloc'ed storage which should be
+ *	free'ed by the caller when it's no longer needed.  If the length of
+ *	the inputs string is not even, the function will return NULL and
+ *	set data_len to 0.
+ */
+unsigned char *
+hex2data(const char *string, size_t *data_len) {
+   unsigned char *data;
+   unsigned char *cp;
+   unsigned i;
+   size_t len;
+
+   if (strlen(string) %2 ) {	/* Length is odd */
+      *data_len = 0;
+      return NULL;
+   }
+
+   len = strlen(string) / 2;
+   data = Malloc(len);
+   cp = data;
+   for (i=0; i<len; i++)
+      *cp++=hstr_i(&string[i*2]);
+   *data_len = len;
+   return data;
+}
+
+/*
  *	decode_trans -- Decode a custom transform specification
  *
  *	Inputs:
@@ -2055,21 +2077,21 @@ hstr_i(const char *cptr)
  *
  */
 void
-decode_trans(char *str, int *enc, int *keylen, int *hash, int *auth,
-             int *group) {
+decode_trans(char *str, unsigned *enc, unsigned *keylen, unsigned *hash,
+             unsigned *auth, unsigned *group) {
    char *cp;
    int pos;	/* 1=enc, 2=hash, 3=auth, 4=group */
-   int val;
-   int len;
+   unsigned val;
+   unsigned len;
 
    cp = str;
    pos = 1;
    len = 0;
    while (*cp != '\0') {
-      val = strtol(cp, &cp, 10);
+      val = strtoul(cp, &cp, 10);
       if (*cp == '/' && pos == 1) {	/* Keylength */
          cp++;
-         len = strtol(cp, &cp, 10);
+         len = strtoul(cp, &cp, 10);
       }
       switch(pos) {
          case 1:
@@ -2135,7 +2157,7 @@ make_message(const char *fmt, ...) {
 }
 
 /*
- *	numstr -- Convert a number to a string
+ *	numstr -- Convert an unsigned integer to a string
  *
  *	Inputs:
  *
@@ -2145,10 +2167,11 @@ make_message(const char *fmt, ...) {
  *
  *	Pointer to the string representation of the number.
  *
+ *	This is used by the STR_OR_ID macro.
  *	I'm surprised that there is not a standard library function to do this.
  */
 char *
-numstr(int num) {
+numstr(unsigned num) {
    static char buf[21];	/* Large enough for biggest 64-bit integer */
 
    snprintf(buf, sizeof(buf), "%d", num);
@@ -2184,7 +2207,7 @@ printable(unsigned char *string, size_t size) {
    char *r;
    unsigned char *cp;
    size_t outlen;
-   int i;
+   unsigned i;
 /*
  *	If the input string is NULL, return an empty string.
  */
@@ -2290,7 +2313,7 @@ hexstring(unsigned char *data, size_t size) {
    char *result;
    char *r;
    unsigned char *cp;
-   int i;
+   unsigned i;
 /*
  *	If the input data is NULL, return an empty string.
  */
@@ -2371,14 +2394,14 @@ usage(int status) {
    fprintf(stderr, "\n--file=<fn> or -f <fn>\tRead hostnames or addresses from the specified file\n");
    fprintf(stderr, "\t\t\tinstead of from the command line. One name or IP\n");
    fprintf(stderr, "\t\t\taddress per line.  Use \"-\" for standard input.\n");
-   fprintf(stderr, "\n--sport=<p> or -s <p>\tSet UDP source port to <p>, default=%d, 0=random.\n", DEFAULT_SOURCE_PORT);
+   fprintf(stderr, "\n--sport=<p> or -s <p>\tSet UDP source port to <p>, default=%u, 0=random.\n", DEFAULT_SOURCE_PORT);
    fprintf(stderr, "\t\t\tSome IKE implementations require the client to use\n");
    fprintf(stderr, "\t\t\tUDP source port 500 and will not talk to other ports.\n");
    fprintf(stderr, "\t\t\tNote that superuser privileges are normally required\n");
    fprintf(stderr, "\t\t\tto use non-zero source ports below 1024.  Also only\n");
    fprintf(stderr, "\t\t\tone process on a system may bind to a given source port\n");
    fprintf(stderr, "\t\t\tat any one time.\n");
-   fprintf(stderr, "\n--dport=<p> or -d <p>\tSet UDP destination port to <p>, default=%d.\n", DEFAULT_DEST_PORT);
+   fprintf(stderr, "\n--dport=<p> or -d <p>\tSet UDP destination port to <p>, default=%u.\n", DEFAULT_DEST_PORT);
    fprintf(stderr, "\t\t\tUDP port 500 is the assigned port number for ISAKMP\n");
    fprintf(stderr, "\t\t\tand this is the port used by most if not all IKE\n");
    fprintf(stderr, "\t\t\timplementations.\n");
@@ -2434,7 +2457,7 @@ usage(int status) {
    fprintf(stderr, "\t\t\twith the --trans options to produce multiple transform\n");
    fprintf(stderr, "\t\t\tpayloads with different lifesizes.  Each --trans option\n");
    fprintf(stderr, "\t\t\twill use the previously specified lifesize value.\n");
-   fprintf(stderr, "\n--auth=<n> or -m <n>\tSet auth. method to <n>, default=%d (%s).\n", DEFAULT_AUTH_METHOD, STR_OR_ID(DEFAULT_AUTH_METHOD, auth_methods));
+   fprintf(stderr, "\n--auth=<n> or -m <n>\tSet auth. method to <n>, default=%u (%s).\n", DEFAULT_AUTH_METHOD, STR_OR_ID(DEFAULT_AUTH_METHOD, auth_methods));
    fprintf(stderr, "\t\t\tRFC defined values are 1 to 5.  See RFC 2409 Appendix A.\n");
    fprintf(stderr, "\t\t\tCheckpoint hybrid mode is 64221.\n");
    fprintf(stderr, "\t\t\tGSS (Windows \"Kerberos\") is 65001.\n");
@@ -2501,10 +2524,10 @@ usage(int status) {
    fprintf(stderr, "\n--id <id> or -n <id>\tUse <id> as the identification value.\n");
    fprintf(stderr, "\t\t\tThis option is only applicable to Aggressive Mode.\n");
    fprintf(stderr, "\t\t\t<id> should be specified in hex, e.g. --id=deadbeef.\n");
-   fprintf(stderr, "\n--idtype=n or -y n\tUse identification type <n>.  Default %d (%s).\n", DEFAULT_IDTYPE, STR_OR_ID(DEFAULT_IDTYPE, id_type_name));
+   fprintf(stderr, "\n--idtype=n or -y n\tUse identification type <n>.  Default %u (%s).\n", DEFAULT_IDTYPE, STR_OR_ID(DEFAULT_IDTYPE, id_type_name));
    fprintf(stderr, "\t\t\tThis option is only applicable to Aggressive Mode.\n");
    fprintf(stderr, "\t\t\tSee RFC 2407 4.6.2 for details of Identification types.\n");
-   fprintf(stderr, "\n--dhgroup=n or -g n\tUse Diffie Hellman Group <n>.  Default %d.\n", DEFAULT_DH_GROUP);
+   fprintf(stderr, "\n--dhgroup=n or -g n\tUse Diffie Hellman Group <n>.  Default %u.\n", DEFAULT_DH_GROUP);
    fprintf(stderr, "\t\t\tThis option is only applicable to Aggressive Mode.\n");
    fprintf(stderr, "\t\t\tAcceptable values are 1,2,5,14,15,16,17,18 (MODP only).\n");
    fprintf(stderr, "\n--gssid=<n> or -G <n>\tUse GSS ID <n> where <n> is a hex string.\n");
