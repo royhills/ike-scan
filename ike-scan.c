@@ -17,9 +17,22 @@
  * any responses that are received.  It handles retry and retransmission with
  * backoff to cope with packet loss.
  *
+ * The main mode packets by default contain 8 transforms with all possible
+ * combinations of: Enc - DES or 3DES; Hash - MD5 or SHA1; Group - 1 or 2.
+ * This results in a packet data length of 336 bytes which when IP and UDP
+ * headers are added gives a total packet size of 364 bytes.
+ *
+ * If a custom transform is specified with --trans=a,b,c,d then only a single
+ * transform is used, and the packet data length is 84 bytes for a total
+ * packet length of 112 bytes.
+ *
  * Change History:
  *
  * $Log$
+ * Revision 1.20  2002/11/15 17:47:37  rsh
+ * Added initial syslog support.
+ * Minor comment changes.
+ *
  * Revision 1.19  2002/10/31 14:45:50  rsh
  * Only display "unknown cookie" message if verbose >= 1
  * Check for he == NULL in find_host_by_cookie to avoid SIGSEGV if it is.
@@ -111,6 +124,8 @@
 #include <arpa/inet.h>
 #include <errno.h>
 #include <ctype.h>
+#include <syslog.h>
+#include <libgen.h>
 
 #include "global.h"
 #include "md5.h"
@@ -238,6 +253,7 @@ int main(int argc, char *argv[]) {
    };
    char *short_options = "f:hr:t:i:b:w:vl:m:Ve:a:";
    int arg;
+   char arg_str[MAXLINE];	/* Args as string for syslog */
    int options_index=0;
    char filename[MAXLINE];
    int filename_flag=0;
@@ -250,6 +266,20 @@ int main(int argc, char *argv[]) {
    struct host_entry *temp_cursor;
    unsigned long loop_timediff;
    unsigned long host_timediff;
+/*
+ *	Open syslog channel and log arguments if required
+ */
+#ifdef SYSLOG
+   openlog(basename(argv[0]), LOG_PID, SYSLOG_FACILITY);
+   arg_str[0] = '\0';
+   for (arg=0; arg<argc; arg++) {
+      strcat(arg_str, argv[arg]);
+      if (arg < (argc-1)) {
+         strcat(arg_str, " ");
+      }
+   }
+   info_syslog("Starting: %s", arg_str);
+#endif
 /*
  *	Process options and arguments.
  */
@@ -363,6 +393,9 @@ int main(int argc, char *argv[]) {
  */
    if (!num_hosts)
       err_msg("No hosts to process.");
+#ifdef SYSLOG
+   info_syslog("%d hosts in list", num_hosts);
+#endif
 /*
  *	Create UDP socket and bind to local source port.
  */
@@ -471,6 +504,9 @@ int main(int argc, char *argv[]) {
    } /* End While */
 
    close(sockfd);
+#ifdef SYSLOG
+   info_syslog("Ending");
+#endif
    return(0);
 }
 
@@ -1130,7 +1166,10 @@ void usage(void) {
    fprintf(stderr, "--dport=<p> or -d p\tSet UDP destination port to <p>, default=%d\n", DEFAULT_DEST_PORT);
    fprintf(stderr, "--retry=<n> or -r n\tSet number of attempts per host to <n>, default=%d\n", DEFAULT_RETRY);
    fprintf(stderr, "--timeout=<n> or -t n\tSet per host timeout to <n> ms, default=%d\n", DEFAULT_TIMEOUT);
-   fprintf(stderr, "--interval=<n> or -i <n> Set packet interval to <n> ms, default=%d\n", DEFAULT_INTERVAL);
+   fprintf(stderr, "--interval=<n> or -i <n> Set minimum packet interval to <n> ms, default=%d\n", DEFAULT_INTERVAL);
+   fprintf(stderr, "\t\t\tThis limits the outgoing bandwidth usage.\n");
+   fprintf(stderr, "\t\t\tFor default transform set: 50=58240bps, 80=36400bps\n");
+   fprintf(stderr, "\t\t\tFor custom transform: 15=59733bps, 30=35840bps\n");
    fprintf(stderr, "--backoff=<b> or -b <b>\tSet backoff factor to <b>, default=%.2f\n", DEFAULT_BACKOFF_FACTOR);
    fprintf(stderr, "--selectwait=<n> or -w <n> Set select wait to <n> ms, default=%d\n", DEFAULT_SELECT_TIMEOUT);
    fprintf(stderr, "--verbose or -v\t\tDisplay verbose progress messages.\n");
@@ -1141,6 +1180,8 @@ void usage(void) {
    fprintf(stderr, "--vendor or -e\t\tSet vendor id string (experimental).\n");
    fprintf(stderr, "--trans=<t> or -a <t>\tUse transform <t> instead of default set.\n");
    fprintf(stderr, "\t\t\t<t> is specified as enc,hash,auth,group. e.g. 1,1,1,1\n");
+   fprintf(stderr, "\t\t\tIf this option is specified, then the IP packet size\n");
+   fprintf(stderr, "\t\t\tis 112 bytes rather than the default of 364.\n");
    fprintf(stderr, "\n");
    fprintf(stderr, "%s\n", rcsid);
    fprintf(stderr, "\n");
