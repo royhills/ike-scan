@@ -100,11 +100,12 @@ main(int argc, char *argv[]) {
       {"pskcrack", optional_argument, 0, 'P'},
       {"tcptimeout", required_argument, 0, 'O'},
       {"nodns", no_argument, 0, 'N'},
+      {"noncelen", required_argument, 0, 'c'},
       {"experimental", required_argument, 0, 'X'},
       {0, 0, 0, 0}
    };
    const char *short_options =
-      "f:hs:d:r:t:i:b:w:vl:z:m:Ve:a:o::u:n:y:g:p:AG:I:qMRT::P::O:NX:";
+      "f:hs:d:r:t:i:b:w:vl:z:m:Ve:a:o::u:n:y:g:p:AG:I:qMRT::P::O:Nc:X:";
    int arg;
    char arg_str[MAXLINE];	/* Args as string for syslog */
    int options_index=0;
@@ -157,6 +158,7 @@ main(int argc, char *argv[]) {
    size_t vid_data_len;		/* Vendor ID data length */
    unsigned char *gss_data=NULL;	/* Binary GSSID data */
    size_t gss_data_len=0;	/* GSSID data length */
+   size_t nonce_data_len=DEFAULT_NONCE_LEN;	/* Nonce data length */
    unsigned char *id_data=NULL;	/* Identity data */
    size_t id_data_len=0;	/* Identity data length */
    int vendor_id_flag = 0;	/* Indicates if VID to be used */
@@ -368,6 +370,9 @@ main(int argc, char *argv[]) {
          case 'N':	/* --nodns */
             no_dns_flag=1;
             break;
+         case 'c':	/* --noncelen */
+            nonce_data_len = strtoul(optarg, (char **)NULL, 10);
+            break;
          case 'X':	/* --experimental */
             experimental_value = strtoul(optarg, (char **)NULL, 10);
             break;
@@ -448,6 +453,9 @@ main(int argc, char *argv[]) {
 
    if (idtype != DEFAULT_IDTYPE && exchange_type != ISAKMP_XCHG_AGGR)
       warn_msg("WARNING: Specifying an idtype payload with --idtype or -y does not have any\n         effect unless you also specify aggressive mode with --aggressive or -A\n");
+
+   if (nonce_data_len != DEFAULT_NONCE_LEN && exchange_type != ISAKMP_XCHG_AGGR)
+      warn_msg("WARNING: Specifying the nonce payload length with --noncelen or -c does not\n         have any effect unless you also specify aggressive mode with\n         --aggressive or -A\n");
 
    if (dhgroup != DEFAULT_DH_GROUP && exchange_type != ISAKMP_XCHG_AGGR)
       warn_msg("WARNING: Specifying the DH Group with --dhgroup or -g does not have any effect\n         unless you also specify aggressive mode with --aggressive or -A\n");
@@ -570,7 +578,7 @@ main(int argc, char *argv[]) {
                                     auth_method, dhgroup, idtype,
                                     id_data, id_data_len, vendor_id_flag,
                                     trans_flag, exchange_type, gss_id_flag,
-                                    gss_data, gss_data_len);
+                                    gss_data, gss_data_len, nonce_data_len);
 /*
  *	Display initial message.
  */
@@ -1455,7 +1463,7 @@ initialise_ike_packet(size_t *packet_out_len, unsigned lifetime,
                       unsigned idtype, unsigned char *id_data, size_t id_data_len,
                       int vendor_id_flag, int trans_flag, unsigned exchange_type,
                       int gss_id_flag, unsigned char *gss_data,
-                      size_t gss_data_len) {
+                      size_t gss_data_len, size_t nonce_data_len) {
    struct isakmp_hdr *hdr;
    struct isakmp_sa *sa;
    struct isakmp_proposal *prop;
@@ -1471,7 +1479,6 @@ initialise_ike_packet(size_t *packet_out_len, unsigned lifetime,
    size_t trans_len;
    size_t id_len;
    size_t nonce_len;
-   size_t nonce_data_len=20;
    size_t ke_len;
    size_t kx_data_len=0;
    unsigned no_trans=0;	/* Number of transforms */
@@ -2594,6 +2601,8 @@ usage(int status) {
    fprintf(stderr, "\n--nodns or -N\t\tDo not use DNS to resolve names.\n");
    fprintf(stderr, "\t\t\tIf you use this option, then all hosts must be\n");
    fprintf(stderr, "\t\t\tspecified as IP addresses.\n");
+   fprintf(stderr, "\n--noncelen=<n> or -c <n> Set the nonce length to <n> bytes. Default=%u\n", DEFAULT_NONCE_LEN);
+   fprintf(stderr, "\t\t\tThis option is only applicable to IKE aggressive mode.\n");
    fprintf(stderr, "\n");
    fprintf(stderr, "Report bugs or send suggestions to %s\n", PACKAGE_BUGREPORT);
    fprintf(stderr, "See the ike-scan homepage at http://www.nta-monitor.com/ike-scan/\n");
