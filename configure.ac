@@ -1,8 +1,8 @@
 dnl $Id$
 dnl Process this file with autoconf to produce a configure script.
 
-AC_INIT(ike-scan, 1.6.1, [ike-scan@nta-monitor.com])
-AC_CONFIG_SRCDIR(ike-scan.c)
+AC_INIT([ike-scan], [1.6.1], [ike-scan@nta-monitor.com])
+AC_CONFIG_SRCDIR([ike-scan.c])
 dnl If I don't pass $PACKAGE_NAME and $PACKAGE_VERSION to AM_INIT_AUTOMAKE,
 dnl then PACKAGE and VERSION are not defined and these are required for
 dnl make dist.  The documentation implies that I shouldn't need to
@@ -10,15 +10,19 @@ dnl supply these arguments, but I find that I do need to with autoconf 2.53 and
 dnl automake 1.4.
 AM_INIT_AUTOMAKE($PACKAGE_NAME, $PACKAGE_VERSION)
 
-AM_CONFIG_HEADER(config.h)
+AM_CONFIG_HEADER([config.h])
 
 dnl Checks for programs.
 AC_PROG_CC
  if test -n "$GCC"; then
       CFLAGS="$CFLAGS -Wall "
+dnl Uncomment the line below for testing
+dnl      CFLAGS="$CFLAGS -pedantic -Wshadow -Wpointer-arith -Wcast-qual -Wcast-align -Wwrite-strings -Wconversion -Wstrict-prototypes -Wmissing-prototypes -Wmissing-declarations -Wnested-externs "
  fi
 AC_PROG_INSTALL
 AC_PROG_LN_S
+dnl Check endian-ness. MD5 and SHA1 hash functions need to know this.
+AC_C_BIGENDIAN
 
 dnl Checks for libraries.
 dnl Solaris 8 needs nsl and socket.  Linux and {Free,Open}BSD do not.
@@ -84,6 +88,125 @@ dnl If we don't have it, then use a replacement function.
 AC_CHECK_FUNC(inet_aton, ,
   [ COMPAT_SRCS="$COMPAT_SRCS inet_aton.c"
     COMPAT_OBJS="$COMPAT_OBJS inet_aton.o" ])
+
+# Search for OpenSSL
+# From openssh-3.8.1p1/configure.ac
+saved_CPPFLAGS="$CPPFLAGS"
+saved_LDFLAGS="$LDFLAGS"
+AC_ARG_WITH(ssl-dir,
+	[  --with-ssl-dir=PATH     Specify path to OpenSSL installation ],
+	[
+		if test "x$withval" != "xno" ; then
+			if test -d "$withval/lib"; then
+				LDFLAGS="-L${withval}/lib ${LDFLAGS}"
+			else
+				LDFLAGS="-L${withval} ${LDFLAGS}"
+			fi
+			if test -d "$withval/include"; then
+				CPPFLAGS="-I${withval}/include ${CPPFLAGS}"
+			else
+				CPPFLAGS="-I${withval} ${CPPFLAGS}"
+			fi
+		fi
+	]
+)
+LIBS="-lcrypto $LIBS"
+AC_TRY_LINK_FUNC(RAND_add, AC_DEFINE(HAVE_OPENSSL, 1, [Define to 1 if you have the OpenSSL libraries and header files]),
+	[
+		dnl Check default openssl install dir
+		LDFLAGS="-L/usr/local/ssl/lib ${saved_LDFLAGS}"
+		CPPFLAGS="-I/usr/local/ssl/include ${saved_CPPFLAGS}"
+		AC_TRY_LINK_FUNC(RAND_add, AC_DEFINE(HAVE_OPENSSL),
+			[
+				AC_MSG_ERROR([*** Can't find recent OpenSSL libcrypto (see config.log for details) ***])
+			]
+		)
+	]
+)
+
+# Determine OpenSSL header version
+AC_MSG_CHECKING([OpenSSL header version])
+AC_TRY_RUN(
+	[
+#include <stdio.h>
+#include <string.h>
+#include <openssl/opensslv.h>
+#define DATA "conftest.sslincver"
+int main(void) {
+	FILE *fd;
+	int rc;
+
+	fd = fopen(DATA,"w");
+	if(fd == NULL)
+		exit(1);
+
+	if ((rc = fprintf(fd ,"%x (%s)\n", OPENSSL_VERSION_NUMBER, OPENSSL_VERSION_TEXT)) <0)
+		exit(1);
+
+	exit(0);
+}
+	],
+	[
+		ssl_header_ver=`cat conftest.sslincver`
+		AC_MSG_RESULT($ssl_header_ver)
+	],
+	[
+		AC_MSG_RESULT(not found)
+		AC_MSG_ERROR(OpenSSL version header not found.)
+	]
+)
+
+# Determine OpenSSL library version
+AC_MSG_CHECKING([OpenSSL library version])
+AC_TRY_RUN(
+	[
+#include <stdio.h>
+#include <string.h>
+#include <openssl/opensslv.h>
+#include <openssl/crypto.h>
+#define DATA "conftest.ssllibver"
+int main(void) {
+	FILE *fd;
+	int rc;
+
+	fd = fopen(DATA,"w");
+	if(fd == NULL)
+		exit(1);
+
+	if ((rc = fprintf(fd ,"%x (%s)\n", SSLeay(), SSLeay_version(SSLEAY_VERSION))) <0)
+		exit(1);
+
+	exit(0);
+}
+	],
+	[
+		ssl_library_ver=`cat conftest.ssllibver`
+		AC_MSG_RESULT($ssl_library_ver)
+	],
+	[
+		AC_MSG_RESULT(not found)
+		AC_MSG_ERROR(OpenSSL library not found.)
+	]
+)
+
+# Sanity check OpenSSL headers
+AC_MSG_CHECKING([whether OpenSSL's headers match the library])
+AC_TRY_RUN(
+	[
+#include <string.h>
+#include <openssl/opensslv.h>
+int main(void) { exit(SSLeay() == OPENSSL_VERSION_NUMBER ? 0 : 1); }
+	],
+	[
+		AC_MSG_RESULT(yes)
+	],
+	[
+		AC_MSG_RESULT(no)
+		AC_MSG_ERROR([Your OpenSSL headers do not match your library.
+Check config.log for details.
+Also see contrib/findssl.sh for help identifying header/library mismatches.])
+	]
+)
 
 AC_CONFIG_FILES([Makefile])
 AC_OUTPUT
