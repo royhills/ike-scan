@@ -59,7 +59,7 @@ main (int argc, char *argv[]) {
    int verbose=0;
    int hash_type=HASH_TYPE_AUTO;	/* Hash type: Auto, MD5 or SHA1 */
    size_t hash_len=0;	/* Set to 0 to avoid uninitialised warning */
-   char *hash_name;	/* Hash name: MD5 or SHA1 */
+   char *hash_name=NULL; /* Hash name: MD5 or SHA1 */
 
    FILE *dictionary_file;	/* Dictionary file, one word per line */
    FILE *data_file;	/* PSK parameters in colon separated format */
