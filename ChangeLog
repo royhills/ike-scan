@@ -15,6 +15,9 @@ $Id$
 	* ike-scan.c: Use new add_trans() function in intialise_ike_packet()
 	  rather than manually building the transform payload using
 	  make_trans().
+	* isakmp.c: Add new add_vid() function.
+	* ike-scan.c: Use new add_vid() function to allow multiple VIDs to
+	  be specified.
 
 2003-11-07 Roy Hills <Roy.Hills@nta-monitor.com>
 
