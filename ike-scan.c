@@ -137,8 +137,8 @@ main(int argc, char *argv[]) {
    int n;
    struct host_entry *temp_cursor;
    struct timeval diff;		/* Difference between two timevals */
-   UINT64 loop_timediff;	/* Time since last packet sent in us */
-   UINT64 host_timediff;	/* Time since last packet sent to this host */
+   IKE_UINT64 loop_timediff;	/* Time since last packet sent in us */
+   IKE_UINT64 host_timediff;	/* Time since last packet sent to this host */
    unsigned long end_timediff=0; /* Time since last packet received in ms */
    int req_interval;		/* Requested per-packet interval */
    int select_timeout;		/* Select timeout */
