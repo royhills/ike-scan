@@ -20,6 +20,12 @@
  * Change History:
  *
  * $Log$
+ * Revision 1.7  2002/09/15 14:08:13  rsh
+ * removed exchange_type array as this was not used.
+ * Don't set name member of host entry - this is not used as has been removed.
+ * Update cursor in remove_host to avoid having to do it before calling the
+ * function.
+ *
  * Revision 1.6  2002/09/13 15:01:51  rsh
  * Added support for changing authentication method.
  *
@@ -63,7 +69,7 @@ static char rcsid[] = "$Id$";   /* RCS ID for ident(1) */
 
 /* Global variables */
 struct host_entry *rrlist = NULL;	/* Round-robin linked list "the list" */
-struct host_entry *cursor;		/* Pointer to current entry */
+struct host_entry *cursor;		/* Pointer to current list entry */
 unsigned num_hosts = 0;			/* Number of entries in the list */
 unsigned retry = DEFAULT_RETRY;		/* Number of retries */
 unsigned timeout = DEFAULT_TIMEOUT;	/* Per-host timeout */
@@ -97,7 +103,7 @@ char *auth_methods[] = { /* Authentication methods from RFC 2409 Appendix A */
 };
 
 char *notification_msg[] = { /* Notify Message Types from RFC 2408 3.14.1 */
-   "",                               /* 0 */
+   "UNSPECIFIED",                    /* 0 */
    "INVALID-PAYLOAD-TYPE",           /* 1 */
    "DOI-NOT-SUPPORTED",              /* 2 */
    "SITUATION-NOT-SUPPORTED",        /* 3 */
@@ -147,15 +153,6 @@ char *payload_name[] = {     /* Payload types from RFC 2408 3.1 */
    "Vendor ID"                       /* 13 */
 };
 
-char *exchange_type[] = {    /* Exchange types from RFC 2408 3.1 */
-   "NONE",                           /* 0 */
-   "Base",                           /* 1 */
-   "Identity Protection",            /* 2 */
-   "Authentication Only",            /* 3 */
-   "Aggressive",                     /* 4 */
-   "Informational"                   /* 5 */
-};
-
 int main(int argc, char *argv[]) {
    struct option long_options[] = {
       {"file", required_argument, 0, 'f'},
@@ -185,9 +182,9 @@ int main(int argc, char *argv[]) {
    struct timeval now;
    char packet_in[MAXUDP];	/* Received packet */
    int n;
+   struct host_entry *temp_cursor;
    unsigned long loop_timediff;
    unsigned long host_timediff;
-   struct host_entry *temp_cursor;
    unsigned seed = 0;
 /*
  *	Process options and arguments.
@@ -269,7 +266,6 @@ int main(int argc, char *argv[]) {
       FILE *fp;
       char line[MAXLINE];
       char host[MAXLINE];
-      char *p;
 
       if ((strcmp(filename, "-")) == 0) {	/* Filename "-" means stdin */
          if ((fp = fdopen(0, "r")) == NULL) {
@@ -283,8 +279,7 @@ int main(int argc, char *argv[]) {
 
       while (fgets(line, MAXLINE, fp)) {
          if ((sscanf(line, "%s", host)) == 1) {
-            p=cpystr(host);
-            add_host(p);
+            add_host(host);
          }
       }
       fclose(fp);
@@ -358,13 +353,7 @@ int main(int argc, char *argv[]) {
             if (cursor->num_sent >= retry) {
                if (verbose)
                   warn_msg("Removing host entry %d (%s) - Timeout", cursor->n, inet_ntoa(cursor->addr));
-               temp_cursor = cursor;
-               if (num_hosts) {
-                  cursor = cursor->next;
-               } else {
-                  cursor = NULL;
-               }
-               remove_host(temp_cursor);
+               remove_host(cursor);
             } else {	/* Retry limit not reached for this host */
                if (cursor->num_sent) {
                   cursor->timeout *= backoff;
@@ -382,24 +371,12 @@ int main(int argc, char *argv[]) {
                display_packet(n, packet_in, temp_cursor);
                if (verbose)
                   warn_msg("Removing host entry %d (%s) - Received %d bytes", temp_cursor->n, inet_ntoa(sa_peer.sin_addr), n);
-               temp_cursor = cursor;
-               if (num_hosts) {
-                  cursor = cursor->next;
-               } else {
-                  cursor = NULL;
-               }
-               remove_host(temp_cursor);
+               remove_host(cursor);
             }
          } else if (n == -2) {	/* Connection refused - remove entry */
             if (verbose)
                warn_msg("Removing host entry %d (%s) - Connection refused", cursor->n, inet_ntoa(cursor->addr));
-            temp_cursor = cursor;
-            if (num_hosts) {
-               cursor = cursor->next;
-            } else {
-               cursor = NULL;
-            }
-            remove_host(temp_cursor);
+            remove_host(cursor);
          }
       }
    }	/* End While */
@@ -424,7 +401,6 @@ void add_host(char *name) {
    num_hosts++;
 
    he->n = num_hosts;
-   he->name = name;
    memcpy(&(he->addr), hp->h_addr_list[0], sizeof(struct in_addr));
    he->timeout = timeout;
    he->num_sent = 0;
@@ -448,12 +424,18 @@ void add_host(char *name) {
 
 /*
  * 	remove_host -- Remove the specified host from the list
+ *
+ *	Updates cursor so that it points to the next entry or NULL if the
+ *	list is empty after the removal.  Sets rrlist to NULL if the list
+ *	becomes empty.
  */
 void remove_host(struct host_entry *he) {
-   if (num_hosts) {	/* List has more than one entry */
+   if (num_hosts > 1) {	/* List has more than one entry */
+      cursor = cursor->next;
       he->prev->next = he->next;
       he->next->prev = he->prev;
    } else {		/* Last entry is being removed */
+      cursor = NULL;
       rrlist = NULL;
    }
    free(he);
@@ -581,22 +563,6 @@ void display_packet(int n, char *packet_in, struct host_entry *he) {
       } else {
          printf("%s\tUnknown IKE packet returned payload %d (UNDEFINED)\n", ip, hdr_in.isa_np);
       }
-   }
-}
-
-/*
- *	cpystr -- Copy a string into malloc'ed memory and return pointer
- */
-char *cpystr(char *str) {
-   char *p;
-
-   if (str) {
-      if ((p = (char *) malloc(strlen(str)+1)) == NULL)
-         err_sys("malloc");
-      strcpy(p, str);
-      return(p);
-   } else {
-      return(NULL);
    }
 }
 
