@@ -361,6 +361,28 @@ For details of how to submit new backoff patterns.
 Note that any packet loss will prevent the backoff fingerprinting from working
 because the program needs to see all of the responses.
 
+4.6. Syslog
+
+The program can log brief details to a syslog server if SYSLOG is defined
+in ike-scan.h when the program is compiled.  You can also define the
+syslog facility to use.
+
+By default, syslog is enabled and the facility is set to "user".  The
+lines in ike-scan.h that define this behaviour are:
+
+#define SYSLOG 1                        /* Use syslog if defined */
+#define SYSLOG_FACILITY LOG_USER        /* Syslog facility to use */
+
+If syslog is defined, each run ok ike-scan will log two syslog messages:
+one when ike-scan starts showing the arguments it was invoked with, and one
+when it ends showing the number of hosts scanned and the number of transform
+and notify responses received.
+
+An example of syslog output for a single ike-scan run is:
+
+Jan 17 17:12:05 helium ike-scan[3157]: Starting: ike-scan 172.16.2.2
+Jan 17 17:12:05 helium ike-scan[3157]: Ending: 1 hosts scanned. 0 returned transform; 1 returned notify
+
 5.  PROGRAM OUTPUT:
 
 The program output consists of two sections:
