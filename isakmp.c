@@ -94,7 +94,7 @@ make_isakmp_hdr(unsigned xchg, unsigned next, unsigned length,
  *	This constructs an SA header.  It fills in the static values.
  */
 struct isakmp_sa*
-make_sa_hdr(unsigned next, unsigned length) {
+make_sa_hdr(unsigned next, unsigned length, unsigned doi, unsigned situation) {
    struct isakmp_sa* hdr;
 
    hdr = Malloc(sizeof(struct isakmp_sa));
@@ -102,8 +102,8 @@ make_sa_hdr(unsigned next, unsigned length) {
 
    hdr->isasa_np = next;		/* Next Payload Type */
    hdr->isasa_length = htons(length);		/* SA Payload length */
-   hdr->isasa_doi = htonl(ISAKMP_DOI_IPSEC);	/* IPsec DOI */
-   hdr->isasa_situation = htonl(SIT_IDENTITY_ONLY);	/* Exchange type */
+   hdr->isasa_doi = htonl(doi);	/* Default is IPsec DOI */
+   hdr->isasa_situation = htonl(situation); /* Default SIT_IDENTITY_ONLY */
 
    return hdr;
 }
@@ -125,7 +125,7 @@ make_sa_hdr(unsigned next, unsigned length) {
  *	are only allowed to have one proposal anyway.
  */
 struct isakmp_proposal*
-make_prop(unsigned length, unsigned notrans) {
+make_prop(unsigned length, unsigned notrans, unsigned protocol) {
    struct isakmp_proposal* hdr;
 
    hdr = Malloc(sizeof(struct isakmp_proposal));
@@ -134,7 +134,7 @@ make_prop(unsigned length, unsigned notrans) {
    hdr->isap_np = 0;			/* No more proposals */
    hdr->isap_length = htons(length);	/* Proposal payload length */
    hdr->isap_proposal = 1;		/* Proposal #1 */
-   hdr->isap_protoid = PROTO_ISAKMP;
+   hdr->isap_protoid = protocol;
    hdr->isap_spisize = 0;		/* No SPI */
    hdr->isap_notrans = notrans;		/* Number of transforms */
 
@@ -168,7 +168,7 @@ unsigned char*
 make_trans(size_t *length, unsigned next, unsigned number, unsigned cipher,
            unsigned keylen, unsigned hash, unsigned auth, unsigned group,
            unsigned lifetime, unsigned lifesize, int gss_id_flag,
-           unsigned char *gss_data, size_t gss_data_len) {
+           unsigned char *gss_data, size_t gss_data_len, unsigned trans_id) {
 
    struct isakmp_transform* hdr;	/* Transform header */
    unsigned char *payload;
@@ -184,7 +184,7 @@ make_trans(size_t *length, unsigned next, unsigned number, unsigned cipher,
 
    hdr->isat_np = next;			/* Next payload type */
    hdr->isat_transnum = number;		/* Transform Number */
-   hdr->isat_transid = KEY_IKE;
+   hdr->isat_transid = trans_id;
 
 /* Allocate and initialise the mandatory attributes */
 
@@ -268,7 +268,8 @@ unsigned char*
 add_trans(int finished, size_t *length,
           unsigned cipher, unsigned keylen, unsigned hash, unsigned auth,
           unsigned group, unsigned lifetime, unsigned lifesize,
-          int gss_id_flag, unsigned char *gss_data, size_t gss_data_len) {
+          int gss_id_flag, unsigned char *gss_data, size_t gss_data_len,
+          unsigned trans_id) {
 
    static int first_transform = 1;
    static unsigned char *trans_start=NULL;	/* Start of set of transforms */
@@ -284,7 +285,7 @@ add_trans(int finished, size_t *length,
    if (!finished) {
       trans = make_trans(&len, 3, trans_no, cipher, keylen, hash, auth,
                          group, lifetime, lifesize, gss_id_flag, gss_data,
-                         gss_data_len);
+                         gss_data_len, trans_id);
       trans_no++;
       if (first_transform) {
          cur_offset = 0;

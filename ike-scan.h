@@ -156,6 +156,10 @@ unsigned char *SHA1(const unsigned char *, size_t, unsigned char *);
 #define DEFAULT_EXCHANGE_TYPE ISAKMP_XCHG_IDPROT	/* Main Mode */
 #define DEFAULT_NONCE_LEN 20		/* Default Nonce length in bytes */
 #define DEFAULT_HEADER_VERSION 0x10	/* Default ISAKMP header version */
+#define DEFAULT_DOI ISAKMP_DOI_IPSEC	/* Default SA DOI */
+#define DEFAULT_SITUATION SIT_IDENTITY_ONLY /* Default SA Situation */
+#define DEFAULT_PROTOCOL PROTO_ISAKMP	/* Default Proposal Protocol */
+#define DEFAULT_TRANS_ID KEY_IKE	/* Default Transform ID */
 #define SYSLOG 1			/* Use syslog if defined */
 #define SYSLOG_FACILITY LOG_USER	/* Syslog facility to use */
 #define PATTERNS_FILE "ike-backoff-patterns" /* Backoff patterns filename */
@@ -286,8 +290,12 @@ typedef struct {	/* IKE Packet Parameters */
    size_t nonce_data_len;
    char *header_length;
    unsigned char *cr_data;
-   size_t cr_data_len;
-   int header_version;
+   size_t cr_data_len;	
+   int header_version;	/* ISAKMP Header Version */
+   unsigned doi;	/* SA DOI */
+   unsigned situation;	/* SA Situation */
+   unsigned protocol;	/* Proposal protocol */
+   unsigned trans_id;	/* Transform ID */
 } ike_packet_params;
 
 /* Functions */
@@ -328,14 +336,15 @@ unsigned int hstr_i(const char *);
 unsigned char* hex2data(const char *, size_t *);
 unsigned char* hex_or_str(const char *, size_t *);
 struct isakmp_hdr* make_isakmp_hdr(unsigned, unsigned, unsigned, int);
-struct isakmp_sa* make_sa_hdr(unsigned, unsigned);
-struct isakmp_proposal* make_prop(unsigned, unsigned);
+struct isakmp_sa* make_sa_hdr(unsigned, unsigned, unsigned, unsigned);
+struct isakmp_proposal* make_prop(unsigned, unsigned, unsigned);
 unsigned char* make_trans(size_t *, unsigned, unsigned, unsigned,
                           unsigned, unsigned, unsigned, unsigned,
-                          unsigned, unsigned, int, unsigned char *, size_t);
+                          unsigned, unsigned, int, unsigned char *, size_t,
+                          unsigned);
 unsigned char* add_trans(int, size_t *, unsigned, unsigned, unsigned, unsigned,
                          unsigned, unsigned, unsigned, int, unsigned char *,
-                         size_t);
+                         size_t, unsigned);
 unsigned char* make_attr(size_t *, int, unsigned, size_t, unsigned, void *);
 unsigned char* add_attr(int, size_t *, int, unsigned, size_t, unsigned,
                         void *);
