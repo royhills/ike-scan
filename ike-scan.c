@@ -186,7 +186,7 @@ main(int argc, char *argv[]) {
    for (arg=0; arg<argc; arg++) {
       arg_str_space -= strlen(argv[arg]);
       if (arg_str_space > 0) {
-         strncat(arg_str, argv[arg], arg_str_space);
+         strncat(arg_str, argv[arg], (size_t) arg_str_space);
          if (arg < (argc-1)) {
             if (--arg_str_space > 0) {
                strcat(arg_str, " ");
