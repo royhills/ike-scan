@@ -117,7 +117,7 @@ main(int argc, char *argv[]) {
    unsigned source_port = DEFAULT_SOURCE_PORT;	/* UDP source port */
    unsigned dest_port = DEFAULT_DEST_PORT;	/* UDP destination port */
    unsigned retry = DEFAULT_RETRY;	/* Number of retries */
-   unsigned interval = DEFAULT_INTERVAL;	/* Interval between packets */
+   unsigned interval = 1000 * DEFAULT_INTERVAL;	/* Interval between packets */
    double backoff_factor = DEFAULT_BACKOFF_FACTOR;	/* Backoff factor */
    unsigned end_wait = 1000 * DEFAULT_END_WAIT; /* Time to wait after all done in ms */
    unsigned timeout = DEFAULT_TIMEOUT;	/* Per-host timeout in ms */
@@ -221,6 +221,8 @@ main(int argc, char *argv[]) {
          unsigned trans_auth;	/* Custom transform auth */
          unsigned trans_group;	/* Custom transform DH group */
          char trans_str[MAXLINE];	/* Custom transform string */
+         char interval_str[MAXLINE];	/* --interval argument */
+         size_t interval_len;	/* --interval argument length */
          case 'f':	/* --file */
             strncpy(filename, optarg, MAXLINE);
             filename_flag=1;
@@ -241,7 +243,13 @@ main(int argc, char *argv[]) {
             timeout=strtoul(optarg, (char **)NULL, 10);
             break;
          case 'i':	/* --interval */
-            interval=strtoul(optarg, (char **)NULL, 10);
+            strncpy(interval_str, optarg, MAXLINE);
+            interval_len=strlen(interval_str);
+            if (interval_str[interval_len-1] == 'u') {
+               interval=strtoul(interval_str, (char **)NULL, 10);
+            } else {
+               interval=1000 * strtoul(interval_str, (char **)NULL, 10);
+            }
             break;
          case 'b':	/* --backoff */
             backoff_factor=atof(optarg);
@@ -590,7 +598,7 @@ main(int argc, char *argv[]) {
  *	since the last packet was received and we have received at least one
  *	transform response.
  */
-   interval *= 1000;	/* Convert from ms to us */
+   warn_msg("interval=%u microseconds", interval);
    reset_cum_err = 1;
    req_interval = interval;
    while (live_count ||
@@ -2405,9 +2413,11 @@ usage(int status) {
    fprintf(stderr, "\t\t\tThe outgoing packets have a total size of 364 bytes\n");
    fprintf(stderr, "\t\t\t(20 bytes IP hdr + 8 bytes UDP hdr + 336 bytes data)\n");
    fprintf(stderr, "\t\t\twhen the default transform set is used, or 112 bytes\n");
-   fprintf(stderr, "\t\t\tif a custom transform is specified.  Therefore\n");
+   fprintf(stderr, "\t\t\tif a single custom transform is specified.  Therefore\n");
    fprintf(stderr, "\t\t\tfor default transform set: 50=58240bps, 80=36400bps and\n");
    fprintf(stderr, "\t\t\tfor custom transform: 15=59733bps, 30=35840bps.\n");
+   fprintf(stderr, "\t\t\tThe interval specified is in milliseconds by default,\n");
+   fprintf(stderr, "\t\t\tor in microseconds if \"u\" is appended to the value.\n");
    fprintf(stderr, "\n--backoff=<b> or -b <b>\tSet timeout backoff factor to <b>, default=%.2f.\n", DEFAULT_BACKOFF_FACTOR);
    fprintf(stderr, "\t\t\tThe per-host timeout is multiplied by this factor\n");
    fprintf(stderr, "\t\t\tafter each timeout.  So, if the number of retrys\n");
