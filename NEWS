@@ -3,6 +3,17 @@ $Id$
 This file gives a brief overview of the major changes between each ike-scan
 release.  For more details please read the ChangeLog file.
 
+ike-scan v1.7.1:
+
+* Fixed bug which caused hostnames containing hyphens to fail with an error.
+
+* Improved mapping of ID numbers to names in decode.  This allows sparse IDs
+  ranges (e.g. 1,2,3,65000) to be supported, which means that we can now decode
+  XAUTH authentication method amongst other things.
+
+* Added SO_BROADCAST option to UDP socket to allow sending to broadcast
+  addresses.  Previously this gave a permission denied error.
+
 ike-scan v1.7:
 
 * Improved "make check" tests, so they now check more areas including Pre-
