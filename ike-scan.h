@@ -146,8 +146,8 @@ unsigned char *SHA1(const unsigned char *, size_t, unsigned char *);
 #define SYSLOG_FACILITY LOG_USER	/* Syslog facility to use */
 #define PATTERNS_FILE "ike-backoff-patterns" /* Backoff patterns filename */
 #define VID_FILE "ike-vendor-ids"	/* Vendor ID patterns filename */
-#define EXPECTED_TOTAL 72		/* Expected ISAKMP header size total */
 #define REALLOC_COUNT	1000		/* Entries to realloc at once */
+#undef DEBUG_TIMINGS			/* Define to 1 to debug timing code */
 /*
  * If ALPHA is defined, then it is used as the smoothing factor for the
  * per-packet timing error using the TCP RTT smoothing algorithm from RFC 793:
@@ -207,6 +207,27 @@ struct vid_pattern_list {
    struct vid_pattern_list *next;
 };
 #endif
+
+struct psk_crack {
+   unsigned char *g_xr;		/* Responder DH public value */
+   size_t g_xr_len;
+   unsigned char *g_xi;		/* Initiator DH public value */
+   size_t g_xi_len;
+   unsigned char *cky_r;	/* Responder cookie */
+   size_t cky_r_len;
+   unsigned char *cky_i;	/* Initiator cookie */
+   size_t cky_i_len;
+   unsigned char *sai_b;	/* Initiator SA payload */
+   size_t sai_b_len;
+   unsigned char *idir_b;	/* Responder ID payload */
+   size_t idir_b_len;
+   unsigned char *ni_b;		/* Initiator nonce */
+   size_t ni_b_len;
+   unsigned char *nr_b;		/* Responder nonce */
+   size_t nr_b_len;
+   unsigned char *hash_r;	/* Responder hash */
+   size_t hash_r_len;
+};
 
 /* Functions */
 
