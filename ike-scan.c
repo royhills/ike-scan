@@ -358,7 +358,7 @@ main(int argc, char *argv[]) {
       if (fp != stdin)
          fclose(fp);
    } else {		/* Populate list from command line arguments */
-      argv=&argv[optind];
+      argv = &argv[optind];
       while (*argv) {
          add_host_pattern(*argv, timeout, &num_hosts);
          argv++;
