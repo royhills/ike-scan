@@ -64,12 +64,8 @@ psk_crack psk_values = {		/* Pre-shared key values */
    NULL, 0
 };
 int no_dns_flag=0;			/* No DNS flag */
-char *header_length=NULL;		/* ISAKMP header length modifier */
 int mbz_value=0;			/* Value for MBZ fields */
-int header_version=0x10;		/* ISAKMP header version */
-unsigned char *cr_data=NULL;		/* Cert req. data */
-size_t cr_data_len;
-const id_name_map payload_map[] = {	/* Payload types RFC 2408 3.1 */
+const id_name_map payload_map[] = {	/* Payload types from RFC 2408 3.1 */
    {1, "SecurityAssociation"},
    {2, "Proposal"},
    {3, "Transform"},
@@ -146,13 +142,27 @@ main(int argc, char *argv[]) {
    double backoff_factor = DEFAULT_BACKOFF_FACTOR;	/* Backoff factor */
    unsigned end_wait = 1000 * DEFAULT_END_WAIT; /* Time to wait after all done in ms */
    unsigned timeout = DEFAULT_TIMEOUT;	/* Per-host timeout in ms */
-   unsigned lifetime = DEFAULT_LIFETIME;	/* Lifetime in seconds */
-   unsigned lifesize = DEFAULT_LIFESIZE;	/* Lifesize in KB */
-   unsigned auth_method = DEFAULT_AUTH_METHOD;	/* Authentication method */
-   unsigned dhgroup = DEFAULT_DH_GROUP;		/* Diffie Hellman Group */
-   unsigned idtype = DEFAULT_IDTYPE;		/* IKE Identification type */
+   ike_packet_params ike_params = {
+      DEFAULT_LIFETIME,	/* Lifetime in seconds */
+      DEFAULT_LIFESIZE,	/* Lifesize in KB */
+      DEFAULT_AUTH_METHOD,	/* Authentication method */
+      DEFAULT_DH_GROUP,		/* Diffie Hellman Group */
+      DEFAULT_IDTYPE,		/* IKE Identification type */
+      NULL,	/* Identity data */
+      0,	/* Identity data length */
+      0,	/* Indicates if VID to be used */
+      0,		/* Indicates custom transform */
+      DEFAULT_EXCHANGE_TYPE, /* Main or Aggressive mode */
+      0,		/* Indicates if GSSID to be used */
+      NULL,	/* Binary GSSID data */
+      0,	/* GSSID data length */
+      DEFAULT_NONCE_LEN,	/* Nonce data length */
+      NULL,		/* ISAKMP header length modifier */
+      NULL,		/* Cert req. data */
+      0,			/* cd_data_len */
+      DEFAULT_HEADER_VERSION		/* header_version */
+   };
    unsigned pattern_fuzz = DEFAULT_PATTERN_FUZZ; /* Pattern matching fuzz in ms */
-   unsigned exchange_type = DEFAULT_EXCHANGE_TYPE; /* Main or Aggressive mode */
    unsigned tcp_connect_timeout = DEFAULT_TCP_CONNECT_TIMEOUT;
    struct sockaddr_in sa_local;
    struct sockaddr_in sa_peer;
@@ -182,14 +192,6 @@ main(int argc, char *argv[]) {
    int first_timeout=1;
    unsigned char *vid_data;	/* Binary Vendor ID data */
    size_t vid_data_len;		/* Vendor ID data length */
-   unsigned char *gss_data=NULL;	/* Binary GSSID data */
-   size_t gss_data_len=0;	/* GSSID data length */
-   size_t nonce_data_len=DEFAULT_NONCE_LEN;	/* Nonce data length */
-   unsigned char *id_data=NULL;	/* Identity data */
-   size_t id_data_len=0;	/* Identity data length */
-   int vendor_id_flag = 0;	/* Indicates if VID to be used */
-   int gss_id_flag = 0;		/* Indicates if GSSID to be used */
-   int trans_flag = 0;		/* Indicates custom transform */
    int showbackoff_flag = 0;	/* Display backoff table? */
    struct timeval last_recv_time;	/* Time last packet was received */
    unsigned char *packet_out;	/* IKE packet to send */
@@ -290,13 +292,13 @@ main(int argc, char *argv[]) {
             verbose++;
             break;
          case 'l':	/* --lifetime */
-            lifetime=strtoul(optarg, (char **)NULL, 10);
+            ike_params.lifetime=strtoul(optarg, (char **)NULL, 10);
             break;
          case 'z':	/* --lifesize */
-            lifesize=strtoul(optarg, (char **)NULL, 10);
+            ike_params.lifesize=strtoul(optarg, (char **)NULL, 10);
             break;
          case 'm':	/* --auth */
-            auth_method=strtoul(optarg, (char **)NULL, 10);
+            ike_params.auth_method=strtoul(optarg, (char **)NULL, 10);
             break;
          case 'V':	/* --version */
             fprintf(stderr, "%s\n\n", PACKAGE_STRING);
@@ -317,19 +319,20 @@ main(int argc, char *argv[]) {
          case 'e':	/* --vendor */
             if (strlen(optarg) % 2)	/* Length is odd */
                err_msg("ERROR: Length of --vendor argument must be even (multiple of 2).");
-            vendor_id_flag=1;
+            ike_params.vendor_id_flag=1;
             vid_data=hex2data(optarg, &vid_data_len);
             add_vid(0, NULL, vid_data, vid_data_len, 0);
             free(vid_data);
             break;
          case 'a':	/* --trans */
             strncpy(trans_str, optarg, MAXLINE);
-            trans_flag++;
+            ike_params.trans_flag++;
             decode_trans(trans_str, &trans_enc, &trans_keylen, &trans_hash,
                          &trans_auth, &trans_group);
             add_trans(0, NULL, trans_enc, trans_keylen, trans_hash,
-                      trans_auth, trans_group, lifetime, lifesize,
-                      gss_id_flag, gss_data, gss_data_len);
+                      trans_auth, trans_group, ike_params.lifetime,
+                      ike_params.lifesize, ike_params.gss_id_flag,
+                      ike_params.gss_data, ike_params.gss_data_len);
             break;
          case 'o':	/* --showbackoff */
             showbackoff_flag=1;
@@ -343,28 +346,28 @@ main(int argc, char *argv[]) {
             pattern_fuzz=strtoul(optarg, (char **)NULL, 10);
             break;
          case 'n':	/* --id */
-            if (id_data)
+            if (ike_params.id_data)
                err_msg("ERROR: You may only specify one identity payload with --id");
-            id_data=hex_or_str(optarg, &id_data_len);
+            ike_params.id_data=hex_or_str(optarg, &(ike_params.id_data_len));
             break;
          case 'y':	/* --idtype */
-            idtype = strtoul(optarg, (char **)NULL, 10);
+            ike_params.idtype = strtoul(optarg, (char **)NULL, 10);
             break;
          case 'g':	/* --dhgroup */
-            dhgroup = strtoul(optarg, (char **)NULL, 10);
+            ike_params.dhgroup = strtoul(optarg, (char **)NULL, 10);
             break;
          case 'p':	/* --patterns */
             strncpy(patfile, optarg, MAXLINE);
             break;
          case 'A':	/* --aggressive */
-            exchange_type = ISAKMP_XCHG_AGGR;
+            ike_params.exchange_type = ISAKMP_XCHG_AGGR;
             break;
          case 'G':	/* --gssid */
             if (strlen(optarg) % 2) {	/* Length is odd */
                err_msg("ERROR: Length of --gssid argument must be even (multiple of 2).");
             }
-            gss_id_flag=1;
-            gss_data=hex2data(optarg, &gss_data_len);
+            ike_params.gss_id_flag=1;
+            ike_params.gss_data=hex2data(optarg, &(ike_params.gss_data_len));
             break;
          case 'I':	/* --vidpatterns */
             strncpy(vidfile, optarg, MAXLINE);
@@ -400,7 +403,7 @@ main(int argc, char *argv[]) {
             no_dns_flag=1;
             break;
          case 'c':	/* --noncelen */
-            nonce_data_len = strtoul(optarg, (char **)NULL, 10);
+            ike_params.nonce_data_len = strtoul(optarg, (char **)NULL, 10);
             break;
          case 'B':	/* --bandwidth */
             strncpy(bandwidth_str, optarg, MAXLINE);
@@ -414,19 +417,19 @@ main(int argc, char *argv[]) {
             }
             break;
          case 'L':	/* --headerlen */
-            header_length = Malloc(strlen(optarg) + 1);
-            strcpy(header_length, optarg);
+            ike_params.header_length = Malloc(strlen(optarg) + 1);
+            strcpy(ike_params.header_length, optarg);
             break;
          case 'Z':	/* --mbz */
             mbz_value = strtoul(optarg, (char **)NULL, 0);
             break;
          case 'E':	/* --headerver */
-            header_version = strtoul(optarg, (char **)NULL, 0);
+            ike_params.header_version = strtoul(optarg, (char **)NULL, 0);
             break;
          case 'C':	/* --certreq */
             if (strlen(optarg) % 2)	/* Length is odd */
                err_msg("ERROR: Length of --certreq argument must be even (multiple of 2).");
-            cr_data=hex2data(optarg, &cr_data_len);
+            ike_params.cr_data=hex2data(optarg, &(ike_params.cr_data_len));
             break;
          case 'X':	/* --experimental */
             experimental_value = strtoul(optarg, (char **)NULL, 10);
@@ -503,19 +506,22 @@ main(int argc, char *argv[]) {
    if (*patfile != '\0' && !showbackoff_flag)
       warn_msg("WARNING: Specifying a backoff pattern file with --patterns or -p does not\n         have any effect unless you also specify --showbackoff or -o\n");
 
-   if (id_data && exchange_type != ISAKMP_XCHG_AGGR)
+   if (ike_params.id_data && ike_params.exchange_type != ISAKMP_XCHG_AGGR)
       warn_msg("WARNING: Specifying an identification payload with --id or -n does not have\n         any effect unless you also specify aggressive mode with --aggressive\n         or -A\n");
 
-   if (idtype != DEFAULT_IDTYPE && exchange_type != ISAKMP_XCHG_AGGR)
+   if (ike_params.idtype != DEFAULT_IDTYPE &&
+       ike_params.exchange_type != ISAKMP_XCHG_AGGR)
       warn_msg("WARNING: Specifying an idtype payload with --idtype or -y does not have any\n         effect unless you also specify aggressive mode with --aggressive or -A\n");
 
-   if (nonce_data_len != DEFAULT_NONCE_LEN && exchange_type != ISAKMP_XCHG_AGGR)
+   if (ike_params.nonce_data_len != DEFAULT_NONCE_LEN &&
+       ike_params.exchange_type != ISAKMP_XCHG_AGGR)
       warn_msg("WARNING: Specifying the nonce payload length with --noncelen or -c does not\n         have any effect unless you also specify aggressive mode with\n         --aggressive or -A\n");
 
-   if (dhgroup != DEFAULT_DH_GROUP && exchange_type != ISAKMP_XCHG_AGGR)
+   if (ike_params.dhgroup != DEFAULT_DH_GROUP &&
+       ike_params.exchange_type != ISAKMP_XCHG_AGGR)
       warn_msg("WARNING: Specifying the DH Group with --dhgroup or -g does not have any effect\n         unless you also specify aggressive mode with --aggressive or -A\n");
 
-   if (psk_crack_flag && exchange_type != ISAKMP_XCHG_AGGR) {
+   if (psk_crack_flag && ike_params.exchange_type != ISAKMP_XCHG_AGGR) {
       warn_msg("WARNING: The --pskcrack (-P) option is only relevant for aggressive mode.\n");
       psk_crack_flag=0;
    }
@@ -638,11 +644,7 @@ main(int argc, char *argv[]) {
    last_packet_time.tv_sec=0;
    last_packet_time.tv_usec=0;
    Gettimeofday(&last_recv_time);
-   packet_out=initialise_ike_packet(&packet_out_len, lifetime, lifesize,
-                                    auth_method, dhgroup, idtype,
-                                    id_data, id_data_len, vendor_id_flag,
-                                    trans_flag, exchange_type, gss_id_flag,
-                                    gss_data, gss_data_len, nonce_data_len);
+   packet_out=initialise_ike_packet(&packet_out_len, &ike_params);
 /*
  *	If the --bandwidth option was used, calculate the required interval
  *	to achieve the required outgoing bandwidth.
@@ -1530,12 +1532,7 @@ recvfrom_wto(int s, unsigned char *buf, size_t len, struct sockaddr *saddr,
  *	payload, and also that we know the total length for the ISAKMP header.
  */
 unsigned char *
-initialise_ike_packet(size_t *packet_out_len, unsigned lifetime,
-                      unsigned lifesize, unsigned auth_method, unsigned dhgroup,
-                      unsigned idtype, unsigned char *id_data, size_t id_data_len,
-                      int vendor_id_flag, int trans_flag, unsigned exchange_type,
-                      int gss_id_flag, unsigned char *gss_data,
-                      size_t gss_data_len, size_t nonce_data_len) {
+initialise_ike_packet(size_t *packet_out_len, ike_packet_params *params) {
    struct isakmp_hdr *hdr;
    struct isakmp_sa *sa;
    struct isakmp_proposal *prop;
@@ -1563,15 +1560,16 @@ initialise_ike_packet(size_t *packet_out_len, unsigned lifetime,
 /*
  *	Certificate request payload (Optional)
  */
-   if (cr_data) {
-      certreq = make_cr(&certreq_len, next_payload, cr_data, cr_data_len);
+   if (params->cr_data) {
+      certreq = make_cr(&certreq_len, next_payload, params->cr_data,
+                        params->cr_data_len);
       *packet_out_len += certreq_len;
       next_payload = ISAKMP_NEXT_CR;
    }
 /*
  *	Vendor ID Payload (Optional)
  */
-   if (vendor_id_flag) {
+   if (params->vendor_id_flag) {
       vid = add_vid(1, &vid_len, NULL, 0, next_payload);
       *packet_out_len += vid_len;
       next_payload = ISAKMP_NEXT_VID;
@@ -1579,18 +1577,19 @@ initialise_ike_packet(size_t *packet_out_len, unsigned lifetime,
 /*
  *	Key Exchange, Nonce and ID for aggressive mode only.
  */
-   if (exchange_type == ISAKMP_XCHG_AGGR) {
-      id = make_id(&id_len, next_payload, idtype, id_data, id_data_len);
-      if (id_data)
-         free(id_data);
+   if (params->exchange_type == ISAKMP_XCHG_AGGR) {
+      id = make_id(&id_len, next_payload, params->idtype, params->id_data,
+                   params->id_data_len);
+      if (params->id_data)
+         free(params->id_data);
       *packet_out_len += id_len;
       next_payload = ISAKMP_NEXT_ID;
-      nonce = make_nonce(&nonce_len, next_payload, nonce_data_len);
+      nonce = make_nonce(&nonce_len, next_payload, params->nonce_data_len);
       if (psk_crack_flag)
          add_psk_crack_payload(nonce, 10, 'I');
       *packet_out_len += nonce_len;
       next_payload = ISAKMP_NEXT_NONCE;
-      switch (dhgroup) {
+      switch (params->dhgroup) {
          case 1:
             kx_data_len = 96;	/* Group 1 - 768 bits */
             break;
@@ -1616,7 +1615,7 @@ initialise_ike_packet(size_t *packet_out_len, unsigned lifetime,
             kx_data_len = 1024;	/* Group 18 - 8192 bits */
             break;
          default:
-            err_msg("ERROR: Bad Diffie Hellman group: %u, should be 1,2,5,14,15,16,17 or 18", dhgroup);
+            err_msg("ERROR: Bad Diffie Hellman group: %u, should be 1,2,5,14,15,16,17 or 18", params->dhgroup);
             break;	/* NOTREACHED */
       }
       ke = make_ke(&ke_len, next_payload, kx_data_len);
@@ -1628,40 +1627,56 @@ initialise_ike_packet(size_t *packet_out_len, unsigned lifetime,
 /*
  *	Transform payloads
  */
-   if (!trans_flag) {	/* Use standard transform set if none specified */
-      if (exchange_type == ISAKMP_XCHG_IDPROT) {	/* Main Mode */
-         add_trans(0, NULL, OAKLEY_3DES_CBC, 0, OAKLEY_SHA, auth_method,
-                   2, lifetime, lifesize, gss_id_flag, gss_data, gss_data_len);
-         add_trans(0, NULL, OAKLEY_3DES_CBC, 0, OAKLEY_MD5, auth_method,
-                   2, lifetime, lifesize, gss_id_flag, gss_data, gss_data_len);
-         add_trans(0, NULL, OAKLEY_DES_CBC,  0, OAKLEY_SHA, auth_method,
-                   2, lifetime, lifesize, gss_id_flag, gss_data, gss_data_len);
-         add_trans(0, NULL, OAKLEY_DES_CBC,  0, OAKLEY_MD5, auth_method,
-                   2, lifetime, lifesize, gss_id_flag, gss_data, gss_data_len);
-         add_trans(0, NULL, OAKLEY_3DES_CBC, 0, OAKLEY_SHA, auth_method,
-                   1, lifetime, lifesize, gss_id_flag, gss_data, gss_data_len);
-         add_trans(0, NULL, OAKLEY_3DES_CBC, 0, OAKLEY_MD5, auth_method,
-                   1, lifetime, lifesize, gss_id_flag, gss_data, gss_data_len);
-         add_trans(0, NULL, OAKLEY_DES_CBC,  0, OAKLEY_SHA, auth_method,
-                   1, lifetime, lifesize, gss_id_flag, gss_data, gss_data_len);
-         add_trans(0, NULL, OAKLEY_DES_CBC,  0, OAKLEY_MD5, auth_method,
-                   1, lifetime, lifesize, gss_id_flag, gss_data, gss_data_len);
+   if (!params->trans_flag) {	/* Use standard transform set if none specified */
+      if (params->exchange_type == ISAKMP_XCHG_IDPROT) {	/* Main Mode */
+         add_trans(0, NULL, OAKLEY_3DES_CBC, 0, OAKLEY_SHA,
+                   params->auth_method, 2, params->lifetime, params->lifesize,
+                   params->gss_id_flag, params->gss_data, params->gss_data_len);
+         add_trans(0, NULL, OAKLEY_3DES_CBC, 0, OAKLEY_MD5,
+                   params->auth_method, 2, params->lifetime, params->lifesize,
+                   params->gss_id_flag, params->gss_data, params->gss_data_len);
+         add_trans(0, NULL, OAKLEY_DES_CBC,  0, OAKLEY_SHA,
+                   params->auth_method, 2, params->lifetime, params->lifesize,
+                   params->gss_id_flag, params->gss_data, params->gss_data_len);
+         add_trans(0, NULL, OAKLEY_DES_CBC,  0, OAKLEY_MD5,
+                   params->auth_method, 2, params->lifetime, params->lifesize,
+                   params->gss_id_flag, params->gss_data, params->gss_data_len);
+         add_trans(0, NULL, OAKLEY_3DES_CBC, 0, OAKLEY_SHA,
+                   params->auth_method, 1, params->lifetime, params->lifesize,
+                   params->gss_id_flag, params->gss_data, params->gss_data_len);
+         add_trans(0, NULL, OAKLEY_3DES_CBC, 0, OAKLEY_MD5,
+                   params->auth_method, 1, params->lifetime, params->lifesize,
+                   params->gss_id_flag, params->gss_data, params->gss_data_len);
+         add_trans(0, NULL, OAKLEY_DES_CBC,  0, OAKLEY_SHA,
+                   params->auth_method, 1, params->lifetime, params->lifesize,
+                   params->gss_id_flag, params->gss_data, params->gss_data_len);
+         add_trans(0, NULL, OAKLEY_DES_CBC,  0, OAKLEY_MD5,
+                   params->auth_method, 1, params->lifetime, params->lifesize,
+                   params->gss_id_flag, params->gss_data, params->gss_data_len);
          no_trans=8;
       } else {	/* presumably aggressive mode */
-         add_trans(0, NULL, OAKLEY_3DES_CBC, 0, OAKLEY_SHA, auth_method,
-                   dhgroup, lifetime, lifesize, gss_id_flag, gss_data, gss_data_len);
-         add_trans(0, NULL, OAKLEY_3DES_CBC, 0, OAKLEY_MD5, auth_method,
-                   dhgroup, lifetime, lifesize, gss_id_flag, gss_data, gss_data_len);
-         add_trans(0, NULL, OAKLEY_DES_CBC,  0, OAKLEY_SHA, auth_method,
-                   dhgroup, lifetime, lifesize, gss_id_flag, gss_data, gss_data_len);
-         add_trans(0, NULL, OAKLEY_DES_CBC,  0, OAKLEY_MD5, auth_method,
-                   dhgroup, lifetime, lifesize, gss_id_flag, gss_data, gss_data_len);
+         add_trans(0, NULL, OAKLEY_3DES_CBC, 0, OAKLEY_SHA,
+                   params->auth_method, params->dhgroup, params->lifetime,
+                   params->lifesize, params->gss_id_flag, params->gss_data,
+                   params->gss_data_len);
+         add_trans(0, NULL, OAKLEY_3DES_CBC, 0, OAKLEY_MD5,
+                   params->auth_method, params->dhgroup, params->lifetime,
+                   params->lifesize, params->gss_id_flag, params->gss_data,
+                   params->gss_data_len);
+         add_trans(0, NULL, OAKLEY_DES_CBC,  0, OAKLEY_SHA,
+                   params->auth_method, params->dhgroup, params->lifetime,
+                   params->lifesize, params->gss_id_flag, params->gss_data,
+                   params->gss_data_len);
+         add_trans(0, NULL, OAKLEY_DES_CBC,  0, OAKLEY_MD5,
+                   params->auth_method, params->dhgroup, params->lifetime,
+                   params->lifesize, params->gss_id_flag, params->gss_data,
+                   params->gss_data_len);
          no_trans=4;
       }
-      if (gss_data)
-         free(gss_data);
+      if (params->gss_data)
+         free(params->gss_data);
    } else {	/* Custom transforms */
-      no_trans = trans_flag;
+      no_trans = params->trans_flag;
    }
    transforms = add_trans(1, &trans_len, 0,  0, 0, 0, 0, 0, 0, 0, NULL, 0);
    *packet_out_len += trans_len;
@@ -1682,12 +1697,12 @@ initialise_ike_packet(size_t *packet_out_len, unsigned lifetime,
  *	ISAKMP Header
  */
    *packet_out_len += sizeof(struct isakmp_hdr);
-   if (header_length) {	/* Manually specify header length */
+   if (params->header_length) {	/* Manually specify header length */
       unsigned fake_header_len;
       char *cp;
 
       fake_header_len = *packet_out_len;
-      cp = header_length;
+      cp = params->header_length;
       if (*cp == '+') {
          fake_header_len += strtoul(++cp, (char **)NULL, 0);
       } else if (*cp == '-') {
@@ -1695,9 +1710,11 @@ initialise_ike_packet(size_t *packet_out_len, unsigned lifetime,
       } else {
          fake_header_len = strtoul(cp, (char **)NULL, 0);
       }
-      hdr = make_isakmp_hdr(exchange_type, next_payload, fake_header_len);
+      hdr = make_isakmp_hdr(params->exchange_type, next_payload,
+                            fake_header_len, params->header_version);
    } else {		/* Use correct header length */
-      hdr = make_isakmp_hdr(exchange_type, next_payload, *packet_out_len);
+      hdr = make_isakmp_hdr(params->exchange_type, next_payload,
+                            *packet_out_len, params->header_version);
    }
 /*
  *	Allocate packet and copy payloads into packet.
@@ -1718,7 +1735,7 @@ initialise_ike_packet(size_t *packet_out_len, unsigned lifetime,
    memcpy(cp, transforms, trans_len);
    free(transforms);
    cp += trans_len;
-   if (exchange_type == ISAKMP_XCHG_AGGR) {
+   if (params->exchange_type == ISAKMP_XCHG_AGGR) {
       memcpy(cp, ke, ke_len);
       free(ke);
       cp += ke_len;
@@ -1729,12 +1746,12 @@ initialise_ike_packet(size_t *packet_out_len, unsigned lifetime,
       free(id);
       cp += id_len;
    }
-   if (vendor_id_flag) {
+   if (params->vendor_id_flag) {
       memcpy(cp, vid, vid_len);
       free(vid);
       cp += vid_len;
    }
-   if (cr_data) {
+   if (params->cr_data) {
       memcpy(cp, certreq, certreq_len);
       free(certreq);
       cp += certreq_len;
@@ -2745,6 +2762,7 @@ usage(int status) {
    fprintf(stderr, "\t\t\tyou want to see how the VPN server reacts to strange\n");
    fprintf(stderr, "\t\t\tversions.\n");
    fprintf(stderr, "\t\t\tThe value should be in the range 0-255.\n");
+   fprintf(stderr, "\n--certreq=<c> or -C <c> Add a CertificateRequest payload.\n");
    fprintf(stderr, "\n");
    fprintf(stderr, "Report bugs or send suggestions to %s\n", PACKAGE_BUGREPORT);
    fprintf(stderr, "See the ike-scan homepage at http://www.nta-monitor.com/ike-scan/\n");
