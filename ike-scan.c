@@ -655,6 +655,7 @@ display_packet(int n, char *packet_in, struct host_entry *he, struct in_addr *re
    int msg_type;                /* Notification message type */
    char msg_in[MAXLINE];        /* Notification message */
    char ip_str[MAXLINE];	/* IP address(es) to display at start */
+   char xchg_type[MAXLINE];	/* Exchange type string */
    char *cp;
 /*
  *	Write the IP addresses to the output string.
@@ -666,7 +667,7 @@ display_packet(int n, char *packet_in, struct host_entry *he, struct in_addr *re
    *cp = '\0';
 /*
  *	Check that the received packet is at least as big as the ISAKMP
- *	header.
+ *	header before we try to copy it into an ISAKMP header struct.
  */
    if (n < sizeof(hdr_in)) {
       printf("%sShort packet returned (len < ISAKMP header length)\n", ip_str);
@@ -678,7 +679,8 @@ display_packet(int n, char *packet_in, struct host_entry *he, struct in_addr *re
    memcpy(&hdr_in, packet_in, sizeof(hdr_in));
 /*
  *	Check that the initiator cookie in the packet matches what's in the
- *	host entry.
+ *	host entry.  This check should never fail because we wouldn't get here
+ *	unless we'd already matched the cookie.
  */
    if (hdr_in.isa_icookie[0] != he->icookie[0] || hdr_in.isa_icookie[1] != he->icookie[1]) {
       printf("%sReturned icookie doesn't match (received %.8x%.8x; expected %.8x%.8x)\n",
@@ -698,8 +700,15 @@ display_packet(int n, char *packet_in, struct host_entry *he, struct in_addr *re
          packet_in += sizeof(sa_hdr_in);
          memcpy(&sa_prop_in, packet_in, sizeof(sa_prop_in));
          packet_in += sizeof(sa_prop_in);
+         if (hdr_in.isa_xchg == ISAKMP_XCHG_IDPROT) {	/* Main mode */
+            strcpy(xchg_type, "Main Mode");
+         } else if (hdr_in.isa_xchg == ISAKMP_XCHG_AGGR) {	/* Aggressive */
+            strcpy(xchg_type, "Aggressive Mode");
+         } else {
+            sprintf(xchg_type, "UNKNOWN Mode (%u)", hdr_in.isa_xchg);
+         }
          decode_transform(packet_in, n, sa_prop_in.isap_notrans);
-         printf("%sIKE Handshake returned (%d transforms)\n", ip_str, sa_prop_in.isap_notrans);
+         printf("%sIKE %s Handshake returned (%d transforms)\n", ip_str, xchg_type, sa_prop_in.isap_notrans);
       } else {
          printf("%sIKE Handshake returned (%d byte packet too short to decode)\n", ip_str, n);
       }
