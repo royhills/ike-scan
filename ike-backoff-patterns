@@ -46,6 +46,10 @@
 # the implementation name and the backoff pattern must be a single TAB and
 # not a space, multiple tabs or spaces, or a mixture of tabs and spaces.
 #
+# I plan to change the format of this file in the future because at present it
+# cannot deal with different backoff variances for each pattern or different
+# variances between entries in patterns, both of which are needed.
+#
 # If you have problems adding entries, run ike-scan as:
 # ike-scan -v -v -v -o <any-target>
 # To dump the backoff pattern table.
