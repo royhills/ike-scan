@@ -470,14 +470,18 @@ print_times(void) {
       first_call=0;
       time_first.tv_sec  = time_now.tv_sec;
       time_first.tv_usec = time_now.tv_usec;
-      printf("%lu.%.6lu (0.000000) [0.000000]\n", time_now.tv_sec,
-             time_now.tv_usec);
+      printf("%lu.%.6lu (0.000000) [0.000000]\n",
+             (unsigned long)time_now.tv_sec, (unsigned long)time_now.tv_usec);
    } else {
       timeval_diff(&time_now, &time_last, &time_delta1);
       timeval_diff(&time_now, &time_first, &time_delta2);
-      printf("%lu.%.6lu (%lu.%.6lu) [%lu.%.6lu]\n", time_now.tv_sec,
-             time_now.tv_usec, time_delta1.tv_sec, time_delta1.tv_usec,
-             time_delta2.tv_sec, time_delta2.tv_usec);
+      printf("%lu.%.6lu (%lu.%.6lu) [%lu.%.6lu]\n",
+             (unsigned long)time_now.tv_sec,
+             (unsigned long)time_now.tv_usec,
+             (unsigned long)time_delta1.tv_sec,
+             (unsigned long)time_delta1.tv_usec,
+             (unsigned long)time_delta2.tv_sec,
+             (unsigned long)time_delta2.tv_usec);
    }
    time_last.tv_sec  = time_now.tv_sec;
    time_last.tv_usec = time_now.tv_usec;

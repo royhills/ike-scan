@@ -946,8 +946,14 @@ add_host(const char *name, unsigned timeout, unsigned *num_hosts) {
    he->last_send_time.tv_sec=0;
    he->last_send_time.tv_usec=0;
    he->recv_times = NULL;
-   sprintf(str, "%lu %lu %u %s", now.tv_sec, now.tv_usec, *num_hosts,
-           inet_ntoa(he->addr));
+/*
+ * We cast the timeval elements to unsigned long because different vendors
+ * use different types for them (int, long, unsigned int and unsigned long).
+ * As long is the widest type, and the values should always be positive, it's
+ * safe to cast to unsigned long.
+ */
+   sprintf(str, "%lu %lu %u %s", (unsigned long) now.tv_sec,
+           (unsigned long) now.tv_usec, *num_hosts, inet_ntoa(he->addr));
    memcpy(he->icookie, MD5((unsigned char *)str, strlen(str), NULL),
           sizeof(he->icookie));
 }
@@ -1664,13 +1670,14 @@ dump_backoff(unsigned pattern_fuzz) {
       while (pp != NULL) {
 /*
  *  Only print the fractional seconds part if required (generally it's not).
- *  We cast to long because some OSes define tv_sec/tv_usec as long and
- *  others define them as long.
+ *  We cast to unsigned long because some OSes define tv_sec/tv_usec as long and
+ *  others define them as int.
  */
          if (pp->time.tv_usec) {
-            printf("%ld.%.6ld", (long)pp->time.tv_sec, (long)pp->time.tv_usec);
+            printf("%lu.%.6lu", (unsigned long)pp->time.tv_sec,
+                   (unsigned long)pp->time.tv_usec);
          } else {
-            printf("%ld", (long)pp->time.tv_sec);
+            printf("%lu", (unsigned long)pp->time.tv_sec);
          }
 /*
  * Display the fuzz value for this pattern entry if it is not the default.
@@ -1759,10 +1766,11 @@ dump_times(unsigned num_hosts) {
          while (te != NULL) {
             if (time_no > 1)
                timeval_diff(&(te->time), &prev_time, &diff);
-            printf("%s\t%d\t%ld.%.6ld\t%ld.%.6ld\n",
+            printf("%s\t%d\t%lu.%.6lu\t%lu.%.6lu\n",
                    inet_ntoa(helistptr[i]->addr),
-                   time_no, (long)te->time.tv_sec, (long)te->time.tv_usec,
-                   (long)diff.tv_sec, (long)diff.tv_usec);
+                   time_no, (unsigned long)te->time.tv_sec,
+                   (unsigned long)te->time.tv_usec,
+                   (unsigned long)diff.tv_sec, (unsigned long)diff.tv_usec);
             prev_time = te->time;
             te = te->next;
             time_no++;
