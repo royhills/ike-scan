@@ -120,6 +120,8 @@
 #define SYSLOG 1			/* Use syslog if defined */
 #define SYSLOG_FACILITY LOG_USER	/* Syslog facility to use */
 #define PATTERNS_FILE "ike-backoff-patterns" /* Backoff patterns filename */
+#define MAX_PAYLOAD 13			/* Maximum defined payload number */
+#define EXPECTED_TOTAL 100		/* Expected ISAKMP header size total */
 
 /* Structures */
 struct host_entry {
@@ -181,3 +183,4 @@ void add_pattern(char *);
 char *match_pattern(struct host_entry *);
 int times_close_enough(struct timeval *, struct timeval *, unsigned);
 void dump_backoff(void);
+void check_struct_sizes(void);
