@@ -44,6 +44,7 @@
 #include <ctype.h>
 #include <stdarg.h>
 #include <errno.h>
+#include <limits.h>
 #else
 #error This program requires the ANSI C Headers
 #endif
@@ -206,7 +207,6 @@ char *match_pattern(struct host_entry *);
 int times_close_enough(struct timeval *, struct timeval *, unsigned);
 void dump_backoff(unsigned);
 void dump_vid(void);
-void check_struct_sizes(void);
 unsigned int hstr_i(const char *);
 struct isakmp_hdr* make_isakmp_hdr(uint8_t, uint8_t, uint32_t);
 struct isakmp_sa* make_sa_hdr(uint8_t, uint32_t);
