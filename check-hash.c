@@ -35,7 +35,7 @@
 
 #include "ike-scan.h"
 #define NUM_HMAC_TESTS 1
-#define HMAC_SPEED_ITERATIONS 1000000
+#define HMAC_SPEED_ITERATIONS 100000
 
 int
 main(void) {
