@@ -158,6 +158,7 @@ unsigned char *SHA1(const unsigned char *, size_t, unsigned char *);
 #define SYSLOG_FACILITY LOG_USER	/* Syslog facility to use */
 #define PATTERNS_FILE "ike-backoff-patterns" /* Backoff patterns filename */
 #define VID_FILE "ike-vendor-ids"	/* Vendor ID patterns filename */
+#define DICT_FILE "psk-crack-dictionary" /* psk-crack dictionary filename */
 #define REALLOC_COUNT	1000		/* Entries to realloc at once */
 #define DEFAULT_TCP_CONNECT_TIMEOUT 10	/* TCP connect timeout in seconds */
 #define TCP_PROTO_RAW 1			/* Raw IKE over TCP (Checkpoint) */
