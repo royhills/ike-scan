@@ -128,9 +128,6 @@
 #endif
 #include <errno.h>
 #include <syslog.h>
-#ifdef HAVE_LIBGEN_H
-#include <libgen.h>
-#endif
 
 #include "global.h"
 #include "md5.h"
@@ -289,7 +286,7 @@ main(int argc, char *argv[]) {
  *	Open syslog channel and log arguments if required
  */
 #ifdef SYSLOG
-   openlog(basename(argv[0]), LOG_PID, SYSLOG_FACILITY);
+   openlog("ike-scan", LOG_PID, SYSLOG_FACILITY);
    arg_str[0] = '\0';
    for (arg=0; arg<argc; arg++) {
       strcat(arg_str, argv[arg]);
