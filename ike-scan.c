@@ -29,6 +29,9 @@
  * Change History:
  *
  * $Log$
+ * Revision 1.21  2002/11/18 11:02:45  rsh
+ * Added initial backoff fingerprinting support.
+ *
  * Revision 1.20  2002/11/15 17:47:37  rsh
  * Added initial syslog support.
  * Minor comment changes.
@@ -149,6 +152,7 @@ int source_port = DEFAULT_SOURCE_PORT;	/* UDP source port */
 int dest_port = DEFAULT_DEST_PORT;	/* UDP destination port */
 unsigned lifetime = DEFAULT_LIFETIME;	/* Lifetime in seconds */
 int auth_method = DEFAULT_AUTH_METHOD;	/* Authentication method */
+unsigned end_wait = DEFAULT_END_WAIT;	/* Time to wait after all done */
 int verbose=0;
 char vendor_id[MAXLINE];		/* Vendor ID string */
 int vendor_id_flag = 0;			/* Indicates if VID to be used */
@@ -421,9 +425,9 @@ int main(int argc, char *argv[]) {
    last_packet_time.tv_usec=0;
    initialise_ike_packet();
 /*
- *	Display the list if verbose setting is 2 or more.
+ *	Display the list if verbose setting is 3 or more.
  */
-   if (verbose > 1)
+   if (verbose > 2)
       dump_list();
 /*
  *	Main loop: send packets to all hosts in order until a response
@@ -483,12 +487,15 @@ int main(int argc, char *argv[]) {
  *	We found a cookie match for the returned packet.
  */
             temp_cursor->num_recv++;
+            add_recv_time(temp_cursor);
+            if (verbose > 1)
+               warn_msg("---\tReceived packet #%d from %s",temp_cursor->num_recv ,inet_ntoa(sa_peer.sin_addr));
             if (temp_cursor->live) {
                display_packet(n, packet_in, temp_cursor, &(sa_peer.sin_addr));
+               if (verbose)
+                  warn_msg("---\tRemoving host entry %d (%s) - Received %d bytes", temp_cursor->n, inet_ntoa(sa_peer.sin_addr), n);
+               remove_host(temp_cursor);
             }
-            if (verbose)
-               warn_msg("---\tRemoving host entry %d (%s) - Received %d bytes", temp_cursor->n, inet_ntoa(sa_peer.sin_addr), n);
-            remove_host(temp_cursor);
          } else {
             struct isakmp_hdr hdr_in;
 /*
@@ -502,6 +509,9 @@ int main(int argc, char *argv[]) {
          }
       } /* End If */
    } /* End While */
+
+   if (verbose > 1)
+      dump_times();
 
    close(sockfd);
 #ifdef SYSLOG
@@ -541,6 +551,7 @@ void add_host(char *name) {
    he->num_recv = 0;
    he->last_send_time.tv_sec=0;
    he->last_send_time.tv_usec=0;
+   he->recv_times = NULL;
    sprintf(str, "%lu %lu %d %s", now.tv_sec, now.tv_usec, num_hosts, inet_ntoa(he->addr));
    MD5Init(&context);
    MD5Update(&context, str, strlen(str));
@@ -562,23 +573,20 @@ void add_host(char *name) {
 /*
  * 	remove_host -- Remove the specified host from the list
  *
- *	Updates cursor so that it points to the next entry or NULL if the
- *	list is empty after the removal.
+ *	If the host being removed is the one pointed to by the cursor, this
+ *	function updates cursor so that it points to the next entry.
  */
 void remove_host(struct host_entry *he) {
    he->live = 0;
    live_count--;
-   if (live_count) {
-      do {
-         cursor = cursor->next;
-      } while (!cursor->live);
-   } else {
-      cursor = NULL;
-   }
+   if (he == cursor)
+      advance_cursor();
 }
 
 /*
  *	advance_cursor -- Advance the cursor to point at next live entry
+ *
+ *	Does nothing if there are no live entries in the list.
  */
 void advance_cursor(void) {
    if (live_count) {
@@ -817,7 +825,7 @@ void send_packet(int s, struct host_entry *he) {
 /*
  *	Send the packet.
  */
-   if (verbose)
+   if (verbose > 1)
       warn_msg("---\tSending packet #%d to host entry %d (%s) tmo %d", he->num_sent, he->n, inet_ntoa(he->addr), he->timeout);
    if ((sendto(s, buf, buflen, 0, (struct sockaddr *) &sa_peer, sa_peer_len)) < 0) {
       err_sys("sendto");
@@ -1149,6 +1157,65 @@ void dump_list(void) {
 }
 
 /*
+ *	dump_times -- Display packet times for backoff fingerprinting
+ */
+void dump_times(void) {
+   struct host_entry *p;
+   struct time_list *te;
+   int i;
+   int delta;
+   struct timeval prev_time;
+
+   p = rrlist;
+
+   printf("IP Address\tNo.\tRecv time\tDelta (ms)\n");
+   do {
+      if (p->recv_times != NULL) {
+         te = p->recv_times;
+         i = 1;
+         delta = 0;
+         while (te != NULL) {
+            if (i > 1)
+               delta = timeval_diff(&(te->time), &prev_time);
+            printf("%s\t%d\t\%ld.%ld\t%d\n", inet_ntoa(p->addr), i, (long)te->time.tv_sec, (long)te->time.tv_usec, delta);
+            prev_time = te->time;
+            te = te->next;
+            i++;
+         }
+      }
+      p = p->next;
+   } while (p != rrlist);
+}
+
+/*
+ *	add_recv_time -- Add current time to the recv_times list
+ */
+void add_recv_time(struct host_entry *he) {
+   struct time_list *p;		/* Temp pointer */
+   struct time_list *te;	/* New timeentry pointer */
+/*
+ *	Allocate and initialise new time structure
+ */   
+   if ((te = malloc(sizeof(struct time_list))) == NULL)
+      err_sys("malloc");
+   if ((gettimeofday(&(te->time), NULL)) != 0) {
+      err_sys("gettimeofday");
+   }
+   te->next = NULL;
+/*
+ *	Insert new time structure on the tail of the recv_times list.
+ */
+   p = he->recv_times;
+   if (p == NULL) {
+      he->recv_times = te;
+   } else {
+      while (p->next != NULL)
+         p = p->next;
+      p->next = te;
+   }
+}
+
+/*
  *	usage -- display usage message and exit
  */
 void usage(void) {
@@ -1173,6 +1240,7 @@ void usage(void) {
    fprintf(stderr, "--backoff=<b> or -b <b>\tSet backoff factor to <b>, default=%.2f\n", DEFAULT_BACKOFF_FACTOR);
    fprintf(stderr, "--selectwait=<n> or -w <n> Set select wait to <n> ms, default=%d\n", DEFAULT_SELECT_TIMEOUT);
    fprintf(stderr, "--verbose or -v\t\tDisplay verbose progress messages.\n");
+   fprintf(stderr, "\t\t\tUse more than once for greater effect.\n");
    fprintf(stderr, "--lifetime=<s> or -l <s> Set IKE lifetime to <s> seconds, default=%d\n", DEFAULT_LIFETIME);
    fprintf(stderr, "--auth=<n> or -m <n>\tSet auth. method to <n>, default=%d (%s)\n", DEFAULT_AUTH_METHOD, auth_methods[DEFAULT_AUTH_METHOD]);
    fprintf(stderr, "\t\t\tRFC defined values are 1 to 5.  See RFC 2409 Appendix A.\n");

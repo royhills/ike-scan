@@ -17,6 +17,7 @@
 #define DEFAULT_DEST_PORT 500		/* Default UDP destination port */
 #define DEFAULT_LIFETIME 28800		/* Default lifetime in seconds */
 #define DEFAULT_AUTH_METHOD 1		/* Default authentication method */
+#define DEFAULT_END_WAIT 60000		/* Default time to wait at end in ms */
 #define SYSLOG 1			/* Use syslog if defined */
 #define SYSLOG_FACILITY LOG_USER	/* Syslog facility to use */
 
@@ -28,10 +29,16 @@ struct host_entry {
    struct in_addr addr;		/* Host IP address */
    u_char live;			/* Set when awaiting response */
    struct timeval last_send_time; /* Time when last packet sent to this addr */
+   struct time_list *recv_times; /* List of receive times */
    unsigned timeout;		/* Timeout for this host */
    unsigned num_sent;		/* Number of packets sent */
    unsigned num_recv;		/* Number of packets received */
    u_int32_t icookie[COOKIE_SIZE];	/* IKE Initiator cookie */
+};
+
+struct time_list {
+   struct timeval time;
+   struct time_list *next;
 };
 
 /* Functions */
@@ -55,3 +62,5 @@ void display_packet(int, char *, struct host_entry *, struct in_addr *);
 void advance_cursor(void);
 void decode_transform(char *, int, int);
 void dump_list(void);
+void dump_times(void);
+void add_recv_time(struct host_entry *);
