@@ -174,7 +174,7 @@ int recvfrom_wto(int, unsigned char *, int, struct sockaddr *, int);
 void remove_host(struct host_entry *);
 void timeval_diff(struct timeval *, struct timeval *, struct timeval *);
 void initialise_ike_packet(unsigned, unsigned, int, int, int, unsigned char *,
-                           int, int, int, int);
+                           int, int, int, int, int, unsigned char *, int);
 struct host_entry *find_host_by_cookie(struct host_entry *, unsigned char *,
                                        int);
 void display_packet(int, unsigned char *, struct host_entry *,
@@ -194,9 +194,10 @@ struct isakmp_sa* make_sa_hdr(uint8_t, uint32_t);
 struct isakmp_proposal* make_prop(uint32_t, uint8_t);
 unsigned char* make_trans(int *, uint8_t, uint8_t, uint16_t,
                           uint16_t, uint16_t, uint16_t, uint16_t,
-                          uint32_t, uint32_t);
+                          uint32_t, uint32_t, int, unsigned char *, int);
 unsigned char* add_trans(int, int *, uint16_t, uint16_t, uint16_t, uint16_t,
-                         uint16_t, uint32_t, uint32_t);
+                         uint16_t, uint32_t, uint32_t, int, unsigned char *,
+                         int);
 unsigned char* make_vid(int *, uint8_t, unsigned char *, int);
 unsigned char* add_vid(int, int *, unsigned char *, int);
 unsigned char* make_ke(int *, uint8_t, int);
