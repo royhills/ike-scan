@@ -7,7 +7,7 @@ dnl If I don't pass $PACKAGE_NAME and $PACKAGE_VERSION to AM_INIT_AUTOMAKE,
 dnl then PACKAGE and VERSION are not defined and these are required for
 dnl make dist.  The documentation implies that I shouldn't need to
 dnl supply these arguments, but I find that I do need to with autoconf 2.53 and
-dns automake 1.4.
+dnl automake 1.4.
 AM_INIT_AUTOMAKE($PACKAGE_NAME, $PACKAGE_VERSION)
 
 AM_CONFIG_HEADER(config.h)
