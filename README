@@ -157,8 +157,7 @@ Options:
 
 --version or -V		Display program version and exit.
 
---vendor=<v> or -e <v>	Set vendor id string to MD5 hash of <v>.
-			Note: this is currently experimental.
+--vendor=<v> or -e <v>	Set vendor id string to hex value <v>.
 
 --trans=<t> or -a <t>	Use custom transform <t> instead of default set.
 			<t> is specified as enc,hash,auth,group. e.g. 2,3,1,5.
@@ -282,7 +281,9 @@ This default transform set is designed to be acceptable to most IKE
 implementations - most will accept at least one of the offered transforms.
 However, it is sometimes necessary to use a different authentication method
 (pre-shared key is the most common, but is not always supported) and
-more rarely it may be necessary to reduce the lifetime.
+more rarely it may be necessary to change the lifetime.  Finally, some
+implementations require a specific "Vendor ID" string to be sent by the client
+before they will respond.  This can be specified with the --vendor option.
 
 The default transform set results in a packet data length of 336 bytes which
 when IP and UDP headers are added gives a total packet size of 364 bytes.
@@ -332,7 +333,7 @@ transform representing the transform chosen from the proposal sent by ike-scan.
 
 An example tcpdump output for a "notify" response is:
 
-17:12:55.038554 161.30.89.22.500 > 194.164.37.1.500:  [udp sum ok]isakmp 1.0 msgid 00000000: phase 1 R inf:
+17:12:55.038554 192.168.89.22.500 > 192.168.37.1.500:  [udp sum ok]isakmp 1.0 msgid 00000000: phase 1 R inf:
     (n: doi=0 proto=1 type=NO-PROPOSAL-CHOSEN) (ttl 52, id 39577, len 68)
 
 This shows that the IKE host has responded with an ISAKMP header and a
