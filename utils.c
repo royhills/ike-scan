@@ -325,6 +325,7 @@ printable(unsigned char *string, size_t size) {
    cp = string;
    for (i=0; i<size; i++) {
       switch (*cp) {
+         case '\\':
          case '\b':
          case '\f':
          case '\n':
@@ -347,6 +348,10 @@ printable(unsigned char *string, size_t size) {
    r = result;
    for (i=0; i<size; i++) {
       switch (*cp) {
+         case '\\':
+            *r++ = '\\';
+            *r++ = '\\';
+            break;
          case '\b':
             *r++ = '\\';
             *r++ = 'b';
