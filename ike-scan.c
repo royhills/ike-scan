@@ -595,7 +595,10 @@ main(int argc, char *argv[]) {
  *	Note that there is no point calling advance_cursor() here because if
  *	host n is not ready to send, then host n+1 will not be ready either.
  */
-            select_timeout = cursor->timeout - host_timediff;
+            if (live_count)
+               select_timeout = cursor->timeout - host_timediff;
+            else
+               select_timeout = interval;
             reset_cum_err = 1;	/* Zero cumulative error */
          } /* End If */
       } else {		/* We can't send a packet yet */
