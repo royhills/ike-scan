@@ -1,9 +1,13 @@
 dnl $Id$
 dnl Process this file with autoconf to produce a configure script.
 
-AC_INIT
-AC_CONFIG_SRCDIR([ike-scan.c])
-AM_INIT_AUTOMAKE(ike-scan, 1.2, nodefine)
+AC_INIT(ike-scan, 1.2, [ike-scan@nta-monitor.com])
+AC_CONFIG_SRCDIR(ike-scan.c)
+dnl If I don't pass $PACKAGE_NAME and $PACKAGE_VERSION to AM_INIT_AUTOMAKE,
+dnl then PACKAGE and VERSION are not defined and these are required for
+dnl make dist.  However, the documentation implies that I shouldn't need to
+dnl supply these arguments.
+AM_INIT_AUTOMAKE($PACKAGE_NAME, $PACKAGE_VERSION)
 
 AM_CONFIG_HEADER(config.h)
 
