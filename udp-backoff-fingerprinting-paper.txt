@@ -160,7 +160,7 @@ Packet No.	ike-scan		VPN Server
 In this packet exchange, the ike-scan program sends a packet containing
 a Header and an SA (Security Association) to the VPN server.  The VPN server
 then responds with a Header and SA.  ike-scan records the time of this
-reponse packet for later fingerprinting, but it does not respond to it.
+response packet for later fingerprinting, but it does not respond to it.
 Because the VPN server does not receive a response from ike-scan, it assumes
 that the packet must have been lost, so it re-sends the packet after a
 delay.  As the VPN server never received any response from ike-scan, it keeps
