@@ -185,7 +185,7 @@ main (int argc, char *argv[]) {
       char *fn;
 #ifdef __CYGWIN__
       char fnbuf[MAXLINE];
-      int fnbuf_size;
+      int fnbuf_siz;
       int i;
 #endif
 
