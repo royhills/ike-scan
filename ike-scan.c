@@ -31,22 +31,86 @@
  *
  * Description:
  *
+ * ike-scan - The IKE security scanner
+ * 
  * ike-scan sends IKE main mode requests to the specified hosts and displays
  * any responses that are received.  It handles retry and retransmission with
  * backoff to cope with packet loss.
- *
- * The main mode packets by default contain 8 transforms with all possible
- * combinations of: Enc - DES or 3DES; Hash - MD5 or SHA1; Group - 1 or 2.
- * This results in a packet data length of 336 bytes which when IP and UDP
- * headers are added gives a total packet size of 364 bytes.
- *
- * If a custom transform is specified with --trans=a,b,c,d then only a single
- * transform is used, and the packet data length is 84 bytes for a total
- * packet length of 112 bytes.
+ * 
+ * Use ike-scan --help to display information on the usage and options.
+ * 
+ * The hosts to scan can be specified on the command line or read from an
+ * input file using the --file=<fn> option.  The program can cope with
+ * large numbers of hosts limited only by the amount of memory needed to store
+ * the list of host_entry structures.  Each host_entry structure requires 52
+ * bytes on a 32-bit system, so a class B network (65534 hosts) would require
+ * about 3.25 MB for the list.
+ * 
+ * The program limits the rate at which it sends IKE packets to ensure that
+ * it does not overload the network connection.  By default the rate limit
+ * is one packet every 80ms which equates to a data rate of 36400 bits per
+ * second given the default packet size of 364 bytes.  For faster links, the
+ * packet rate can be raised by lowering the minimum packet interval using
+ * --interval=<n> which sets the minimum packet interval to n ms.
+ * 
+ * By default, the main mode packets sent contain one proposal which contains
+ * 8 transforms.  These 8 transforms represent all possible combinations of:
+ * a) Encryption Algorithm: DES-CBC and 3DES-CBC;
+ * b) Hash Algorithm: MD5 and SHA; and
+ * c) DH Group: 1 (MODP 768) and 2 (MODP 1024).
+ * 
+ * It is also possible to specify the Authentication Method with --auth
+ * (default is 1 - pre-shared key) and the IKE lifetime in seconds with
+ * --lifetime (default is 28800 seconds or 8 hours as recommended by RFC 2407).
+ * 
+ * This default transform set is designed to be acceptable to most IKE
+ * implementations - most will accept at least one of the offered transforms.
+ * However, it is often necessary to use a different authentication method
+ * (pre-shared key is the most common, but is not always supported) and
+ * more rarely it may be necessary to reduce the lifetime.
+ * 
+ * The default transform set results in a packet data length of 336 bytes which
+ * when IP and UDP headers are added gives a total packet size of 364 bytes.
+ * 
+ * It is also possible to specify a single custom transform with
+ * --trans=e,h,a,g where e is the Encryption Algorithm, h the Hash Algorithm,
+ * a the Authentication Method and g is the DH Group.  These are specified as
+ * values; see RFC 2409 * Appendix A for details of which values to use.  For
+ * example, --trans=2,3,1,5 would specify Enc=IDEA-CBC, Hash=Tiger, DH Group=5
+ * (MODP 1536), Auth=1 (pre-shared key).
+ * 
+ * If a custom transform is specified, then only a single transform is used,
+ * and the packet data length is 84 bytes for a total packet length of 112
+ * bytes.  Specifying a custom transform also overrides authentication method
+ * (either the default of pre-shared key or as specified with --auth).
+ * However, it is still possible to change the IKE lifetime of the custom
+ * transform with --lifetime.
+ * 
+ * A custom transform can be useful in the following situations:
+ * a) If none of the transforms in the default transform set is acceptable to
+ *    the remote IKE implementation;
+ * b) If you know that a particular transform will be acceptable, and you want
+ *    to minimise bandwidth use or allow faster scanning rates; or
+ * c) If you want to determine exactly which transforms a remote IKE
+ *    implementation supports for fingerprinting.
+ * 
+ * For those hosts that respond, ike-scan records the times of the recieved
+ * IKE responses.  The backoff between IKE responses varies between different
+ * IKE implementations and can therefore be used as a fingerprint.  The
+ * --showbackoff option is used to display the backoff times for each host
+ * which responded.  Note that using the --showbackoff option will cause
+ * ike-scan to wait for 60 seconds after the last received packet to ensure
+ * that it has * seen all of the responses.  This 60 second wait can be
+ * altered by specifying a different value (in ms, not seconds) to the
+ * --showbackoff option.
  *
  * Change History:
  *
  * $Log$
+ * Revision 1.27  2002/12/31 15:14:38  rsh
+ * Changed function definitions so return type is on a line by itself.
+ * Added contents of README file as initial program comments.
+ *
  * Revision 1.26  2002/12/31 09:29:42  rsh
  * Added initial support for backoff pattern matching.  This is not working yet.
  *
@@ -273,7 +337,8 @@ char *payload_name[] = {     /* Payload types from RFC 2408 3.1 */
    "Vendor ID"                       /* 13 */
 };
 
-int main(int argc, char *argv[]) {
+int
+main(int argc, char *argv[]) {
    struct option long_options[] = {
       {"file", required_argument, 0, 'f'},
       {"help", no_argument, 0, 'h'},
@@ -481,7 +546,7 @@ int main(int argc, char *argv[]) {
    if ((sockfd = socket(AF_INET, SOCK_DGRAM, 0)) < 0)
       err_sys("socket");
 
-   bzero(&sa_local, sizeof(sa_local));
+   memset(&sa_local, '\0', sizeof(sa_local));
    sa_local.sin_family = AF_INET;
    sa_local.sin_addr.s_addr = htonl(INADDR_ANY);
    sa_local.sin_port = htons(source_port);
@@ -610,7 +675,8 @@ int main(int argc, char *argv[]) {
 /*
  *	add_host -- Add a host name and associated address to the list
  */
-void add_host(char *name) {
+void
+add_host(char *name) {
    struct hostent *hp;
    struct host_entry *he;
    char str[MAXLINE];
@@ -663,7 +729,8 @@ void add_host(char *name) {
  *	If the host being removed is the one pointed to by the cursor, this
  *	function updates cursor so that it points to the next entry.
  */
-void remove_host(struct host_entry *he) {
+void
+remove_host(struct host_entry *he) {
    he->live = 0;
    live_count--;
    if (he == cursor)
@@ -675,7 +742,8 @@ void remove_host(struct host_entry *he) {
  *
  *	Does nothing if there are no live entries in the list.
  */
-void advance_cursor(void) {
+void
+advance_cursor(void) {
    if (live_count) {
       do {
          cursor = cursor->next;
@@ -694,7 +762,8 @@ void advance_cursor(void) {
  *	Returns a pointer to the host entry associated with the specified IP
  *	or NULL if no match found.
  */
-struct host_entry *find_host_by_cookie(struct host_entry *he, char *packet_in, int n) {
+struct host_entry *
+find_host_by_cookie(struct host_entry *he, char *packet_in, int n) {
    struct host_entry *p;
    int found;
    struct isakmp_hdr hdr_in;
@@ -740,7 +809,8 @@ struct host_entry *find_host_by_cookie(struct host_entry *he, char *packet_in, i
 /*
  *	display_packet -- Display received IKE packet
  */
-void display_packet(int n, char *packet_in, struct host_entry *he, struct in_addr *recv_addr) {
+void
+display_packet(int n, char *packet_in, struct host_entry *he, struct in_addr *recv_addr) {
    struct isakmp_hdr hdr_in;
    struct isakmp_sa sa_hdr_in;
    struct isakmp_proposal sa_prop_in;
@@ -843,7 +913,8 @@ void display_packet(int n, char *packet_in, struct host_entry *he, struct in_add
 /*
  *	decode-transform -- Decode an IKE transform payload
  */
-void decode_transform(char *packet_in, int n, int ntrans) {
+void
+decode_transform(char *packet_in, int n, int ntrans) {
    if (ntrans <=0)
       return;	/* Nothing to do if no transforms */
 /*
@@ -854,7 +925,8 @@ void decode_transform(char *packet_in, int n, int ntrans) {
 /*
  *	send_packet -- Construct and send a packet to the specified host
  */
-void send_packet(int s, struct host_entry *he) {
+void
+send_packet(int s, struct host_entry *he) {
    struct sockaddr_in sa_peer;
    char buf[MAXUDP];
    int buflen;
@@ -863,7 +935,7 @@ void send_packet(int s, struct host_entry *he) {
 /*
  *	Set up the sockaddr_in structure for the host.
  */
-   bzero(&sa_peer, sizeof(sa_peer));
+   memset(&sa_peer, '\0', sizeof(sa_peer));
    sa_peer.sin_family = AF_INET;
    sa_peer.sin_addr.s_addr = he->addr.s_addr;
    sa_peer.sin_port = htons(dest_port);
@@ -924,7 +996,8 @@ void send_packet(int s, struct host_entry *he) {
  *
  *	Returns number of characters received, or -1 for timeout.
  */
-int recvfrom_wto(int s, char *buf, int len, struct sockaddr *saddr, int tmo) {
+int
+recvfrom_wto(int s, char *buf, int len, struct sockaddr *saddr, int tmo) {
    fd_set readset;
    struct timeval to;
    int n;
@@ -961,7 +1034,8 @@ int recvfrom_wto(int s, char *buf, int len, struct sockaddr *saddr, int tmo) {
  *	difference in a third timeval.
  *	diff = a - b.
  */
-void timeval_diff(struct timeval *a, struct timeval *b, struct timeval *diff) {
+void
+timeval_diff(struct timeval *a, struct timeval *b, struct timeval *diff) {
 
    /* Perform the carry for the later subtraction by updating y. */
    if (a->tv_usec < b->tv_usec) {
@@ -984,7 +1058,8 @@ void timeval_diff(struct timeval *a, struct timeval *b, struct timeval *diff) {
 /*
  *	initialise_ike_packet	-- Initialise IKE packet structures
  */
-void initialise_ike_packet(void) {
+void
+initialise_ike_packet(void) {
    int len;
 /*
  *	Zero all header fields to start with.
@@ -1225,7 +1300,8 @@ void initialise_ike_packet(void) {
 /*
  *	dump_list -- Display contents of list for debugging
  */
-void dump_list(void) {
+void
+dump_list(void) {
    struct host_entry *p;
 
    p = rrlist;
@@ -1241,7 +1317,8 @@ void dump_list(void) {
 /*
  *	dump_times -- Display packet times for backoff fingerprinting
  */
-void dump_times(void) {
+void
+dump_times(void) {
    struct host_entry *p;
    struct time_list *te;
    int i;
@@ -1273,7 +1350,8 @@ void dump_times(void) {
 /*
  *	add_recv_time -- Add current time to the recv_times list
  */
-void add_recv_time(struct host_entry *he) {
+void
+add_recv_time(struct host_entry *he) {
    struct time_list *p;		/* Temp pointer */
    struct time_list *te;	/* New timeentry pointer */
 /*
@@ -1307,13 +1385,18 @@ void add_recv_time(struct host_entry *he) {
 /*
  *	add_pattern -- add a backoff pattern to the list
  */
-void add_pattern(char *line) {
+void
+add_pattern(char *line) {
+/*
+ *	Body of function has not been written yet.
+ */
 }
 
 /*
  *	usage -- display usage message and exit
  */
-void usage(void) {
+void
+usage(void) {
    fprintf(stderr, "Usage: ike-scan [options] [hosts...]\n");
    fprintf(stderr, "\n");
    fprintf(stderr, "Hosts are specified on the command line unless the --file option is specified.\n");
