@@ -96,3 +96,8 @@ Watchguard Firebox	0, 10, 10, 10, 10, 10
 # Discovered by: Roy Hills, December 2002
 # Observed on: Windows 2000 Server SP1
 Windows-2000	0, 1, 2, 4, 8, 16, 32
+
+# Discovered by: Thomas Walpuski, Jan 2003
+# Observed on: Various OpenBSD systems running isakmpd
+OpenBSD-isakmpd:	0, 7, 9, 11
+
