@@ -1108,7 +1108,7 @@ recvfrom_wto(int s, unsigned char *buf, int len, struct sockaddr *saddr,
 void
 timeval_diff(struct timeval *a, struct timeval *b, struct timeval *diff) {
 
-   /* Perform the carry for the later subtraction by updating y. */
+   /* Perform the carry for the later subtraction by updating b. */
    if (a->tv_usec < b->tv_usec) {
      int nsec = (b->tv_usec - a->tv_usec) / 1000000 + 1;
      b->tv_usec -= 1000000 * nsec;
@@ -1648,7 +1648,7 @@ add_recv_time(struct host_entry *he, struct timeval *last_recv_time) {
 }
 
 void
-load_backoff_patterns(char *patfile, unsigned pattern_fuzz) {
+load_backoff_patterns(const char *patfile, unsigned pattern_fuzz) {
    FILE *fp;
    char line[MAXLINE];
    int line_no;
@@ -1680,7 +1680,7 @@ load_backoff_patterns(char *patfile, unsigned pattern_fuzz) {
    if ((fp = fopen(fn, "r")) == NULL) {
       warn_msg("WARNING: Cannot open IKE backoff patterns file.  ike-scan will still display");
       warn_msg("the backoff patterns, but it will not be able to identify the fingerprints.");
-      warn_sys("fopen: %s", patfile);
+      warn_sys("fopen: %s", fn);
    } else {
       line_no=0;
       while (fgets(line, MAXLINE, fp)) {
@@ -1836,7 +1836,7 @@ add_pattern(char *line, unsigned pattern_fuzz) {
 }
 
 void
-load_vid_patterns(char *vidfile) {
+load_vid_patterns(const char *vidfile) {
    FILE *fp;
    char line[MAXLINE];
    int line_no;
@@ -1869,7 +1869,7 @@ load_vid_patterns(char *vidfile) {
       warn_msg("WARNING: Cannot open Vendor ID patterns file.  ike-scan will still display");
       warn_msg("the raw Vendor ID data in hex, but it will not be able to display the");
       warn_msg("associated Vendor ID names.");
-      warn_sys("fopen: %s", vidfile);
+      warn_sys("fopen: %s", fn);
    } else {
       line_no=0;
       while (fgets(line, MAXLINE, fp)) {
