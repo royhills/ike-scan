@@ -55,8 +55,7 @@ struct isakmp_hdr*
 make_isakmp_hdr(uint8_t xchg, uint8_t next, uint32_t length) {
    struct isakmp_hdr* hdr;
 
-   if ((hdr = malloc(sizeof(struct isakmp_hdr))) == NULL)
-      err_sys("malloc");
+   hdr = Malloc(sizeof(struct isakmp_hdr));
    memset(hdr, '\0', sizeof(struct isakmp_hdr));
 
    hdr->isa_icookie[0] = 0xdeadbeef;	/* Initiator cookie */
@@ -91,8 +90,7 @@ struct isakmp_sa*
 make_sa_hdr(uint8_t next, uint32_t length) {
    struct isakmp_sa* hdr;
 
-   if ((hdr = malloc(sizeof(struct isakmp_sa))) == NULL)
-      err_sys("malloc");
+   hdr = Malloc(sizeof(struct isakmp_sa));
    memset(hdr, '\0', sizeof(struct isakmp_sa));
 
    hdr->isasa_np = next;		/* Next Payload Type */
@@ -123,8 +121,7 @@ struct isakmp_proposal*
 make_prop(uint32_t length, uint8_t notrans) {
    struct isakmp_proposal* hdr;
 
-   if ((hdr = malloc(sizeof(struct isakmp_proposal))) == NULL)
-      err_sys("malloc");
+   hdr = Malloc(sizeof(struct isakmp_proposal));
    memset(hdr, '\0', sizeof(struct isakmp_proposal));
 
    hdr->isap_np = 0;			/* No more proposals */
@@ -175,8 +172,7 @@ make_trans(int *length, uint8_t next, uint8_t number, uint16_t cipher,
 
 /* Allocate and initialise the transform header */
 
-   if ((hdr = malloc(sizeof(struct isakmp_transform))) == NULL)
-      err_sys("malloc");
+   hdr = Malloc(sizeof(struct isakmp_transform));
    memset(hdr, '\0', sizeof(struct isakmp_transform));
 
    hdr->isat_np = next;			/* Next payload type */
@@ -185,8 +181,7 @@ make_trans(int *length, uint8_t next, uint8_t number, uint16_t cipher,
 
 /* Allocate and initialise the mandatory attributes */
 
-   if ((attr1 = malloc(4 * sizeof(struct isakmp_attribute))) == NULL)
-      err_sys("malloc");
+   attr1 = Malloc(4 * sizeof(struct isakmp_attribute));
 
    attr1[0].isaat_af_type = htons(0x8001);	/* Encryption Algorithm */
    attr1[0].isaat_lv = htons(cipher);
@@ -202,18 +197,15 @@ make_trans(int *length, uint8_t next, uint8_t number, uint16_t cipher,
 /* Allocate and initialise the optional attributes */
 
    if (keylen) {
-      if ((attr2 = malloc(sizeof(struct isakmp_attribute))) == NULL)
-         err_sys("malloc");
+      attr2 = Malloc(sizeof(struct isakmp_attribute));
       attr2->isaat_af_type = htons(0x800e);	/* Key Length */
       attr2->isaat_lv = htons(keylen);
       len += sizeof(struct isakmp_attribute);
    }
 
    if (lifetime) {
-      if ((attr3 = malloc(sizeof(struct isakmp_attribute))) == NULL)
-         err_sys("malloc");
-      if ((attr4 = malloc(sizeof(struct isakmp_attribute_l32))) == NULL)
-         err_sys("malloc");
+      attr3 = Malloc(sizeof(struct isakmp_attribute));
+      attr4 = Malloc(sizeof(struct isakmp_attribute_l32));
       attr3->isaat_af_type = htons(0x800b);	/* Life Type */
       attr3->isaat_lv = htons(1);		/* Seconds */
       attr4->isaat_af_type = htons(0x000c);	/* Life Duratiion */
@@ -230,8 +222,7 @@ make_trans(int *length, uint8_t next, uint8_t number, uint16_t cipher,
 
 /* Allocate memory for payload and copy structures to payload */
 
-   if ((payload = malloc(len)) == NULL)
-      err_sys("malloc");
+   payload = Malloc(len);
 
    cp = payload;
    memcpy(cp, hdr, sizeof(struct isakmp_transform));
@@ -276,8 +267,7 @@ make_vid(int *length, uint8_t next, unsigned char *vid_data, int vid_data_len) {
    unsigned char *payload;
    struct isakmp_vid* hdr;
 
-   if ((payload = malloc(sizeof(struct isakmp_vid)+vid_data_len)) == NULL)
-      err_sys("malloc");
+   payload = Malloc(sizeof(struct isakmp_vid)+vid_data_len);
    hdr = (struct isakmp_vid*) payload;	/* Overlay vid struct on payload */
    memset(hdr, '\0', sizeof(struct isakmp_vid));
 
@@ -290,6 +280,6 @@ make_vid(int *length, uint8_t next, unsigned char *vid_data, int vid_data_len) {
    return payload;
 }
 
-void use_rcsid(void) {
+void isakmp_use_rcsid(void) {
    printf("%s\n", rcsid);	/* Use rcsid to stop compiler optimising away */
 }
