@@ -167,6 +167,7 @@ void warn_msg(const char *, ...);
 void info_syslog(const char *, ...);
 void err_print(int, int, const char *, va_list);
 void usage(void);
+void add_host_pattern(const char *, unsigned, unsigned *);
 void add_host(const char *, unsigned, unsigned *);
 void send_packet(int, unsigned char*, int, struct host_entry *, int,
                  struct timeval *);
