@@ -106,6 +106,10 @@
 #include <arpa/inet.h>
 #endif
 
+#ifdef HAVE_SIGNAL_H
+#include <signal.h>	/* For TCP connect() timeout using alarm */
+#endif
+
 #ifdef HAVE_REGEX_H
 #include <regex.h>	/* Posix regular expression support */
 #endif
@@ -147,6 +151,9 @@ unsigned char *SHA1(const unsigned char *, size_t, unsigned char *);
 #define PATTERNS_FILE "ike-backoff-patterns" /* Backoff patterns filename */
 #define VID_FILE "ike-vendor-ids"	/* Vendor ID patterns filename */
 #define REALLOC_COUNT	1000		/* Entries to realloc at once */
+#define TCP_CONNECT_TIMEOUT 10		/* TCP connect timeout in seconds */
+#define TCP_PROTO_RAW 1			/* Raw IKE over TCP (Checkpoint) */
+#define TCP_PROTO_ENCAP 2		/* Encapsulated IKE over TCP (cisco) */
 #undef DEBUG_TIMINGS			/* Define to 1 to debug timing code */
 /*
  * If ALPHA is defined, then it is used as the smoothing factor for the
@@ -229,6 +236,14 @@ struct psk_crack {
    size_t hash_r_len;
 };
 
+struct ike_udphdr {
+  uint16_t     source;
+  uint16_t     dest;
+  uint16_t     len;
+  uint16_t     check;
+};
+
+
 /* Functions */
 
 void err_sys(const char *, ...);
@@ -284,6 +299,7 @@ unsigned char* add_vid(int, size_t *, unsigned char *, size_t);
 unsigned char* make_ke(size_t *, unsigned, size_t);
 unsigned char* make_nonce(size_t *, unsigned, size_t);
 unsigned char* make_id(size_t *, unsigned, unsigned, unsigned char *, size_t);
+unsigned char* make_udphdr(size_t *, int, int, unsigned);
 int Gettimeofday(struct timeval *);
 void *Malloc(size_t);
 void *Realloc(void *, size_t);
@@ -303,6 +319,7 @@ char *numstr(unsigned);
 char *printable(unsigned char*, size_t);
 char *hexstring(unsigned char*, size_t);
 void print_times(void);
+void sig_alarm(int);
 unsigned char *hmac_md5(const unsigned char *, size_t,
                         const unsigned char *, size_t, unsigned char *);
 unsigned char *hmac_sha1(const unsigned char *, size_t,
