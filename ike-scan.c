@@ -8,9 +8,25 @@
  * Author: Roy Hills
  * Date: 11 September 2002
  *
+ * Usage:
+ *    ike-scan [options] [host...]
+ *
+ * Description:
+ *
+ * ike-scan sends IKE main mode requests to the specified hosts and displays
+ * any responses that are received.  It handles retry and retransmission with
+ * backoff to cope with packet loss.
+ *
  * Change History:
  *
  * $Log$
+ * Revision 1.2  2002/09/13 09:58:22  rsh
+ * Added names for ISAKMP codes.
+ * Added --selectwait option.
+ * Added dh group 1 which increased number of transforms from 4 to 8
+ * Added rcsid[]
+ * Improved display for notification message types.
+ *
  * Revision 1.1  2002/09/12 17:57:53  rsh
  * Initial revision
  *
@@ -27,6 +43,8 @@
 #include <errno.h>
 
 #include "ike-scan.h"
+
+static char rcsid[] = "$Id$";   /* RCS ID for ident(1) */
 
 /* Global variables */
 struct host_entry *rrlist = NULL;	/* Round-robin linked list "the list" */
@@ -50,7 +68,66 @@ struct transform
    struct isakmp_attribute attr[5];
    struct isakmp_attribute_l32 attr2;
 };
-struct transform trans[4];		/* Transform payload */
+struct transform trans[8];		/* Transform payload */
+   char *notification_msg[] = { /* Notify Message Types from RFC 2408 3.14.1 */
+      "",                               /* 0 */
+      "INVALID-PAYLOAD-TYPE",           /* 1 */
+      "DOI-NOT-SUPPORTED",              /* 2 */
+      "SITUATION-NOT-SUPPORTED",        /* 3 */
+      "INVALID-COOKIE",                 /* 4 */
+      "INVALID-MAJOR-VERSION",          /* 5 */
+      "INVALID-MINOR-VERSION",          /* 6 */
+      "INVALID-EXCHANGE-TYPE",          /* 7 */
+      "INVALID-FLAGS",                  /* 8 */
+      "INVALID-MESSAGE-ID",             /* 9 */
+      "INVALID-PROTOCOL-ID",            /* 10 */
+      "INVALID-SPI",                    /* 11 */
+      "INVALID-TRANSFORM-ID",           /* 12 */
+      "ATTRIBUTES-NOT-SUPPORTED",       /* 13 */
+      "NO-PROPOSAL-CHOSEN",             /* 14 */
+      "BAD-PROPOSAL-SYNTAX",            /* 15 */
+      "PAYLOAD-MALFORMED",              /* 16 */
+      "INVALID-KEY-INFORMATION",        /* 17 */
+      "INVALID-ID-INFORMATION",         /* 18 */
+      "INVALID-CERT-ENCODING",          /* 19 */
+      "INVALID-CERTIFICATE",            /* 20 */
+      "CERT-TYPE-UNSUPPORTED",          /* 21 */
+      "INVALID-CERT-AUTHORITY",         /* 22 */
+      "INVALID-HASH-INFORMATION",       /* 23 */
+      "AUTHENTICATION-FAILED",          /* 24 */
+      "INVALID-SIGNATURE",              /* 25 */
+      "ADDRESS-NOTIFICATION",           /* 26 */
+      "NOTIFY-SA-LIFETIME",             /* 27 */
+      "CERTIFICATE-UNAVAILABLE",        /* 28 */
+      "UNSUPPORTED-EXCHANGE-TYPE",      /* 29 */
+      "UNEQUAL-PAYLOAD-LENGTHS"         /* 30 */
+   };
+
+   char *payload_name[] = {     /* Payload types from RFC 2408 3.1 */
+      "NONE",                           /* 0 */
+      "Security Association",           /* 1 */
+      "Proposal",                       /* 2 */
+      "Transform",                      /* 3 */
+      "Key Exchange",                   /* 4 */
+      "Identification",                 /* 5 */
+      "Certificate",                    /* 6 */
+      "Certificate Request",            /* 7 */
+      "Hash",                           /* 8 */
+      "Signature",                      /* 9 */
+      "Nonce",                          /* 10 */
+      "Notification",                   /* 11 */
+      "Delete",                         /* 12 */
+      "Vendor ID"                       /* 13 */
+   };
+
+   char *exchange_type[] = {    /* Exchange types from RFC 2408 3.1 */
+      "NONE",                           /* 0 */
+      "Base",                           /* 1 */
+      "Identity Protection",            /* 2 */
+      "Authentication Only",            /* 3 */
+      "Aggressive",                     /* 4 */
+      "Informational"                   /* 5 */
+   };
 
 int main(int argc, char *argv[]) {
    struct option long_options[] = {
@@ -62,12 +139,13 @@ int main(int argc, char *argv[]) {
       {"timeout", required_argument, 0, 't'},
       {"interval", required_argument, 0, 'i'},
       {"backoff", required_argument, 0, 'b'},
+      {"selectwait", required_argument, 0, 'w'},
       {"random", required_argument, 0, 'a'},
       {"verbose", no_argument, 0, 'v'},
       {"version", no_argument, 0, 'V'},
       {0, 0, 0, 0}
    };
-   char *short_options = "f:hr:t:i:b:a:vV";
+   char *short_options = "f:hr:t:i:b:w:a:vV";
    int arg;
    int options_index=0;
    char filename[MAXLINE];
@@ -111,6 +189,9 @@ int main(int argc, char *argv[]) {
             break;
          case 'b':
             backoff=atof(optarg);
+            break;
+         case 'w':
+            select_timeout=atoi(optarg);
             break;
          case 'a':
             seed=atoi(optarg);
@@ -382,25 +463,67 @@ struct host_entry *find_host_by_ip(struct host_entry *he,struct in_addr *addr) {
  */
 void display_packet(int n, char *packet_in, struct host_entry *he) {
    struct isakmp_hdr hdr_in;
+   struct isakmp_notification notification_in;
+   int msg_len;                 /* Size of notification message in bytes */
+   int msg_type;                /* Notification message type */
+   char msg_in[MAXLINE];        /* Notification message */
+   char *ip;			/* IP address in dotted quad format */
+/*
+ *	Convert IP address to ASCII dotted-quad format.
+ */
+   ip = inet_ntoa(he->addr);
 /*
  *	Check that the received packet is at least as big as the ISAKMP
  *	header.
  */
    if (n < sizeof(hdr_in)) {
-      printf("%s\tShort packet returned (len < ISAKMP header length)\n", inet_ntoa(he->addr));
+      printf("%s\tShort packet returned (len < ISAKMP header length)\n", ip);
       return;
    }
 /*
- *	Copy packet into ISAKMP header structure and examine contents.
+ *	Copy packet into ISAKMP header structure.
  */
    memcpy(&hdr_in, packet_in, sizeof(hdr_in));
+/*
+ *	Check that the initiator cookie in the packet matches what's in the
+ *	host entry.
+ */
+   if (hdr_in.isa_icookie[0] != he->icookie[0] || hdr_in.isa_icookie[1] != he->icookie[1]) {
+      printf("%s\tReturned icookie doesn't match (received %.8x%.8x; expected %.8x%.8x)\n",
+         ip, htonl(hdr_in.isa_icookie[0]), htonl(hdr_in.isa_icookie[1]),
+         htonl(he->icookie[0]), htonl(he->icookie[1]));
+      return;
+   }
 
    if (hdr_in.isa_np == ISAKMP_NEXT_SA) {
-      printf("%s\tIKE Handshake returned\n", inet_ntoa(he->addr));
+/*
+ *	1st payload is SA -- IKE handshake
+ */
+      printf("%s\tIKE Handshake returned\n", ip);
    } else if (hdr_in.isa_np == ISAKMP_NEXT_N) {
-      printf("%s\tIKE Notification returned\n", inet_ntoa(he->addr));
+/*
+ *	1st payload is notification -- Informational message
+ */
+      packet_in += sizeof(hdr_in);
+      memcpy(&notification_in, packet_in, sizeof(notification_in));
+      msg_type = ntohs(notification_in.isan_type);
+      if (msg_type < 31) {                /* RFC Defined message types */
+         printf("%s\tNotify message %d (%s)\n", ip, msg_type, notification_msg[msg_type]);
+      } else if (msg_type == 9101) {      /* Firewall-1 4.x message */
+         msg_len = ntohs(notification_in.isan_length) - sizeof(notification_in);
+         packet_in += sizeof(notification_in);
+         memcpy(msg_in, packet_in, msg_len);
+         packet_in += msg_len;
+         *packet_in = '\0';      /* Ensure string is null terminated */
+         printf("%s\tNotify message %d (%s)\n", ip, msg_type, msg_in);
+      } else {                            /* Unknown message type */
+         printf("%s\tNotify message %d (UNKNOWN MESSAGE TYPE)\n", ip, msg_type);
+      }
    } else {
-      printf("%s\tUnknown IKE packet returned (%d)\n", inet_ntoa(he->addr), hdr_in.isa_np);
+/*
+ *	Some other payload that we don't understand.
+ */
+      printf("%s\tUnknown IKE packet returned payload %d (%s)\n", ip, hdr_in.isa_np, payload_name[hdr_in.isa_np]);
    }
 }
 
@@ -560,7 +683,7 @@ void initialise_ike_packet(void) {
    sa_prop.isap_proposal = 1;           /* Proposal #1 (should this start at 0)*/
    sa_prop.isap_protoid = PROTO_ISAKMP;
    sa_prop.isap_spisize = 0;            /* No SPI */
-   sa_prop.isap_notrans = 4;            /* Four Transforms */
+   sa_prop.isap_notrans = 8;            /* Eight Transforms */
 /*
  *	Transform payload
  */
@@ -618,7 +741,7 @@ void initialise_ike_packet(void) {
    trans[2].attr2.isaat_l = htons(4);                   /* 4 Bytes- CANT CHANGE*/
    trans[2].attr2.isaat_v = htonl(0x00015180);          /* 86400 */
 
-   trans[3].trans_hdr.isat_np = 0;                      /* No more transforms */
+   trans[3].trans_hdr.isat_np = 3;                      /* More transforms */
    trans[3].trans_hdr.isat_length = htons(sizeof(trans[3]));
    trans[3].trans_hdr.isat_transnum = 4;                /* Transform #4 */
    trans[3].trans_hdr.isat_transid = KEY_IKE;
@@ -635,6 +758,78 @@ void initialise_ike_packet(void) {
    trans[3].attr2.isaat_af_type = htons(0x000c);        /* Life Duration */
    trans[3].attr2.isaat_l = htons(4);                   /* 4 Bytes- CANT CHANGE*/
    trans[3].attr2.isaat_v = htonl(0x00015180);          /* 86400 */
+
+   trans[4].trans_hdr.isat_np = 3;                      /* More transforms */
+   trans[4].trans_hdr.isat_length = htons(sizeof(trans[0]));
+   trans[4].trans_hdr.isat_transnum = 5;                /* Transform #5 */
+   trans[4].trans_hdr.isat_transid = KEY_IKE;
+   trans[4].attr[0].isaat_af_type = htons(0x8001);      /* Encrypt */
+   trans[4].attr[0].isaat_lv = htons(OAKLEY_3DES_CBC);
+   trans[4].attr[1].isaat_af_type = htons(0x8002);      /* Hash */
+   trans[4].attr[1].isaat_lv = htons(OAKLEY_SHA);
+   trans[4].attr[2].isaat_af_type = htons(0x8003);      /* Auth */
+   trans[4].attr[2].isaat_lv = htons(1);                /* Shared Key */
+   trans[4].attr[3].isaat_af_type = htons(0x8004);      /* Group */
+   trans[4].attr[3].isaat_lv = htons(1);                /* group 1 */
+   trans[4].attr[4].isaat_af_type = htons(0x800b);      /* Life Type */
+   trans[4].attr[4].isaat_lv = htons(1);                /* Seconds */
+   trans[4].attr2.isaat_af_type = htons(0x000c);        /* Life Duration */
+   trans[4].attr2.isaat_l = htons(4);                   /* 4 Bytes- CANT CHANGE*/
+   trans[4].attr2.isaat_v = htonl(0x00015180);          /* 86400 */
+
+   trans[5].trans_hdr.isat_np = 3;                      /* More transforms */
+   trans[5].trans_hdr.isat_length = htons(sizeof(trans[1]));
+   trans[5].trans_hdr.isat_transnum = 6;                /* Transform #6 */
+   trans[5].trans_hdr.isat_transid = KEY_IKE;
+   trans[5].attr[0].isaat_af_type = htons(0x8001);      /* Encrypt */
+   trans[5].attr[0].isaat_lv = htons(OAKLEY_3DES_CBC);
+   trans[5].attr[1].isaat_af_type = htons(0x8002);      /* Hash */
+   trans[5].attr[1].isaat_lv = htons(OAKLEY_MD5);
+   trans[5].attr[2].isaat_af_type = htons(0x8003);      /* Auth */
+   trans[5].attr[2].isaat_lv = htons(1);                /* Shared Key */
+   trans[5].attr[3].isaat_af_type = htons(0x8004);      /* Group */
+   trans[5].attr[3].isaat_lv = htons(1);                /* group 1 */
+   trans[5].attr[4].isaat_af_type = htons(0x800b);      /* Life Type */
+   trans[5].attr[4].isaat_lv = htons(1);                /* Seconds */
+   trans[5].attr2.isaat_af_type = htons(0x000c);        /* Life Duration */
+   trans[5].attr2.isaat_l = htons(4);                   /* 4 Bytes- CANT CHANGE*/
+   trans[5].attr2.isaat_v = htonl(0x00015180);          /* 86400 */
+
+   trans[6].trans_hdr.isat_np = 3;                      /* More transforms */
+   trans[6].trans_hdr.isat_length = htons(sizeof(trans[2]));
+   trans[6].trans_hdr.isat_transnum = 7;                /* Transform #7 */
+   trans[6].trans_hdr.isat_transid = KEY_IKE;
+   trans[6].attr[0].isaat_af_type = htons(0x8001);      /* Encrypt */
+   trans[6].attr[0].isaat_lv = htons(OAKLEY_DES_CBC);
+   trans[6].attr[1].isaat_af_type = htons(0x8002);      /* Hash */
+   trans[6].attr[1].isaat_lv = htons(OAKLEY_SHA);
+   trans[6].attr[2].isaat_af_type = htons(0x8003);      /* Auth */
+   trans[6].attr[2].isaat_lv = htons(1);                /* Shared Key */
+   trans[6].attr[3].isaat_af_type = htons(0x8004);      /* Group */
+   trans[6].attr[3].isaat_lv = htons(1);                /* group 1 */
+   trans[6].attr[4].isaat_af_type = htons(0x800b);      /* Life Type */
+   trans[6].attr[4].isaat_lv = htons(1);                /* Seconds */
+   trans[6].attr2.isaat_af_type = htons(0x000c);        /* Life Duration */
+   trans[6].attr2.isaat_l = htons(4);                   /* 4 Bytes- CANT CHANGE*/
+   trans[6].attr2.isaat_v = htonl(0x00015180);          /* 86400 */
+
+   trans[7].trans_hdr.isat_np = 0;                      /* No more transforms */
+   trans[7].trans_hdr.isat_length = htons(sizeof(trans[3]));
+   trans[7].trans_hdr.isat_transnum = 8;                /* Transform #8 */
+   trans[7].trans_hdr.isat_transid = KEY_IKE;
+   trans[7].attr[0].isaat_af_type = htons(0x8001);      /* Encrypt */
+   trans[7].attr[0].isaat_lv = htons(OAKLEY_DES_CBC);
+   trans[7].attr[1].isaat_af_type = htons(0x8002);      /* Hash */
+   trans[7].attr[1].isaat_lv = htons(OAKLEY_MD5);
+   trans[7].attr[2].isaat_af_type = htons(0x8003);      /* Auth */
+   trans[7].attr[2].isaat_lv = htons(1);                /* Shared Key */
+   trans[7].attr[3].isaat_af_type = htons(0x8004);      /* Group */
+   trans[7].attr[3].isaat_lv = htons(1);                /* group 1 */
+   trans[7].attr[4].isaat_af_type = htons(0x800b);      /* Life Type */
+   trans[7].attr[4].isaat_lv = htons(1);                /* Seconds */
+   trans[7].attr2.isaat_af_type = htons(0x000c);        /* Life Duration */
+   trans[7].attr2.isaat_l = htons(4);                   /* 4 Bytes- CANT CHANGE*/
+   trans[7].attr2.isaat_v = htonl(0x00015180);          /* 86400 */
 }
 
 /*
@@ -650,18 +845,19 @@ void usage(void) {
    fprintf(stderr, "--help or -h\t\tDisplay this usage message and exit.\n");
    fprintf(stderr, "--file=<fn> or -f <fn>\tRead hostnames or addresses from the specified file\n");
    fprintf(stderr, "\t\t\tinstead of from the command line. One name or address\n");
-   fprintf(stderr, "\t\t\tper line.\n");
+   fprintf(stderr, "\t\t\tper line.  Use \"-\" for standard input.\n");
    fprintf(stderr, "--sport=<p> or -s p\tSet UDP source port to <p>, default=%d, 0=random.\n", DEFAULT_SOURCE_PORT);
    fprintf(stderr, "--dport=<p> or -d p\tSet UDP destination port to <p>, default=%d\n", DEFAULT_DEST_PORT);
    fprintf(stderr, "--retry=<n> or -r n\tSet number of attempts per host to <n>, default=%d\n", DEFAULT_RETRY);
    fprintf(stderr, "--timeout=<n> or -t n\tSet per host timeout to <n> ms, default=%d\n", DEFAULT_TIMEOUT);
    fprintf(stderr, "--interval=<n> or -i <n>\tSet packet interval to <n> ms, default=%d\n", DEFAULT_INTERVAL);
    fprintf(stderr, "--backoff=<b> or -b <b>\tSet backoff factor to <b>, default=%.2f\n", DEFAULT_BACKOFF_FACTOR);
+   fprintf(stderr, "--selectwait=<n> or -w <b>\tSet select wait to <n> ms, default=%d\n", DEFAULT_SELECT_TIMEOUT);
    fprintf(stderr, "--random=<n> or -a <n>\tSet random seed to <n>.  Default is based on time\n");
    fprintf(stderr, "--verbose or -v\t\tDisplay verbose progress messages.\n");
    fprintf(stderr, "--version or -V\t\tDisplay program version and exit.\n");
    fprintf(stderr, "\n");
-   fprintf(stderr, "%s\n", VERSION);
+   fprintf(stderr, "%s\n", rcsid);
    fprintf(stderr, "\n");
    exit(1);
 }
