@@ -214,6 +214,9 @@ unsigned char* make_trans(size_t *, uint8_t, uint8_t, uint16_t,
 unsigned char* add_trans(int, size_t *, uint16_t, uint16_t, uint16_t, uint16_t,
                          uint16_t, uint32_t, uint32_t, int, unsigned char *,
                          size_t);
+unsigned char* make_attr(size_t *, char, unsigned, size_t, unsigned, void *);
+unsigned char* add_attr(int, size_t *, char, unsigned, size_t, unsigned,
+                        void *);
 unsigned char* make_vid(size_t *, uint8_t, unsigned char *, size_t);
 unsigned char* add_vid(int, size_t *, unsigned char *, size_t);
 unsigned char* make_ke(size_t *, uint8_t, size_t);
