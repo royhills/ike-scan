@@ -99,14 +99,14 @@ main(int argc, char *argv[]) {
       {"multiline", no_argument, 0, 'M'},
       {"random", no_argument, 0, 'R'},
       {"tcp", optional_argument, 0, 'T'},
-      {"pskcrack", no_argument, 0, 'P'},
+      {"pskcrack", optional_argument, 0, 'P'},
       {"tcptimeout", required_argument, 0, 'O'},
       {"nodns", no_argument, 0, 'N'},
       {"experimental", required_argument, 0, 'X'},
       {0, 0, 0, 0}
    };
    const char *short_options =
-      "f:hs:d:r:t:i:b:w:vl:z:m:Ve:a:o::u:n:y:g:p:AG:I:qMRT::PO:NX:";
+      "f:hs:d:r:t:i:b:w:vl:z:m:Ve:a:o::u:n:y:g:p:AG:I:qMRT::P::O:NX:";
    int arg;
    char arg_str[MAXLINE];	/* Args as string for syslog */
    int options_index=0;
@@ -152,6 +152,7 @@ main(int argc, char *argv[]) {
    int arg_str_space;		/* Used to avoid buffer overruns when copying */
    char patfile[MAXLINE];	/* IKE Backoff pattern file name */
    char vidfile[MAXLINE];	/* IKE Vendor ID pattern file name */
+   char psk_crack_file[MAXLINE];/* PSK crack data output file name */
    unsigned pass_no=0;
    int first_timeout=1;
    unsigned char *vid_data;	/* Binary Vendor ID data */
@@ -349,6 +350,11 @@ main(int argc, char *argv[]) {
             break;
          case 'P':	/* --pskcrack */
             psk_crack_flag=1;
+            if (optarg) {
+               strncpy(psk_crack_file, optarg, MAXLINE);
+            } else {
+               psk_crack_file[0] = '\0'; /* use stdout */
+            }
             break;
          case 'O':	/* --tcptimeout */
             tcp_connect_timeout = strtoul(optarg, (char **)NULL, 10);
@@ -746,8 +752,7 @@ main(int argc, char *argv[]) {
  *	Display PSK crack values if applicable
  */
    if (psk_crack_flag && psk_values.hash_r != NULL) {
-      printf("IKE PSK parameters (g_xr:g_xi:cky_r:cky_i:sai_b:idir_b:ni_b:nr_b:hash_r):\n");
-      print_psk_crack_values();
+      print_psk_crack_values(psk_crack_file);
    }
 /*
  *	Get program end time and calculate elapsed time.
