@@ -121,8 +121,12 @@ make_sa_hdr(unsigned next, unsigned length, unsigned doi, unsigned situation) {
  *	Pointer to proposal payload.
  *
  *	This constructs a proposal payload.  It fills in the static values.
- *	We assume only one proposal will be created.  I think that ISAKMP SAs
- *	are only allowed to have one proposal anyway.
+ *	We assume only one proposal will be created.  ISAKMP SAs are only 
+ *	allowed to have one proposal anyway, RFC 2409 section 5 states:
+ *
+ *	"To put it another way, for phase 1 exchanges there MUST NOT be
+ *	multiple Proposal Payloads for a single SA payload and there MUST NOT
+ *	be multiple SA payloads."
  */
 struct isakmp_proposal*
 make_prop(unsigned length, unsigned notrans, unsigned protocol) {
@@ -1163,6 +1167,9 @@ process_notify(unsigned char *cp, size_t len) {
       {28, "CERTIFICATE-UNAVAILABLE"},
       {29, "UNSUPPORTED-EXCHANGE-TYPE"},
       {30, "UNEQUAL-PAYLOAD-LENGTHS"},
+      {24576, "RESPONDER-LIFETIME"},	/* Next 3 are from RFC 2407 4.6.3 */
+      {24577, "REPLAY-STATUS"},
+      {24578, "INITIAL-CONTACT"},
       {-1, NULL}
    };
 
