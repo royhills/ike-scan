@@ -245,6 +245,11 @@ struct psk_crack {
    size_t hash_r_len;
 };
 
+typedef struct {
+   int id;			/* IKE IDs are generally 8 or 16-bits */
+   char *name;
+} id_name_map;
+
 struct ike_udphdr {
   uint16_t     source;
   uint16_t     dest;
@@ -336,6 +341,7 @@ unsigned char *hmac_md5(const unsigned char *, size_t,
                         const unsigned char *, size_t, unsigned char *);
 unsigned char *hmac_sha1(const unsigned char *, size_t,
                          const unsigned char *, size_t, unsigned char *);
+char *str_or_id(int, const id_name_map[]);
 /* The following functions are just to prevent rcsid being optimised away */
 void error_use_rcsid(void);
 void isakmp_use_rcsid(void);
