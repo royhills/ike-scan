@@ -15,7 +15,7 @@ AM_CONFIG_HEADER(config.h)
 dnl Checks for programs.
 AC_PROG_CC
  if test -n "$GCC"; then
-      CFLAGS="$CFLAGS -Wall -Wstrict-prototypes "
+      CFLAGS="$CFLAGS -Wall "
  fi
 AC_PROG_INSTALL
 AC_PROG_LN_S
