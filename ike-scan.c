@@ -106,6 +106,9 @@
  * Change History:
  *
  * $Log$
+ * Revision 1.31  2003/01/04 12:59:27  rsh
+ * Wrote body of add_pattern function.
+ *
  * Revision 1.30  2003/01/03 15:35:54  rsh
  * Changed DEFAULT_END_WAIT from ms to seconds.
  * Added more details to the usage text.
@@ -231,6 +234,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <ctype.h>
+#include <math.h>
 #include <netdb.h>
 #ifdef HAVE_GETOPT_H
 #include <getopt.h>
@@ -1362,8 +1366,9 @@ dump_times(void) {
             prev_time = te->time;
             te = te->next;
             i++;
-         }
-      }
+         } /* End While */
+         printf("\n");
+      } /* End If */
       p = p->next;
    } while (p != rrlist);
 }
@@ -1404,13 +1409,90 @@ add_recv_time(struct host_entry *he) {
 }
 
 /*
- *	add_pattern -- add a backoff pattern to the list
+ *	add_pattern -- add a backoff pattern to the list.
  */
 void
 add_pattern(char *line) {
+   char *cp;
+   char *np;
+   char *pp;
+   char name[MAXLINE];
+   char pat[MAXLINE];
+   int tabseen;
+   struct pattern_list *pe;	/* Pattern entry */
+   struct pattern_list *p;	/* Temp pointer */
+   struct time_list *te;
+   struct time_list *tp;
+   char *endp;
+   int i;
+   double back;
 /*
- *	Body of function has not been written yet.
+ *	Allocate new pattern list entry and add to tail of patlist.
  */
+   if ((pe = malloc(sizeof(struct pattern_list))) == NULL)
+      err_sys("malloc");
+   pe->next = NULL;
+   pe->recv_times = NULL;
+   p = patlist;
+   if (p == NULL) {
+      patlist = pe;
+   } else {
+      while (p->next != NULL)
+         p = p->next;
+      p->next = pe;
+   }
+/*
+ *	Seperate line from patterns file into name and pattern.
+ */
+   tabseen = 0;
+   cp = line;
+   np = name;
+   pp = pat;
+   while (*cp != '\0' && *cp != '\n') {
+      if (*cp == '\t') {
+         tabseen++;
+         cp++;
+      }
+      if (tabseen) {
+         *pp++ = *cp++;
+      } else {
+         *np++ = *cp++;
+      }
+   }
+   *np = '\0';
+   *pp = '\0';
+/*
+ *	Copy name into malloc'ed storage and set pl->name to point to this.
+ */
+   if ((cp = malloc(strlen(name)+1)) == NULL)
+      err_sys("malloc");
+   strcpy(cp, name);
+   pe->name = cp;
+/*
+ *	Process and store the backoff pattern.
+ */
+   i=0;
+   endp=pat;
+   while (*endp != '\0') {
+      back=strtod(endp, &endp);
+      if ((te = malloc(sizeof(struct time_list))) == NULL)
+         err_sys("malloc");
+      te->next=NULL;
+      te->time.tv_sec = floor(back);
+      te->time.tv_usec = (back - te->time.tv_sec) * 1000000;
+      tp = pe->recv_times;
+      if (tp == NULL) {
+         pe->recv_times = te;
+      } else {
+         while (tp->next != NULL)
+            tp = tp->next;
+         tp->next = te;
+      }
+      if (*endp == ',')
+         endp++;
+      i++;
+   }
+   pe->num_times=i;
 }
 
 /*
