@@ -48,6 +48,10 @@
 
 #include <sys/types.h>  /* FreeBSD needs explicit include for sys/types.h */
 
+#ifdef __CYGWIN__
+#include <windows.h>	/* Include windows.h if compiling under Cygwin */
+#endif
+
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif
@@ -98,8 +102,6 @@
 #include "isakmp.h"
 
 /* Defines */
-
-#define PRINT_VENDOR_ID 1		/* EXPERIMENTAL */
 
 #define MAXLINE 255			/* Max line length for input files */
 #define MAXUDP 65507			/* Max UDP data size = 64k - 20 - 8 */
