@@ -29,6 +29,9 @@
  * Date:	12 September 2002
  */
 
+#ifndef _IKE_SCAN_H
+#define _IKE_SCAN_H 1
+
 /* Includes */
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -176,7 +179,7 @@ void err_msg(const char *, ...);
 void warn_msg(const char *, ...);
 void info_syslog(const char *, ...);
 void err_print(int, int, const char *, va_list);
-void usage(void);
+void usage(int);
 void add_host_pattern(const char *, unsigned, unsigned *);
 void add_host(const char *, unsigned, unsigned *);
 void send_packet(int, unsigned char *, size_t, struct host_entry *, int,
@@ -241,3 +244,5 @@ char *hexstring(unsigned char*, size_t);
 void error_use_rcsid(void);
 void isakmp_use_rcsid(void);
 void wrappers_use_rcsid(void);
+
+#endif	/* _IKE_SCAN_H */
