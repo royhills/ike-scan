@@ -71,40 +71,6 @@ const char *auth_methods[] = { /* Authentication methods from RFC 2409 Appendix 
    "Revised encryption with RSA" /* 5 */
 };
 
-const char *notification_msg[] = { /* Notify Message Types from RFC 2408 3.14.1 */
-   "UNSPECIFIED",                    /* 0 */
-   "INVALID-PAYLOAD-TYPE",           /* 1 */
-   "DOI-NOT-SUPPORTED",              /* 2 */
-   "SITUATION-NOT-SUPPORTED",        /* 3 */
-   "INVALID-COOKIE",                 /* 4 */
-   "INVALID-MAJOR-VERSION",          /* 5 */
-   "INVALID-MINOR-VERSION",          /* 6 */
-   "INVALID-EXCHANGE-TYPE",          /* 7 */
-   "INVALID-FLAGS",                  /* 8 */
-   "INVALID-MESSAGE-ID",             /* 9 */
-   "INVALID-PROTOCOL-ID",            /* 10 */
-   "INVALID-SPI",                    /* 11 */
-   "INVALID-TRANSFORM-ID",           /* 12 */
-   "ATTRIBUTES-NOT-SUPPORTED",       /* 13 */
-   "NO-PROPOSAL-CHOSEN",             /* 14 */
-   "BAD-PROPOSAL-SYNTAX",            /* 15 */
-   "PAYLOAD-MALFORMED",              /* 16 */
-   "INVALID-KEY-INFORMATION",        /* 17 */
-   "INVALID-ID-INFORMATION",         /* 18 */
-   "INVALID-CERT-ENCODING",          /* 19 */
-   "INVALID-CERTIFICATE",            /* 20 */
-   "CERT-TYPE-UNSUPPORTED",          /* 21 */
-   "INVALID-CERT-AUTHORITY",         /* 22 */
-   "INVALID-HASH-INFORMATION",       /* 23 */
-   "AUTHENTICATION-FAILED",          /* 24 */
-   "INVALID-SIGNATURE",              /* 25 */
-   "ADDRESS-NOTIFICATION",           /* 26 */
-   "NOTIFY-SA-LIFETIME",             /* 27 */
-   "CERTIFICATE-UNAVAILABLE",        /* 28 */
-   "UNSUPPORTED-EXCHANGE-TYPE",      /* 29 */
-   "UNEQUAL-PAYLOAD-LENGTHS"         /* 30 */
-};
-
 const char *payload_name[] = {     /* Payload types from RFC 2408 3.1 */
    "NONE",                           /* 0 */
    "Security Association",           /* 1 */
@@ -840,143 +806,82 @@ find_host_by_cookie(struct host_entry *he, char *packet_in, int n) {
 void
 display_packet(int n, char *packet_in, struct host_entry *he,
                struct in_addr *recv_addr) {
-   struct isakmp_hdr hdr_in;
-   struct isakmp_sa sa_hdr_in;
-   struct isakmp_proposal sa_prop_in;
-   struct isakmp_notification notification_in;
-   struct isakmp_vid vid_hdr_in;
-   int vid_data_len_in;
-   int msg_len;                 /* Size of notification message in bytes */
-   int msg_type;                /* Notification message type */
-   char msg_in[MAXLINE];        /* Notification message */
-   char ip_str[MAXLINE];	/* IP address(es) to display at start */
-   char xchg_type[MAXLINE];	/* Exchange type string */
-   char *cp;
+   char *cp;			/* Temp pointer */
+   int bytes_left;		/* Remaining buffer size */
+   int next;			/* Next Payload */
+   int type;			/* Exchange Type */
+   char *msg;			/* Message to display */
+   char *msg2;
+   unsigned char *pkt_ptr;
 /*
- *	Write the IP addresses to the output string.
+ *	Set ip_str to the IP address of the host entry, plus the address of the
+ *	responder if different, and a tab.  The maximum length of this string
+ *	is host_IP (15) + TAB (1) + "(" (1) + resp_IP (15) + ") " (2) = 34
+ *	plus one extra for the terminating NULL.
  */
-   cp = ip_str;
-   cp += sprintf(cp, "%s\t", inet_ntoa(he->addr));
-   if ((he->addr).s_addr != recv_addr->s_addr)
-      cp += sprintf(cp, "(%s) ", inet_ntoa(*recv_addr));
-   *cp = '\0';
-
-   cp = packet_in;	/* Save original start of packet. Shouldn't need this */
+   msg = make_message("%s\t", inet_ntoa(he->addr));
+   if ((he->addr).s_addr != recv_addr->s_addr) {
+      cp = msg;
+      msg = make_message("%s(%s) ", cp, inet_ntoa(*recv_addr));
+      free(cp);
+   }
 /*
- *	Check that the received packet is at least as big as the ISAKMP
- *	header before we try to copy it into an ISAKMP header struct.
+ *	Process ISAKMP header.
+ *	If this returns zero length left, indicating some sort of problem, then
+ *	we report a short or malformed packet and return.
  */
-   if (n < sizeof(hdr_in)) {
-      printf("%sShort packet returned (len < ISAKMP header length)\n", ip_str);
+   bytes_left = n;	/* Set remaining length to total packet len */
+   pkt_ptr = process_isakmp_hdr(packet_in, &bytes_left, &next, &type);
+   if (!bytes_left) {
+      printf("%sShort or malformed ISAKMP packet returned: %d bytes\n",
+             msg, n);
       return;
    }
 /*
- *	Copy packet into ISAKMP header structure.
+ *	Determine the overall type of the packet from the first payload type.
  */
-   memcpy(&hdr_in, packet_in, sizeof(hdr_in));
-/*
- *	Check that the initiator cookie in the packet matches what's in the
- *	host entry.  This check should never fail because we wouldn't get here
- *	unless we'd already matched the cookie.
- */
-   if (hdr_in.isa_icookie[0] != he->icookie[0] || hdr_in.isa_icookie[1] != he->icookie[1]) {
-      printf("%sReturned icookie doesn't match (received %.8x%.8x; expected %.8x%.8x)\n",
-         ip_str, (uint32_t) htonl(hdr_in.isa_icookie[0]), (uint32_t) htonl(hdr_in.isa_icookie[1]),
-         (uint32_t) htonl(he->icookie[0]), (uint32_t) htonl(he->icookie[1]));
-      return;
-   }
-
-   if (hdr_in.isa_np == ISAKMP_NEXT_SA) {
-/*
- *	1st payload is SA -- IKE handshake
- */
-      transform_responders++;
-      if (n >= sizeof(hdr_in) + sizeof(sa_hdr_in) + sizeof(sa_prop_in)) {
-         packet_in += sizeof(hdr_in);
-         memcpy(&sa_hdr_in, packet_in, sizeof(sa_hdr_in));
-         packet_in += sizeof(sa_hdr_in);
-         memcpy(&sa_prop_in, packet_in, sizeof(sa_prop_in));
-         packet_in += sizeof(sa_prop_in);
-         if (hdr_in.isa_xchg == ISAKMP_XCHG_IDPROT) {	/* Main mode */
-            strcpy(xchg_type, "Main Mode");
-         } else if (hdr_in.isa_xchg == ISAKMP_XCHG_AGGR) {	/* Aggressive */
-            strcpy(xchg_type, "Aggressive Mode");
+   switch (next) {
+      case ISAKMP_NEXT_SA:	/* SA */
+         transform_responders++;
+         cp = process_sa(pkt_ptr, bytes_left, type);
+         break;
+      case ISAKMP_NEXT_N:	/* Notify */
+         notify_responders++;
+         cp = process_notify(pkt_ptr, bytes_left);
+         break;
+      default:
+         if (next <= MAX_PAYLOAD) {
+            cp=make_message("Unknown IKE packet returned: payload %d (%s)",
+                            next, payload_name[next]);
          } else {
-            sprintf(xchg_type, "UNKNOWN Mode (%u)", hdr_in.isa_xchg);
+            cp=make_message("Unknown IKE packet returned: payload %d (UNDEFINED)",
+                            next);
          }
-         decode_transform(packet_in, n, sa_prop_in.isap_notrans);
-         if (sa_prop_in.isap_notrans == 1) {
-            printf("%sIKE %s Handshake returned.",
-                   ip_str, xchg_type);
-         } else {	/* More than 1 transform - shouldn't happen */
-            printf("%sIKE %s Handshake returned (%d transforms).",
-                   ip_str, xchg_type, sa_prop_in.isap_notrans);
-         }
-/*
- *	If the payload after SA is VID, print the associated data as hex.
- *	We should really check the packet size before copying rather than
- *	just trusting the length fields.
- */
-         if (sa_hdr_in.isasa_np == ISAKMP_NEXT_VID) {
-            int i;
-
-            cp += sizeof(hdr_in) + ntohs(sa_hdr_in.isasa_length);
-            memcpy(&vid_hdr_in, cp, sizeof(vid_hdr_in));
-            cp += sizeof(vid_hdr_in);	/* cp now points at VID data */
-            vid_data_len_in=ntohs(vid_hdr_in.isavid_length) - sizeof(vid_hdr_in);
-            printf(" VID=");
-            for (i=0; i<vid_data_len_in; i++) {
-               printf("%.2x", (unsigned char) *cp);
-               cp++;
-            }
-         }
-         printf("\n");
-      } else {
-         printf("%sIKE Handshake returned (%d byte packet too short to decode)\n", ip_str, n);
-      }
-   } else if (hdr_in.isa_np == ISAKMP_NEXT_N) {
-/*
- *	1st payload is notification -- Informational message
- */
-      notify_responders++;
-      if (n >= sizeof(hdr_in) + sizeof(notification_in)) {
-         packet_in += sizeof(hdr_in);
-         memcpy(&notification_in, packet_in, sizeof(notification_in));
-         msg_type = ntohs(notification_in.isan_type);
-         if (msg_type < 31) {                /* RFC Defined message types */
-            printf("%sNotify message %d (%s)\n", ip_str, msg_type, notification_msg[msg_type]);
-         } else if (msg_type == 9101) {      /* Firewall-1 4.x/NG Base msg */
-            char *p;
-            msg_len = ntohs(notification_in.isan_length) - sizeof(notification_in);
-            packet_in += sizeof(notification_in);
-            memcpy(msg_in, packet_in, msg_len);
-            packet_in += msg_len;
-            *packet_in = '\0';      /* Ensure string is null terminated */
-/*
- *	Replace any non-printable characters with "."
- */
-            for (p=msg_in; *p != '\0'; p++) {
-               if (!isprint(*p))
-                  *p='.';
-            }
-            printf("%sNotify message %d [Checkpoint Firewall-1 4.x or NG Base] (%s)\n", ip_str, msg_type, msg_in);
-         } else {                            /* Unknown message type */
-            printf("%sNotify message %d (UNKNOWN MESSAGE TYPE)\n", ip_str, msg_type);
-         }
-      } else {
-         printf("%sNotify message (%d byte packet too short to decode)\n", ip_str, n);
-      }
-   } else {
-/*
- *	Some other payload type that we don't understand.  Display the payload
- *	number, and also the payload name if defined.
- */
-      if (hdr_in.isa_np <= MAX_PAYLOAD) {
-         printf("%sUnknown IKE packet returned payload %d (%s)\n", ip_str, hdr_in.isa_np, payload_name[hdr_in.isa_np]);
-      } else {
-         printf("%sUnknown IKE packet returned payload %d (UNDEFINED)\n", ip_str, hdr_in.isa_np);
-      }
+         break;
    }
+   pkt_ptr = skip_payload(pkt_ptr, &bytes_left, &next);
+   msg2=msg;
+   msg=make_message("%s%s", msg, cp);
+   free(msg2);	/* Free old message (IP address) */
+   free(cp);	/* Free 1st payload message */
+/*
+ *	Process any other interesting payloads.
+ */
+   while (bytes_left) {
+      if (next == ISAKMP_NEXT_VID) {
+         msg2=msg;
+         cp = process_vid(pkt_ptr, bytes_left);
+         msg=make_message("%s %s", msg, cp);
+         free(msg2);	/* Free old message */
+         free(cp);	/* Free VID payload message */
+      }
+      pkt_ptr = skip_payload(pkt_ptr, &bytes_left, &next);
+   }
+/*
+ *	Print the message.
+ */
+   printf("%s\n", msg);
+   free(msg);
 }
 
 /*
@@ -1788,6 +1693,44 @@ decode_trans(char *str, int *enc, int *keylen, int *hash, int *auth,
       if (*cp == ',')
          cp++;		/* Move on to next entry */
       pos++;
+   }
+}
+
+/*
+ * make_message -- allocate a sufficiently large string and print into it.
+ *
+ * Inputs:
+ *
+ * Format and variable number of arguments.
+ *
+ * Outputs:
+ *
+ * Pointer to the string,
+ *
+ * The code for this function is from the Debian Linux "woody" sprintf man
+ * page.  Modified slightly to use wrapper functions for malloc and realloc.
+ */
+char *
+make_message(const char *fmt, ...) {
+   /* Guess we need no more than 100 bytes. */
+   int n, size = 100;
+   char *p;
+   va_list ap;
+   p = Malloc (size);
+   while (1) {
+      /* Try to print in the allocated space. */
+      va_start(ap, fmt);
+      n = vsnprintf (p, size, fmt, ap);
+      va_end(ap);
+      /* If that worked, return the string. */
+      if (n > -1 && n < size)
+         return p;
+      /* Else try again with more space. */
+      if (n > -1)    /* glibc 2.1 */
+         size = n+1; /* precisely what is needed */
+      else           /* glibc 2.0 */
+         size *= 2;  /* twice the old size */
+      p = Realloc (p, size);
    }
 }
 
