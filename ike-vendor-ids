@@ -115,6 +115,10 @@ SSH IPSEC Express 4.2.0	^6880c7d026099114e486c55430e7abee
 # Cisco Unity compliant peer. VID is the MD5 hash of "CISCO-UNITY"
 Cisco Unity	^12f5f28c457168a9702d9fe274cc0100
 
+# I've seen this pattern with a trailing 500400 and also with a trailing
+# 500306.  Perhaps the last 3 bytes (6 hex character) are a version number?
+Cisco VPN Concentrator	^1f07f70eaa6514d3b0fa96542a
+
 # IKE Fragmentation.  VID is the MD5 hash of the text "FRAGMENTATION"
 # I've seen extra bytes on the end of a fragmentation VID payload, e.g.
 # c0000000.  I don't know what these represent.
@@ -175,9 +179,7 @@ GSSAPI	^621b04bb09882ac1e15935fefa24aeee
 # Other things I've seen but not fully classified yet.
 # If anyone can confirm any of these, please let me know.
 Maybe Cisco IOS	^bdb41038a7ec5e5534dd004d0f91f927
-# I've seen Unknown 1 from a Cisco VPN Concentrator with a trailing 500400
-# I've also seen it from an unknown device with a trailing 500306
-Unknown 1	^1f07f70eaa6514d3b0fa96542a
+# Unknown 1 was classified as Cisco VPN Concentrator
 # Unknown 2 was classified as Windows-2000
 Unknown 3	^edea53a3c15d45cafb11e59ea68db2aa99c1470e0000000400000303
 Unknown 4	^bedc86dabf0ab7973870b5e6c4b87d3ee824de310000001000000401
