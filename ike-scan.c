@@ -20,6 +20,12 @@
  * Change History:
  *
  * $Log$
+ * Revision 1.12  2002/09/20 17:10:01  rsh
+ * Added find_host_by_cookie() function and related code to find the host
+ * entry if the received IP doesn't match.  Modified display_packet to display
+ * both host entry IP and received IP in these cases.
+ * Added advance_cursor() function to tidy up main loop.
+ *
  * Revision 1.11  2002/09/17 09:00:00  rsh
  * Minor change to usage() display.
  * Removed trans_in from display_packet().
@@ -381,31 +387,52 @@ int main(int argc, char *argv[]) {
                   cursor->timeout *= backoff;
                }
                send_packet(sockfd, cursor);
-               if (live_count) {
-                  do {
-                     cursor = cursor->next;
-                  } while (!cursor->live);
-               } /* End If */
+               advance_cursor();
             }
          } else {	/* We can't send a packet to this host yet */
-            if (live_count) {
-               do {
-                  cursor = cursor->next;
-               } while (!cursor->live);
-            } /* End If */
+            advance_cursor();
          } /* End If */
       } /* End If */
       n=recvfrom_wto(sockfd, packet_in, MAXUDP, (struct sockaddr *)&sa_peer, select_timeout);
-      if (n != -1) {
-         temp_cursor=find_host_by_ip(cursor, &(sa_peer.sin_addr));
-      }
       if (n > 0) {
+/*
+ *	We've received a packet.  Try to locate the IP address of the
+ *	respondant in the list.
+ */
+         temp_cursor=find_host_by_ip(cursor, &(sa_peer.sin_addr));
          if (temp_cursor == NULL) {
-            warn_msg("Received %d bytes from unknown host (%s) - unexpected!", n, inet_ntoa(sa_peer.sin_addr));
-         } else {	/* Received a packet from a host in our list */
+/*
+ *	We've received a response, but the IP address doesn't match any host
+ *	in our list.  Try to match up the packet by cookie instead in case
+ *	the response is from a multi-homed system which has replied from a
+ *	different interface to that which we sent to.  Some systems do this.
+ */
+            temp_cursor=find_host_by_cookie(cursor, packet_in, n);
+            if (temp_cursor) {
+/*
+ *	We found a cookie match for the returned packet.
+ */
+               temp_cursor->num_recv++;
+               if (temp_cursor->live) {
+                  display_packet(n, packet_in, temp_cursor, &(sa_peer.sin_addr));
+               }
+               if (verbose)
+                  warn_msg("Removing host entry %d (%s) - Received %d bytes", temp_cursor->n, inet_ntoa(sa_peer.sin_addr), n);
+               remove_host(temp_cursor);
+            } else {
+/*
+ *	Neither the IP address nor the cookie matches any hosts in the list,
+ *	so just issue a message to that effect and ignore the packet.
+ */
+               warn_msg("Received %d bytes from unknown host (%s)", n, inet_ntoa(sa_peer.sin_addr));
+            }
+         } else {
+/*
+ *	The IP address of the packet reveived matches a host in the list.
+ */
             temp_cursor->num_recv++;
             if (temp_cursor->live) {
-               display_packet(n, packet_in, temp_cursor);
+               display_packet(n, packet_in, temp_cursor, NULL);
                if (verbose)
                   warn_msg("Removing host entry %d (%s) - Received %d bytes", temp_cursor->n, inet_ntoa(sa_peer.sin_addr), n);
                remove_host(temp_cursor);
@@ -475,6 +502,17 @@ void remove_host(struct host_entry *he) {
 }
 
 /*
+ *	advance_cursor -- Advance the cursor to point at next live entry
+ */
+void advance_cursor(void) {
+   if (live_count) {
+      do {
+         cursor = cursor->next;
+      } while (!cursor->live);
+   } /* End If */
+}
+
+/*
  *	find_host_by_ip	-- Find a host in the list by IP address
  *
  *	he points to current position in list.  Search runs backwards
@@ -508,9 +546,55 @@ struct host_entry *find_host_by_ip(struct host_entry *he,struct in_addr *addr) {
 }
 
 /*
+ *	find_host_by_cookie	-- Find a host in the list by cookie
+ *
+ *	he points to current position in list.  Search runs backwards
+ *	starting from this point.
+ *
+ *	packet points to the received packet containing the cookie.
+ *
+ *	Returns a pointer to the host entry associated with the specified IP
+ *	or NULL if no match found.
+ */
+struct host_entry *find_host_by_cookie(struct host_entry *he, char *packet_in, int n) {
+   struct host_entry *p;
+   int found;
+   struct isakmp_hdr hdr_in;
+/*
+ *	Check that the received packet is at least as big as the ISAKMP
+ *	header.  Return NULL if not.
+ */
+   if (n < sizeof(hdr_in)) {
+      return NULL;
+   }
+/*
+ *	Copy packet into ISAKMP header structure.
+ */
+   memcpy(&hdr_in, packet_in, sizeof(hdr_in));
+
+   p = he;
+   found = 0;
+
+   do {
+      if (p->icookie[0] == hdr_in.isa_icookie[0] &&
+          p->icookie[1] == hdr_in.isa_icookie[1]) {
+         found = 1;
+      } else {
+         p = p->prev;
+      }
+   } while (!found && p != he);
+
+   if (found) {
+      return p;
+   } else {
+      return NULL;
+   }
+}
+
+/*
  *	display_packet -- Display received IKE packet
  */
-void display_packet(int n, char *packet_in, struct host_entry *he) {
+void display_packet(int n, char *packet_in, struct host_entry *he, struct in_addr *recv_addr) {
    struct isakmp_hdr hdr_in;
    struct isakmp_sa sa_hdr_in;
    struct isakmp_proposal sa_prop_in;
@@ -518,17 +602,22 @@ void display_packet(int n, char *packet_in, struct host_entry *he) {
    int msg_len;                 /* Size of notification message in bytes */
    int msg_type;                /* Notification message type */
    char msg_in[MAXLINE];        /* Notification message */
-   char *ip;			/* IP address in dotted quad format */
+   char ip_str[MAXLINE];	/* IP address(es) to display at start */
+   char *cp;
 /*
- *	Convert IP address to ASCII dotted-quad format.
+ *	Write the IP addresses to the output string.
  */
-   ip = inet_ntoa(he->addr);
+   cp = ip_str;
+   cp += sprintf(cp, "%s\t", inet_ntoa(he->addr));
+   if (recv_addr)
+      cp += sprintf(cp, "(%s) ", inet_ntoa(*recv_addr));
+   *cp = '\0';
 /*
  *	Check that the received packet is at least as big as the ISAKMP
  *	header.
  */
    if (n < sizeof(hdr_in)) {
-      printf("%s\tShort packet returned (len < ISAKMP header length)\n", ip);
+      printf("%sShort packet returned (len < ISAKMP header length)\n", ip_str);
       return;
    }
 /*
@@ -540,8 +629,8 @@ void display_packet(int n, char *packet_in, struct host_entry *he) {
  *	host entry.
  */
    if (hdr_in.isa_icookie[0] != he->icookie[0] || hdr_in.isa_icookie[1] != he->icookie[1]) {
-      printf("%s\tReturned icookie doesn't match (received %.8x%.8x; expected %.8x%.8x)\n",
-         ip, htonl(hdr_in.isa_icookie[0]), htonl(hdr_in.isa_icookie[1]),
+      printf("%sReturned icookie doesn't match (received %.8x%.8x; expected %.8x%.8x)\n",
+         ip_str, htonl(hdr_in.isa_icookie[0]), htonl(hdr_in.isa_icookie[1]),
          htonl(he->icookie[0]), htonl(he->icookie[1]));
       return;
    }
@@ -559,9 +648,9 @@ void display_packet(int n, char *packet_in, struct host_entry *he) {
  *	Should decode the transform payloads here, but I've not written that
  *	bit yet.
  */
-         printf("%s\tIKE Handshake returned (%d transforms)\n", ip, sa_prop_in.isap_notrans);
+         printf("%sIKE Handshake returned (%d transforms)\n", ip_str, sa_prop_in.isap_notrans);
       } else {
-         printf("%s\tIKE Handshake returned (%d byte packet too short to decode)\n", ip, n);
+         printf("%sIKE Handshake returned (%d byte packet too short to decode)\n", ip_str, n);
       }
    } else if (hdr_in.isa_np == ISAKMP_NEXT_N) {
 /*
@@ -572,7 +661,7 @@ void display_packet(int n, char *packet_in, struct host_entry *he) {
          memcpy(&notification_in, packet_in, sizeof(notification_in));
          msg_type = ntohs(notification_in.isan_type);
          if (msg_type < 31) {                /* RFC Defined message types */
-            printf("%s\tNotify message %d (%s)\n", ip, msg_type, notification_msg[msg_type]);
+            printf("%sNotify message %d (%s)\n", ip_str, msg_type, notification_msg[msg_type]);
          } else if (msg_type == 9101) {      /* Firewall-1 4.x message */
             char *p;
             msg_len = ntohs(notification_in.isan_length) - sizeof(notification_in);
@@ -587,12 +676,12 @@ void display_packet(int n, char *packet_in, struct host_entry *he) {
                if (!isprint(*p))
                   *p='.';
             }
-            printf("%s\tNotify message %d (%s)\n", ip, msg_type, msg_in);
+            printf("%sNotify message %d (%s)\n", ip_str, msg_type, msg_in);
          } else {                            /* Unknown message type */
-            printf("%s\tNotify message %d (UNKNOWN MESSAGE TYPE)\n", ip, msg_type);
+            printf("%sNotify message %d (UNKNOWN MESSAGE TYPE)\n", ip_str, msg_type);
          }
       } else {
-         printf("%s\tNotify message (%d byte packet too short to decode)\n", ip, n);
+         printf("%sNotify message (%d byte packet too short to decode)\n", ip_str, n);
       }
    } else {
 /*
@@ -600,9 +689,9 @@ void display_packet(int n, char *packet_in, struct host_entry *he) {
  *	number, and also the payload name if defined.
  */
       if (hdr_in.isa_np <= MAX_PAYLOAD) {
-         printf("%s\tUnknown IKE packet returned payload %d (%s)\n", ip, hdr_in.isa_np, payload_name[hdr_in.isa_np]);
+         printf("%sUnknown IKE packet returned payload %d (%s)\n", ip_str, hdr_in.isa_np, payload_name[hdr_in.isa_np]);
       } else {
-         printf("%s\tUnknown IKE packet returned payload %d (UNDEFINED)\n", ip, hdr_in.isa_np);
+         printf("%sUnknown IKE packet returned payload %d (UNDEFINED)\n", ip_str, hdr_in.isa_np);
       }
    }
 }
