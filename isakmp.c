@@ -135,7 +135,7 @@ make_prop(uint32_t length, uint8_t notrans) {
 }
 
 /*
- *	make_trans -- Construct a transform payload
+ *	make_trans -- Construct a single transform payload
  *
  *	Inputs:
  *
@@ -153,7 +153,7 @@ make_prop(uint32_t length, uint8_t notrans) {
  *
  *	Pointer to transform payload.
  *
- *	This constructs a transform payload.  It fills in the static values.
+ *	This constructs a single transform payload.
  *	Most of the values are defined in RFC 2409 Appendix A.
  */
 unsigned char*
@@ -243,6 +243,69 @@ make_trans(int *length, uint8_t next, uint8_t number, uint16_t cipher,
 /* We could free the structures at this point */
 
    return payload;
+}
+
+/*
+ *	add_trans -- Add a transform payload onto the set of transforms.
+ *
+ *	Inputs:
+ *
+ *	finished	0 if adding a new transform; 1 if finalising.
+ *	length	(output) length of entire transform payload.
+ *	next    Next Payload Type (3 = More transforms; 0=No more transforms)
+ *	number	Transform number
+ *	cipher	The encryption algorithm
+ *	keylen	Key length for variable length keys (0=fixed key length)
+ *	hash	Hash algorithm
+ *	auth	Authentication method
+ *	group	DH Group number
+ *	lifetime	Lifetime in seconds (0=no lifetime)
+ *
+ *	Returns:
+ *
+ *	Pointer to new set of transform payloads.
+ */
+unsigned char*
+add_trans(int finished, int *length,
+          uint16_t cipher, uint16_t keylen, uint16_t hash, uint16_t auth,
+          uint16_t group, uint32_t lifetime) {
+
+   static int first_transform = 1;
+   static unsigned char *trans_start=NULL;	/* Start of set of transforms */
+   static int cur_offset;			/* Start of current transform */
+   static int end_offset;			/* End of transforms */
+   static int trans_no=1;
+   unsigned char *trans;			/* Transform payload */
+   int len;					/* Transform length */
+/*
+ * Construct a transform if we are not finalising.
+ * Set next to 3 (more transforms), and increment trans_no for next time round.
+ */
+   if (!finished) {
+      trans = make_trans(&len, 3, trans_no, cipher, keylen, hash, auth,
+                         group, lifetime);
+      trans_no++;
+      if (first_transform) {
+         cur_offset = 0;
+         end_offset = len;
+         trans_start = Malloc(end_offset);
+         memcpy(trans_start, trans, len);
+         first_transform = 0;
+      } else {
+         cur_offset = end_offset;
+         end_offset += len;
+         trans_start = Realloc(trans_start, end_offset);
+         memcpy(trans_start+cur_offset, trans, len);
+      }
+      return NULL;
+   } else {
+      struct isakmp_transform* hdr =
+         (struct isakmp_transform*) (trans_start+cur_offset);	/* Overlay */
+
+      hdr->isat_np = 0;		/* No more transforms */
+      *length = end_offset;
+      return trans_start;
+   }
 }
 
 /*
