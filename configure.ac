@@ -36,13 +36,14 @@ AC_C_CONST
 AC_TYPE_SIZE_T
 AC_HEADER_TIME
 
-dnl Check for the uint{8,16,32,64}_t types and, if we don't have them, define
+dnl Check for the uint{8,16,32}_t types and, if we don't have them, define
 dnl them using types which will work on most systems.
+dnl We use these fixed-width types for constructing the IKE packet payloads.
 AC_NTA_CHECK_TYPE(uint8_t, unsigned char)
 AC_NTA_CHECK_TYPE(uint16_t, unsigned short)
 AC_NTA_CHECK_TYPE(uint32_t, unsigned int)
-AC_NTA_CHECK_TYPE(uint64_t, unsigned long long)
 
+dnl Checks for 64-bit integer types.  These checks are from postgresql.
 dnl Check to see if we have a working 64-bit integer type.
 dnl This breaks down into two steps:
 dnl (1) figure out if the compiler has a 64-bit int type with working
