@@ -40,100 +40,13 @@
  * backoff to cope with packet loss.
  * 
  * Use ike-scan --help to display information on the usage and options.
+ * See the README file for full details.
  * 
- * The hosts to scan can be specified on the command line or read from an
- * input file using the --file=<fn> option.  The program can cope with
- * large numbers of hosts limited only by the amount of memory needed to store
- * the list of host_entry structures.  Each host_entry structure requires 52
- * bytes on a 32-bit system, so a class B network (65534 hosts) would require
- * about 3.25 MB for the list.
- * 
- * The program limits the rate at which it sends IKE packets to ensure that
- * it does not overload the network connection.  By default the rate limit
- * is one packet every 80ms which equates to a data rate of 36400 bits per
- * second given the default packet size of 364 bytes.  For faster links, the
- * packet rate can be raised by lowering the minimum packet interval using
- * --interval=<n> which sets the minimum packet interval to n ms.
- * 
- * By default, the main mode packets sent contain one proposal which contains
- * 8 transforms.  These 8 transforms represent all possible combinations of:
- * a) Encryption Algorithm: DES-CBC and 3DES-CBC;
- * b) Hash Algorithm: MD5 and SHA; and
- * c) DH Group: 1 (MODP 768) and 2 (MODP 1024).
- * 
- * It is also possible to specify the Authentication Method with --auth
- * (default is 1 - pre-shared key) and the IKE lifetime in seconds with
- * --lifetime (default is 28800 seconds or 8 hours as recommended by RFC 2407).
- * 
- * This default transform set is designed to be acceptable to most IKE
- * implementations - most will accept at least one of the offered transforms.
- * However, it is often necessary to use a different authentication method
- * (pre-shared key is the most common, but is not always supported) and
- * more rarely it may be necessary to reduce the lifetime.
- * 
- * The default transform set results in a packet data length of 336 bytes which
- * when IP and UDP headers are added gives a total packet size of 364 bytes.
- * 
- * It is also possible to specify a single custom transform with
- * --trans=e,h,a,g where e is the Encryption Algorithm, h the Hash Algorithm,
- * a the Authentication Method and g is the DH Group.  These are specified as
- * values; see RFC 2409 Appendix A for details of which values to use.  For
- * example, --trans=2,3,1,5 would specify Enc=IDEA-CBC, Hash=Tiger, DH Group=5
- * (MODP 1536), Auth=1 (pre-shared key).
- * 
- * If a custom transform is specified, then only a single transform is used,
- * and the packet data length is 84 bytes for a total packet length of 112
- * bytes.  Specifying a custom transform also overrides authentication method
- * (either the default of pre-shared key or as specified with --auth).
- * However, it is still possible to change the IKE lifetime of the custom
- * transform with --lifetime.
- * 
- * A custom transform can be useful in the following situations:
- * a) If none of the transforms in the default transform set is acceptable to
- *    the remote IKE implementation;
- * b) If you know that a particular transform will be acceptable, and you want
- *    to minimise bandwidth use or allow faster scanning rates; or
- * c) If you want to determine exactly which transforms a remote IKE
- *    implementation supports for fingerprinting.
- * 
- * For those hosts that respond, ike-scan records the times of the received
- * IKE responses.  The backoff between IKE responses varies between different
- * IKE implementations and can therefore be used as a fingerprint.  The
- * --showbackoff option is used to display the backoff times for each host
- * which responded.  Note that using the --showbackoff option will cause
- * ike-scan to wait for 60 seconds after the last received packet to ensure
- * that it has seen all of the responses.  This 60 second wait can be
- * altered by specifying a different value to the --showbackoff option.
  */
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
 
-#include <stdio.h>
-#include <string.h>
-#include <stdlib.h>
-#include <unistd.h>
-#include <ctype.h>
-#include <math.h>
-#include <netdb.h>
-#ifdef HAVE_GETOPT_H
-#include <getopt.h>
-#else
-/* Include getopt.h for the sake of getopt_long.
-   We don't need the declaration of getopt, and it could conflict
-   with something from a system header file, so effectively nullify that.  */
-#define getopt getopt_loser
-#include "getopt.h"
-#undef getopt
-#endif
-#include <errno.h>
-#include <syslog.h>
-
-#include "global.h"
-#include "md5.h"
 #include "ike-scan.h"
 
-#define VERSION "ike-scan v1.0"
+#define VERSION "ike-scan v1.1"
 #define MAX_PAYLOAD 13	/* Maximum defined payload number */
 static char rcsid[] = "$Id$";   /* RCS ID for ident(1) */
 
