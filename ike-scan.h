@@ -160,9 +160,9 @@ struct pattern_entry_list {
 };
 
 struct pattern_list {
-   char *name;
-   int num_times;
-   struct pattern_entry_list *recv_times;
+   char *name;			/* Name of this backoff pattern */
+   unsigned num_times;		/* Number of time entries in this pattern */
+   struct pattern_entry_list *recv_times;	/* Pointer to list of times */
    struct pattern_list *next;
 };
 
@@ -189,9 +189,9 @@ void send_packet(int, unsigned char *, size_t, struct host_entry *, int,
 int recvfrom_wto(int, unsigned char *, size_t, struct sockaddr *, int);
 void remove_host(struct host_entry *, unsigned *);
 void timeval_diff(struct timeval *, struct timeval *, struct timeval *);
-unsigned char *initialise_ike_packet(size_t *, unsigned, unsigned, int, int,
-                                     int, unsigned char *, size_t, int, int,
-                                     int, int, unsigned char *, size_t);
+unsigned char *initialise_ike_packet(size_t *, unsigned, unsigned, unsigned, unsigned,
+                                     unsigned, unsigned char *, size_t, int, int,
+                                     unsigned, int, unsigned char *, size_t);
 struct host_entry *find_host_by_cookie(struct host_entry *, unsigned char *,
                                        int);
 void display_packet(int, unsigned char *, struct host_entry *,
@@ -209,36 +209,39 @@ int times_close_enough(struct timeval *, struct timeval *, unsigned);
 void dump_backoff(unsigned);
 void dump_vid(void);
 unsigned int hstr_i(const char *);
-struct isakmp_hdr* make_isakmp_hdr(uint8_t, uint8_t, uint32_t);
-struct isakmp_sa* make_sa_hdr(uint8_t, uint32_t);
-struct isakmp_proposal* make_prop(uint32_t, uint8_t);
-unsigned char* make_trans(size_t *, uint8_t, uint8_t, uint16_t,
-                          uint16_t, uint16_t, uint16_t, uint16_t,
-                          uint32_t, uint32_t, int, unsigned char *, size_t);
-unsigned char* add_trans(int, size_t *, uint16_t, uint16_t, uint16_t, uint16_t,
-                         uint16_t, uint32_t, uint32_t, int, unsigned char *,
+unsigned char* hex2data(const char *, size_t *);
+struct isakmp_hdr* make_isakmp_hdr(unsigned, unsigned, unsigned);
+struct isakmp_sa* make_sa_hdr(unsigned, unsigned);
+struct isakmp_proposal* make_prop(unsigned, unsigned);
+unsigned char* make_trans(size_t *, unsigned, unsigned, unsigned,
+                          unsigned, unsigned, unsigned, unsigned,
+                          unsigned, unsigned, int, unsigned char *, size_t);
+unsigned char* add_trans(int, size_t *, unsigned, unsigned, unsigned, unsigned,
+                         unsigned, unsigned, unsigned, int, unsigned char *,
                          size_t);
-unsigned char* make_attr(size_t *, char, unsigned, size_t, unsigned, void *);
-unsigned char* add_attr(int, size_t *, char, unsigned, size_t, unsigned,
+unsigned char* make_attr(size_t *, int, unsigned, size_t, unsigned, void *);
+unsigned char* add_attr(int, size_t *, int, unsigned, size_t, unsigned,
                         void *);
-unsigned char* make_vid(size_t *, uint8_t, unsigned char *, size_t);
+unsigned char* make_vid(size_t *, unsigned, unsigned char *, size_t);
 unsigned char* add_vid(int, size_t *, unsigned char *, size_t);
-unsigned char* make_ke(size_t *, uint8_t, size_t);
-unsigned char* make_nonce(size_t *, uint8_t, size_t);
-unsigned char* make_id(size_t *, uint8_t, uint8_t, unsigned char *, size_t);
+unsigned char* make_ke(size_t *, unsigned, size_t);
+unsigned char* make_nonce(size_t *, unsigned, size_t);
+unsigned char* make_id(size_t *, unsigned, unsigned, unsigned char *, size_t);
 int Gettimeofday(struct timeval *);
 void *Malloc(size_t);
 void *Realloc(void *, size_t);
-void decode_trans(char *, int *, int *, int *, int *, int *);
-unsigned char *skip_payload(unsigned char *, size_t *, int *);
-unsigned char *process_isakmp_hdr(unsigned char *, size_t *, int *, int *);
-char *process_sa(unsigned char *, size_t, int, int, int);
+void decode_trans(char *, unsigned *, unsigned *, unsigned *, unsigned *,
+                  unsigned *);
+unsigned char *skip_payload(unsigned char *, size_t *, unsigned *);
+unsigned char *process_isakmp_hdr(unsigned char *, size_t *, unsigned *,
+                                  unsigned *);
+char *process_sa(unsigned char *, size_t, unsigned, int, int);
 char *process_attr(unsigned char **, size_t *);
 char *process_vid(unsigned char *, size_t, struct vid_pattern_list *);
 char *process_notify(unsigned char *, size_t);
 char *process_id(unsigned char *, size_t);
 char *make_message(const char *, ...);
-char *numstr(int);
+char *numstr(unsigned);
 char *printable(unsigned char*, size_t);
 char *hexstring(unsigned char*, size_t);
 /* The following functions are just to prevent rcsid being optimised away */
