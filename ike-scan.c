@@ -20,6 +20,9 @@
  * Change History:
  *
  * $Log$
+ * Revision 1.3  2002/09/13 10:03:38  rsh
+ * Added VERSION (moved from ike-scan.h).
+ *
  * Revision 1.2  2002/09/13 09:58:22  rsh
  * Added names for ISAKMP codes.
  * Added --selectwait option.
@@ -44,6 +47,7 @@
 
 #include "ike-scan.h"
 
+#define VERSION "ike-scan version $Revision$ $Date$ <Roy.Hills@nta-monitor.com>"
 static char rcsid[] = "$Id$";   /* RCS ID for ident(1) */
 
 /* Global variables */
