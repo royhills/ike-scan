@@ -375,15 +375,15 @@ is displayed in this section.
 
 Some examples of the IKE host detection section are:
 
-10.1.46.98    IKE Handshake returned (1 transforms)
-10.1.89.22    Notify message 14 (NO-PROPOSAL-CHOSEN)
-10.1.89.189   (10.1.215.130) Notify message 9101 (No common authentication method with Firewall.)
+10.0.1.98	IKE Handshake returned (1 transforms)
+10.0.1.22	Notify message 14 (NO-PROPOSAL-CHOSEN)
+10.0.1.189	(10.0.1.130) Notify message 9101 (No common authentication method with Firewall.)
 
-In the above example output, host 10.1.46.98 has returned an IKE handshake,
-10.1.89.22 has returned notify message 14 (decimal) which corresponds to
+In the above example output, host 10.0.1.98 has returned an IKE handshake,
+10.0.1.22 has returned notify message 14 (decimal) which corresponds to
 the RFC-defined error message "NO-PROPOSAL-CHOSEN" (see RFC 2408 section
-3.14.1), and 10.1.89.189 has returned a non-standard notify message 9101
-but the response has come from the IP address 10.1.215.130 rather than the
+3.14.1), and 10.0.1.189 has returned a non-standard notify message 9101
+but the response has come from the IP address 10.0.1.130 rather than the
 address which the request was sent to (presumably this is a multi-homed
 system).  Notify message 9101 is not defined by RFC 2408, but it is known
 to be a Checkpoint proprietary notify code (therefore the system is probably
@@ -406,13 +406,13 @@ IP Address      No.     Recv time               Delta Time
 172.16.2.2      12      1042549241.280654       4.005509
 172.16.2.2      Implementation guess: Firewall-1 4.1/NG
 
-10.1.46.98	1       1042549209.426540       0.000000
-10.1.46.98	2       1042549224.425435       14.998895
-10.1.46.98	3       1042549239.422251       14.996816
-10.1.46.98	Implementation guess: Cisco IOS / PIX
+10.0.1.98	1       1042549209.426540       0.000000
+10.0.1.98	2       1042549224.425435       14.998895
+10.0.1.98	3       1042549239.422251       14.996816
+10.0.1.98	Implementation guess: Cisco IOS / PIX
 
 Here, host 172.16.2.2 returned a total of 12 packets and the
-pattern matched "Firewall-1 4.1/NG", and host 10.1.46.98 returned
+pattern matched "Firewall-1 4.1/NG", and host 10.0.1.98 returned
 3 packets matching the pattern for "Cisco IOS / PIX".  The recv
 time column shows the absolute time when the packet was received
 in seconds and microseconds since the epoch; delta time shows the
