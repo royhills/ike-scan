@@ -20,6 +20,10 @@
  * Change History:
  *
  * $Log$
+ * Revision 1.19  2002/10/31 14:45:50  rsh
+ * Only display "unknown cookie" message if verbose >= 1
+ * Check for he == NULL in find_host_by_cookie to avoid SIGSEGV if it is.
+ *
  * Revision 1.18  2002/10/29 09:02:04  rsh
  * Added printing of cookie data in "unknown cookie" message.
  *
@@ -458,7 +462,7 @@ int main(int argc, char *argv[]) {
  *	The recieved cookie doesn't match any entry in the list
  *	so just issue a message to that effect and ignore the packet.
  */
-            if (n >= sizeof(hdr_in)) {
+            if (verbose && n >= sizeof(hdr_in)) {
                memcpy(&hdr_in, packet_in, sizeof(hdr_in));
                warn_msg("---\tReceived %d bytes from %s with unknown cookie %0x%0x", n, inet_ntoa(sa_peer.sin_addr),hdr_in.isa_icookie[0], hdr_in.isa_icookie[1]);
             }
@@ -563,6 +567,14 @@ struct host_entry *find_host_by_cookie(struct host_entry *he, char *packet_in, i
    struct host_entry *p;
    int found;
    struct isakmp_hdr hdr_in;
+/*
+ *	Check that the current list position is not null.  Return NULL if it
+ *	is.  It's possible for "he" to be NULL if a packet is received just
+ *	after the last entry in the list is removed.
+ */
+   if (he == NULL) {
+      return NULL;
+   }
 /*
  *	Check that the received packet is at least as big as the ISAKMP
  *	header.  Return NULL if not.
