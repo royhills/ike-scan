@@ -1,2 +1,24 @@
 $Id$
 
+2003-01-25 Roy Hills <Roy.Hills@nta-monitor.com>
+
+	* Moved all #includes to ike-scan.h.
+	* ike-scan.c, ike-scan.h: Changed host_entry element "n" from int to
+	  unsigned.
+	* ike-scan.c: Changed printf format for unsigned from %d to %u.
+	* ike-scan.c: Added exchange type (Main Mode or Aggressive Mode) to
+	  "handshake returned" message.
+	* ike-scan.h: Make all #includes conditional based on configure findings
+	* configure.in: Check for uint_8, uint_16 and u_int32 types using
+	  custom macro AC_NTA_CHECK_TYPE (defined in acinclude.m4).  If the
+	  types are not define, then #define them to values that will work on
+	  most systems.
+
+2003-01-23 Roy Hills <Roy.Hills@nta-monitor.com>
+
+	* ike-backoff-patterns: Changed Cisco Concentrator entry to 0,8,8,8
+
+2003-01-20 Roy Hills <Roy.Hills@nta-monitor.com>
+
+	* Released initial version v1.0. Tarball size 86434 bytes,
+	  md5sum: 7299777c7d67d1cea82d9594867b4806
