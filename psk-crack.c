@@ -43,6 +43,9 @@ static const char rcsid[] = "$Id$";	/* RCS ID for ident(1) */
 #define MD5_HASH_LEN 16
 #define SHA1_HASH_LEN 20
 
+char *default_charset =
+   "0123456789abcdefghijklmnopqrstuvwxyz"; /* default bruteforce charset */
+
 int
 main (int argc, char *argv[]) {
    const struct option long_options[] = {
@@ -63,11 +66,11 @@ main (int argc, char *argv[]) {
    size_t hash_len=0;	/* Set to 0 to avoid uninitialised warning */
    char *hash_name=NULL; /* Hash name: MD5 or SHA1 */
    unsigned brute_len=0; /* Bruteforce len.  0=dictionary attack (default) */
-   char *charset="0123456789abcdefghijklmnopqrstuvwxyz"; /* bruteforce set */
+   char *charset = NULL;
 
    FILE *dictionary_file=NULL;	/* Dictionary file, one word per line */
    FILE *data_file;	/* PSK parameters in colon separated format */
-   unsigned iterations=0;
+   UINT64 iterations=0;
    int found=0;
    struct timeval start_time;	/* Program start time */
    struct timeval end_time;	/* Program end time */
@@ -178,6 +181,9 @@ main (int argc, char *argv[]) {
          psk_crack_usage(EXIT_FAILURE);
       }
    }
+
+   if (!charset)
+      charset = default_charset;
 /*
  *	Open data files.
  */
@@ -261,22 +267,24 @@ main (int argc, char *argv[]) {
  *	Cracking loop.
  */
    if (brute_len) {
-      unsigned max;
+      UINT64 max;
       unsigned base;
       unsigned i;
-      unsigned val;
+      UINT64 loop;
+      UINT64 val;
       unsigned digit;
    
       base = strlen(charset);
       max = base;
       for (i=1; i<brute_len; i++)
          max *= base;	/* max = base^brute_len without using pow() */
-      printf("Brute force with %u chars up to length %u will take %u iterations\n", base, brute_len, max);
+      printf("Brute force with %u chars up to length %u will take up to "
+             UINT64_FORMAT " iterations\n", base, brute_len, max);
    
-      for (i=0; i<max; i++) {
+      for (loop=0; loop<max; loop++) {
          char *line_p;
 
-         val = i;
+         val = loop;
          line_p = line;
          do {
             digit = val % base;
@@ -339,7 +347,8 @@ main (int argc, char *argv[]) {
    } else {
       printf("no match found\n");
    }
-   printf("Ending psk-crack: %u iterations in %.3f seconds (%.2f iterations/sec)\n",
+   printf("Ending psk-crack: " UINT64_FORMAT
+          " iterations in %.3f seconds (%.2f iterations/sec)\n",
           iterations, elapsed_seconds, iterations/elapsed_seconds);
    fclose(data_file);
    if (!brute_len)
@@ -382,6 +391,7 @@ psk_crack_usage(int status) {
    fprintf(stderr, "\t\t\tis automatically determined from the hash length.\n");
    fprintf(stderr, "\n--bruteforce=<n> or -B <n> Select bruteforce cracking up to <n> characters.\n");
    fprintf(stderr, "\n--charset=<s> or -c <s>\tSet bruteforce character set to <s>\n");
+   fprintf(stderr, "\t\t\tDefault is \"%s\"\n", default_charset);
    fprintf(stderr, "\n");
    fprintf(stderr, "Report bugs or send suggestions to %s\n", PACKAGE_BUGREPORT);
    fprintf(stderr, "See the ike-scan homepage at http://www.nta-monitor.com/ike-scan/\n");
