@@ -194,7 +194,8 @@ make_prop(uint32_t length, uint8_t notrans) {
 unsigned char*
 make_trans(int *length, uint8_t next, uint8_t number, uint16_t cipher,
            uint16_t keylen, uint16_t hash, uint16_t auth, uint16_t group,
-           uint32_t lifetime, uint32_t lifesize) {
+           uint32_t lifetime, uint32_t lifesize, int gss_id_flag,
+           unsigned char *gss_data, int gss_data_len) {
 
    struct isakmp_transform* hdr;	/* Transform header */
    struct isakmp_attribute* attr1;	/* Mandatory attributes */
@@ -203,6 +204,7 @@ make_trans(int *length, uint8_t next, uint8_t number, uint16_t cipher,
    struct isakmp_attribute_l32* attr4=NULL; /* Optional lifetime attribute */
    struct isakmp_attribute* attr5=NULL;	/* Optional lifetype attribute */
    struct isakmp_attribute_l32* attr6=NULL; /* Optional lifesize attribute */
+   unsigned char *gssid=NULL;		/* Optional GSSID attribute */
    unsigned char *payload;
    unsigned char *cp;
    int len;				/* Payload Length */
@@ -264,6 +266,16 @@ make_trans(int *length, uint8_t next, uint8_t number, uint16_t cipher,
              sizeof(struct isakmp_attribute_l32);
    }
 
+   if (gss_id_flag) {
+      struct isakmp_attribute *gss_hdr;
+      gssid = Malloc(gss_data_len + sizeof(struct isakmp_attribute));
+      gss_hdr = (struct isakmp_attribute *) gssid;	/* Overlay */
+      gss_hdr->isaat_af_type = htons(16384);	/* GSS ID */
+      gss_hdr->isaat_lv = htons(gss_data_len);
+      memcpy(gssid+sizeof(struct isakmp_attribute), gss_data, gss_data_len);
+      len += gss_data_len + sizeof(struct isakmp_attribute);
+   }
+
 /* Fill in length value now we know it */
 
    hdr->isat_length = htons(len);	/* Transform length */
@@ -301,6 +313,11 @@ make_trans(int *length, uint8_t next, uint8_t number, uint16_t cipher,
       free(attr6);
       cp += sizeof(struct isakmp_attribute_l32);
    }
+   if (gss_id_flag) {
+      memcpy(cp, gssid, gss_data_len+sizeof(struct isakmp_attribute));
+      free(gssid);
+      cp += gss_data_len+sizeof(struct isakmp_attribute);
+   }
 
 
    return payload;
@@ -334,7 +351,8 @@ make_trans(int *length, uint8_t next, uint8_t number, uint16_t cipher,
 unsigned char*
 add_trans(int finished, int *length,
           uint16_t cipher, uint16_t keylen, uint16_t hash, uint16_t auth,
-          uint16_t group, uint32_t lifetime, uint32_t lifesize) {
+          uint16_t group, uint32_t lifetime, uint32_t lifesize,
+          int gss_id_flag, unsigned char *gss_data, int gss_data_len) {
 
    static int first_transform = 1;
    static unsigned char *trans_start=NULL;	/* Start of set of transforms */
@@ -349,7 +367,8 @@ add_trans(int finished, int *length,
  */
    if (!finished) {
       trans = make_trans(&len, 3, trans_no, cipher, keylen, hash, auth,
-                         group, lifetime, lifesize);
+                         group, lifetime, lifesize, gss_id_flag, gss_data,
+                         gss_data_len);
       trans_no++;
       if (first_transform) {
          cur_offset = 0;
