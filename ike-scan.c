@@ -106,6 +106,9 @@
  * Change History:
  *
  * $Log$
+ * Revision 1.32  2003/01/04 17:49:05  rsh
+ * Added support for matching backoff patterns against patterns file.
+ *
  * Revision 1.31  2003/01/04 12:59:27  rsh
  * Wrote body of add_pattern function.
  *
@@ -543,10 +546,13 @@ main(int argc, char *argv[]) {
    if (showbackoff_flag) {
       FILE *fp;
       char line[MAXLINE];
+      char patfile[MAXLINE];
       int line_no;
 
-      if ((fp = fopen(PATTERNS_FILE, "r")) == NULL) {
-         warn_sys("Cannot open backoff patterns file %s", PATTERNS_FILE);
+      sprintf(patfile, "%s/%s", DATADIR, PATTERNS_FILE);
+      if ((fp = fopen(patfile, "r")) == NULL) {
+         warn_sys("fopen: %s", patfile);
+         warn_msg("Cannot open IKE backoff patterns file.  Will not be able to identify fingerprints.");
       } else {
          line_no=0;
          while (fgets(line, MAXLINE, fp)) {
@@ -1349,6 +1355,7 @@ dump_times(void) {
    int i;
    struct timeval prev_time;
    struct timeval diff;
+   char *patname;
 
    p = rrlist;
 
@@ -1366,11 +1373,93 @@ dump_times(void) {
             prev_time = te->time;
             te = te->next;
             i++;
-         } /* End While */
+         } /* End While te != NULL */
+         if ((patname=match_pattern(p)) != NULL) {
+            printf("%s\tPattern: %s\n", inet_ntoa(p->addr), patname);
+         } else {
+            printf("%s\tPattern: %s\n", inet_ntoa(p->addr), "UNKNOWN");
+         }
          printf("\n");
       } /* End If */
       p = p->next;
    } while (p != rrlist);
+}
+
+/*
+ *	match_pattern -- Find backoff pattern match
+ *
+ *	Finds the first match for the backoff pattern of the host entry *he.
+ *	If a match is found, returns a pointer to the implementation name,
+ *	otherwise returns NULL.
+ */
+char *
+match_pattern(struct host_entry *he) {
+   struct pattern_list *pl;
+/*
+ *	Return NULL immediately if there is no chance of matching.
+ */
+   if (he == NULL || patlist == NULL)
+      return NULL;
+   if (he->recv_times == NULL || he->num_recv < 2)
+      return NULL;
+/*
+ *	Try to find a match in the pattern list.
+ */
+   pl = patlist;
+   while (pl != NULL) {
+      if (he->num_recv == pl->num_times && pl->recv_times != NULL) {
+         struct time_list *hp;
+         struct time_list *pp;
+         struct timeval diff;
+         struct timeval prev_time;
+         int match;
+         int i;
+
+         hp = he->recv_times;
+         pp = pl->recv_times;
+         match = 1;
+         i = 1;
+         diff.tv_sec = 0;
+         diff.tv_usec = 0;
+         while (pp != NULL && hp != NULL) {
+            if (i > 1)
+               timeval_diff(&(hp->time), &prev_time, &diff);
+            if (!times_close_enough(&(pp->time), &diff)) {
+               match = 0;
+               break;
+            }
+            prev_time = hp->time;
+            pp = pp->next;
+            hp = hp->next;
+            i++;
+         } /* End While */
+         if (match)
+            return pl->name;
+      } /* End If */
+      pl = pl->next;
+   } /* End While */
+/*
+ *	If we reach here, then we havn't mached the pattern so return NULL.
+ */
+   return NULL;
+}
+
+/*
+ *	times_close_enough -- return 1 if t1 and t2 are within pattern_fuzz ms
+ *	                      of each other.  Otherwise return 0.
+ */
+int
+times_close_enough(struct timeval *t1, struct timeval *t2) {
+struct timeval diff;
+int diff_ms;
+
+   timeval_diff(t1, t2, &diff);	/* diff = t1 - t2 */
+   diff_ms = abs(1000*diff.tv_sec + diff.tv_usec/1000);
+   if (diff_ms <= pattern_fuzz) {
+      return 1;
+   } else {
+      return 0;
+   }
 }
 
 /*
