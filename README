@@ -283,9 +283,14 @@ also shows the order in which they are sent:
             (t: #7 id=ike (type=enc value=1des)(type=hash value=sha1)(type=auth value=preshared)(type=group desc value=modp768)(type=lifetype value=sec)(type=lifeduration len=4 value=00007080))
             (t: #8 id=ike (type=enc value=1des)(type=hash value=md5)(type=auth value=preshared)(type=group desc value=modp768)(type=lifetype value=sec)(type=lifeduration len=4 value=00007080)))) (DF) (ttl 64, id 0, len 364)
 
-It is also possible to specify the Authentication Method with --auth
+It is possible to specify the Authentication Method with --auth
 (default is 1 - pre-shared key) and the IKE lifetime in seconds with
 --lifetime (default is 28800 seconds or 8 hours as recommended by RFC 2407).
+If you specify --lifetime as 0, then no lifetime attribute is included in
+the transfrom payloads.  If you are specifying custom transforms, you can
+you can use this option more than once to produce transform payloads with
+different lifetimes.  Each --trans option will use the previously specified
+lifetime value.
 
 This default transform set is designed to be acceptable to most IKE
 implementations - most will accept at least one of the offered transforms.
@@ -298,19 +303,44 @@ before they will respond.  This can be specified with the --vendor option.
 The default transform set results in a packet data length of 336 bytes which
 when IP and UDP headers are added gives a total packet size of 364 bytes.
 
-It is also possible to specify a single custom transform with
---trans=e,h,a,g where e is the Encryption Algorithm, h the Hash Algorithm,
-a the Authentication Method and g is the DH Group.  These are specified as
-values; see RFC 2409 Appendix A for details of which values to use.  For
-example, --trans=2,3,1,5 would specify Enc=IDEA-CBC, Hash=Tiger, DH Group=5
-(MODP 1536), Auth=1 (pre-shared key).
+It is possible to specify a custom transform set with
+--trans=e[/l],h,a,g where "e" is the Encryption Algorithm, "l" is the key
+length for variable length ciphers, "h" is the Hash Algorithm, "a" is the
+Authentication Method and g is the DH Group.  These are specified as
+numeric values; see RFC 2409 Appendix A for details of which values to use.
+For example: "--trans=5,2,1,2" specifies:
+Enc=5 (3DES-CBC), Hash=2 (SHA1), Auth=1 (shared key), DH Group=2 (modp 1024)
+and "--trans=7/256,1,1,5" specifies:
+Enc=7 (AES), Keylen=256 bits, Hash=MD5, Auth=shared key, DH Group=5 (modp 1536)
+You can use the --trans option more than once to send an arbitary number of
+custom transforms in the proposal.
 
-If a custom transform is specified, then only a single transform is used,
-and the packet data length is 84 bytes for a total packet length of 112
-bytes.  Specifying a custom transform also overrides authentication method
-(either the default of pre-shared key or as specified with --auth).
-However, it is still possible to change the IKE lifetime of the custom
-transform with --lifetime.
+Specifying a custom transform set overrides any authentication method
+specified with --auth.  However, it still uses the lifetime value specified
+in the last --lifetime option.
+
+An example of a complex custom transform set is:
+
+--trans=5,2,1,2 --lifetime=0 --trans=7/256,1,3,5 --lifetime=600
+--trans=7/128,1,3,5
+
+This would specify the following three transforms:
+
+a) 3DES Encryption with SHA1 hash, shared key authentication, DH group 2,
+   and the default lifetime;
+
+b) 256-bit AES Encryption with MD5 hash, RSA authentication, DH group 5,
+   and no lifetime; and
+
+b) 128-bit AES Encryption with MD5 hash, RSA authentication, DH group 5,
+   and lifetime of 600 second.
+
+If a custom transform set is specified, the packet length will differ from
+the default.  Fewer than 8 transforms will make it smaller, and more than
+8 transforms will make it larger.  If the packet size exceeds the MTU, then
+it will be fragmented.  You may need to increase the --interval setting for
+large packets to avoid overloading your network connection.  Some VPN servers
+may ignore very long packets.
 
 A custom transform can be useful in the following situations:
 a) If none of the transforms in the default transform set is acceptable to
