@@ -1,5 +1,16 @@
 $Id$
 
+2003-11-07 Roy Hills <Roy.Hills@nta-monitor.com>
+
+	* isakmp.c: Wrote ISAKMP payload construction functions.
+	* ike-scan.c: Use functions from isakmp.c to construct ISAKMP
+	  payloads rather than manually filling in structures.
+
+2003-10-30 Roy Hills <Roy.Hills@nta-monitor.com>
+
+	* ike-scan.c: Change loop timing units from ms to us to improve
+	  accuracy.  This requires a 64-bit integer type.
+
 2003-10-30 Roy Hills <Roy.Hills@nta-monitor.com>
 
 	* Released version v1.5.  Tarball size 115814 bytes.
