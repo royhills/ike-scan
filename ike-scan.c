@@ -921,7 +921,7 @@ display_packet(int n, char *packet_in, struct host_entry *he,
             memcpy(&vid_hdr_in, cp, sizeof(vid_hdr_in));
             cp += sizeof(vid_hdr_in);	/* cp now points at VID data */
             vid_data_len_in=ntohs(vid_hdr_in.isavid_length) - sizeof(vid_hdr_in);
-            printf(" VID Data=");
+            printf(" VID=");
             for (i=0; i<vid_data_len_in; i++) {
                printf("%.2x", (unsigned char) *cp);
                cp++;
