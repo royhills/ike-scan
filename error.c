@@ -115,7 +115,7 @@ err_print (int errnoflag, int level, const char *fmt, va_list ap) {
    strcat(buf, "\n");
 
    if (level != 0) {
-      syslog(level, buf);
+      syslog(level, "%s", buf);
    } else {
       fflush(stdout);	/* In case stdout and stderr are the same */
       fputs(buf, stderr);
