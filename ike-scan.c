@@ -455,7 +455,7 @@ main(int argc, char *argv[]) {
       struct host_entry *temp;
 
       Gettimeofday(&tv);
-      srand(tv.tv_usec ^ getpid());
+      srand((unsigned) tv.tv_usec ^ (unsigned) getpid());
 
       for (i=num_hosts-1; i>0; i--) {
          r = (int)((double)rand() / ((double)RAND_MAX + 1) * i);  /* 0<=r<i */
@@ -498,8 +498,8 @@ main(int argc, char *argv[]) {
  *	TCP.
  */
    if (tcp_flag) {
-      struct sockaddr_in sa_peer;
-      NET_SIZE_T sa_peer_len;
+      struct sockaddr_in sa_tcp;
+      NET_SIZE_T sa_tcp_len;
       struct sigaction act, oact;  /* For sigaction */
 /*
  *      Set signal handler for alarm.
@@ -516,12 +516,12 @@ main(int argc, char *argv[]) {
 /*
  *	Connect to peer
  */
-      memset(&sa_peer, '\0', sizeof(sa_peer));
-      sa_peer.sin_family = AF_INET;
-      sa_peer.sin_addr.s_addr = helist->addr.s_addr;
-      sa_peer.sin_port = htons(dest_port);
-      sa_peer_len = sizeof(sa_peer);
-      if ((connect(sockfd, (struct sockaddr *) &sa_peer, sa_peer_len)) != 0)
+      memset(&sa_tcp, '\0', sizeof(sa_tcp));
+      sa_tcp.sin_family = AF_INET;
+      sa_tcp.sin_addr.s_addr = helist->addr.s_addr;
+      sa_tcp.sin_port = htons(dest_port);
+      sa_tcp_len = sizeof(sa_tcp);
+      if ((connect(sockfd, (struct sockaddr *) &sa_tcp, sa_tcp_len)) != 0)
          err_sys("connect");
 /*
  *	Cancel alarm
@@ -914,7 +914,8 @@ add_host(const char *name, unsigned timeout, unsigned *num_hosts) {
    he->recv_times = NULL;
    sprintf(str, "%lu %lu %u %s", now.tv_sec, now.tv_usec, *num_hosts,
            inet_ntoa(he->addr));
-   memcpy(he->icookie, MD5(str, strlen(str), NULL), sizeof(he->icookie));
+   memcpy(he->icookie, MD5((unsigned char *)str, strlen(str), NULL),
+          sizeof(he->icookie));
 }
 
 /*
@@ -1327,14 +1328,15 @@ recvfrom_wto(int s, unsigned char *buf, size_t len, struct sockaddr *saddr,
    if (tcp_flag == TCP_PROTO_ENCAP && n > 8) {
       struct ike_udphdr *udphdr;
       unsigned char *tmpbuf;
+      size_t tmpbuf_len;
 
       udphdr = (struct ike_udphdr*) buf;
       if (ntohs(udphdr->source) == 500 &&
           ntohs(udphdr->dest) == 500) {
-
-         tmpbuf=Malloc(n-8);	/* could we use memmove() instead ? */
-         memcpy(tmpbuf, buf+8, n-8);
-         memcpy(buf, tmpbuf, n-8);
+         tmpbuf_len = n - 8;	/* we know that n > 8 at this point */
+         tmpbuf=Malloc(tmpbuf_len);	/* could we use memmove() instead ? */
+         memcpy(tmpbuf, buf+8, tmpbuf_len);
+         memcpy(buf, tmpbuf, tmpbuf_len);
          free(tmpbuf);
       }
    }
