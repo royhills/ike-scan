@@ -121,7 +121,7 @@
 #define SYSLOG_FACILITY LOG_USER	/* Syslog facility to use */
 #define PATTERNS_FILE "ike-backoff-patterns" /* Backoff patterns filename */
 #define MAX_PAYLOAD 13			/* Maximum defined payload number */
-#define EXPECTED_TOTAL 100		/* Expected ISAKMP header size total */
+#define EXPECTED_TOTAL 72		/* Expected ISAKMP header size total */
 
 /* Structures */
 struct host_entry {
