@@ -191,6 +191,8 @@ struct isakmp_proposal* make_prop(uint32_t, uint8_t);
 unsigned char* make_trans(int *, uint8_t, uint8_t, uint16_t,
                           uint16_t, uint16_t, uint16_t, uint16_t,
                           uint32_t);
+unsigned char* add_trans(int, int *, uint16_t, uint16_t, uint16_t, uint16_t,
+                         uint16_t, uint32_t);
 unsigned char* make_vid(int *, uint8_t, unsigned char *, int);
 int Gettimeofday(struct timeval *, struct timezone *);
 void *Malloc(size_t);
