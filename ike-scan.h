@@ -5,7 +5,8 @@
  *  by the Free Software Foundation; Version 2.  This guarantees your
  *  right to use, modify, and redistribute this software under certain
  *  conditions.  If this license is unacceptable to you, I may be
- *  willing to sell alternative licenses (contact Roy.Hills@nta-monitor.com).
+ *  willing to negotiate alternative licenses (contact
+ *  Roy.Hills@nta-monitor.com).
  *
  *  You are encouraged to send comments, improvements or suggestions to
  *  me at Roy.Hills@nta-monitor.com.
@@ -37,8 +38,10 @@
 #define DEFAULT_LIFETIME 28800		/* Default lifetime in seconds */
 #define DEFAULT_AUTH_METHOD 1		/* Default authentication method */
 #define DEFAULT_END_WAIT 60000		/* Default time to wait at end in ms */
+#define DEFAULT_PATTERN_FUZZ 100	/* Default pattern fuzz in ms */
 #define SYSLOG 1			/* Use syslog if defined */
 #define SYSLOG_FACILITY LOG_USER	/* Syslog facility to use */
+#define PATTERNS_FILE "/usr/local/bin/backoff-patterns" /* Backoff patterns file */
 
 /* Structures */
 struct host_entry {
@@ -58,6 +61,12 @@ struct host_entry {
 struct time_list {
    struct timeval time;
    struct time_list *next;
+};
+
+struct pattern_list {
+   int num_times;
+   struct time_list *recv_times;
+   struct pattern_list *next;
 };
 
 /* Functions */
@@ -83,3 +92,4 @@ void decode_transform(char *, int, int);
 void dump_list(void);
 void dump_times(void);
 void add_recv_time(struct host_entry *);
+void add_pattern(char *);
