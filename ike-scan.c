@@ -267,6 +267,10 @@ main(int argc, char *argv[]) {
             fprintf(stderr, "\n");
 /* We use rcsid here to prevent it being optimised away */
             fprintf(stderr, "%s\n", rcsid);
+            isakmp_use_rcsid();
+            error_use_rcsid();
+            utils_use_rcsid();
+            wrappers_use_rcsid();
             exit(EXIT_SUCCESS);
             break;
          case 'e':	/* --vendor */
