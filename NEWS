@@ -3,3 +3,19 @@ $Id$
 This file gives a brief overview of the major changes between each ike-scan
 release.  For more details please read the ChangeLog file.
 
+ike-scan v1.2:
+
+* Fixed format string vulnerability in syslog() call.
+* ike-scan now builds and runs on HP Tru64 Unix.
+
+ike-scan v1.1:
+
+* Added new backoff patterns for Cisco Concentrator and isakmpd.
+* ike-scan now builds and runs on Windows/Cygwin, old libc5 Linux systems, and
+  Solaris 2.8 / SPARC.
+* Windows command-line binary released.
+
+ike-scan v1.0: (Initial release)
+
+* Compiles and runs on Debian Linux 2.2 "potato" and 3.0 "woody", FreeBSD 4.3,
+  and OpenBSD 3.1.
