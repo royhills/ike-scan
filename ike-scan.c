@@ -56,25 +56,8 @@ unsigned num_hosts = 0;			/* Number of entries in the list */
 unsigned transform_responders = 0;	/* Number of hosts giving handshake */
 unsigned notify_responders = 0;		/* Number of hosts giving notify msg */
 unsigned live_count;			/* Number of entries awaiting reply */
-unsigned timeout = DEFAULT_TIMEOUT;	/* Per-host timeout */
-unsigned lifetime = DEFAULT_LIFETIME;	/* Lifetime in seconds */
-int auth_method = DEFAULT_AUTH_METHOD;	/* Authentication method */
-unsigned pattern_fuzz = DEFAULT_PATTERN_FUZZ; /* Pattern matching fuzz in ms */
-int dhgroup = DEFAULT_DH_GROUP;		/* Diffie Hellman Group */
-int idtype = DEFAULT_IDTYPE;		/* IKE Identification type */
-unsigned char *id_data;
-int id_data_len=0;
-uint32_t kx_data[48];		/* Key exchange data.  48 is largest needed */
-int kx_data_len;		/* Key exchange data len in 32bit longwords */
 int verbose=0;
-int vendor_id_flag = 0;			/* Indicates if VID to be used */
-int trans_flag = 0;			/* Indicates custom transform */
-int showbackoff_flag = 0;		/* Display backoff table? */
-int patterns_loaded = 0;		/* Indicates if backoff patterns loaded */
 struct timeval last_recv_time;		/* Time last packet was received */
-unsigned char *vid_data;		/* Binary Vendor ID data */
-int vid_data_len;			/* Vendor ID data length */
-int exchange_type = DEFAULT_EXCHANGE_TYPE;	/* Main or Aggressive mode */
 /* These two should be made local.  Used by initialise and send_packet */
 unsigned char *buf;
 int buflen;
@@ -179,6 +162,13 @@ main(int argc, char *argv[]) {
    unsigned interval = DEFAULT_INTERVAL;	/* Interval between packets */
    double backoff_factor = DEFAULT_BACKOFF_FACTOR;	/* Backoff factor */
    unsigned end_wait = 1000 * DEFAULT_END_WAIT; /* Time to wait after all done in ms */
+   unsigned timeout = DEFAULT_TIMEOUT;	/* Per-host timeout in ms */
+   unsigned lifetime = DEFAULT_LIFETIME;	/* Lifetime in seconds */
+   int auth_method = DEFAULT_AUTH_METHOD;	/* Authentication method */
+   int dhgroup = DEFAULT_DH_GROUP;		/* Diffie Hellman Group */
+   int idtype = DEFAULT_IDTYPE;		/* IKE Identification type */
+   unsigned pattern_fuzz = DEFAULT_PATTERN_FUZZ; /* Pattern matching fuzz in ms */
+   int exchange_type = DEFAULT_EXCHANGE_TYPE;	/* Main or Aggressive mode */
    struct sockaddr_in sa_local;
    struct sockaddr_in sa_peer;
    struct timeval now;
@@ -203,6 +193,14 @@ main(int argc, char *argv[]) {
    char patfile[MAXLINE];	/* IKE Backoff pattern file name */
    int pass_no=0;
    int first_timeout=1;
+   unsigned char *vid_data;	/* Binary Vendor ID data */
+   int vid_data_len;		/* Vendor ID data length */
+   unsigned char *id_data=NULL;	/* Identity data */
+   int id_data_len=0;		/* Identity data length */
+   int vendor_id_flag = 0;	/* Indicates if VID to be used */
+   int trans_flag = 0;		/* Indicates custom transform */
+   int showbackoff_flag = 0;	/* Display backoff table? */
+   int patterns_loaded = 0;	/* Indicates if backoff patterns loaded */
    unsigned char *cp;
 /*
  *	Open syslog channel and log arguments if required.
@@ -385,14 +383,14 @@ main(int argc, char *argv[]) {
 
       while (fgets(line, MAXLINE, fp)) {
          if ((sscanf(line, "%s", host)) == 1) {
-            add_host(host);
+            add_host(host, timeout);
          }
       }
       fclose(fp);
    } else {		/* Populate list from command line arguments */
       argv=&argv[optind];
       while (*argv) {
-         add_host(*argv);
+         add_host(*argv, timeout);
          argv++;
       }
    }
@@ -435,7 +433,7 @@ main(int argc, char *argv[]) {
          while (fgets(line, MAXLINE, fp)) {
             line_no++;
             if (line[0] != '#' && line[0] != '\n') /* Not comment or empty */
-               add_pattern(line);
+               add_pattern(line, pattern_fuzz);
          }
          fclose(fp);
          patterns_loaded=1;
@@ -473,7 +471,9 @@ main(int argc, char *argv[]) {
    last_packet_time.tv_sec=0;
    last_packet_time.tv_usec=0;
    Gettimeofday(&last_recv_time, NULL);
-   initialise_ike_packet();
+   initialise_ike_packet(lifetime, auth_method, dhgroup, idtype, id_data,
+                         id_data_len, vendor_id_flag, trans_flag,
+                         exchange_type);
 /*
  *	Check ISAKMP structure sizes.
  */
@@ -488,7 +488,7 @@ main(int argc, char *argv[]) {
    if (verbose > 2)
       dump_list();
    if (verbose > 2 && showbackoff_flag)
-      dump_backoff();
+      dump_backoff(pattern_fuzz);
 /*
  *	Main loop: send packets to all hosts in order until a response
  *	has been received or the host has exhausted it's retry limit.
@@ -627,7 +627,7 @@ main(int argc, char *argv[]) {
  */
    printf("\n");	/* Ensure we have a blank line */
    if (showbackoff_flag && transform_responders) {
-      dump_times();
+      dump_times(patterns_loaded);
    }
 
    close(sockfd);
@@ -656,10 +656,13 @@ main(int argc, char *argv[]) {
  *
  *	Inputs:
  *
- *	name = The Name or IP address of the host.
+ *	name	= The Name or IP address of the host.
+ *	timeout	= Per-host timeout in ms.
+ *
+ *	Returns: None
  */
 void
-add_host(char *name) {
+add_host(char *name, unsigned timeout) {
    struct hostent *hp;
    struct host_entry *he;
    char str[MAXLINE];
@@ -1114,7 +1117,9 @@ timeval_diff(struct timeval *a, struct timeval *b, struct timeval *diff) {
  *	payload, and also that we know the total length for the ISAKMP header.
  */
 void
-initialise_ike_packet(void) {
+initialise_ike_packet(unsigned lifetime, int auth_method, int dhgroup,
+                      int idtype, unsigned char *id_data, int id_data_len,
+                      int vendor_id_flag, int trans_flag, int exchange_type) {
    struct isakmp_hdr *hdr;
    struct isakmp_sa *sa;
    struct isakmp_proposal *prop;
@@ -1306,7 +1311,7 @@ dump_list(void) {
  *	from the backoff patterns file.
  */
 void
-dump_backoff(void) {
+dump_backoff(unsigned pattern_fuzz) {
    struct pattern_list *pl;
    struct pattern_entry_list *pp;
    int i;
@@ -1355,7 +1360,7 @@ dump_backoff(void) {
  *	dump_times -- Display packet times for backoff fingerprinting
  */
 void
-dump_times(void) {
+dump_times(int patterns_loaded) {
    struct host_entry *p;
    struct time_list *te;
    int i;
@@ -1465,7 +1470,7 @@ match_pattern(struct host_entry *he) {
 }
 
 /*
- *	times_close_enough -- return 1 if t1 and t2 are within pattern_fuzz ms
+ *	times_close_enough -- return 1 if t1 and t2 are within fuzz ms
  *	                      of each other.  Otherwise return 0.
  */
 int
@@ -1518,7 +1523,7 @@ add_recv_time(struct host_entry *he) {
  *	add_pattern -- add a backoff pattern to the list.
  */
 void
-add_pattern(char *line) {
+add_pattern(char *line, unsigned pattern_fuzz) {
    char *cp;
    char *np;
    char *pp;
