@@ -27,6 +27,9 @@
  * Revision History:
  *
  * $Log$
+ * Revision 1.5  2002/12/31 21:09:01  rsh
+ * Add autoconf config.h
+ *
  * Revision 1.4  2002/12/31 15:10:04  rsh
  * Changed function definitions so return type is on a line by itself.
  *
@@ -41,6 +44,9 @@
  *
  *
  */
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
 
 #include <stdio.h>
 #include <string.h>
