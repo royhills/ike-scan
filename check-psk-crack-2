@@ -31,12 +31,14 @@ echo "Checking psk-crack bruteforce with MD5 hash ..."
 $srcdir/psk-crack --bruteforce=6 --charset=abc123 $MD5PSK >$TMPFILE
 if test $? -ne 0; then
    rm -f $TMPFILE
+   rm -f $DICTFILE
    echo "FAILED"
    exit 1
 fi
 grep '^key "abc123" matches MD5 hash ' $TMPFILE >/dev/null
 if test $? -ne 0; then
    rm -f $TMPFILE
+   rm -f $DICTFILE
    echo "FAILED"
    exit 1
 fi
@@ -46,45 +48,52 @@ echo "Checking psk-crack bruteforce with SHA1 hash ..."
 $srcdir/psk-crack --bruteforce=6 --charset=abc123 $SHA1PSK > $TMPFILE
 if test $? -ne 0; then
    rm -f $TMPFILE
+   rm -f $DICTFILE
    echo "FAILED"
    exit 1
 fi
 grep '^key "abc123" matches SHA1 hash ' $TMPFILE >/dev/null
 if test $? -ne 0; then
    rm -f $TMPFILE
+   rm -f $DICTFILE
    echo "FAILED"
    exit 1
 fi
 echo "ok"
 #
 echo "Checking psk-crack dictionary with MD5 hash ..."
-$srcdir/psk-crack $MD5PSK $DICTFILE >$TMPFILE
+$srcdir/psk-crack --dictionary=$DICTFILE $MD5PSK >$TMPFILE
 if test $? -ne 0; then
    rm -f $TMPFILE
+   rm -f $DICTFILE
    echo "FAILED"
    exit 1
 fi
 grep '^key "abc123" matches MD5 hash ' $TMPFILE >/dev/null
 if test $? -ne 0; then
    rm -f $TMPFILE
+   rm -f $DICTFILE
    echo "FAILED"
    exit 1
 fi
 echo "ok"
 #
 echo "Checking psk-crack dictionary with SHA1 hash ..."
-$srcdir/psk-crack $SHA1PSK $DICTFILE > $TMPFILE
+$srcdir/psk-crack --dictionary=$DICTFILE $SHA1PSK > $TMPFILE
 if test $? -ne 0; then
    rm -f $TMPFILE
+   rm -f $DICTFILE
    echo "FAILED"
    exit 1
 fi
 grep '^key "abc123" matches SHA1 hash ' $TMPFILE >/dev/null
 if test $? -ne 0; then
    rm -f $TMPFILE
+   rm -f $DICTFILE
    echo "FAILED"
    exit 1
 fi
 echo "ok"
 #
 rm -f $TMPFILE
+rm -f $DICTFILE
