@@ -85,10 +85,11 @@ main(int argc, char *argv[]) {
       {"gssid", required_argument, 0, 'G'},
       {"vidpatterns", required_argument, 0, 'I'},
       {"quiet", no_argument, 0, 'q'},
+      {"multiline", no_argument, 0, 'M'},
       {"experimental", no_argument, 0, 'X'},
       {0, 0, 0, 0}
    };
-   const char *short_options = "f:hs:d:r:t:i:b:w:vl:z:m:Ve:a:o::u:n:y:g:p:AG:I:qX";
+   const char *short_options = "f:hs:d:r:t:i:b:w:vl:z:m:Ve:a:o::u:n:y:g:p:AG:I:qMX";
    int arg;
    char arg_str[MAXLINE];	/* Args as string for syslog */
    int options_index=0;
@@ -152,6 +153,7 @@ main(int argc, char *argv[]) {
    unsigned num_hosts = 0;		/* Number of entries in the list */
    unsigned live_count;			/* Number of entries awaiting reply */
    int quiet=0;			/* Only print the basic info if nonzero */
+   int multiline=0;		/* Split decodes across lines if nonzero */
 /*
  *	Open syslog channel and log arguments if required.
  *	We must be careful here to avoid overflowing the arg_str buffer
@@ -320,6 +322,9 @@ main(int argc, char *argv[]) {
             break;
          case 'q':	/* --quiet */
             quiet=1;
+            break;
+         case 'M':	/* --multiline */
+            multiline=1;
             break;
          case 'X':	/* --experimental */
             experimental=1;
@@ -555,7 +560,8 @@ main(int argc, char *argv[]) {
                warn_msg("---\tReceived packet #%u from %s",temp_cursor->num_recv ,inet_ntoa(sa_peer.sin_addr));
             if (temp_cursor->live) {
                display_packet(n, packet_in, temp_cursor, &(sa_peer.sin_addr),
-                              &sa_responders, &notify_responders, quiet);
+                              &sa_responders, &notify_responders, quiet,
+                              multiline);
                if (verbose)
                   warn_msg("---\tRemoving host entry %u (%s) - Received %d bytes", temp_cursor->n, inet_ntoa(sa_peer.sin_addr), n);
                remove_host(temp_cursor, &live_count);
@@ -890,6 +896,7 @@ find_host_by_cookie(struct host_entry *he, unsigned char *packet_in, int n) {
  *	sa_responders	Number of hosts responding with SA
  *	notify_responders	Number of hosts responding with NOTIFY
  *	quiet		Only display basic info if nonzero
+ *	multiline	Split decodes across lines if nonzero
  *	
  *	Returns:
  *	
@@ -901,7 +908,7 @@ find_host_by_cookie(struct host_entry *he, unsigned char *packet_in, int n) {
 void
 display_packet(int n, unsigned char *packet_in, struct host_entry *he,
                struct in_addr *recv_addr, unsigned *sa_responders,
-               unsigned *notify_responders, int quiet) {
+               unsigned *notify_responders, int quiet, int multiline) {
    char *cp;			/* Temp pointer */
    size_t bytes_left;		/* Remaining buffer size */
    int next;			/* Next Payload */
@@ -954,7 +961,7 @@ display_packet(int n, unsigned char *packet_in, struct host_entry *he,
    switch (next) {
       case ISAKMP_NEXT_SA:	/* SA */
          (*sa_responders)++;
-         cp = process_sa(pkt_ptr, bytes_left, type, quiet);
+         cp = process_sa(pkt_ptr, bytes_left, type, quiet, multiline);
          break;
       case ISAKMP_NEXT_N:	/* Notify */
          (*notify_responders)++;
@@ -978,13 +985,13 @@ display_packet(int n, unsigned char *packet_in, struct host_entry *he,
          if (next == ISAKMP_NEXT_VID) {
             msg2=msg;
             cp = process_vid(pkt_ptr, bytes_left, vidlist);
-            msg=make_message("%s %s", msg2, cp);
+            msg=make_message("%s%s%s", msg2, multiline?"\n\t":" ", cp);
             free(msg2);	/* Free old message */
             free(cp);	/* Free VID payload message */
          } else if (next == ISAKMP_NEXT_ID ) {
             msg2=msg;
             cp = process_id(pkt_ptr, bytes_left);
-            msg=make_message("%s %s", msg2, cp);
+            msg=make_message("%s%s%s", msg2, multiline?"\n\t":" ", cp);
             free(msg2);	/* Free old message */
             free(cp);	/* Free ID payload message */
          } else {
@@ -997,7 +1004,7 @@ display_packet(int n, unsigned char *packet_in, struct host_entry *he,
             } else {
                 cp=make_message("%s)", STR_OR_ID(next, payload_name));
             }
-            msg=make_message("%s %s", msg2, cp);
+            msg=make_message("%s%s%s", msg2, multiline?"\n\t":" ", cp);
             free(msg2);	/* Free old message */
             free(cp);	/* Free generic payload message */
          }
@@ -2443,6 +2450,11 @@ usage(void) {
    fprintf(stderr, "\n--quiet or -q\t\tDon't decode the returned packet.\n");
    fprintf(stderr, "\t\t\tThis prints less protocol information so the\n");
    fprintf(stderr, "\t\t\toutput lines are shorter.\n");
+   fprintf(stderr, "\n--multiline or -M\tSplit the payload decode across multiple lines.\n");
+   fprintf(stderr, "\t\t\tWith this option, the decode for each payload is\n");
+   fprintf(stderr, "\t\t\tprinted on a seperate line starting with a TAB.\n");
+   fprintf(stderr, "\t\t\tThis option makes the output easier to read, especially\n");
+   fprintf(stderr, "\t\t\twhen there are many payloads.\n");
    fprintf(stderr, "\n--lifetime=<s> or -l <s> Set IKE lifetime to <s> seconds, default=%d.\n", DEFAULT_LIFETIME);
    fprintf(stderr, "\t\t\tRFC 2407 specifies 28800 as the default, but some\n");
    fprintf(stderr, "\t\t\timplementations may require different values.\n");
