@@ -46,7 +46,7 @@ err_sys(const char *fmt,...) {
    va_start(ap, fmt);
    err_print(1, 0, fmt, ap);
    va_end(ap);
-   exit(1);
+   exit(EXIT_FAILURE);
 }
 
 /*
@@ -71,7 +71,7 @@ err_msg(const char *fmt,...) {
    va_start(ap, fmt);
    err_print(0, 0, fmt, ap);
    va_end(ap);
-   exit(1);
+   exit(EXIT_FAILURE);
 }
 
 /*
