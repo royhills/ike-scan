@@ -106,7 +106,17 @@
 #include <regex.h>	/* Posix regular expression support */
 #endif
 
+#ifdef HAVE_OPENSSL
+#include <openssl/md5.h>
+#include <openssl/sha.h>
+#include <openssl/hmac.h>
+#else
 #include "md5.h"
+#include "sha1.h"
+unsigned char *MD5(const unsigned char *, size_t, unsigned char *);
+unsigned char *SHA1(const unsigned char *, size_t, unsigned char *);
+#endif
+
 #include "isakmp.h"
 
 /* Defines */
@@ -245,13 +255,20 @@ char *process_attr(unsigned char **, size_t *);
 char *process_vid(unsigned char *, size_t, struct vid_pattern_list *);
 char *process_notify(unsigned char *, size_t);
 char *process_id(unsigned char *, size_t);
+void print_payload(unsigned char *cp, unsigned payload, int);
 char *make_message(const char *, ...);
 char *numstr(unsigned);
 char *printable(unsigned char*, size_t);
 char *hexstring(unsigned char*, size_t);
+void print_times(void);
+unsigned char *hmac_md5(const unsigned char *, size_t,
+                        const unsigned char *, size_t, unsigned char *);
+unsigned char *hmac_sha1(const unsigned char *, size_t,
+                         const unsigned char *, size_t, unsigned char *);
 /* The following functions are just to prevent rcsid being optimised away */
 void error_use_rcsid(void);
 void isakmp_use_rcsid(void);
 void wrappers_use_rcsid(void);
+void utils_use_rcsid(void);
 
 #endif	/* IKE_SCAN_H */
