@@ -46,58 +46,18 @@
 
 #include "ike-scan.h"
 
-static char rcsid[] = "$Id$";   /* RCS ID for ident(1) */
+static const char rcsid[] = "$Id$";   /* RCS ID for ident(1) */
 
 /* Global variables */
 struct host_entry *rrlist = NULL;	/* Round-robin linked list of hosts */
 struct host_entry *cursor;		/* Pointer to current list entry */
 struct pattern_list *patlist = NULL;	/* Backoff pattern list */
-int verbose=0;
-
-const char *auth_methods[] = { /* Authentication methods from RFC 2409 Appendix A */
-   "UNSPECIFIED",		/* 0 */
-   "pre-shared key",		/* 1 */
-   "DSS signatures",		/* 2 */
-   "RSA signatures",		/* 3 */
-   "Encryption with RSA",	/* 4 */
-   "Revised encryption with RSA" /* 5 */
-};
-
-const char *payload_name[] = {     /* Payload types from RFC 2408 3.1 */
-   "NONE",                           /* 0 */
-   "Security Association",           /* 1 */
-   "Proposal",                       /* 2 */
-   "Transform",                      /* 3 */
-   "Key Exchange",                   /* 4 */
-   "Identification",                 /* 5 */
-   "Certificate",                    /* 6 */
-   "Certificate Request",            /* 7 */
-   "Hash",                           /* 8 */
-   "Signature",                      /* 9 */
-   "Nonce",                          /* 10 */
-   "Notification",                   /* 11 */
-   "Delete",                         /* 12 */
-   "Vendor ID"                       /* 13 */
-};
-
-const char *id_type_name[] ={	/* ID Type names from RFC 2407 4.6.2.1 */
-   "RESERVED",               /* 0 */
-   "ID_IPV4_ADDR",           /* 1 */
-   "ID_FQDN",                /* 2 */
-   "ID_USER_FQDN",           /* 3 */
-   "ID_IPV4_ADDR_SUBNET",    /* 4 */
-   "ID_IPV6_ADDR",           /* 5 */
-   "ID_IPV6_ADDR_SUBNET",    /* 6 */
-   "ID_IPV4_ADDR_RANGE",     /* 7 */
-   "ID_IPV6_ADDR_RANGE",     /* 8 */
-   "ID_DER_ASN1_DN",         /* 9 */
-   "ID_DER_ASN1_GN",         /* 10 */
-   "ID_KEY_ID"               /* 11 */
-};
+struct vid_pattern_list *vidlist = NULL;	/* Vendor ID pattern list */
+int verbose=0;				/* Verbose level */
 
 int
 main(int argc, char *argv[]) {
-   struct option long_options[] = {
+   const struct option long_options[] = {
       {"file", required_argument, 0, 'f'},
       {"help", no_argument, 0, 'h'},
       {"sport", required_argument, 0, 's'},
@@ -122,9 +82,10 @@ main(int argc, char *argv[]) {
       {"patterns", required_argument, 0, 'p'},
       {"aggressive", no_argument, 0, 'A'},
       {"gssid", required_argument, 0, 'G'},
+      {"showvendor", no_argument, 0, 'I'},
       {0, 0, 0, 0}
    };
-   const char *short_options = "f:hs:d:r:t:i:b:w:vl:z:m:Ve:a:o::u:n:y:g:p:AG:";
+   const char *short_options = "f:hs:d:r:t:i:b:w:vl:z:m:Ve:a:o::u:n:y:g:p:AG:I";
    int arg;
    char arg_str[MAXLINE];	/* Args as string for syslog */
    int options_index=0;
@@ -166,6 +127,7 @@ main(int argc, char *argv[]) {
    double elapsed_seconds;	/* Elapsed time in seconds */
    int arg_str_space;		/* Used to avoid buffer overruns when copying */
    char patfile[MAXLINE];	/* IKE Backoff pattern file name */
+   char vidfile[MAXLINE];	/* IKE Vendor ID pattern file name */
    int pass_no=0;
    int first_timeout=1;
    unsigned char *vid_data;	/* Binary Vendor ID data */
@@ -178,7 +140,9 @@ main(int argc, char *argv[]) {
    int gss_id_flag = 0;		/* Indicates if GSSID to be used */
    int trans_flag = 0;		/* Indicates custom transform */
    int showbackoff_flag = 0;	/* Display backoff table? */
+   int showvendor_flag = 0;	/* Display Vendor ID names? */
    int patterns_loaded = 0;	/* Indicates if backoff patterns loaded */
+   int vid_patterns_loaded = 0;	/* Indicates if Vendor ID patterns loaded */
    struct timeval last_recv_time;	/* Time last packet was received */
    unsigned char *cp;
    unsigned char *packet_out;	/* IKE packet to send */
@@ -213,9 +177,10 @@ main(int argc, char *argv[]) {
  */
    Gettimeofday(&start_time, NULL);
 /*
- *	Initialise IKE pattern file name to the empty string.
+ *	Initialise IKE pattern file names to the empty string.
  */
    patfile[0] = '\0';
+   vidfile[0] = '\0';
 /*
  *	Seed random number generator.
  */
@@ -349,6 +314,9 @@ main(int argc, char *argv[]) {
             for (i=0; i<gss_data_len; i++)
                *cp++=hstr_i(&optarg[i*2]);
             break;
+         case 'I':	/* --showvendor */
+            showvendor_flag=1;
+            break;
          default:	/* Unknown option */
             usage();
             break;
@@ -439,6 +407,51 @@ main(int argc, char *argv[]) {
       }
    }
 /*
+ *	If we are displaying Vendor ID names, load known Vendor ID
+ *	patterns from the Vendor ID file.
+ */
+   if (showvendor_flag) {
+      FILE *fp;
+      char line[MAXLINE];
+      int line_no;
+#ifdef __CYGWIN__
+      char fnbuf[MAXLINE];
+      int fnbuf_siz;
+      int i;
+#endif
+
+      if (vidfile[0] == '\0') {	/* If patterns file not specified */
+#ifdef __CYGWIN__
+         if ((fnbuf_siz=GetModuleFileName(GetModuleHandle(0), fnbuf, MAXLINE)) == 0) {
+            err_msg("Call to GetModuleFileName failed");
+         }
+         for (i=fnbuf_siz-1; i>=0 && fnbuf[i] != '/' && fnbuf[i] != '\\'; i--)
+            ;
+         if (i >= 0) {
+            fnbuf[i] = '\0';
+         }
+         sprintf(vidfile, "%s\\%s", fnbuf, VID_FILE);
+#else
+         sprintf(vidfile, "%s/%s", IKEDATADIR, VID_FILE);
+#endif
+      }
+
+      if ((fp = fopen(vidfile, "r")) == NULL) {
+         warn_msg("WARNING: Cannot open Vendor ID patterns file.  ike-scan will not be able");
+         warn_msg("to display Vendor ID names.");
+         warn_sys("fopen: %s", vidfile);
+      } else {
+         line_no=0;
+         while (fgets(line, MAXLINE, fp)) {
+            line_no++;
+            if (line[0] != '#' && line[0] != '\n') /* Not comment or empty */
+               add_vid_pattern(line);
+         }
+         fclose(fp);
+         vid_patterns_loaded=1;
+      }
+   }
+/*
  *	Check that we have at least one entry in the list.
  */
    if (!num_hosts)
@@ -490,6 +503,8 @@ main(int argc, char *argv[]) {
       dump_list(num_hosts);
    if (verbose > 2 && showbackoff_flag)
       dump_backoff(pattern_fuzz);
+   if (verbose > 2 && showvendor_flag)
+      dump_vid();
 /*
  *	Main loop: send packets to all hosts in order until a response
  *	has been received or the host has exhausted it's retry limit.
@@ -963,6 +978,23 @@ display_packet(int n, unsigned char *packet_in, struct host_entry *he,
    char *msg;			/* Message to display */
    char *msg2;
    unsigned char *pkt_ptr;
+   static const char *payload_name[] = { /* Payload types from RFC 2408 3.1 */
+      "NONE",                           /* 0 */
+      "Security Association",           /* 1 */
+      "Proposal",                       /* 2 */
+      "Transform",                      /* 3 */
+      "Key Exchange",                   /* 4 */
+      "Identification",                 /* 5 */
+      "Certificate",                    /* 6 */
+      "Certificate Request",            /* 7 */
+      "Hash",                           /* 8 */
+      "Signature",                      /* 9 */
+      "Nonce",                          /* 10 */
+      "Notification",                   /* 11 */
+      "Delete",                         /* 12 */
+      "Vendor ID"                       /* 13 */
+   };
+
 /*
  *	Set ip_str to the IP address of the host entry, plus the address of the
  *	responder if different, and a tab.  The maximum length of this string
@@ -1020,7 +1052,7 @@ display_packet(int n, unsigned char *packet_in, struct host_entry *he,
    while (bytes_left) {
       if (next == ISAKMP_NEXT_VID) {
          msg2=msg;
-         cp = process_vid(pkt_ptr, bytes_left);
+         cp = process_vid(pkt_ptr, bytes_left, vidlist);
          msg=make_message("%s %s", msg, cp);
          free(msg2);	/* Free old message */
          free(cp);	/* Free VID payload message */
@@ -1465,6 +1497,44 @@ dump_backoff(unsigned pattern_fuzz) {
 }
 
 /*
+ *	dump_vid -- Display contents of Vendor ID pattern list for debugging
+ *
+ *	Inputs:
+ *
+ *	None
+ *
+ *	Returns:
+ *
+ *	None.
+ *
+ *	This displays the contents of the Vendor ID pattern list.  It is useful
+ *	when debugging to check that the patterns have been loaded correctly
+ *	from the Vendor ID patterns file.
+ */
+void
+dump_vid(void) {
+   struct vid_pattern_list *pl;
+   unsigned char *vid_data;
+   int i;
+   int j;
+
+   printf("Vendor ID Pattern List:\n\n");
+   printf("Entry\tName\tSize\tVendor ID Data\n");
+   pl = vidlist;
+   i=1;
+   while (pl != NULL) {
+      printf("%d\t%s\t%d\t", i, pl->name, pl->len);
+      i++;
+      vid_data = pl->data;
+      for (j=0; j<pl->len; j++)
+         printf("%.2x", (unsigned char) *vid_data++);
+      printf("\n");
+      pl = pl->next;
+   } /* End While */
+   printf("\nTotal of %d Vendor ID pattern entries.\n\n", i-1);
+}
+
+/*
  *	dump_times -- Display packet times for backoff fingerprinting
  *
  *	Inputs:
@@ -1802,6 +1872,84 @@ add_pattern(char *line, unsigned pattern_fuzz) {
 }
 
 /*
+ *	add_vid_pattern -- add a Vendor ID pattern to the list.
+ *
+ *	Inputs:
+ *
+ *	line		Vendor ID pattern entry from the patterns file
+ *
+ *	Returns:
+ *
+ *	None.
+ */
+void
+add_vid_pattern(char *line) {
+   char *cp;
+   char *np;
+   char *pp;
+   unsigned char *ucp;
+   char name[MAXLINE];
+   char pat[MAXLINE];
+   int tabseen;
+   struct vid_pattern_list *pe;     /* Pattern entry */
+   struct vid_pattern_list *p;      /* Temp pointer */
+   unsigned char *vid_data;
+   int vid_data_len;
+   int i;
+/*
+ *      Allocate new pattern list entry and add to tail of vidlist.
+ */
+   pe = Malloc(sizeof(struct vid_pattern_list));
+   pe->next = NULL;
+   p = vidlist;
+   if (p == NULL) {
+      vidlist=pe;
+   } else {
+      while (p->next != NULL)
+         p = p->next;
+      p->next = pe;
+   }
+/*
+ *	Separate line from VID patterns file into name and pattern.
+ */
+   tabseen = 0;
+   cp = line;
+   np = name;
+   pp = pat;
+   while (*cp != '\0' && *cp != '\n') {
+      if (*cp == '\t') {
+         tabseen++;
+         cp++;
+      }
+      if (tabseen) {
+         *pp++ = *cp++;
+      } else {
+         *np++ = *cp++;
+      }
+   }
+   *np = '\0';
+   *pp = '\0';
+/*
+ *      Copy name into malloc'ed storage and set pl->name to point to this.
+ */
+   cp = Malloc(strlen(name)+1);
+   strcpy(cp, name);
+   pe->name = cp;
+/*
+ *      Process and store the Vendor ID pattern.
+ */
+   if (strlen(pat) % 2) 	/* Length is odd */
+      err_msg("Length of vendor ID pattern must be even (multiple of 2).");
+   vid_data_len = strlen(pat) / 2;
+   vid_data = Malloc(vid_data_len);
+   ucp = vid_data;
+   for (i=0; i<vid_data_len; i++)
+      *ucp++=hstr_i(&pat[i*2]);
+   pe->len = vid_data_len;
+   pe->data = vid_data;
+}
+
+/*
  *	check_struct_sizes -- Check sizes of structures.
  *
  *	Inputs:
@@ -1991,6 +2139,31 @@ make_message(const char *fmt, ...) {
  */
 void
 usage(void) {
+
+   static const char *auth_methods[] = { /* Auth methods from RFC 2409 App. A */
+      "UNSPECIFIED",		/* 0 */
+      "pre-shared key",		/* 1 */
+      "DSS signatures",		/* 2 */
+      "RSA signatures",		/* 3 */
+      "Encryption with RSA",	/* 4 */
+      "Revised encryption with RSA" /* 5 */
+   };
+   static const char *id_type_name[] ={	/* ID Type names from RFC 2407 4.6.2.1 */
+      "RESERVED",               /* 0 */
+      "ID_IPV4_ADDR",           /* 1 */
+      "ID_FQDN",                /* 2 */
+      "ID_USER_FQDN",           /* 3 */
+      "ID_IPV4_ADDR_SUBNET",    /* 4 */
+      "ID_IPV6_ADDR",           /* 5 */
+      "ID_IPV6_ADDR_SUBNET",    /* 6 */
+      "ID_IPV4_ADDR_RANGE",     /* 7 */
+      "ID_IPV6_ADDR_RANGE",     /* 8 */
+      "ID_DER_ASN1_DN",         /* 9 */
+      "ID_DER_ASN1_GN",         /* 10 */
+      "ID_KEY_ID"               /* 11 */
+   };
+
+
    fprintf(stderr, "Usage: ike-scan [options] [hosts...]\n");
    fprintf(stderr, "\n");
    fprintf(stderr, "Target hosts must be specified on the command line unless the --file option is\n");
@@ -2126,8 +2299,10 @@ usage(void) {
    fprintf(stderr, "\t\t\tThis option is only applicable to Aggressive Mode.\n");
    fprintf(stderr, "\t\t\tAcceptable values are 1,2,5,14,15,16,17,18 (MODP only).\n");
    fprintf(stderr, "\n--gssid=<n> or -G <n>\tUse GSS ID <n> where <n> is a hex string.\n");
-   fprintf(stderr, "\t\t\tThis uses transform attribute type 16384.\n");
-   fprintf(stderr, "\t\t\tThis is currently experimental.\n");
+   fprintf(stderr, "\t\t\tThis uses transform attribute type 16384 as specified\n");
+   fprintf(stderr, "\t\t\tin draft-ietf-ipsec-isakmp-gss-auth-07.txt, although\n");
+   fprintf(stderr, "\t\t\tWindows-2000 has been observed to use 32001 as well.\n");
+   fprintf(stderr, "\t\t\tThis option is currently experimental.\n");
    fprintf(stderr, "\n");
    fprintf(stderr, "Report bugs or send suggestions to %s\n", PACKAGE_BUGREPORT);
    fprintf(stderr, "See the ike-scan homepage at http://www.nta-monitor.com/ike-scan/\n");
