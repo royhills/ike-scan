@@ -225,6 +225,7 @@ void dump_backoff(unsigned);
 void dump_vid(void);
 unsigned int hstr_i(const char *);
 unsigned char* hex2data(const char *, size_t *);
+unsigned char* hex_or_str(const char *, size_t *);
 struct isakmp_hdr* make_isakmp_hdr(unsigned, unsigned, unsigned);
 struct isakmp_sa* make_sa_hdr(unsigned, unsigned);
 struct isakmp_proposal* make_prop(unsigned, unsigned);
