@@ -65,6 +65,7 @@ struct psk_crack psk_values = {		/* Pre-shared key values */
    NULL, 0, NULL, 0, NULL, 0, NULL, 0, NULL, 0, NULL, 0, NULL, 0, NULL, 0,
    NULL, 0
 };
+int no_dns_flag=0;			/* No DNS flag */
 
 int
 main(int argc, char *argv[]) {
@@ -100,11 +101,12 @@ main(int argc, char *argv[]) {
       {"tcp", optional_argument, 0, 'T'},
       {"pskcrack", no_argument, 0, 'P'},
       {"tcptimeout", required_argument, 0, 'O'},
+      {"nodns", no_argument, 0, 'N'},
       {"experimental", required_argument, 0, 'X'},
       {0, 0, 0, 0}
    };
    const char *short_options =
-      "f:hs:d:r:t:i:b:w:vl:z:m:Ve:a:o::u:n:y:g:p:AG:I:qMRT::PO:X:";
+      "f:hs:d:r:t:i:b:w:vl:z:m:Ve:a:o::u:n:y:g:p:AG:I:qMRT::PO:NX:";
    int arg;
    char arg_str[MAXLINE];	/* Args as string for syslog */
    int options_index=0;
@@ -147,7 +149,7 @@ main(int argc, char *argv[]) {
    struct timeval last_packet_time; /* Time last packet was sent */
    struct timeval elapsed_time;	/* Elapsed time as timeval */
    double elapsed_seconds;	/* Elapsed time in seconds */
-   size_t arg_str_space;	/* Used to avoid buffer overruns when copying */
+   int arg_str_space;		/* Used to avoid buffer overruns when copying */
    char patfile[MAXLINE];	/* IKE Backoff pattern file name */
    char vidfile[MAXLINE];	/* IKE Vendor ID pattern file name */
    unsigned pass_no=0;
@@ -180,14 +182,15 @@ main(int argc, char *argv[]) {
 #ifdef SYSLOG
    openlog("ike-scan", LOG_PID, SYSLOG_FACILITY);
    arg_str[0] = '\0';
-   arg_str_space = MAXLINE;	/* Amount of space in the arg_str buffer */
+   arg_str_space = MAXLINE;	/* Amount of space left in the arg_str buffer */
    for (arg=0; arg<argc; arg++) {
       arg_str_space -= strlen(argv[arg]);
       if (arg_str_space > 0) {
          strncat(arg_str, argv[arg], arg_str_space);
          if (arg < (argc-1)) {
-            strcat(arg_str, " ");
-            arg_str_space--;
+            if (--arg_str_space > 0) {
+               strcat(arg_str, " ");
+            }
          }
       }
    }
@@ -350,6 +353,9 @@ main(int argc, char *argv[]) {
          case 'O':	/* --tcptimeout */
             tcp_connect_timeout = strtoul(optarg, (char **)NULL, 10);
             break;
+         case 'N':	/* --nodns */
+            no_dns_flag=1;
+            break;
          case 'X':	/* --experimental */
             experimental_value = strtoul(optarg, (char **)NULL, 10);
             break;
@@ -362,7 +368,8 @@ main(int argc, char *argv[]) {
  *	If we're not reading from a file, then we must have some hosts
  *	given as command line arguments.
  */
-   hp = gethostbyname("ike-scan-target.test.nta-monitor.com");
+   if (!no_dns_flag)
+      hp = gethostbyname("ike-scan-target.test.nta-monitor.com");
    if (!filename_flag) 
       if ((argc - optind) < 1)
          usage(EXIT_FAILURE);
@@ -379,7 +386,7 @@ main(int argc, char *argv[]) {
          fp = stdin;
       } else {
          if ((fp = fopen(filename, "r")) == NULL) {
-            err_sys("fopen");
+            err_sys("ERROR: fopen");
          }
       }
 
@@ -475,12 +482,12 @@ main(int argc, char *argv[]) {
       const int on = 1;	/* for setsockopt() */
 
       if ((sockfd = socket(AF_INET, SOCK_STREAM, 0)) < 0)
-         err_sys("socket");
+         err_sys("ERROR: socket");
       if ((setsockopt(sockfd, IPPROTO_TCP, TCP_NODELAY, &on, sizeof(on))) < 0)
-         err_sys("setsockopt() failed");
+         err_sys("ERROR: setsockopt() failed");
    } else {
       if ((sockfd = socket(AF_INET, SOCK_DGRAM, 0)) < 0)
-         err_sys("socket");
+         err_sys("ERROR: socket");
    }
 
    memset(&sa_local, '\0', sizeof(sa_local));
@@ -494,7 +501,7 @@ main(int argc, char *argv[]) {
          warn_msg("You need to be root, or ike-scan must be suid root to bind to ports below 1024.");
       if (errno == EADDRINUSE)
          warn_msg("Only one process may bind to the source port at any one time.");
-      err_sys("bind");
+      err_sys("ERROR: bind");
    }
 /*
  *	If we are using TCP transport, then connect the socket to the peer.
@@ -528,7 +535,7 @@ main(int argc, char *argv[]) {
       if ((connect(sockfd, (struct sockaddr *) &sa_tcp, sa_tcp_len)) != 0) {
          if (errno == EINTR)
             errno = ETIMEDOUT;
-         err_sys("TCP connect");
+         err_sys("ERROR: TCP connect");
       }
 /*
  *	Cancel alarm
@@ -893,12 +900,18 @@ void
 add_host(const char *name, unsigned timeout, unsigned *num_hosts) {
    struct hostent *hp;
    struct host_entry *he;
+   struct in_addr inp;
    char str[MAXLINE];
    struct timeval now;
    static int num_left=0;       /* Number of free entries left */
 
-   if ((hp = gethostbyname(name)) == NULL)
-      err_sys("gethostbyname failed for \"%s\"", name);
+   if (no_dns_flag) {
+      if (!(inet_aton(name, &inp)))
+         err_msg("ERROR: inet_aton failed for \"%s\"", name);
+   } else {
+      if ((hp = gethostbyname(name)) == NULL)
+         err_sys("ERROR: gethostbyname failed for \"%s\"", name);
+   }
 
    if (!num_left) {     /* No entries left, allocate some more */
       if (helist)
@@ -917,7 +930,10 @@ add_host(const char *name, unsigned timeout, unsigned *num_hosts) {
    Gettimeofday(&now);
 
    he->n = *num_hosts;
-   memcpy(&(he->addr), hp->h_addr_list[0], sizeof(struct in_addr));
+   if (no_dns_flag)
+      memcpy(&(he->addr), &inp, sizeof(struct in_addr));
+   else
+      memcpy(&(he->addr), hp->h_addr_list[0], sizeof(struct in_addr));
    he->live = 1;
    he->timeout = timeout * 1000;	/* Convert from ms to us */
    he->num_sent = 0;
@@ -1278,7 +1294,7 @@ send_packet(int s, unsigned char *packet_out, size_t packet_out_len,
                he->num_sent, he->n, inet_ntoa(he->addr), he->timeout);
    if ((sendto(s, packet_out, packet_out_len, 0, (struct sockaddr *) &sa_peer,
        sa_peer_len)) < 0) {
-      err_sys("sendto");
+      err_sys("ERROR: sendto");
    }
 /*
  *	Experimental Cisco TCP encapsulation.
@@ -1317,7 +1333,7 @@ recvfrom_wto(int s, unsigned char *buf, size_t len, struct sockaddr *saddr,
    to.tv_usec = (tmo - 1000000*to.tv_sec);
    n = select(s+1, &readset, NULL, NULL, &to);
    if (n < 0) {
-      err_sys("select");
+      err_sys("ERROR: select");
    } else if (n == 0) {
       return -1;	/* Timeout */
    }
@@ -1331,7 +1347,7 @@ recvfrom_wto(int s, unsigned char *buf, size_t len, struct sockaddr *saddr,
  */
          return -1;
       } else {
-         err_sys("recvfrom");
+         err_sys("ERROR: recvfrom");
       }
    }
 /*
@@ -1905,7 +1921,7 @@ load_backoff_patterns(const char *patfile, unsigned pattern_fuzz) {
    if (*patfile == '\0') {	/* If patterns file not specified */
 #ifdef __CYGWIN__
       if ((fnbuf_siz=GetModuleFileName(GetModuleHandle(0), fnbuf, MAXLINE)) == 0) {
-         err_msg("Call to GetModuleFileName failed");
+         err_msg("ERROR: Call to GetModuleFileName failed");
       }
       for (i=fnbuf_siz-1; i>=0 && fnbuf[i] != '/' && fnbuf[i] != '\\'; i--)
          ;
@@ -2105,7 +2121,7 @@ load_vid_patterns(const char *vidfile) {
    if (*vidfile == '\0') {	/* If patterns file not specified */
 #ifdef __CYGWIN__
       if ((fnbuf_siz=GetModuleFileName(GetModuleHandle(0), fnbuf, MAXLINE)) == 0) {
-         err_msg("Call to GetModuleFileName failed");
+         err_msg("ERROR: Call to GetModuleFileName failed");
       }
       for (i=fnbuf_siz-1; i>=0 && fnbuf[i] != '/' && fnbuf[i] != '\\'; i--)
          ;
@@ -2510,6 +2526,9 @@ usage(int status) {
    fprintf(stderr, "\n--pskcrack or -P\tCrack aggressive mode pre-shared keys (experimental).\n");
    fprintf(stderr, "\n--tcptimeout=n or -O n\tSet TCP connect timeout to n seconds\n");
    fprintf(stderr, "\t\t\tThis is only applicable to TCP transport mode.\n");
+   fprintf(stderr, "\n--nodns or -N\t\tDo not use DNS to resolve names.\n");
+   fprintf(stderr, "\t\t\tIf you use this option, then all hosts must be\n");
+   fprintf(stderr, "\t\t\tspecified as IP addresses.\n");
    fprintf(stderr, "\n");
    fprintf(stderr, "Report bugs or send suggestions to %s\n", PACKAGE_BUGREPORT);
    fprintf(stderr, "See the ike-scan homepage at http://www.nta-monitor.com/ike-scan/\n");
