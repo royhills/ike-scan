@@ -39,6 +39,7 @@ extern int experimental_value;
 extern psk_crack psk_values;
 extern int mbz_value;
 extern int header_version;
+extern const id_name_map payload_map[];
 
 /*
  *	make_isakmp_hdr -- Construct an ISAKMP Header
@@ -465,6 +466,7 @@ make_vid(size_t *length, unsigned next, unsigned char *vid_data,
  *      length  (output) length of entire VID payload set.
  *      vid_data        Vendor ID data
  *      vid_data_len    Vendor ID data length
+ *	next		Next payload type (only when finished == 1)
  *
  *	Returns:
  *
@@ -479,7 +481,7 @@ make_vid(size_t *length, unsigned next, unsigned char *vid_data,
  */
 unsigned char*
 add_vid(int finished, size_t *length, unsigned char *vid_data,
-        size_t vid_data_len) {
+        size_t vid_data_len, unsigned next) {
    static int first_vid = 1;
    static unsigned char *vid_start=NULL;	/* Start of set of VIDs */
    static size_t cur_offset;			/* Start of current VID */
@@ -508,7 +510,7 @@ add_vid(int finished, size_t *length, unsigned char *vid_data,
       struct isakmp_vid* hdr =
          (struct isakmp_vid*) (vid_start+cur_offset);   /* Overlay */
 
-      hdr->isavid_np = ISAKMP_NEXT_NONE;         /* No more payloads */
+      hdr->isavid_np = next;
       *length = end_offset;
       return vid_start;
    }
@@ -669,6 +671,41 @@ make_udphdr(size_t *length, int sport, int dport, unsigned udplen) {
    hdr->check  = 0; /* should use in_cksum() */
 
    *length = sizeof(ike_udphdr);
+
+   return payload;
+}
+
+/*
+ *	make_cr -- Construct a certificate request payload
+ *
+ *	Inputs:
+ *
+ *	length	(output) length of certificate request payload.
+ *	next		Next Payload Type
+ *	cr_data		Certificate request data
+ *	cr_data_len	Certificate request data length
+ *
+ *	Returns:
+ *
+ *	Pointer to certificate request payload.
+ *
+ *	This constructs a certificate request payload.
+ */
+unsigned char*
+make_cr(size_t *length, unsigned next, unsigned char *cr_data,
+        size_t cr_data_len) {
+   unsigned char *payload;
+   struct isakmp_generic* hdr;
+
+   payload = Malloc(sizeof(struct isakmp_generic)+cr_data_len);
+   hdr = (struct isakmp_generic*) payload;
+   memset(hdr, mbz_value, sizeof(struct isakmp_generic));
+
+   hdr->isag_np = next;		/* Next payload type */
+   hdr->isag_length = htons(sizeof(struct isakmp_generic)+cr_data_len);
+
+   memcpy(payload+sizeof(struct isakmp_generic), cr_data, cr_data_len);
+   *length = sizeof(struct isakmp_generic) + cr_data_len;
 
    return payload;
 }
@@ -1255,6 +1292,59 @@ process_id(unsigned char *cp, size_t len) {
    msg2=msg;
    msg=make_message("ID(Type=%s, %s)", id_to_name(idtype,id_map), msg2);
    free(msg2);
+
+   return msg;
+}
+
+/*
+ *	process_cert -- Process Certificate Payload
+ *
+ *	Inputs:
+ *
+ *	cp	Pointer to start of certificate payload
+ *	len	Packet length remaining
+ *	next	The previous next payload type
+ *
+ *	Returns:
+ *
+ *	Pointer to certificate description string.
+ *
+ *	The description string pointer returned points to malloc'ed storage
+ *	which should be free'ed by the caller when it's no longer needed.
+ */
+char *
+process_cert(unsigned char *cp, size_t len, unsigned next) {
+   struct isakmp_generic *hdr = (struct isakmp_generic *) cp;
+   char *msg;
+   unsigned char cert_type;
+   unsigned char *cert_data;
+   size_t data_len;
+   static const id_name_map cert_map[] = {	/* From RFC 2408 Sec. 3.9 */
+      {1, "PKCS #7 wrapped X.509 certificate"},
+      {2, "PGP Certificate"},
+      {3, "DNS Signed Key"},
+      {4, "X.509 Certificate - Signature"},
+      {5, "X.509 Certificate - Key Exchange"},
+      {6, "Kerberos Tokens"},
+      {7, "Certificate Revocation List (CRL)"},
+      {8, "Authority Revocation List (ARL)"},
+      {9, "SPKI Certificate"},
+      {10, "X.509 Certificate - Attribute"},
+      {-1, NULL}
+   };
+
+   if (len < sizeof(struct isakmp_generic) + 1 ||
+        ntohs(hdr->isag_length) < sizeof(struct isakmp_generic) + 1)
+      return make_message("Certificate (packet too short to decode)");
+
+   cert_data = cp + sizeof(struct isakmp_generic);
+   cert_type = *cert_data++;
+   data_len = ntohs(hdr->isag_length) < len ? ntohs(hdr->isag_length) : len;
+   data_len -= sizeof(struct isakmp_generic) + 1;
+
+   msg=make_message("%s(Type=%s, Length=%u bytes)",
+                    id_to_name(next, payload_map),
+                    id_to_name(cert_type, cert_map), data_len);
 
    return msg;
 }
