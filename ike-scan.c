@@ -29,6 +29,9 @@
  * Change History:
  *
  * $Log$
+ * Revision 1.22  2002/11/18 12:20:25  rsh
+ * Changed timeval_diff() definition to return difference as timeval not int.
+ *
  * Revision 1.21  2002/11/18 11:02:45  rsh
  * Added initial backoff fingerprinting support.
  *
@@ -268,6 +271,7 @@ int main(int argc, char *argv[]) {
    char packet_in[MAXUDP];	/* Received packet */
    int n;
    struct host_entry *temp_cursor;
+   struct timeval diff;		/* Difference between two timevals */
    unsigned long loop_timediff;
    unsigned long host_timediff;
 /*
@@ -446,14 +450,16 @@ int main(int argc, char *argv[]) {
  *	If the last packet was sent more than interval ms ago, then we can
  *	potentially send a packet to the current host.
  */
-      loop_timediff=timeval_diff(&now, &last_packet_time);
+      timeval_diff(&now, &last_packet_time, &diff);
+      loop_timediff = 1000*diff.tv_sec + diff.tv_usec/1000;
       if (loop_timediff > interval) {
 /*
  *	If the last packet to this host was sent more than the current
  *	timeout for this host ms ago, then we can potentially send a packet
  *	to it.
  */
-         host_timediff=timeval_diff(&now, &(cursor->last_send_time));
+         timeval_diff(&now, &(cursor->last_send_time), &diff);
+         host_timediff = 1000*diff.tv_sec + diff.tv_usec/1000;
          if (host_timediff > cursor->timeout) {
 /*
  *	If we've exceeded our retry limit, then this host has timed out so
@@ -870,12 +876,11 @@ int recvfrom_wto(int s, char *buf, int len, struct sockaddr *saddr, int tmo) {
 }
 
 /*
- *	Returns the difference in milliseconds between the two
- *	specified time values.  return = a - b.
+ *	Calculates the difference between two timevals and returns this
+ *	difference in a third timeval.
+ *	diff = a - b.
  */
-int timeval_diff(struct timeval *a,struct timeval *b) {
-   struct timeval diff;
-   int result;
+void timeval_diff(struct timeval *a, struct timeval *b, struct timeval *diff) {
 
    /* Perform the carry for the later subtraction by updating y. */
    if (a->tv_usec < b->tv_usec) {
@@ -891,12 +896,8 @@ int timeval_diff(struct timeval *a,struct timeval *b) {
  
    /* Compute the time difference
       tv_usec is certainly positive. */
-   diff.tv_sec = a->tv_sec - b->tv_sec;
-   diff.tv_usec = a->tv_usec - b->tv_usec;
-
-   result = 1000*diff.tv_sec + diff.tv_usec/1000;
-
-   return result;
+   diff->tv_sec = a->tv_sec - b->tv_sec;
+   diff->tv_usec = a->tv_usec - b->tv_usec;
 }
 
 /*
@@ -1163,21 +1164,22 @@ void dump_times(void) {
    struct host_entry *p;
    struct time_list *te;
    int i;
-   int delta;
    struct timeval prev_time;
+   struct timeval diff;
 
    p = rrlist;
 
-   printf("IP Address\tNo.\tRecv time\tDelta (ms)\n");
+   printf("IP Address\tNo.\tRecv time\t\tDelta Time\n");
    do {
       if (p->recv_times != NULL) {
          te = p->recv_times;
          i = 1;
-         delta = 0;
+         diff.tv_sec = 0;
+         diff.tv_usec = 0;
          while (te != NULL) {
             if (i > 1)
-               delta = timeval_diff(&(te->time), &prev_time);
-            printf("%s\t%d\t\%ld.%ld\t%d\n", inet_ntoa(p->addr), i, (long)te->time.tv_sec, (long)te->time.tv_usec, delta);
+               timeval_diff(&(te->time), &prev_time, &diff);
+            printf("%s\t%d\t\%ld.%ld\t%ld.%ld\n", inet_ntoa(p->addr), i, (long)te->time.tv_sec, (long)te->time.tv_usec, (long)diff.tv_sec, (long)diff.tv_usec);
             prev_time = te->time;
             te = te->next;
             i++;
