@@ -1093,12 +1093,11 @@ initialise_ike_packet(void) {
    struct isakmp_hdr *hdr;
    struct isakmp_sa *sa;
    struct isakmp_proposal *prop;
-   unsigned char *trans;	/* Individual Transform */
    unsigned char *transforms;	/* All transforms */
    unsigned char *vid=NULL;
    unsigned char *cp;
    int len;
-   int trans_len=0;
+   int trans_len;
 /*
  *	Vendor ID Payload (Optional)
  */
@@ -1109,70 +1108,24 @@ initialise_ike_packet(void) {
 /*
  *	Transform payloads
  */
-   trans = make_trans(&len, 3, 1, OAKLEY_3DES_CBC, 0, OAKLEY_SHA, auth_method,
-                      2, lifetime);
-   transforms=Realloc(NULL, len);
-   cp = transforms;
-   memcpy(cp, trans, len);
-   cp += len;
-   buflen += len;
-   trans_len += len;
-
-   trans = make_trans(&len, 3, 2, OAKLEY_3DES_CBC, 0, OAKLEY_MD5, auth_method,
-                      2, lifetime);
-   transforms=Realloc(transforms, len);
-   memcpy(cp, trans, len);
-   cp += len;
-   buflen += len;
-   trans_len += len;
-
-   trans = make_trans(&len, 3, 3, OAKLEY_DES_CBC,  0, OAKLEY_SHA, auth_method,
-                      2, lifetime);
-   transforms=Realloc(transforms, len);
-   memcpy(cp, trans, len);
-   cp += len;
-   buflen += len;
-   trans_len += len;
-
-   trans = make_trans(&len, 3, 4, OAKLEY_DES_CBC,  0, OAKLEY_MD5, auth_method,
-                      2, lifetime);
-   transforms=Realloc(transforms, len);
-   memcpy(cp, trans, len);
-   cp += len;
-   buflen += len;
-   trans_len += len;
-
-   trans = make_trans(&len, 3, 5, OAKLEY_3DES_CBC, 0, OAKLEY_SHA, auth_method,
-                      1, lifetime);
-   transforms=Realloc(transforms, len);
-   memcpy(cp, trans, len);
-   cp += len;
-   buflen += len;
-   trans_len += len;
-
-   trans = make_trans(&len, 3, 6, OAKLEY_3DES_CBC, 0, OAKLEY_MD5, auth_method,
-                      1, lifetime);
-   transforms=Realloc(transforms, len);
-   memcpy(cp, trans, len);
-   cp += len;
-   buflen += len;
-   trans_len += len;
-
-   trans = make_trans(&len, 3, 7, OAKLEY_DES_CBC,  0, OAKLEY_SHA, auth_method,
-                      1, lifetime);
-   transforms=Realloc(transforms, len);
-   memcpy(cp, trans, len);
-   cp += len;
-   buflen += len;
-   trans_len += len;
-
-   trans = make_trans(&len, 0, 8, OAKLEY_DES_CBC,  0, OAKLEY_MD5, auth_method,
-                      1, lifetime);
-   transforms=Realloc(transforms, len);
-   memcpy(cp, trans, len);
-   cp += len;
-   buflen += len;
-   trans_len += len;
+   add_trans(0, NULL, OAKLEY_3DES_CBC, 0, OAKLEY_SHA, auth_method,
+                     2, lifetime);
+   add_trans(0, NULL, OAKLEY_3DES_CBC, 0, OAKLEY_MD5, auth_method,
+                     2, lifetime);
+   add_trans(0, NULL, OAKLEY_DES_CBC,  0, OAKLEY_SHA, auth_method,
+                     2, lifetime);
+   add_trans(0, NULL, OAKLEY_DES_CBC,  0, OAKLEY_MD5, auth_method,
+                     2, lifetime);
+   add_trans(0, NULL, OAKLEY_3DES_CBC, 0, OAKLEY_SHA, auth_method,
+                     1, lifetime);
+   add_trans(0, NULL, OAKLEY_3DES_CBC, 0, OAKLEY_MD5, auth_method,
+                     1, lifetime);
+   add_trans(0, NULL, OAKLEY_DES_CBC,  0, OAKLEY_SHA, auth_method,
+                     1, lifetime);
+   add_trans(0, NULL, OAKLEY_DES_CBC,  0, OAKLEY_MD5, auth_method,
+                     1, lifetime);
+   transforms = add_trans(1, &trans_len, 0,  0, 0, 0, 0, 0);
+   buflen += trans_len;
 /*
  *	Proposal payload
  */
