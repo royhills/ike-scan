@@ -16,6 +16,7 @@ Modified by Roy Hills for ike-scan
 
 #include <stdio.h>
 #include <string.h>
+#include "sha1.h"
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -33,17 +34,6 @@ Modified by Roy Hills for ike-scan
 
 /* #define LITTLE_ENDIAN * This should be #define'd if true. */
 /* #define SHA1HANDSOFF * Copies data before messing with it. */
-
-typedef struct {
-    unsigned long state[5];
-    unsigned long count[2];
-    unsigned char buffer[64];
-} SHA1_CTX;
-
-void SHA1Transform(unsigned long state[5], unsigned char buffer[64]);
-void SHA1Init(SHA1_CTX* context);
-void SHA1Update(SHA1_CTX* context, unsigned char* data, unsigned int len);
-void SHA1Final(unsigned char digest[20], SHA1_CTX* context);
 
 #define rol(value, bits) (((value) << (bits)) | ((value) >> (32 - (bits))))
 
