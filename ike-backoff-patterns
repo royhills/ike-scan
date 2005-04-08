@@ -174,3 +174,7 @@ Lynksys	0, 15/500, 15, 15
 # Discovered by: Tony Lloyd, January 2005
 # Observed on: suspected bordermanager box
 bordermanager	0, 4.5/1000, 6.9, 9.8
+
+# Discovered by: Tony Lloyd, April 2005
+# Observed on: Draytek ADSL Routers (several different versions)
+draytek	0, 3, 6
