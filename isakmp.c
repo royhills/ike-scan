@@ -862,9 +862,10 @@ process_sa(unsigned char *cp, size_t len, unsigned type, int quiet,
       free(msg2);
    }
 /*
- *	If quiet is not in effect, add the transform details to the message.
+ *	If quiet is not in effect, and we have exactly one transform, add the
+ *	transform details to the message.
  */
-   if (!quiet) {
+   if (!quiet && prop_hdr->isap_notrans==1) {
       int firstloop=1;
 
       msg2 = msg;
