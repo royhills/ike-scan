@@ -101,9 +101,10 @@ Firewall-1 4.1/NG	0, 2, 2, 2, 2, 2, 2, 4, 4, 4, 4, 4
 Linux FreeS/WAN	0, 10, 20
 
 # Discovered by: Roy Hills, November 2002
+# Additional fuzz on 1st retry suggested by Florent Trupheme, April 2005
 # Observed on: Nortel Contivity 2500, OS version V4.06-120
 # Observed on: Nortel Contivity 1600, OS version V3.60-45
-Nortel Contivity	0, 16, 16, 16
+Nortel Contivity	0, 16/600, 16, 16
 
 # Discovered by: Roy Hills, December 2002
 # Observed on: Watchguard Firebox 700 v6.1
@@ -156,6 +157,15 @@ watchguard-soho	0, 1/500, 9.5/3000, 1.5/2000, 9.5/3000, 1.5/2000, 9.5/3000, 1.5/
 # Note:	There is quite a bit of variation with this pattern, hence the
 #	per-entry fuzz specifications.
 sonicwall-pro	0, 6.5/1500, 9/1000, 13/2000, 22/3000
+
+# Discovered by: Florent Trupheme, April 2005
+# Observed on Side Winder G2 Firewall
+SideWinder G2 Firewall	0, 3, 6, 15, 48
+
+# Discovered by: Florent Trupheme, April 2005
+# Observed on SonicWall unknown version
+# Interestingly, this is different from the earlier sonicwall-pro entry.
+Sonic Wall	0, 5, 8, 18
 
 # Discovered by: Roy Hills, December 2003
 # Observed on: Windows 2003 Server Enterprise Edition, Intel platform
