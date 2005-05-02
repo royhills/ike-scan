@@ -69,6 +69,8 @@ Windows-2003	^1e2b516905991c7d7c96fcbfb587e461000000040d000014
 # that these first 20 bytes are an SHA1 hash of something.
 # The second 20 bytes give the Firewall-1 version number and other info.
 # Firewall-1 v4.0 didn't use Vendor IDs.  v3.0 didn't support IPsec.
+# Firewall-1 only returns this Vendor ID if you send a Vendor ID payload
+# starting with f4ed19e0c114eb516faaac0ee37daf2807b4381f in the ike-scan packet.
 # See http://www.nta-monitor.com/news/checkpoint2004/index.htm for full details
 Firewall-1 4.1 Base	^f4ed19e0c114eb516faaac0ee37daf2807b4381f00000001000000020000000000000000....0000
 Firewall-1 4.1 SP1	^f4ed19e0c114eb516faaac0ee37daf2807b4381f00000001000000030000000000000000....0000
@@ -178,7 +180,8 @@ GSSAPI	^621b04bb09882ac1e15935fefa24aeee
 
 # Nortel Contivity VPN Router (was Bay Networks Enterprise Switch)
 # The first 4 bytes are ASCII "BNES" (Bay Networks Enterprise Switch)
-# The second 4 bytes are probably a version number or similar.
+# The second 4 bytes appear to be a version number in big endian format.
+# I've seen values 00000007, 00000009 and 0000000a in this position.
 Nortel Contivity	^424e4553000000..
 
 # Observed to be sent from SonicWall Firewalls
