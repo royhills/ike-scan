@@ -36,7 +36,7 @@
  *
  * ike-scan - The IKE Scanner
  * 
- * ike-scan sends IKE main mode requests to the specified hosts and displays
+ * ike-scan sends IKE Phase 1 requests to the specified hosts and displays
  * any responses that are received.  It handles retry and retransmission with
  * backoff to cope with packet loss.
  * 
@@ -84,6 +84,10 @@ const id_name_map payload_map[] = {	/* Payload types from RFC 2408 3.1 */
 
 int
 main(int argc, char *argv[]) {
+/*
+ * long_options can be const because the flag is always set to zero (NULL)
+ * and is never changed.
+ */
    const struct option long_options[] = {
       {"file", required_argument, 0, 'f'},
       {"help", no_argument, 0, 'h'},
@@ -127,6 +131,7 @@ main(int argc, char *argv[]) {
       {"situation", required_argument, 0, 'S'},
       {"protocol", required_argument, 0, 'j'},
       {"transid", required_argument, 0, 'k'},
+      {"idfile", required_argument, 0, 'F'},
       {"experimental", required_argument, 0, 'X'},
       {0, 0, 0, 0}
    };
@@ -134,11 +139,11 @@ main(int argc, char *argv[]) {
  * available short option characters:
  *
  * lower:	-----------------------x--
- * UPPER:	-----F-H-JK-----Q---U-W-Y-
+ * UPPER:	-------H-JK-----Q---U-W-Y-
  */
    const char *short_options =
       "f:hs:d:r:t:i:b:w:vl:z:m:Ve:a:o::u:n:y:g:p:AG:I:qMRT::P::O:Nc:B:"
-      "L:Z:E:C:D:S:j:k:X:";
+      "L:Z:E:C:D:S:j:k:F:X:";
    int arg;
    char arg_str[MAXLINE];	/* Args as string for syslog */
    int options_index=0;
@@ -459,6 +464,8 @@ main(int argc, char *argv[]) {
          case 'k':	/* --transid */
             ike_params.trans_id = strtoul(optarg, (char **)NULL, 0);
             break;
+         case 'F':	/* --idfile */
+            break;
          case 'X':	/* --experimental */
             experimental_value = strtoul(optarg, (char **)NULL, 10);
             break;
@@ -594,6 +601,8 @@ main(int argc, char *argv[]) {
       if ((sockfd = socket(AF_INET, SOCK_STREAM, 0)) < 0)
          err_sys("ERROR: socket");
       if ((setsockopt(sockfd, IPPROTO_TCP, TCP_NODELAY, &on, sizeof(on))) < 0)
+         err_sys("ERROR: setsockopt() failed");
+      if ((setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &on, sizeof(on))) < 0) 
          err_sys("ERROR: setsockopt() failed");
    } else {
       const int on = 1;	/* for setsockopt() */
@@ -2167,11 +2176,8 @@ load_backoff_patterns(const char *patfile, unsigned pattern_fuzz) {
 void
 add_pattern(char *line, unsigned pattern_fuzz) {
    char *cp;
-   char *np;
-   char *pp;
    char name[MAXLINE];
    char pat[MAXLINE];
-   int tabseen;
    pattern_list *pe;	/* Pattern entry */
    pattern_list *p;	/* Temp pointer */
    pattern_entry_list *te;
@@ -2183,6 +2189,50 @@ add_pattern(char *line, unsigned pattern_fuzz) {
    char back_usec_str[7];       /* Backoff microseconds as string */
    int len;
    unsigned fuzz;	/* Pattern matching fuzz in ms */
+   static const char *backoff_pat_str = "([^\t]+)\t[\t ]*([^\t\n]+)";
+   static regex_t backoff_pat;
+   static int first_call=1;
+   regmatch_t pmatch[4];
+   int result;
+   int name_len;
+   int pat_len;
+/*
+ *	Compile the regex if this is the first call.
+ *	Die if we cannot compile the regex.
+ */
+   if (first_call) {
+      first_call = 0;
+      if ((result=regcomp(&backoff_pat, backoff_pat_str, REG_EXTENDED))) {
+         char errbuf[MAXLINE];
+         size_t errlen;
+         errlen=regerror(result, &backoff_pat, errbuf, MAXLINE);
+         err_msg("ERROR: cannot compile regex pattern \"%s\": %s",
+                 backoff_pat_str, errbuf);
+      }
+   }
+/*
+ *	Separate line from patterns file into "name" and "pat" using the
+ *	regex pattern.
+ *	Issue a warning if we cannot parse the line.  Die if we get a regex
+ *	error. 
+ */
+   result = regexec(&backoff_pat, line, 4, pmatch, 0);
+   if (result == REG_NOMATCH || pmatch[1].rm_so < 0 ||
+       line+pmatch[2].rm_so < 0) {
+      warn_msg("WARNING: Could not parse backoff pattern: %s", line);
+      return;
+   } else if (result != 0) {
+      char errbuf[MAXLINE];
+      size_t errlen;
+      errlen=regerror(result, &backoff_pat, errbuf, MAXLINE);
+      err_msg("ERROR: backoff pattern match regexec failed: %s", errbuf);
+   }
+   name_len = pmatch[1].rm_eo - pmatch[1].rm_so;
+   pat_len = pmatch[2].rm_eo - pmatch[2].rm_so;
+   strncpy(name, line+pmatch[1].rm_so, name_len);
+   name[name_len] = '\0';
+   strncpy(pat, line+pmatch[2].rm_so, pat_len);
+   pat[pat_len] = '\0';
 /*
  *	Allocate new pattern list entry and add to tail of patlist.
  */
@@ -2197,26 +2247,6 @@ add_pattern(char *line, unsigned pattern_fuzz) {
          p = p->next;
       p->next = pe;
    }
-/*
- *	Separate line from patterns file into name and pattern.
- */
-   tabseen = 0;
-   cp = line;
-   np = name;
-   pp = pat;
-   while (*cp != '\0' && *cp != '\n') {
-      if (*cp == '\t') {
-         tabseen++;
-         cp++;
-      }
-      if (tabseen) {
-         *pp++ = *cp++;
-      } else {
-         *np++ = *cp++;
-      }
-   }
-   *np = '\0';
-   *pp = '\0';
 /*
  *	Copy name into malloc'ed storage and set pl->name to point to this.
  */
@@ -2366,35 +2396,52 @@ load_vid_patterns(const char *vidfile) {
 void
 add_vid_pattern(char *line) {
    char *cp;
-   char *np;
-   char *pp;
    regex_t *rep;	/* Compiled regex */
    char name[MAXLINE];
    char pat[MAXLINE];
-   int tabseen;
    vid_pattern_list *pe;     /* Pattern entry */
    vid_pattern_list *p;      /* Temp pointer */
    int result;
+   static const char *vid_pat_str = "([^\t]+)\t[\t ]*([^\t\n]+)";
+   static regex_t vid_pat;
+   static int first_call=1;
+   regmatch_t pmatch[4];
+   int name_len;
+   int pat_len;
+/*
+ *      Compile the regex if this is the first call.
+ *      Die if we cannot compile the regex.
+ */
+   if (first_call) {
+      first_call = 0;
+      if ((result=regcomp(&vid_pat, vid_pat_str, REG_EXTENDED))) {
+         char errbuf[MAXLINE];
+         size_t errlen;
+         errlen=regerror(result, &vid_pat, errbuf, MAXLINE);
+         err_msg("ERROR: cannot compile regex pattern \"%s\": %s",
+                 vid_pat_str, errbuf);
+      }
+   }
 /*
  *	Separate line from VID patterns file into name and pattern.
  */
-   tabseen = 0;
-   cp = line;
-   np = name;
-   pp = pat;
-   while (*cp != '\0' && *cp != '\n') {
-      if (*cp == '\t') {
-         tabseen++;
-         cp++;
-      }
-      if (tabseen) {
-         *pp++ = *cp++;
-      } else {
-         *np++ = *cp++;
-      }
+   result = regexec(&vid_pat, line, 4, pmatch, 0);
+   if (result == REG_NOMATCH || pmatch[1].rm_so < 0 ||
+       line+pmatch[2].rm_so < 0) {
+      warn_msg("WARNING: Could not parse vendor id pattern: %s", line);
+      return;
+   } else if (result != 0) {
+      char errbuf[MAXLINE];
+      size_t errlen;
+      errlen=regerror(result, &vid_pat, errbuf, MAXLINE);
+      err_msg("ERROR: vendor id pattern match regexec failed: %s", errbuf);
    }
-   *np = '\0';
-   *pp = '\0';
+   name_len = pmatch[1].rm_eo - pmatch[1].rm_so;
+   pat_len = pmatch[2].rm_eo - pmatch[2].rm_so;
+   strncpy(name, line+pmatch[1].rm_so, name_len);
+   name[name_len] = '\0';
+   strncpy(pat, line+pmatch[2].rm_so, pat_len);
+   pat[pat_len] = '\0';
 /*
  *      Process and store the Vendor ID pattern.
  *	The pattern in the file is a Posix extended regular expression which is
