@@ -93,8 +93,9 @@ Firewall-1 NG AI R54	^f4ed19e0c114eb516faaac0ee37daf2807b4381f000000010000138c00
 Firewall-1 NG AI R55	^f4ed19e0c114eb516faaac0ee37daf2807b4381f000000010000138d0000000000000000....0000
 Firewall-1 Unknown Vsn	^f4ed19e0c114eb516faaac0ee37daf2807b4381f
 
-# Dead Peer Detection, detailed in RFC 3706.
+# Dead Peer Detection (DPD), detailed in RFC 3706.
 # Last 2 bytes (4 hex chars) are major & minor version.
+# Current version is 1.0.
 # Thanks to Hakan Olsson for clarifing this.
 Dead Peer Detection	^afcad71368a1f1c96b8696fc7757....
 
@@ -153,7 +154,8 @@ SafeNet SoftRemote	^47bbe7c993f1fc13b4e6d0db565c68e5
 # HeartBeat Notify.
 # VID is ASCII "HeartBeat_Notify"
 # Extra data has been observed at the end of this VID payload.  It is
-# suspected that this may be a version number.
+# suspected that this may be a version number.  E.g:
+# 4865617274426561745f4e6f74696679386b0100
 Heartbeat Notify	^4865617274426561745f4e6f74696679
 
 OpenPGP	^4f70656e5047503130313731
@@ -171,22 +173,28 @@ SSH Sentinel 1.3	^7ee5cb85f71ce259c94a5c731ee4e752
 SSH Sentinel 1.4	^63d9a1a7009491b5a0a6fdeb2a8284f0
 SSH Sentinel 1.4.1	^eb4b0d96276b4e220ad16221a7b2a5e6
 
+# Timestep VID is ASCII "TIMESTEP" (54494d4553544550) followed by further
+# ASCII characters which seem to indicate a version number.  e.g:
+# 54494d455354455020312053475720313532302033313520322e303145303133
+# which is "TIMESTEP 1 SGW 1520 315 2.01E013"
 Timestep	^54494d4553544550
+
 # VID is MD5 hash of "KAME/racoon"
 KAME/racoon	^7003cbc1097dbe9c2600ba6983bc8b35
 
-# Negotiation of NAT-Traversal in the IKE - Currently IETF draft.
+# Negotiation of NAT-Traversal in the IKE - previously IETF draft, now RFC.
 # The VID is the MD5 hash of the implementation name given below.
 # The trailing newline (\n) on one entry is explained in
 # http://www.sandelman.ottawa.on.ca/ipsec/2002/04/msg00233.html
-# If this becomes an RFC, the VID should be an MD5 hash of "RFC XXXX"
-# Where XXXX will be the RFC number that is assigned.
+# Jan 2005: RFC released as RFC 3947 "Negotiation of NAT-Traversal in the IKE"
+# VID is MD5 hash of "RFC 3947"
 draft-ietf-ipsec-nat-t-ike-00	^4485152d18b6bbcd0be8a8469579ddcc
 draft-ietf-ipsec-nat-t-ike-01	^16f6ca16e4a4066d83821a0f0aeaa862
 draft-ietf-ipsec-nat-t-ike-02\n	^90cb80913ebb696e086381b5ec427b1f
 draft-ietf-ipsec-nat-t-ike-02	^cd60464335df21f87cfdb2fc68b6a448
 draft-ietf-ipsec-nat-t-ike-03	^7d9419a65310ca6f2c179d9215529d56
 Testing NAT-T RFC	^c40fee00d5d39ddb1fc762e09b7cfea7
+RFC 3947 NAT-T	^4a131c81070358455c5728f20e95452f
 
 # A GSS-API Authentication Method for IKE - draft-ietf-ipsec-isakmp-gss-auth
 # This is used by Windows 2000 and later.  Specific Windows VIDs are in a
@@ -202,7 +210,8 @@ GSSAPI	^621b04bb09882ac1e15935fefa24aeee
 # Nortel Contivity VPN Router (was Bay Networks Enterprise Switch)
 # The first 4 bytes are ASCII "BNES" (Bay Networks Enterprise Switch)
 # The second 4 bytes appear to be a version number in big endian format.
-# I've seen values 00000007, 00000009 and 0000000a in this position.
+# I've seen values 00000004, 00000005, 00000007, 00000009 and 0000000a in
+# this position.
 Nortel Contivity	^424e4553000000..
 
 # Observed to be sent from SonicWall Firewalls
@@ -239,6 +248,50 @@ draft-krywaniuk-ipsec-antireplay-00	^325df29a2319f2dd
 # "draft-ietf-krywaniuk-ipsec-heartbeats-00.txt"
 # but it is not.
 draft-ietf-ipsec-heartbeats-00	^8db7a41811221660
+
+# MacOS X
+# Unconfirmed, from StrongSwan vendor.c
+MacOS 10.x	^4d6163204f53582031302e78
+
+# StrongSwan
+# VID is MD5 hash of "strongSwan x.y.z" where x.y.z is version number
+# Obtained from StrongSwan vendor.c
+StrongSwan 2.2.0	^86f9f547c5d3ba6720dce9ccd17ac0c2
+StrongSwan 2.2.1	^8dfbb1ebec630f0efe557a7f3e13cd36
+StrongSwan 2.2.2	^8a6903daeb705b35d2eac3fb1a62551c
+StrongSwan 2.3.0	^bb14bc5527a2a8289eeb25149d5f661b
+StrongSwan 2.3.1	^6b75fd64516a6cb6441fedd0c6b4e2b1
+StrongSwan 2.3.2	^56546e1ff761fcb1cc7fb0f1fee978ea
+StrongSwan 2.4.0	^20f0af7152332de372e9394138e0253a
+StrongSwan 2.4.1	^486b3d5c7365a47a10df811660e5894e
+
+# ZyXEL ZyWALL router
+# Observed on several devices.  HTTP interface shows that they are XyWALL
+# I suspect that this VID is an SHA-1 hash of something because of the length
+XyXEL ZyWALL Router	^b858d1addd08c1e8adafea150608aa4497aa6cc8
+
+# Microsoft Initial Contact
+# VID is MD5 hash of "Vid-Initial-Contact"
+Microsoft Initial-Contact	^26244d38eddb61b3172a36e3d0cfb819
+
+# FreeS/WAN and Openswan
+# VID is a 12-byte printable string.  The first two bytes are "OE", which
+# stands for "Opportunistic Encryption" (the FreeS/WAN designers were
+# enthusiastic about opportunistic encryption); the remaining twn bytes are
+# a truncated, "ASCIIfied" MD5 hash of the implementation name given below.
+# The "ASCIIfication" process involves clearing bit 7 and setting bit 6 in
+# each byte, thus constraining the range to 64-127 inclusive.
+# I think that support for this VID was added in FreeS/WAN 2.00, and carried
+# over into openswan 2.x.
+Linux FreeS/WAN 2.00	^4f45486b7d44784d42676b5d
+Linux FreeS/WAN 2.01	^4f457c4f547e6e615b426e56
+Linux FreeS/WAN 2.02	^4f456c6b44696d7f6b4c4e60
+Linux FreeS/WAN 2.03	^4f45566671474962734e6264
+Linux FreeS/WAN 2.04	^4f45704f736579505c6e5f6d
+Linux FreeS/WAN 2.05	^4f457271785f4c7e496f4d54
+Linux FreeS/WAN 2.06	^4f457e4c466e5d427c5c6b52
+Openswan 2.2.0	^4f4548724b6e5e68557c604f
+Openswan 2.3.0	^4f4572696f5c77557f746249
 
 # Other things I've seen but not fully classified yet.
 # If anyone can confirm any of these, please let me know.
