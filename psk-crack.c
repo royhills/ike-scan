@@ -69,7 +69,7 @@ main (int argc, char *argv[]) {
    FILE *dictionary_file=NULL;	/* Dictionary file, one word per line */
    FILE *data_file;	/* PSK parameters in colon separated format */
    IKE_UINT64 iterations=0;
-   int found=0;
+   int found;
    struct timeval start_time;	/* Program start time */
    struct timeval end_time;	/* Program end time */
    struct timeval elapsed_time; /* Elapsed time as timeval */
@@ -226,6 +226,7 @@ main (int argc, char *argv[]) {
 
    while ((fgets(psk_data, MAXLEN, data_file)) != NULL) {
 
+      found=0;
       n=sscanf(psk_data,
                "%[^:]:%[^:]:%[^:]:%[^:]:%[^:]:%[^:]:%[^:]:%[^:]:%[^:\r\n]",
                g_xr_hex, g_xi_hex, cky_r_hex, cky_i_hex, sai_b_hex,
