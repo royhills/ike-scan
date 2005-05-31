@@ -1,5 +1,128 @@
 $Id$
 
+2005-05-31 Roy Hills <Roy.Hills@nta-monitor.com>
+
+	* psk-crack.c: Fixed error which caused psk-crack to incorrectly report
+	  PSKs after finding a valid one, when processing multiple PSK records.
+	  Solution was to ensure that "found" is cleared on every loop
+	  iteration.  Thanks to Daniel Lucq for finding this bug and suggesting
+	  the solution.
+
+2005-05-20 Roy Hills <Roy.Hills@nta-monitor.com>
+
+	* ike-scan.c: Check return value from sendto() against size of
+	  packet, and warn if they are different (meaning that not all of
+	  the packet was sent).  I've seen this occur when using TCP
+	  encapsulation to send huge packets (which fragment into many TCP
+	  segments), and the VPN server sends a RST back.
+
+2005-05-12 Roy Hills <Roy.Hills@nta-monitor.com>
+
+	* ike-scan.c: Use POSIX regex to split both the backoff pattern and
+	  vendor id pattern entries into name and pattern in functions
+	  add_pattern() and add_vid_pattern().  Previously, we manually
+	  stepped through the strings using pointers.  POSIX regex is more
+	  complex, but it allows for more flexible and precise matching.
+
+	* ike-scan.c: Add SO_REUSEADDR option to TCP soacket when performing
+	  TCP scanning (--tcp option).
+
+	* ike-vendor-ids: Added 16 new Vendor IDs, and revised some comments
+	  on existing entries.
+
+2005-04-20 Roy Hills <Roy.Hills@nta-monitor.com>
+
+	* isakmp.c: Don't try to decode the SA in the returned packet if
+	  it contains more than one transform.  This cannot happen during
+	  normal scanning, because the VPN server will only return one
+	  transform, but can occur if you scan your own host, and ike-scan
+	  sees its own packets which contain multiple transforms.
+
+2005-04-09 Roy Hills <Roy.Hills@nta-monitor.com>
+
+	* ike-scan.c: Modified usage() so that it can output either brief or
+	  detailed help output depending on a new "detailed" argument.  Now,
+	  detailed output, including information on the available options, is
+	  only displayed when ike-scan is run with the --help option.  For
+	  error conditions such as incorrect options, it only produces brief
+	  output.
+
+2005-03-19 Roy Hills <Roy.Hills@nta-monitor.com>
+
+	* ike-scan.c: Changed initialise_ike_packet() function to use the
+	  struct ike_packet_params rather than taking the various parameters
+	  as seperate arguments, as the argument count for this function was
+	  up to 15 and growing (c89 std only guarantees up to 31 I believe).
+	  Also removed some unecessary global varables and placed these in
+	  the new struct, which currently contains 18 members.
+
+	* ike-scan.c: Added --doi (-D) and --situation (-S) options to allow
+	  the DOI and Situation in the SA of the outbound packets to be changed
+	  from the default of DOI_IPSEC and SIT_IDENTITY_ONLY.
+
+	* ike-scan.c: Added --protocol (-j) and --transid (-k) options to
+	  allow the proposal protocol and transform id of the outbound packets
+	  to be changed from the defaults.
+
+2005-03-10 Roy Hills <Roy.Hills@nta-monitor.com>
+
+	* ike-scan.c, isakmp.c: Improved decoding of Certificate and
+	  CertificateRequest payloads.  These used to be decoded as
+	  generic payloads, but now include the certificate type in the
+	  decode output.
+
+	* ike-scan.c: Added --certreq (-C) option to add a
+	  CertificateRequest payload to the outgoing packet.
+
+2005-03-09 Roy Hills <Roy.Hills@nta-monitor.com>
+
+	* ike-scan.c: Added --headerlen (-L) option to allow the ISAKMP header
+	  length to be manually specified.  Normally, ike-scan will
+	  automatically calculate the correct length; however, you can use this
+	  option if you want to use an incorrect length value instead.
+
+	* ike-scan.c, isakmp.c: Added --mbz (-Z) option to allow the value for
+	  the reserved (MBZ) fields to be set to non-zero values.  Doing so
+	  will make the outgoing packet non-RFC compliant.
+
+	* ike-scan.c, isakmp.c: Added --headerver (-E) option to allow the
+	  version field in the ISAKMP header to be altered from the default of
+	  0x10 (v1.0).
+
+2005-02-21 Roy Hills <Roy.Hills@nta-monitor.com>
+
+	* ike-scan.c: Drop root privileges after binding the local port if we
+	  are running SUID.  We don't need enhanced privileges after this
+	  point, and having effective UID root can cause problems on NFS
+	  filesystems where the root user is squashed to nobody and we need
+	  to write a PSK parameters file.
+
+2005-02-18 Roy Hills <Roy.Hills@nta-monitor.com>
+
+	* ike-scan.c: Make errors from gethostbyname or inet_aton when adding
+	  hosts non-fatal.  Now these errors elicit a warning and cause the
+	  offending target to be ignored, but processing continues.
+	  Thanks to Tony Lloyd for finding this bug.
+
+	* ike-scan.h, ike-scan.c, isakmp.c: Change structure definitions to
+	  typedefs.  i.e. change "struct foo {defs};" to
+	  typedef strct {defs} foo;".
+
+	* ike-scan.h: Added extra data structure to the host entry structure.
+	  This is designed to allow arbitary extra data, such as an id string
+	  or a transform specification, to be attached to a host entry.
+
+2005-02-15 Roy Hills <Roy.Hills@nta-monitor.com>
+
+	* ike-scan.c: Added --bandwidth (-B) option to allow the outgoing
+	  bandwidth to be specified directly instead of using --interval.
+	  The --bandwidth option calculates the appropriate interval setting,
+	  taking into account the size of the packet.
+
+	* ike-scan.c: Added --noncelen (-c) option to allow the length of the
+	  nonce data to be changed.  This is only applicable to aggressive
+	  mode.
+
 2005-02-14 Roy Hills <Roy.Hills@nta-monitor.com>
 
 	* psk-crack.1: Updated psk-crack manpage to reflect current usage.  The
