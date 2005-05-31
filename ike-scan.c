@@ -1395,6 +1395,7 @@ send_packet(int s, unsigned char *packet_out, size_t packet_out_len,
             struct timeval *last_packet_time) {
    struct sockaddr_in sa_peer;
    NET_SIZE_T sa_peer_len;
+   int nsent;
    struct isakmp_hdr *hdr = (struct isakmp_hdr *) packet_out;
 /*
  *	Set up the sockaddr_in structure for the host.
@@ -1417,7 +1418,7 @@ send_packet(int s, unsigned char *packet_out, size_t packet_out_len,
    he->last_send_time.tv_usec = last_packet_time->tv_usec;
    he->num_sent++;
 /*
- *	Experimental Cisco TCP encapsulation.
+ *	Cisco TCP encapsulation.
  */
    if (tcp_flag == TCP_PROTO_ENCAP) {
       unsigned char *orig_packet_out = packet_out;
@@ -1459,12 +1460,16 @@ send_packet(int s, unsigned char *packet_out, size_t packet_out_len,
    if (verbose > 1)
       warn_msg("---\tSending packet #%u to host entry %u (%s) tmo %d us",
                he->num_sent, he->n, inet_ntoa(he->addr), he->timeout);
-   if ((sendto(s, packet_out, packet_out_len, 0, (struct sockaddr *) &sa_peer,
-       sa_peer_len)) < 0) {
+   nsent = sendto(s, packet_out, packet_out_len, 0,
+                  (struct sockaddr *) &sa_peer, sa_peer_len);
+   if (nsent < 0) {
       err_sys("ERROR: sendto");
+   } else if (nsent != packet_out_len) {
+      warn_msg("WARNING: sendto: only %d bytes sent, but %u requested",
+               nsent, packet_out_len);
    }
 /*
- *	Experimental Cisco TCP encapsulation.
+ *	Cisco TCP encapsulation.
  */
    if (tcp_flag == TCP_PROTO_ENCAP) {
       free(packet_out);
