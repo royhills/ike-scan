@@ -33,8 +33,9 @@
 # match the petterns.
 #
 # The hex value of the Vendor ID can only contain the characters [0-9a-f].
-# The regular expression match is case insensitive, so you can use either
-# upper or lower case letters [A-F] in the pattern.
+# The regular expression match is case insensitive so you can use either
+# upper or lower case letters [A-F] in the pattern, although I recommend that
+# you use only lower-case for consistency.
 #
 # The pattern is not anchored by default.  If you want to match from the
 # beginning of the vendor ID hex value (which is normally the case), you
@@ -43,6 +44,7 @@
 # the pattern with "$" to anchor it at the end of the hex value.
 #
 # Each entry must be on one line.  A line can be up to 254 characters long.
+# To allow for longer lines, adjust the MAXLINE macro in ike-scan.h
 #
 # Lines beginning with '#' and blank lines are ignored.
 #
@@ -133,8 +135,10 @@ SSH IPSEC Express 5.1.1	^5925859f7377ed7816d2fb81c01fa551
 # Cisco Unity compliant peer. VID is the MD5 hash of "CISCO-UNITY"
 Cisco Unity	^12f5f28c457168a9702d9fe274cc0100
 
-# I've seen this pattern with a trailing 500400 and also with a trailing
-# 500306.  Perhaps the last 3 bytes (6 hex character) are a version number?
+# I've seen this pattern with trailing 500306 and 500400.  I suspect that
+# the last two bytes indicate the version number, e.g 0306 = 3.0.6.  However,
+# I need more examples before I'm confident that this is the case, so for
+# now I'm just including the generic pattern.
 Cisco VPN Concentrator	^1f07f70eaa6514d3b0fa96542a
 
 # IKE Fragmentation.  VID is the MD5 hash of the text "FRAGMENTATION"
@@ -292,6 +296,11 @@ Linux FreeS/WAN 2.05	^4f457271785f4c7e496f4d54
 Linux FreeS/WAN 2.06	^4f457e4c466e5d427c5c6b52
 Openswan 2.2.0	^4f4548724b6e5e68557c604f
 Openswan 2.3.0	^4f4572696f5c77557f746249
+
+# OpenPGP
+# VID starts with ASCII "OpenPGP".  This is generally followed by some extra
+# data, e.g. "OpenPGP10171", but we don't match that.
+OpenPGP	^4f70656e504750
 
 # Other things I've seen but not fully classified yet.
 # If anyone can confirm any of these, please let me know.
