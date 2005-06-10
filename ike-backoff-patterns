@@ -94,7 +94,8 @@ Firewall-1 4.0	0, 3, 3, 3, 3, 6, 6, 6, 6, 6, 6, 6
 # Observed on: Checkpoint Firewall-1 4.1 SP6 on Windows NT Server 4.0 SP6a
 # Observed on: Checkpoint Firewall-1 NG base on Windows NT Server 4.0 SP6a
 # Observed on: Checkpoint Firewall-1 NG FP2 on Windows NT Server 4.0 SP6a
-Firewall-1 4.1/NG	0, 2, 2, 2, 2, 2, 2, 4, 4, 4, 4, 4
+# Observed on: Checkpoint Firewall-1 NGX R60 on Windows 2003 Server
+Firewall-1 4.1/NG/NGX	0, 2, 2, 2, 2, 2, 2, 4, 4, 4, 4, 4
 
 # Discovered by: Roy Hills, December 2002
 # Observed on: FreeS/WAN 1.9 on Debian Linux 2.2r7 (Potato) with 2.2.17 Kernel
