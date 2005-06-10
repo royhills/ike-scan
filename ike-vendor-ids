@@ -73,26 +73,30 @@ Windows-2003	^1e2b516905991c7d7c96fcbfb587e461000000040d000014
 #  1-20		Checkpoint VID (Probably an SHA1 hash of something)
 # 21-24		Product (1=Firewall-1, 2=SecuRemote/SecureClient)
 # 25-28		Product Version number
-# 29-32		Reserved
-# 33-36		Reserved
+# 29-32		Reserved1
+# 33-36		Reserved2
 # 37-40		Features
 #
 # Firewall-1 v4.0 didn't use Vendor IDs.  v3.0 and below didn't support IPsec.
+#
+# The Reserved1 field is zero for 4.1 to NG AI R55, and non-zero for NGX R60.
+# The meaning for this field for NGX is not fully understood.
 #
 # Firewall-1 only returns this Vendor ID if you send a Vendor ID payload
 # starting with the Checkpoint VID "f4ed19e0c114eb516faaac0ee37daf2807b4381f"
 # in the ike-scan packet.
 #
 # See http://www.nta-monitor.com/news/checkpoint2004/index.htm for full details
-Firewall-1 4.1 Base	^f4ed19e0c114eb516faaac0ee37daf2807b4381f00000001000000020000000000000000....0000
-Firewall-1 4.1 SP1	^f4ed19e0c114eb516faaac0ee37daf2807b4381f00000001000000030000000000000000....0000
-Firewall-1 4.1 SP2-SP6	^f4ed19e0c114eb516faaac0ee37daf2807b4381f0000000100000fa20000000000000000....0000
-Firewall-1 NG Base	^f4ed19e0c114eb516faaac0ee37daf2807b4381f00000001000013880000000000000000....0000
-Firewall-1 NG FP1	^f4ed19e0c114eb516faaac0ee37daf2807b4381f00000001000013890000000000000000....0000
-Firewall-1 NG FP2	^f4ed19e0c114eb516faaac0ee37daf2807b4381f000000010000138a0000000000000000....0000
-Firewall-1 NG FP3	^f4ed19e0c114eb516faaac0ee37daf2807b4381f000000010000138b0000000000000000....0000
-Firewall-1 NG AI R54	^f4ed19e0c114eb516faaac0ee37daf2807b4381f000000010000138c0000000000000000....0000
-Firewall-1 NG AI R55	^f4ed19e0c114eb516faaac0ee37daf2807b4381f000000010000138d0000000000000000....0000
+Firewall-1 4.1 Base	^f4ed19e0c114eb516faaac0ee37daf2807b4381f00000001000000020000000000000000........
+Firewall-1 4.1 SP1	^f4ed19e0c114eb516faaac0ee37daf2807b4381f00000001000000030000000000000000........
+Firewall-1 4.1 SP2-SP6	^f4ed19e0c114eb516faaac0ee37daf2807b4381f0000000100000fa20000000000000000........
+Firewall-1 NG Base	^f4ed19e0c114eb516faaac0ee37daf2807b4381f00000001000013880000000000000000........
+Firewall-1 NG FP1	^f4ed19e0c114eb516faaac0ee37daf2807b4381f00000001000013890000000000000000........
+Firewall-1 NG FP2	^f4ed19e0c114eb516faaac0ee37daf2807b4381f000000010000138a0000000000000000........
+Firewall-1 NG FP3	^f4ed19e0c114eb516faaac0ee37daf2807b4381f000000010000138b0000000000000000........
+Firewall-1 NG AI R54	^f4ed19e0c114eb516faaac0ee37daf2807b4381f000000010000138c0000000000000000........
+Firewall-1 NG AI R55	^f4ed19e0c114eb516faaac0ee37daf2807b4381f000000010000138d0000000000000000........
+Firewall-1 NGX	^f4ed19e0c114eb516faaac0ee37daf2807b4381f000000010000138d........00000000........
 Firewall-1 Unknown Vsn	^f4ed19e0c114eb516faaac0ee37daf2807b4381f
 
 # Dead Peer Detection (DPD), detailed in RFC 3706.
