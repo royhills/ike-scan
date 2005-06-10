@@ -82,9 +82,11 @@ Windows-2003	^1e2b516905991c7d7c96fcbfb587e461000000040d000014
 # The Reserved1 field is zero for 4.1 to NG AI R55, and non-zero for NGX R60.
 # The meaning for this field for NGX is not fully understood.
 #
-# Firewall-1 only returns this Vendor ID if you send a Vendor ID payload
-# starting with the Checkpoint VID "f4ed19e0c114eb516faaac0ee37daf2807b4381f"
-# in the ike-scan packet.
+# Firewall-1 4.1 and NG only returns this Vendor ID if you send a Vendor ID
+# payload starting with the Checkpoint VID
+# "f4ed19e0c114eb516faaac0ee37daf2807b4381f" in the ike-scan packet.
+# Firewall-1 NGX always returns this Vendor ID, regardless of whether the
+# client sends the Checkpoint VID or not.
 #
 # See http://www.nta-monitor.com/news/checkpoint2004/index.htm for full details
 Firewall-1 4.1 Base	^f4ed19e0c114eb516faaac0ee37daf2807b4381f00000001000000020000000000000000........
