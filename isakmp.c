@@ -767,6 +767,7 @@ skip_payload(unsigned char *cp, size_t *len, unsigned *next) {
  *	len	Packet length remaining
  *	next	Next payload type.
  *	type	Exchange type
+ *	cookie	Responder cookie as hex string
  *
  *	Returns:
  *
@@ -774,7 +775,7 @@ skip_payload(unsigned char *cp, size_t *len, unsigned *next) {
  */
 unsigned char *
 process_isakmp_hdr(unsigned char *cp, size_t *len, unsigned *next,
-                   unsigned *type) {
+                   unsigned *type, char **cookie) {
    struct isakmp_hdr *hdr = (struct isakmp_hdr *) cp;
 /*
  *	Signal no more payloads by setting length to zero if:
@@ -788,6 +789,7 @@ process_isakmp_hdr(unsigned char *cp, size_t *len, unsigned *next,
    if (*len < sizeof(struct isakmp_hdr) ||
        ntohl(hdr->isa_length) < sizeof(struct isakmp_hdr) ||
        hdr->isa_np == ISAKMP_NEXT_NONE) {
+      *cookie = NULL;
       *len=0;
       *next=ISAKMP_NEXT_NONE;
       *type=ISAKMP_XCHG_NONE;
@@ -797,6 +799,7 @@ process_isakmp_hdr(unsigned char *cp, size_t *len, unsigned *next,
  *	There is another payload after this one, so adjust length and
  *	return pointer to next payload.
  */
+   *cookie = hexstring((unsigned char *)hdr->isa_rcookie, 8);
    *len = *len - sizeof(struct isakmp_hdr);
    *next = hdr->isa_np;
    *type = hdr->isa_xchg;
@@ -813,6 +816,7 @@ process_isakmp_hdr(unsigned char *cp, size_t *len, unsigned *next,
  *	type	Exchange type.
  *	quiet	Only print the basic info if nonzero
  *	multiline	Split decodes across lines if nonzero
+ *	cookie	The responder cookie as a hex string
  *
  *	Returns:
  *
@@ -823,7 +827,7 @@ process_isakmp_hdr(unsigned char *cp, size_t *len, unsigned *next,
  */
 char *
 process_sa(unsigned char *cp, size_t len, unsigned type, int quiet,
-           int multiline) {
+           int multiline, char *cookie) {
    struct isakmp_sa *sa_hdr = (struct isakmp_sa *) cp;
    struct isakmp_proposal *prop_hdr =
       (struct isakmp_proposal *) (cp + sizeof(struct isakmp_sa));
@@ -851,6 +855,15 @@ process_sa(unsigned char *cp, size_t len, unsigned type, int quiet,
       msg = make_message("Aggressive Mode Handshake returned");
    } else {
       msg = make_message("UNKNOWN Mode Handshake returned (%u)", type);
+   }
+/*
+ *	If quiet is not in effect, add the responder's cookie to the message.
+ */
+   if (!quiet) {
+      msg2 = msg;
+      msg = make_message("%s%sHDR=(CKY-R=%s)", msg2, multiline?"\n\t":" ",
+                         cookie);
+      free(msg2);
    }
 /*
  *	We should have exactly one transform in the server's response.
@@ -1120,6 +1133,9 @@ process_vid(unsigned char *cp, size_t len, vid_pattern_list *vidlist) {
  *
  *	cp	Pointer to start of notify payload
  *	len	Packet length remaining
+ *	quiet	Only print the basic info if nonzero
+ *	multiline	Split decodes across lines if nonzero
+ *	cookie	The responder cookie as a hex string
  *
  *	Returns:
  *
@@ -1129,9 +1145,11 @@ process_vid(unsigned char *cp, size_t len, vid_pattern_list *vidlist) {
  *	which should be free'ed by the caller when it's no longer needed.
  */
 char *
-process_notify(unsigned char *cp, size_t len) {
+process_notify(unsigned char *cp, size_t len, int quiet, int multiline,
+               char *cookie) {
    struct isakmp_notification *hdr = (struct isakmp_notification *) cp;
    char *msg;
+   char *msg2;
    unsigned msg_type;
    size_t msg_len;
    unsigned char *msg_data;
@@ -1190,6 +1208,15 @@ process_notify(unsigned char *cp, size_t len) {
    } else {			/* All other Message Types */
       msg=make_message("Notify message %u (%s)", msg_type,
                        id_to_name(msg_type, notification_map));
+   }
+/*
+ *	If quiet is not in effect, add the responder's cookie to the message.
+ */
+   if (!quiet) {
+      msg2 = msg;
+      msg = make_message("%s%sHDR=(CKY-R=%s)", msg2, multiline?"\n\t":" ",
+                         cookie);
+      free(msg2);
    }
 
    return msg;
