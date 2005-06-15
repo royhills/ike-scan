@@ -67,28 +67,42 @@ Windows-XP	^1e2b516905991c7d7c96fcbfb587e4610000000300000000
 Windows-2003	^1e2b516905991c7d7c96fcbfb587e461000000040d000014
 
 # Checkpoint Firewall-1/VPN-1
+#
+# Firewall-1 v4.0 didn't use Vendor IDs.  v3.0 and below didn't support IPsec.
+#
 # This is a 40-byte Vendor ID, which consists of the following fields:
 #
 # Bytes		Description
 #  1-20		Checkpoint VID (Probably an SHA1 hash of something)
 # 21-24		Product (1=Firewall-1, 2=SecuRemote/SecureClient)
-# 25-28		Product Version number
-# 29-32		Reserved1
-# 33-36		Reserved2
+# 25-28		Encoded Version number
+# 29-32		Timestamp (NGX only; always zero in 4.1 or NG)
+# 33-36		Reserved
 # 37-40		Features
 #
-# Firewall-1 v4.0 didn't use Vendor IDs.  v3.0 and below didn't support IPsec.
+# The Checkpoint VID is "f4ed19e0c114eb516faaac0ee37daf2807b4381f".  This
+# looks like an SHA1 hash.
 #
-# The Reserved1 field is zero for 4.1 to NG AI R55, and non-zero for NGX R60.
-# The meaning for this field for NGX is not fully understood.
+# The Product is either 1 (0x00000001) for Firewall-1/VPN-1 or 2 (0x00000002)
+# for SecuRemote/SecureClient (Checkpoint's VPN client).
 #
-# Firewall-1 4.1 and NG only returns this Vendor ID if you send a Vendor ID
-# payload starting with the Checkpoint VID
-# "f4ed19e0c114eb516faaac0ee37daf2807b4381f" in the ike-scan packet.
-# Firewall-1 NGX always returns this Vendor ID, regardless of whether the
-# client sends the Checkpoint VID or not.
+# The encoded version number is described in the URL below.
+#
+# The timestamp field contains the Firewall's date and time encoded as seconds
+# since 1st Jan 1970 (standard Unix epoch).  Only NGX fills this in; it is
+# always zero on 4.1 and NG.
+#
+# The first byte of the features field contains the number of bits used.  This
+# is normally 0x18 (24).  The remaining three bytes (24 bits) are feature
+# flags.
+#
+# Firewall-1 4.1 and NG only returns a Vendor ID if you send a Vendor ID
+# payload starting with the Checkpoint VID. Firewall-1 NGX always returns
+# a Vendor ID, regardless of whether the client sends the Checkpoint VID
+# or not.
 #
 # See http://www.nta-monitor.com/news/checkpoint2004/index.htm for full details
+#
 Firewall-1 4.1 Base	^f4ed19e0c114eb516faaac0ee37daf2807b4381f00000001000000020000000000000000........
 Firewall-1 4.1 SP1	^f4ed19e0c114eb516faaac0ee37daf2807b4381f00000001000000030000000000000000........
 Firewall-1 4.1 SP2-SP6	^f4ed19e0c114eb516faaac0ee37daf2807b4381f0000000100000fa20000000000000000........
