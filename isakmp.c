@@ -867,7 +867,8 @@ process_sa(unsigned char *cp, size_t len, unsigned type, int quiet,
    }
 /*
  *	We should have exactly one transform in the server's response.
- *	If there is not one transform, then add this fact to the message.
+ *	If there is not exactly one transform, then add this fact to the
+ *	message.  This normally means that we've received our own output.
  */
    if (prop_hdr->isap_notrans != 1) {
       msg2 = msg;
@@ -884,9 +885,20 @@ process_sa(unsigned char *cp, size_t len, unsigned type, int quiet,
       msg2 = msg;
       msg = make_message("%s%sSA=(", msg2, multiline?"\n\t":" ");
       free(msg2);
-      attr_ptr = (cp + sizeof(struct isakmp_sa) + sizeof(struct isakmp_proposal) +
+      if (prop_hdr->isap_spisize != 0) {	/* Non-Zero SPI */
+         msg2 = msg;
+         msg3 = hexstring(cp + sizeof(struct isakmp_sa) +
+                          sizeof(struct isakmp_proposal),
+                          prop_hdr->isap_spisize);
+         msg = make_message("%sSPI=%s ", msg2, msg3);
+         free(msg2);
+         free(msg3);
+      }
+      attr_ptr = (cp + sizeof(struct isakmp_sa) +
+                  sizeof(struct isakmp_proposal) + prop_hdr->isap_spisize +
                   sizeof(struct isakmp_transform));
-      safelen -= sizeof(struct isakmp_sa) + sizeof(struct isakmp_proposal) +
+      safelen -= sizeof(struct isakmp_sa) +
+                 sizeof(struct isakmp_proposal) + prop_hdr->isap_spisize +
                  sizeof(struct isakmp_transform);
 
       while (safelen) {
