@@ -1268,7 +1268,7 @@ display_packet(int n, unsigned char *packet_in, host_entry *he,
    char *msg;			/* Message to display */
    char *msg2;
    unsigned char *pkt_ptr;
-
+   char *cookie;		/* Responder cookie as hex string */
 /*
  *	Set msg to the IP address of the host entry, plus the address of the
  *	responder if different, and a tab.
@@ -1287,7 +1287,7 @@ display_packet(int n, unsigned char *packet_in, host_entry *he,
    bytes_left = n;	/* Set remaining length to total packet len */
    if (psk_crack_flag)
       add_psk_crack_payload(packet_in, 0, 'X');
-   pkt_ptr = process_isakmp_hdr(packet_in, &bytes_left, &next, &type);
+   pkt_ptr = process_isakmp_hdr(packet_in, &bytes_left, &next, &type, &cookie);
    if (!bytes_left) {
       printf("%sShort or malformed ISAKMP packet returned: %d bytes\n",
              msg, n);
@@ -1302,17 +1302,18 @@ display_packet(int n, unsigned char *packet_in, host_entry *he,
          if (psk_crack_flag)
             add_psk_crack_payload(pkt_ptr, next, 'R');
          (*sa_responders)++;
-         cp = process_sa(pkt_ptr, bytes_left, type, quiet, multiline);
+         cp = process_sa(pkt_ptr, bytes_left, type, quiet, multiline, cookie);
          break;
       case ISAKMP_NEXT_N:	/* Notify */
          (*notify_responders)++;
-         cp = process_notify(pkt_ptr, bytes_left);
+         cp = process_notify(pkt_ptr, bytes_left, quiet, multiline, cookie);
          break;
       default:			/* Something else */
          cp=make_message("Unexpected IKE payload returned: %s",
                          id_to_name(next, payload_map));
          break;
    }
+   free(cookie);	/* Don't need the responder cookie hex string now */
    pkt_ptr = skip_payload(pkt_ptr, &bytes_left, &next);
    msg2=msg;
    msg=make_message("%s%s", msg, cp);
