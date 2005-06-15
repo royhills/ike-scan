@@ -224,6 +224,8 @@ main(int argc, char *argv[]) {
    int multiline=0;		/* Split decodes across lines if nonzero */
    int hostno;
    unsigned bandwidth=0;	/* Bandwidth in bits per sec, or zero */
+   struct sigaction sigusr1_act;
+   struct sigaction sigusr1_oact;
 /*
  *	Open syslog channel and log arguments if required.
  *	We must be careful here to avoid overflowing the arg_str buffer
@@ -708,6 +710,13 @@ main(int argc, char *argv[]) {
          dump_backoff(pattern_fuzz);
       dump_vid();
    }
+/*
+ *      Set signal handler for sig_usr1.
+ */
+      sigusr1_act.sa_handler=sig_usr1;
+      sigemptyset(&sigusr1_act.sa_mask);
+      sigusr1_act.sa_flags=0;
+      sigaction(SIGUSR1,&sigusr1_act,&sigusr1_oact);
 /*
  *	Main loop: send packets to all hosts in order until a response
  *	has been received or the host has exhausted its retry limit.
@@ -1506,7 +1515,11 @@ recvfrom_wto(int s, unsigned char *buf, size_t len, struct sockaddr *saddr,
    to.tv_usec = (tmo - 1000000*to.tv_sec);
    n = select(s+1, &readset, NULL, NULL, &to);
    if (n < 0) {
-      err_sys("ERROR: select");
+      if (errno == EINTR) {
+         return -1;	/* Handle "Interrupted System call" as timeout */
+      } else {
+         err_sys("ERROR: select");
+      }
    } else if (n == 0) {
       return -1;	/* Timeout */
    }
@@ -2909,4 +2922,22 @@ usage(int status, int detailed) {
    fprintf(stderr, "Report bugs or send suggestions to %s\n", PACKAGE_BUGREPORT);
    fprintf(stderr, "See the ike-scan homepage at http://www.nta-monitor.com/ike-scan/\n");
    exit(status);
+}
+
+/*
+ *      sig_usr1 -- Signal handler for SIGUSR1
+ *
+ *      Inputs:
+ *
+ *      signo           The signal number (ignored)
+ *
+ *      Returns:
+ *
+ *      None.
+ *
+ *      This function is used as the signal handler for SIGUSR1.
+ */
+void sig_usr1(int signo) {
+   printf("\tCaught signal %d\n", signo);
+   return;
 }

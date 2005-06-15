@@ -378,6 +378,7 @@ char *printable(unsigned char*, size_t);
 char *hexstring(unsigned char*, size_t);
 void print_times(void);
 void sig_alarm(int);
+void sig_usr1(int);
 unsigned char *hmac_md5(const unsigned char *, size_t,
                         const unsigned char *, size_t, unsigned char *);
 unsigned char *hmac_sha1(const unsigned char *, size_t,
