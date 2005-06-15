@@ -2937,7 +2937,12 @@ usage(int status, int detailed) {
  *
  *      This function is used as the signal handler for SIGUSR1.
  */
-void sig_usr1(int signo) {
-   printf("\tCaught signal %d\n", signo);
+void
+sig_usr1(int signo) {
+   fprintf(stderr, "no=%u (%s), li=%u, s=%u, r=%u, last=%lu.%.6lu\n",
+           (*cursor)->n, inet_ntoa((*cursor)->addr), (*cursor)->live,
+           (*cursor)->num_sent, (*cursor)->num_recv,
+           (unsigned long)(*cursor)->last_send_time.tv_sec,
+           (unsigned long)(*cursor)->last_send_time.tv_usec);
    return;
 }
