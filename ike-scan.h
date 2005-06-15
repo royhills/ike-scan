@@ -362,11 +362,11 @@ void decode_trans(char *, unsigned *, unsigned *, unsigned *, unsigned *,
                   unsigned *);
 unsigned char *skip_payload(unsigned char *, size_t *, unsigned *);
 unsigned char *process_isakmp_hdr(unsigned char *, size_t *, unsigned *,
-                                  unsigned *);
-char *process_sa(unsigned char *, size_t, unsigned, int, int);
+                                  unsigned *, char **);
+char *process_sa(unsigned char *, size_t, unsigned, int, int, char *);
 char *process_attr(unsigned char **, size_t *);
 char *process_vid(unsigned char *, size_t, vid_pattern_list *);
-char *process_notify(unsigned char *, size_t);
+char *process_notify(unsigned char *, size_t, int, int, char *);
 char *process_id(unsigned char *, size_t);
 char *process_cert(unsigned char *, size_t, unsigned next);
 void print_payload(unsigned char *cp, unsigned payload, int);
