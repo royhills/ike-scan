@@ -113,8 +113,11 @@ make_sa_hdr(unsigned next, unsigned length, unsigned doi, unsigned situation) {
  *
  *	Inputs:
  *
+ *	outlen	(output) Proposal payload length
  *	length	Proposal payload length
  *	notrans	Number of transforms in this proposal
+ *	protocol
+ *	spi_size
  *
  *	Returns:
  *
@@ -128,21 +131,33 @@ make_sa_hdr(unsigned next, unsigned length, unsigned doi, unsigned situation) {
  *	multiple Proposal Payloads for a single SA payload and there MUST NOT
  *	be multiple SA payloads."
  */
-struct isakmp_proposal*
-make_prop(unsigned length, unsigned notrans, unsigned protocol) {
+unsigned char*
+make_prop(size_t *outlen, unsigned length, unsigned notrans,
+          unsigned protocol, unsigned spi_size) {
+   unsigned char *payload;
    struct isakmp_proposal* hdr;
+   unsigned char *cp;
+   int i;
 
-   hdr = Malloc(sizeof(struct isakmp_proposal));
+   payload = Malloc(sizeof(struct isakmp_proposal)+spi_size);
+   hdr = (struct isakmp_proposal*) payload;	/* Overlay */
    memset(hdr, mbz_value, sizeof(struct isakmp_proposal));
 
    hdr->isap_np = 0;			/* No more proposals */
    hdr->isap_length = htons(length);	/* Proposal payload length */
    hdr->isap_proposal = 1;		/* Proposal #1 */
    hdr->isap_protoid = protocol;
-   hdr->isap_spisize = 0;		/* No SPI */
+   hdr->isap_spisize = spi_size;	/* SPI Size */
    hdr->isap_notrans = notrans;		/* Number of transforms */
 
-   return hdr;
+   if (spi_size > 0) {
+      cp = payload+sizeof(struct isakmp_proposal);
+      for (i=0; i<spi_size; i++)
+         *(cp++) = (unsigned char) (rand() & 0xff);
+   }
+   *outlen = sizeof(struct isakmp_proposal) + spi_size;
+
+   return payload;
 }
 
 /*
