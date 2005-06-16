@@ -170,6 +170,7 @@ unsigned char *SHA1(const unsigned char *, size_t, unsigned char *);
 #define TCP_PROTO_RAW 1			/* Raw IKE over TCP (Checkpoint) */
 #define TCP_PROTO_ENCAP 2		/* Encapsulated IKE over TCP (cisco) */
 #define PACKET_OVERHEAD 28		/* 20 bytes for IP hdr + 8 for UDP */
+#define OPT_SPISIZE 256
 #undef DEBUG_TIMINGS			/* Define to 1 to debug timing code */
 /*
  * If ALPHA is defined, then it is used as the smoothing factor for the
@@ -271,7 +272,7 @@ typedef struct {		/* Used for encapsulated IKE */
 /*
  * If you change the ordering of the members in this struct, then you must
  * also change the initialisation of ike_params in main() in ike-scan.c to
- * confirm to the new order.
+ * conform to the new order.
  */
 typedef struct {	/* IKE Packet Parameters */
    unsigned lifetime;
@@ -296,6 +297,7 @@ typedef struct {	/* IKE Packet Parameters */
    unsigned situation;	/* SA Situation */
    unsigned protocol;	/* Proposal protocol */
    unsigned trans_id;	/* Transform ID */
+   unsigned spi_size;	/* Proposal SPI Size */
 } ike_packet_params;
 
 /* Functions */
@@ -337,7 +339,7 @@ unsigned char* hex2data(const char *, size_t *);
 unsigned char* hex_or_str(const char *, size_t *);
 struct isakmp_hdr* make_isakmp_hdr(unsigned, unsigned, unsigned, int);
 struct isakmp_sa* make_sa_hdr(unsigned, unsigned, unsigned, unsigned);
-struct isakmp_proposal* make_prop(unsigned, unsigned, unsigned);
+unsigned char* make_prop(size_t *, unsigned, unsigned, unsigned, unsigned);
 unsigned char* make_trans(size_t *, unsigned, unsigned, unsigned,
                           unsigned, unsigned, unsigned, unsigned,
                           unsigned, unsigned, int, unsigned char *, size_t,
