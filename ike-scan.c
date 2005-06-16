@@ -132,6 +132,7 @@ main(int argc, char *argv[]) {
       {"protocol", required_argument, 0, 'j'},
       {"transid", required_argument, 0, 'k'},
       {"idfile", required_argument, 0, 'F'},
+      {"spisize", required_argument, 0, OPT_SPISIZE},
       {"experimental", required_argument, 0, 'X'},
       {0, 0, 0, 0}
    };
@@ -159,28 +160,29 @@ main(int argc, char *argv[]) {
    unsigned end_wait = 1000 * DEFAULT_END_WAIT; /* Time to wait after all done in ms */
    unsigned timeout = DEFAULT_TIMEOUT;	/* Per-host timeout in ms */
    ike_packet_params ike_params = {
-      DEFAULT_LIFETIME,	/* Lifetime in seconds */
-      DEFAULT_LIFESIZE,	/* Lifesize in KB */
+      DEFAULT_LIFETIME,		/* Lifetime in seconds */
+      DEFAULT_LIFESIZE,		/* Lifesize in KB */
       DEFAULT_AUTH_METHOD,	/* Authentication method */
       DEFAULT_DH_GROUP,		/* Diffie Hellman Group */
       DEFAULT_IDTYPE,		/* IKE Identification type */
-      NULL,	/* Identity data */
-      0,	/* Identity data length */
-      0,	/* Indicates if VID to be used */
-      0,		/* Indicates custom transform */
-      DEFAULT_EXCHANGE_TYPE, /* Main or Aggressive mode */
-      0,		/* Indicates if GSSID to be used */
-      NULL,	/* Binary GSSID data */
-      0,	/* GSSID data length */
+      NULL,			/* Identity data */
+      0,			/* Identity data length */
+      0,			/* Indicates if VID to be used */
+      0,			/* Indicates custom transform */
+      DEFAULT_EXCHANGE_TYPE, 	/* Main or Aggressive mode */
+      0,			/* Indicates if GSSID to be used */
+      NULL,			/* Binary GSSID data */
+      0,			/* GSSID data length */
       DEFAULT_NONCE_LEN,	/* Nonce data length */
-      NULL,		/* ISAKMP header length modifier */
-      NULL,		/* Cert req. data */
+      NULL,			/* ISAKMP header length modifier */
+      NULL,			/* Cert req. data */
       0,			/* cd_data_len */
-      DEFAULT_HEADER_VERSION,		/* header_version */
+      DEFAULT_HEADER_VERSION,	/* header_version */
       DEFAULT_DOI,		/* SA DOI */
       DEFAULT_SITUATION,	/* SA Situation */
       DEFAULT_PROTOCOL,		/* Proposal Protocol ID */
-      DEFAULT_TRANS_ID		/* Transform ID */
+      DEFAULT_TRANS_ID,		/* Transform ID */
+      0				/* Proposal SPI Size */
    };
    unsigned pattern_fuzz = DEFAULT_PATTERN_FUZZ; /* Pattern matching fuzz in ms */
    unsigned tcp_connect_timeout = DEFAULT_TCP_CONNECT_TIMEOUT;
@@ -467,6 +469,9 @@ main(int argc, char *argv[]) {
             ike_params.trans_id = strtoul(optarg, (char **)NULL, 0);
             break;
          case 'F':	/* --idfile */
+            break;
+         case OPT_SPISIZE:	/* --spisize */
+            ike_params.spi_size=strtoul(optarg, (char **)NULL, 10);
             break;
          case 'X':	/* --experimental */
             experimental_value = strtoul(optarg, (char **)NULL, 10);
@@ -1591,7 +1596,7 @@ unsigned char *
 initialise_ike_packet(size_t *packet_out_len, ike_packet_params *params) {
    struct isakmp_hdr *hdr;
    struct isakmp_sa *sa;
-   struct isakmp_proposal *prop;
+   unsigned char *prop;
    unsigned char *transforms;	/* All transforms */
    unsigned char *certreq=NULL;
    unsigned char *vid=NULL;
@@ -1601,6 +1606,7 @@ initialise_ike_packet(size_t *packet_out_len, ike_packet_params *params) {
    unsigned char *cp;
    unsigned char *packet_out;	/* Constructed IKE packet */
    unsigned char *sa_cp=NULL;	/* For experimental payload printing XXXXX */
+   size_t prop_len;
    size_t certreq_len;
    size_t vid_len;
    size_t trans_len;
@@ -1747,14 +1753,15 @@ initialise_ike_packet(size_t *packet_out_len, ike_packet_params *params) {
 /*
  *	Proposal payload
  */
-   prop = make_prop(trans_len+sizeof(struct isakmp_proposal), no_trans,
-                    params->protocol);
-   *packet_out_len += sizeof(struct isakmp_proposal);
+   prop = make_prop(&prop_len,
+                    trans_len+sizeof(struct isakmp_proposal)+params->spi_size,
+                    no_trans, params->protocol, params->spi_size);
+   *packet_out_len += prop_len;
 /*
  *	SA Header
  */
    sa = make_sa_hdr(next_payload, trans_len+
-                    sizeof(struct isakmp_proposal)+
+                    prop_len+
                     sizeof(struct isakmp_sa),
                     params->doi, params->situation);
    *packet_out_len += sizeof(struct isakmp_sa);
@@ -1795,9 +1802,9 @@ initialise_ike_packet(size_t *packet_out_len, ike_packet_params *params) {
    memcpy(cp, sa, sizeof(struct isakmp_sa));
    free(sa);
    cp += sizeof(struct isakmp_sa);
-   memcpy(cp, prop, sizeof(struct isakmp_proposal));
+   memcpy(cp, prop, prop_len);
    free(prop);
-   cp += sizeof(struct isakmp_proposal);
+   cp += prop_len;
    memcpy(cp, transforms, trans_len);
    free(transforms);
    cp += trans_len;
@@ -2915,6 +2922,10 @@ usage(int status, int detailed) {
       fprintf(stderr, "\t\t\tYou will not normally want to change this unless you\n");
       fprintf(stderr, "\t\t\twant to see how the VPN server responds to a\n");
       fprintf(stderr, "\t\t\tnon-standard transform ID.\n");
+      fprintf(stderr, "\n--spisize=<n>\t\tSet the proposal SPI size to <n>.  Default=0\n");
+      fprintf(stderr, "\t\t\tIf this is non-zero, then a random SPI of the\n");
+      fprintf(stderr, "\t\t\tspecified size will be added to the proposal payload.\n");
+      fprintf(stderr, "\t\t\tThe default of zero means no SPI.\n");
    } else {
       fprintf(stderr, "use \"ike-scan --help\" for detailed information on the available options.\n");
    }
