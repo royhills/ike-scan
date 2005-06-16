@@ -152,7 +152,8 @@ SSH IPSEC Express 5.0.0	^2b2dad97c4d140930053287f996850b0
 SSH IPSEC Express 5.1.0	^45e17f3abe93944cb202910c59ef806b
 SSH IPSEC Express 5.1.1	^5925859f7377ed7816d2fb81c01fa551
 
-# Cisco Unity compliant peer. VID is the MD5 hash of "CISCO-UNITY"
+# Cisco Unity compliant peer. VID is the MD5 hash of "CISCO-UNITY" with
+# the last two bytes replaced with 0x0100
 Cisco Unity	^12f5f28c457168a9702d9fe274cc0100
 
 # I've seen this pattern with trailing 500306 and 500400.  I suspect that
@@ -217,6 +218,12 @@ draft-ietf-ipsec-nat-t-ike-01	^16f6ca16e4a4066d83821a0f0aeaa862
 draft-ietf-ipsec-nat-t-ike-02\n	^90cb80913ebb696e086381b5ec427b1f
 draft-ietf-ipsec-nat-t-ike-02	^cd60464335df21f87cfdb2fc68b6a448
 draft-ietf-ipsec-nat-t-ike-03	^7d9419a65310ca6f2c179d9215529d56
+draft-ietf-ipsec-nat-t-ike-04	^9909b64eed937c6573de52ace952fa6b
+draft-ietf-ipsec-nat-t-ike-05	^80d0bb3def54565ee84645d4c85ce3ee
+draft-ietf-ipsec-nat-t-ike-06	^4d1e0e136deafa34c4f3ea9f02ec7285
+draft-ietf-ipsec-nat-t-ike-07	^439b59f8ba676c4c7737ae22eab8f582
+draft-ietf-ipsec-nat-t-ike-08	^8f8d83826d246b6fc7a8a6a428c11de8
+draft-ietf-ipsec-nat-t-ike-09	^42ea5b6f898d9773a575df26e7dd19e1
 Testing NAT-T RFC	^c40fee00d5d39ddb1fc762e09b7cfea7
 RFC 3947 NAT-T	^4a131c81070358455c5728f20e95452f
 
