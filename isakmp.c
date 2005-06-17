@@ -1413,6 +1413,45 @@ process_cert(unsigned char *cp, size_t len, unsigned next) {
 }
 
 /*
+ *	process_delete -- Process Delete Payload
+ *
+ *	Inputs:
+ *
+ *	cp	Pointer to start of Delete payload
+ *	len	Packet length remaining
+ *
+ *	Returns:
+ *
+ *	Pointer to Delete description string.
+ *
+ *	The description string pointer returned points to malloc'ed storage
+ *	which should be free'ed by the caller when it's no longer needed.
+ */
+char *
+process_delete(unsigned char *cp, size_t len) {
+   struct isakmp_delete *hdr = (struct isakmp_delete *) cp;
+   char *msg;
+   char *hex_spi;
+   unsigned char *delete_spi;
+   size_t spi_len;
+
+   if (len < sizeof(struct isakmp_delete) ||
+        ntohs(hdr->isad_length) < sizeof(struct isakmp_delete))
+      return make_message("Delete (packet too short to decode)");
+
+   delete_spi = cp + sizeof(struct isakmp_delete);
+   spi_len = ntohs(hdr->isad_length) < len ? ntohs(hdr->isad_length) : len;
+   spi_len -= sizeof(struct isakmp_delete);
+
+   hex_spi = hexstring(delete_spi, spi_len);
+   msg=make_message("Delete=(SPI Size=%u, SPI Count=%u, SPI Data=%s)",
+                    hdr->isad_spisize, ntohs(hdr->isad_nospi), hex_spi);
+   free(hex_spi);
+
+   return msg;
+}
+
+/*
  *	print_payload -- Print an ISAKMP payload in hex
  *
  *	Inputs:
