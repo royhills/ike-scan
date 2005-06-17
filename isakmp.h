@@ -388,6 +388,35 @@ struct isakmp_notification
 
 extern struct_desc isakmp_notification_desc;
 
+/* ISAKMP Delete Payload
+ * layout from draft-ietf-ipsec-isakmp-09.txt section 3.15
+ * This is followed by a variable length SPI.
+ * Previous next payload: ISAKMP_NEXT_D
+ *                      1                   2                   3
+ *  0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+ * +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+ * ! Next Payload  !   RESERVED    !         Payload Length        !
+ * +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+ * !              Domain of Interpretation  (DOI)                  !
+ * +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+ * !  Protocol-Id  !   SPI Size    !           # of SPIs           !
+ * +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+ * !                                                               !
+ * ~               Security Parameter Index(es) (SPI)              ~
+ * !                                                               !
+ * +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+ */
+struct isakmp_delete
+{
+    u_int8_t    isad_np;
+    u_int8_t    isad_reserved;
+    u_int16_t   isad_length;
+    u_int32_t   isad_doi;
+    u_int8_t    isad_protoid;
+    u_int8_t    isad_spisize;
+    u_int16_t   isad_nospi;
+};
+
 /*
  *	Vendor ID (VID) payload - header only
  */
