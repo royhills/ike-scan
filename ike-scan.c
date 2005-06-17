@@ -1358,6 +1358,12 @@ display_packet(int n, unsigned char *packet_in, host_entry *he,
             msg=make_message("%s%s%s", msg2, multiline?"\n\t":" ", cp);
             free(msg2);	/* Free old message */
             free(cp);	/* Free Cert payload message */
+         } else if (next == ISAKMP_NEXT_D) {
+            msg2=msg;
+            cp = process_delete(pkt_ptr, bytes_left);
+            msg=make_message("%s%s%s", msg2, multiline?"\n\t":" ", cp);
+            free(msg2);	/* Free old message */
+            free(cp);	/* Free payload message */
          } else {
             if (psk_crack_flag)
                add_psk_crack_payload(pkt_ptr, next, 'R');
@@ -2950,10 +2956,21 @@ usage(int status, int detailed) {
  */
 void
 sig_usr1(int signo) {
-   fprintf(stderr, "no=%u (%s), li=%u, s=%u, r=%u, last=%lu.%.6lu\n",
-           (*cursor)->n, inet_ntoa((*cursor)->addr), (*cursor)->live,
-           (*cursor)->num_sent, (*cursor)->num_recv,
-           (unsigned long)(*cursor)->last_send_time.tv_sec,
-           (unsigned long)(*cursor)->last_send_time.tv_usec);
+   struct timeval now;
+   struct timeval diff;
+   host_entry *he;
+
+   he = *cursor;
+   Gettimeofday(&now);
+   timeval_diff(&now, &(he->last_send_time), &diff);
+
+   fprintf(stderr,
+           "no=%u (%s), li=%u, s=%u, r=%u, last=%lu.%.6lu (%lu.%.6lu)\n",
+           he->n, inet_ntoa(he->addr), he->live,
+           he->num_sent, he->num_recv,
+           (unsigned long)he->last_send_time.tv_sec,
+           (unsigned long)he->last_send_time.tv_usec,
+           (unsigned long)diff.tv_sec,
+           (unsigned long)diff.tv_usec);
    return;
 }
