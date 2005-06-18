@@ -1444,7 +1444,7 @@ process_delete(unsigned char *cp, size_t len) {
    spi_len -= sizeof(struct isakmp_delete);
 
    hex_spi = hexstring(delete_spi, spi_len);
-   msg=make_message("Delete=(SPI Size=%u, SPI Count=%u, SPI Data=%s)",
+   msg=make_message("Delete=(SPI_Size=%u, SPI_Count=%u, SPI_Data=%s)",
                     hdr->isad_spisize, ntohs(hdr->isad_nospi), hex_spi);
    free(hex_spi);
 
