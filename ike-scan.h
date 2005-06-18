@@ -316,7 +316,8 @@ void send_packet(int, unsigned char *, size_t, host_entry *, unsigned,
                  struct timeval *);
 int recvfrom_wto(int, unsigned char *, size_t, struct sockaddr *, int);
 void remove_host(host_entry **, unsigned *, unsigned);
-void timeval_diff(struct timeval *, struct timeval *, struct timeval *);
+void timeval_diff(const struct timeval *, const struct timeval *,
+                  struct timeval *);
 unsigned char *initialise_ike_packet(size_t *, ike_packet_params *);
 host_entry *find_host_by_cookie(host_entry **, unsigned char *,
                                        int, unsigned);
