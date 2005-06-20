@@ -226,8 +226,6 @@ main(int argc, char *argv[]) {
    int multiline=0;		/* Split decodes across lines if nonzero */
    int hostno;
    unsigned bandwidth=0;	/* Bandwidth in bits per sec, or zero */
-   struct sigaction sigusr1_act;
-   struct sigaction sigusr1_oact;
 /*
  *	Open syslog channel and log arguments if required.
  *	We must be careful here to avoid overflowing the arg_str buffer
@@ -716,13 +714,6 @@ main(int argc, char *argv[]) {
       dump_vid();
    }
 /*
- *      Set signal handler for sig_usr1.
- */
-      sigusr1_act.sa_handler=sig_usr1;
-      sigemptyset(&sigusr1_act.sa_mask);
-      sigusr1_act.sa_flags=0;
-      sigaction(SIGUSR1,&sigusr1_act,&sigusr1_oact);
-/*
  *	Main loop: send packets to all hosts in order until a response
  *	has been received or the host has exhausted its retry limit.
  *
@@ -748,7 +739,7 @@ main(int argc, char *argv[]) {
  *	potentially send a packet to the current host.
  */
       timeval_diff(&now, &last_packet_time, &diff);
-      loop_timediff = 1000000*diff.tv_sec + diff.tv_usec;
+      loop_timediff = (IKE_UINT64)1000000*diff.tv_sec + diff.tv_usec;
       if (loop_timediff >= req_interval) {
 /*
  *	If the last packet to this host was sent more than the current
@@ -756,7 +747,7 @@ main(int argc, char *argv[]) {
  *	to it.
  */
          timeval_diff(&now, &((*cursor)->last_send_time), &diff);
-         host_timediff = 1000000*diff.tv_sec + diff.tv_usec;
+         host_timediff = (IKE_UINT64)1000000*diff.tv_sec + diff.tv_usec;
          if (host_timediff >= (*cursor)->timeout && (*cursor)->live) {
             if (reset_cum_err) {
                s_err = 0;
@@ -794,7 +785,8 @@ main(int argc, char *argv[]) {
                remove_host(cursor, &live_count, num_hosts);	/* Automatically calls advance_cursor() */
                if (first_timeout) {
                   timeval_diff(&now, &((*cursor)->last_send_time), &diff);
-                  host_timediff = 1000000*diff.tv_sec + diff.tv_usec;
+                  host_timediff = (IKE_UINT64)1000000*diff.tv_sec +
+                                  diff.tv_usec;
                   while (host_timediff >= (*cursor)->timeout && live_count) {
                      if ((*cursor)->live) {
                         if (verbose > 1)
@@ -805,7 +797,8 @@ main(int argc, char *argv[]) {
                         advance_cursor(live_count, num_hosts);
                      }
                      timeval_diff(&now, &((*cursor)->last_send_time), &diff);
-                     host_timediff = 1000000*diff.tv_sec + diff.tv_usec;
+                     host_timediff = (IKE_UINT64)1000000*diff.tv_sec +
+                                     diff.tv_usec;
                   }
                   first_timeout=0;
                }
@@ -2939,38 +2932,4 @@ usage(int status, int detailed) {
    fprintf(stderr, "Report bugs or send suggestions to %s\n", PACKAGE_BUGREPORT);
    fprintf(stderr, "See the ike-scan homepage at http://www.nta-monitor.com/ike-scan/\n");
    exit(status);
-}
-
-/*
- *      sig_usr1 -- Signal handler for SIGUSR1
- *
- *      Inputs:
- *
- *      signo           The signal number (ignored)
- *
- *      Returns:
- *
- *      None.
- *
- *      This function is used as the signal handler for SIGUSR1.
- */
-void
-sig_usr1(int signo) {
-   struct timeval now;
-   struct timeval diff;
-   host_entry *he;
-
-   he = *cursor;
-   Gettimeofday(&now);
-   timeval_diff(&now, &(he->last_send_time), &diff);
-
-   fprintf(stderr,
-           "no=%u (%s), li=%u, s=%u, r=%u, last=%lu.%.6lu (%lu.%.6lu)\n",
-           he->n, inet_ntoa(he->addr), he->live,
-           he->num_sent, he->num_recv,
-           (unsigned long)he->last_send_time.tv_sec,
-           (unsigned long)he->last_send_time.tv_usec,
-           (unsigned long)diff.tv_sec,
-           (unsigned long)diff.tv_usec);
-   return;
 }
