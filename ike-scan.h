@@ -171,6 +171,8 @@ unsigned char *SHA1(const unsigned char *, size_t, unsigned char *);
 #define TCP_PROTO_ENCAP 2		/* Encapsulated IKE over TCP (cisco) */
 #define PACKET_OVERHEAD 28		/* 20 bytes for IP hdr + 8 for UDP */
 #define OPT_SPISIZE 256
+#define OPT_HDRFLAGS 257
+#define OPT_HDRMSGID 258
 #undef DEBUG_TIMINGS			/* Define to 1 to debug timing code */
 /*
  * If ALPHA is defined, then it is used as the smoothing factor for the
@@ -298,6 +300,8 @@ typedef struct {	/* IKE Packet Parameters */
    unsigned protocol;	/* Proposal protocol */
    unsigned trans_id;	/* Transform ID */
    unsigned spi_size;	/* Proposal SPI Size */
+   int hdr_flags;	/* ISAKMP Header flags */
+   unsigned hdr_msgid;	/* ISAKMP Header message id */
 } ike_packet_params;
 
 /* Functions */
@@ -338,7 +342,8 @@ void dump_vid(void);
 unsigned int hstr_i(const char *);
 unsigned char* hex2data(const char *, size_t *);
 unsigned char* hex_or_str(const char *, size_t *);
-struct isakmp_hdr* make_isakmp_hdr(unsigned, unsigned, unsigned, int);
+struct isakmp_hdr* make_isakmp_hdr(unsigned, unsigned, unsigned, int, int,
+                                   unsigned);
 struct isakmp_sa* make_sa_hdr(unsigned, unsigned, unsigned, unsigned);
 unsigned char* make_prop(size_t *, unsigned, unsigned, unsigned, unsigned);
 unsigned char* make_trans(size_t *, unsigned, unsigned, unsigned,
