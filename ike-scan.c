@@ -473,16 +473,16 @@ main(int argc, char *argv[]) {
          case 'F':	/* --idfile */
             break;
          case OPT_SPISIZE:	/* --spisize */
-            ike_params.spi_size=strtoul(optarg, (char **)NULL, 10);
+            ike_params.spi_size=strtoul(optarg, (char **)NULL, 0);
             break;
          case OPT_HDRFLAGS:	/* --hdrflags */
-            ike_params.hdr_flags=strtoul(optarg, (char **)NULL, 10);
+            ike_params.hdr_flags=strtoul(optarg, (char **)NULL, 0);
             break;
          case OPT_HDRMSGID:	/* --hdrmsgid */
-            ike_params.hdr_msgid=strtoul(optarg, (char **)NULL, 10);
+            ike_params.hdr_msgid=strtoul(optarg, (char **)NULL, 0);
             break;
          case 'X':	/* --experimental */
-            experimental_value = strtoul(optarg, (char **)NULL, 10);
+            experimental_value = strtoul(optarg, (char **)NULL, 0);
             break;
          default:	/* Unknown option */
             usage(EXIT_FAILURE, 0);
