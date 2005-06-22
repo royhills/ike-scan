@@ -133,6 +133,8 @@ main(int argc, char *argv[]) {
       {"transid", required_argument, 0, 'k'},
       {"idfile", required_argument, 0, 'F'},
       {"spisize", required_argument, 0, OPT_SPISIZE},
+      {"hdrflags", required_argument, 0, OPT_HDRFLAGS},
+      {"hdrmsgid", required_argument, 0, OPT_HDRMSGID},
       {"experimental", required_argument, 0, 'X'},
       {0, 0, 0, 0}
    };
@@ -182,7 +184,9 @@ main(int argc, char *argv[]) {
       DEFAULT_SITUATION,	/* SA Situation */
       DEFAULT_PROTOCOL,		/* Proposal Protocol ID */
       DEFAULT_TRANS_ID,		/* Transform ID */
-      0				/* Proposal SPI Size */
+      0,			/* Proposal SPI Size */
+      0,			/* ISAKMP Header Flags */
+      0				/* ISAKMP Header Message ID */
    };
    unsigned pattern_fuzz = DEFAULT_PATTERN_FUZZ; /* Pattern matching fuzz in ms */
    unsigned tcp_connect_timeout = DEFAULT_TCP_CONNECT_TIMEOUT;
@@ -470,6 +474,12 @@ main(int argc, char *argv[]) {
             break;
          case OPT_SPISIZE:	/* --spisize */
             ike_params.spi_size=strtoul(optarg, (char **)NULL, 10);
+            break;
+         case OPT_HDRFLAGS:	/* --hdrflags */
+            ike_params.hdr_flags=strtoul(optarg, (char **)NULL, 10);
+            break;
+         case OPT_HDRMSGID:	/* --hdrmsgid */
+            ike_params.hdr_msgid=strtoul(optarg, (char **)NULL, 10);
             break;
          case 'X':	/* --experimental */
             experimental_value = strtoul(optarg, (char **)NULL, 10);
@@ -1786,10 +1796,12 @@ initialise_ike_packet(size_t *packet_out_len, ike_packet_params *params) {
          fake_header_len = strtoul(cp, (char **)NULL, 0);
       }
       hdr = make_isakmp_hdr(params->exchange_type, next_payload,
-                            fake_header_len, params->header_version);
+                            fake_header_len, params->header_version,
+                            params->hdr_flags, params->hdr_msgid);
    } else {		/* Use correct header length */
       hdr = make_isakmp_hdr(params->exchange_type, next_payload,
-                            *packet_out_len, params->header_version);
+                            *packet_out_len, params->header_version,
+                            params->hdr_flags, params->hdr_msgid);
    }
 /*
  *	Allocate packet and copy payloads into packet.
@@ -2928,6 +2940,10 @@ usage(int status, int detailed) {
       fprintf(stderr, "\t\t\tIf this is non-zero, then a random SPI of the\n");
       fprintf(stderr, "\t\t\tspecified size will be added to the proposal payload.\n");
       fprintf(stderr, "\t\t\tThe default of zero means no SPI.\n");
+      fprintf(stderr, "\n--hdrflags=<n>\t\tSet the ISAKMP header flags to <n>.  Default=0\n");
+      fprintf(stderr, "\t\t\tThe flags are detailed in RFC 2408 section 3.1\n");
+      fprintf(stderr, "\n--hdrmsgid=<n>\t\tSet the ISAKMP header message ID to <n>.  Default=0\n");
+      fprintf(stderr, "\t\t\tThis should be zero for IKE Phase-1.\n");
    } else {
       fprintf(stderr, "use \"ike-scan --help\" for detailed information on the available options.\n");
    }
