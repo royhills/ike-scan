@@ -782,7 +782,7 @@ skip_payload(unsigned char *cp, size_t *len, unsigned *next) {
  *	len	Packet length remaining
  *	next	Next payload type.
  *	type	Exchange type
- *	cookie	Responder cookie as hex string
+ *	hdr_descr	ISAKMP Header description string
  *
  *	Returns:
  *
@@ -790,8 +790,10 @@ skip_payload(unsigned char *cp, size_t *len, unsigned *next) {
  */
 unsigned char *
 process_isakmp_hdr(unsigned char *cp, size_t *len, unsigned *next,
-                   unsigned *type, char **cookie) {
+                   unsigned *type, char **hdr_descr) {
    struct isakmp_hdr *hdr = (struct isakmp_hdr *) cp;
+   char *msg;
+   char *msg2;
 /*
  *	Signal no more payloads by setting length to zero if:
  *
@@ -804,17 +806,41 @@ process_isakmp_hdr(unsigned char *cp, size_t *len, unsigned *next,
    if (*len < sizeof(struct isakmp_hdr) ||
        ntohl(hdr->isa_length) < sizeof(struct isakmp_hdr) ||
        hdr->isa_np == ISAKMP_NEXT_NONE) {
-      *cookie = NULL;
+      *hdr_descr = NULL;
       *len=0;
       *next=ISAKMP_NEXT_NONE;
       *type=ISAKMP_XCHG_NONE;
       return NULL;
    }
 /*
+ *	Create ISAKMP header description string.
+ */
+   msg2 = hexstring((unsigned char *)hdr->isa_rcookie, 8);
+   msg = make_message("HDR=(CKY-R=%s", msg2);
+   free(msg2);
+   if (hdr->isa_version != 0x10) {	/* Version not 1.0 */
+      msg2 = msg;
+      msg = make_message("%s, version=0x%.2x", msg2, hdr->isa_version);
+      free(msg2);
+   }
+   if (hdr->isa_flags != 0) {	/* Flags not 0 */
+      msg2 = msg;
+      msg = make_message("%s, flags=0x%.2x", msg2, hdr->isa_flags);
+      free(msg2);
+   }
+   if (hdr->isa_msgid != 0) {	/* Non-Zero msgid - should't happen */
+      msg2 = msg;
+      msg = make_message("%s, msgid=%.8x", msg2, ntohl(hdr->isa_msgid));
+      free(msg2);
+   }
+   msg2 = msg;
+   msg = make_message("%s)", msg2);
+   free(msg2);
+/*
  *	There is another payload after this one, so adjust length and
  *	return pointer to next payload.
  */
-   *cookie = hexstring((unsigned char *)hdr->isa_rcookie, 8);
+   *hdr_descr = msg;
    *len = *len - sizeof(struct isakmp_hdr);
    *next = hdr->isa_np;
    *type = hdr->isa_xchg;
@@ -831,7 +857,7 @@ process_isakmp_hdr(unsigned char *cp, size_t *len, unsigned *next,
  *	type	Exchange type.
  *	quiet	Only print the basic info if nonzero
  *	multiline	Split decodes across lines if nonzero
- *	cookie	The responder cookie as a hex string
+ *	hdr_descr	ISAKMP Header description string
  *
  *	Returns:
  *
@@ -842,7 +868,7 @@ process_isakmp_hdr(unsigned char *cp, size_t *len, unsigned *next,
  */
 char *
 process_sa(unsigned char *cp, size_t len, unsigned type, int quiet,
-           int multiline, char *cookie) {
+           int multiline, char *hdr_descr) {
    struct isakmp_sa *sa_hdr = (struct isakmp_sa *) cp;
    struct isakmp_proposal *prop_hdr =
       (struct isakmp_proposal *) (cp + sizeof(struct isakmp_sa));
@@ -872,12 +898,11 @@ process_sa(unsigned char *cp, size_t len, unsigned type, int quiet,
       msg = make_message("UNKNOWN Mode Handshake returned (%u)", type);
    }
 /*
- *	If quiet is not in effect, add the responder's cookie to the message.
+ *	If quiet is not in effect, add the ISAKMP header details to the message.
  */
    if (!quiet) {
       msg2 = msg;
-      msg = make_message("%s%sHDR=(CKY-R=%s)", msg2, multiline?"\n\t":" ",
-                         cookie);
+      msg = make_message("%s%s%s", msg2, multiline?"\n\t":" ", hdr_descr);
       free(msg2);
    }
 /*
@@ -1162,7 +1187,7 @@ process_vid(unsigned char *cp, size_t len, vid_pattern_list *vidlist) {
  *	len	Packet length remaining
  *	quiet	Only print the basic info if nonzero
  *	multiline	Split decodes across lines if nonzero
- *	cookie	The responder cookie as a hex string
+ *	hdr_descr	ISAKMP Header description string
  *
  *	Returns:
  *
@@ -1173,7 +1198,7 @@ process_vid(unsigned char *cp, size_t len, vid_pattern_list *vidlist) {
  */
 char *
 process_notify(unsigned char *cp, size_t len, int quiet, int multiline,
-               char *cookie) {
+               char *hdr_descr) {
    struct isakmp_notification *hdr = (struct isakmp_notification *) cp;
    char *msg;
    char *msg2;
@@ -1237,12 +1262,11 @@ process_notify(unsigned char *cp, size_t len, int quiet, int multiline,
                        id_to_name(msg_type, notification_map));
    }
 /*
- *	If quiet is not in effect, add the responder's cookie to the message.
+ *	If quiet is not in effect, add the ISAKMP header details to the message.
  */
    if (!quiet) {
       msg2 = msg;
-      msg = make_message("%s%sHDR=(CKY-R=%s)", msg2, multiline?"\n\t":" ",
-                         cookie);
+      msg = make_message("%s%s%s", msg2, multiline?"\n\t":" ", hdr_descr);
       free(msg2);
    }
 
