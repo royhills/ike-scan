@@ -59,7 +59,7 @@ extern const id_name_map payload_map[];
  */
 struct isakmp_hdr*
 make_isakmp_hdr(unsigned xchg, unsigned next, unsigned length,
-                int header_version) {
+                int header_version, int hdr_flags, unsigned hdr_msgid) {
    struct isakmp_hdr* hdr;
 
    hdr = Malloc(sizeof(struct isakmp_hdr));
@@ -72,8 +72,8 @@ make_isakmp_hdr(unsigned xchg, unsigned next, unsigned length,
    hdr->isa_np = next;			/* Next Payload Type */
    hdr->isa_version = header_version;	/* v1.0 by default */
    hdr->isa_xchg = xchg;		/* Exchange type */
-   hdr->isa_flags = 0;			/* No flags */
-   hdr->isa_msgid = 0;			/* MBZ for phase-1 */
+   hdr->isa_flags = hdr_flags;		/* Flags */
+   hdr->isa_msgid = htonl(hdr_msgid);	/* Message ID */
    hdr->isa_length = htonl(length);	/* Total ISAKMP message length */
 
    return hdr;
