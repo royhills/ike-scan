@@ -135,6 +135,7 @@ main(int argc, char *argv[]) {
       {"spisize", required_argument, 0, OPT_SPISIZE},
       {"hdrflags", required_argument, 0, OPT_HDRFLAGS},
       {"hdrmsgid", required_argument, 0, OPT_HDRMSGID},
+      {"cookie", required_argument, 0, OPT_COOKIE},
       {"experimental", required_argument, 0, 'X'},
       {0, 0, 0, 0}
    };
@@ -230,6 +231,8 @@ main(int argc, char *argv[]) {
    int multiline=0;		/* Split decodes across lines if nonzero */
    int hostno;
    unsigned bandwidth=0;	/* Bandwidth in bits per sec, or zero */
+   unsigned char *cookie_data=NULL;
+   size_t cookie_data_len;
 /*
  *	Open syslog channel and log arguments if required.
  *	We must be careful here to avoid overflowing the arg_str buffer
@@ -481,6 +484,13 @@ main(int argc, char *argv[]) {
          case OPT_HDRMSGID:	/* --hdrmsgid */
             ike_params.hdr_msgid=strtoul(optarg, (char **)NULL, 0);
             break;
+         case OPT_COOKIE:	/* --cookie */
+            if (strlen(optarg) % 2)	/* Length is odd */
+               err_msg("ERROR: Length of --cookie argument must be even (multiple of 2).");
+            cookie_data=hex2data(optarg, &cookie_data_len);
+            if (cookie_data_len > 8)
+               cookie_data_len = 8;
+            break;
          case 'X':	/* --experimental */
             experimental_value = strtoul(optarg, (char **)NULL, 0);
             break;
@@ -519,14 +529,16 @@ main(int argc, char *argv[]) {
          for (cp = line; !isspace((unsigned char)*cp) && *cp != '\0'; cp++)
             ;
          *cp = '\0';
-         add_host_pattern(line, timeout, &num_hosts);
+         add_host_pattern(line, timeout, &num_hosts,
+                          cookie_data, cookie_data_len);
       }
       if (fp != stdin)
          fclose(fp);
    } else {		/* Populate list from command line arguments */
       argv = &argv[optind];
       while (*argv) {
-         add_host_pattern(*argv, timeout, &num_hosts);
+         add_host_pattern(*argv, timeout, &num_hosts,
+                          cookie_data, cookie_data_len);
          argv++;
       }
    }
@@ -550,6 +562,8 @@ main(int argc, char *argv[]) {
  *	Check that the combination of specified options and arguments is
  *	valid.
  */
+   if (cookie_data && num_hosts > 1)
+      err_msg("ERROR: You can only specify one target host with the --cookie option.");
    if (tcp_flag && num_hosts > 1)
       err_msg("ERROR: You can only specify one target host with the --tcp option.");
 
@@ -925,6 +939,8 @@ main(int argc, char *argv[]) {
  *	pattern	= The host pattern to add.
  *	timeout	= Per-host timeout in ms.
  *	num_hosts = The number of entries in the host list.
+ *	cookie_data = Data for static cookie value, or NULL
+ *	cookie_data_len = Length of cookie_data value;
  *
  *	Returns: None
  *
@@ -936,7 +952,8 @@ main(int argc, char *argv[]) {
  *	The timeout and num_hosts arguments are passed unchanged to add_host().
  */
 void
-add_host_pattern(const char *pattern, unsigned timeout, unsigned *num_hosts) {
+add_host_pattern(const char *pattern, unsigned timeout, unsigned *num_hosts,
+                 unsigned char *cookie_data, size_t cookie_data_len) {
    char *patcopy;
    struct in_addr in_val;
    unsigned numbits;
@@ -1031,7 +1048,7 @@ add_host_pattern(const char *pattern, unsigned timeout, unsigned *num_hosts) {
          b3 = (hostip & 0x0000ff00) >> 8;
          b4 = (hostip & 0x000000ff);
          sprintf(ipstr, "%d.%d.%d.%d", b1,b2,b3,b4);
-         add_host(ipstr, timeout, num_hosts);
+         add_host(ipstr, timeout, num_hosts, cookie_data, cookie_data_len);
       }
    } else if (!(regexec(&iprange_pat, patcopy, 0, NULL, 0))) { /* IPstart-IPend */
 /*
@@ -1058,10 +1075,10 @@ add_host_pattern(const char *pattern, unsigned timeout, unsigned *num_hosts) {
          b3 = (i & 0x0000ff00) >> 8;
          b4 = (i & 0x000000ff);
          sprintf(ipstr, "%d.%d.%d.%d", b1,b2,b3,b4);
-         add_host(ipstr, timeout, num_hosts);
+         add_host(ipstr, timeout, num_hosts, cookie_data, cookie_data_len);
       }
    } else {				/* Single host or IP address */
-      add_host(patcopy, timeout, num_hosts);
+      add_host(patcopy, timeout, num_hosts, cookie_data, cookie_data_len);
    }
    free(patcopy);
 }
@@ -1074,11 +1091,14 @@ add_host_pattern(const char *pattern, unsigned timeout, unsigned *num_hosts) {
  *	name	= The Name or IP address of the host.
  *	timeout	= Per-host timeout in ms.
  *	num_hosts = The number of entries in the host list.
+ *	cookie_data = Data for static cookie value, or NULL
+ *	cookie_data_len = Length of cookie_data value;
  *
  *	Returns: None
  */
 void
-add_host(const char *name, unsigned timeout, unsigned *num_hosts) {
+add_host(const char *name, unsigned timeout, unsigned *num_hosts,
+         unsigned char *cookie_data, size_t cookie_data_len) {
    struct hostent *hp = NULL;
    host_entry *he;
    struct in_addr inp;
@@ -1129,16 +1149,22 @@ add_host(const char *name, unsigned timeout, unsigned *num_hosts) {
    he->last_send_time.tv_usec=0;
    he->recv_times = NULL;
    he->extra = NULL;
+
+   if (cookie_data) {
+      memset(he->icookie, '\0', sizeof(he->icookie));
+      memcpy(he->icookie, cookie_data, cookie_data_len);
+   } else {
 /*
  * We cast the timeval elements to unsigned long because different vendors
  * use different types for them (int, long, unsigned int and unsigned long).
  * As long is the widest type, and the values should always be positive, it's
  * safe to cast to unsigned long.
  */
-   sprintf(str, "%lu %lu %u %s", (unsigned long) now.tv_sec,
-           (unsigned long) now.tv_usec, *num_hosts, inet_ntoa(he->addr));
-   memcpy(he->icookie, MD5((unsigned char *)str, strlen(str), NULL),
-          sizeof(he->icookie));
+      sprintf(str, "%lu %lu %u %s", (unsigned long) now.tv_sec,
+              (unsigned long) now.tv_usec, *num_hosts, inet_ntoa(he->addr));
+      memcpy(he->icookie, MD5((unsigned char *)str, strlen(str), NULL),
+             sizeof(he->icookie));
+   }
 }
 
 /*
@@ -2944,6 +2970,12 @@ usage(int status, int detailed) {
       fprintf(stderr, "\t\t\tThe flags are detailed in RFC 2408 section 3.1\n");
       fprintf(stderr, "\n--hdrmsgid=<n>\t\tSet the ISAKMP header message ID to <n>.  Default=0\n");
       fprintf(stderr, "\t\t\tThis should be zero for IKE Phase-1.\n");
+      fprintf(stderr, "\n--cookie=<n>\t\tSet the ISAKMP initiator cookie to <n>\n");
+      fprintf(stderr, "\t\t\tBy default, the cookies are automatically generated\n");
+      fprintf(stderr, "\t\t\tand have unique values.  If you specify this option,\n");
+      fprintf(stderr, "\t\t\tthen you can only specify a single target, because\n");
+      fprintf(stderr, "\t\t\tike-scan requires unique cookie values to match up\n");
+      fprintf(stderr, "\t\t\tthe response packets.\n");
    } else {
       fprintf(stderr, "use \"ike-scan --help\" for detailed information on the available options.\n");
    }

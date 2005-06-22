@@ -173,6 +173,7 @@ unsigned char *SHA1(const unsigned char *, size_t, unsigned char *);
 #define OPT_SPISIZE 256
 #define OPT_HDRFLAGS 257
 #define OPT_HDRMSGID 258
+#define OPT_COOKIE 259
 #undef DEBUG_TIMINGS			/* Define to 1 to debug timing code */
 /*
  * If ALPHA is defined, then it is used as the smoothing factor for the
@@ -314,8 +315,10 @@ void info_syslog(const char *, ...);
 void err_print(int, int, const char *, va_list);
 void usage(int, int);
 void psk_crack_usage(int);
-void add_host_pattern(const char *, unsigned, unsigned *);
-void add_host(const char *, unsigned, unsigned *);
+void add_host_pattern(const char *, unsigned, unsigned *, unsigned char *,
+                      size_t);
+void add_host(const char *, unsigned, unsigned *, unsigned char *,
+              size_t);
 void send_packet(int, unsigned char *, size_t, host_entry *, unsigned,
                  struct timeval *);
 int recvfrom_wto(int, unsigned char *, size_t, struct sockaddr *, int);
