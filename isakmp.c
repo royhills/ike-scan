@@ -1252,7 +1252,7 @@ process_notify(unsigned char *cp, size_t len, int quiet, int multiline,
    msg_len = ntohs(hdr->isan_length) - sizeof(struct isakmp_notification);
    msg_data = cp + sizeof(struct isakmp_notification);
 
-   if (msg_type == 9101) {	/* Firewall-1 4.x/NG Base message type */
+   if (msg_type == 9101 || msg_type == 9110) {	/* Firewall-1 message types */
       notify_msg = printable(msg_data, msg_len);
       msg=make_message("Notify message %u (Firewall-1) Message=\"%s\"",
                        msg_type, notify_msg);
