@@ -14,6 +14,7 @@ if ($#ARGV != 1) {
 my $host = shift;
 my $good_trans = shift;
 my $bad_trans = "8,5,7,2";
+my $debug = 0;
 #
 my $result;
 
@@ -37,7 +38,9 @@ my %simple_tests = (
 
 # Range tests.  Key is test name, value is ike-scan option, lower & upper bounds
 my %range_tests = (
-   lifetime => '--lifetime:0:4000000000'
+   lifetime => '--lifetime:1:4000000000:28800',
+   lifesize => '--lifetime:1:4000000000:1024',
+   spi_size => '--spisize:1:1000:16'
 );
 
 # Check response to invalid transform
@@ -49,22 +52,35 @@ print "invalid_transform\t$result\n";
 while (my($key, $value) = each(%simple_tests)) {
    check_target_ok();
    $result = run_ike_scan("--trans=$good_trans $value $host");
+   $result = "no_response" if ($result =~ /^$/);
    print "$key\t$result\n";
 }
 
 # Perform range tests
 while (my($key, $value) = each(%range_tests)) {
-   if ($value =~ /^(^(.+):(.+):(.+)$)/) {
+   if ($value =~ /^(.+):(.+):(.+):(.+)$/) {
       my $option = $1;
-      my $start = $2;
-      my $end = $3;
-      my $number;
+      my $min = $2;
+      my $max = $3;
+      my $good_value = $4;
+      my $low;
+      my $high;
+      my $basic_response;
+
+# Check good value.  If this works, then determine range, otherwise
+# the option is not supported.
+      $result=run_ike_scan("$option=$good_value --trans=$good_trans $host");
+      $basic_response = get_basic_response($result);
+      if ($basic_response =~ /Handshake returned/) {
+         $low = binsearchlow("$good_value:$min:$max:$option");
+         $high = binsearchhigh("$good_value:$min:$max:$option");
+         print "$key\t$low:$high\n";
+      } else {
+         print "$key\tnot_supported\n";
+      }
    } else {
       die "Incorrect format for range test $key: $value\n";
    }
-   check_target_ok();
-   $result = run_ike_scan("--trans=$good_trans $value $host");
-   print "$key\t$result\n";
 }
 
 # Run ike-scan with the given arguments, and return the output
@@ -90,4 +106,79 @@ sub check_target_ok {
    my $result;
    $result = run_ike_scan("$known_good_check");
    die "Target did not respond\n" unless $result;
+}
+
+# Determine basic ike-scan response
+sub get_basic_response {
+   my $basic_response = $_[0];
+   $basic_response =~ s/\(.*//;
+   $basic_response =~ s/ [A-Z]+=$//;
+   $basic_response =~ s/ $//;
+   return $basic_response;
+}
+
+# Search for low end of range
+sub binsearchlow {
+   my $lo;
+   my $hi;
+   my $val;
+   my $result;
+   my $min;
+   my $max;
+   my $option;
+   my $basic_response;
+   my $iter=1;
+
+   ($val, $min, $max, $option) = split(/:/, $_[0]);
+   $lo = $min;
+   $hi = $val;
+   while ($lo < $hi) {
+      $val = int($lo + ($hi - $lo)/2);
+      $result=run_ike_scan("$option=$val --trans=$good_trans $host");
+      $basic_response = get_basic_response($result);
+      print "$iter\t$lo\t$hi\t$val\t$basic_response\n" if $debug;
+      if ($basic_response =~ /Handshake returned/) {
+         $hi = $val;
+      } else {
+         $lo = $val + 1;
+      }
+      $iter++;
+   }
+   print "end\t$lo\t$hi\t$val\n" if $debug;
+   return $hi;
+}
+
+# search for high end of range
+sub binsearchhigh {
+   my $lo;
+   my $hi;
+   my $val;
+   my $result;
+   my $min;
+   my $max;
+   my $option;
+   my $basic_response;
+   my $iter=1;
+
+   ($val, $min, $max, $option) = split(/:/, $_[0]);
+   $lo = $val;
+   $hi = $max;
+   while ($lo < $hi) {
+      $val = int($lo + ($hi - $lo)/2);
+      $result=run_ike_scan("$option=$val --trans=$good_trans $host");
+      $basic_response = get_basic_response($result);
+      print "$iter\t$lo\t$hi\t$val\t$basic_response\n" if $debug;
+      if ($basic_response =~ /Handshake returned/) {
+         $lo = $val + 1;
+      } else {
+         $hi = $val;
+      }
+      $iter++;
+   }
+   print "end\t$lo\t$hi\t$val\n" if $debug;
+   if ($lo < $max) {
+      return $lo-1;
+   } else {
+      return $lo;
+   }
 }
