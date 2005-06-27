@@ -69,6 +69,7 @@ while (my($key, $value) = each(%range_tests)) {
 
 # Check good value.  If this works, then determine range, otherwise
 # the option is not supported.
+      check_target_ok();
       $result=run_ike_scan("$option=$good_value --trans=$good_trans $host");
       $basic_response = get_basic_response($result);
       if ($basic_response =~ /Handshake returned/) {
