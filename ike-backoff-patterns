@@ -195,3 +195,8 @@ draytek	0, 3, 6
 # Discovered by: Tony Lloyd, June 2005
 # Observed on: Cyberguard Firewall (exact model and version unknown)
 cyberguard	0, 3.5, 7, 10, 10
+
+# Discovered by: Tony Lloyd, June 2005
+# Observed on: Fortinet FortiGate Firewall (exact model and version unknown)
+# Note: some FortiGate Firewalls appear to have a 0,10,20 pattern instead
+FortiGate	0, 6, 12
