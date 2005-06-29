@@ -329,6 +329,10 @@ Openswan 2.3.0	^4f4572696f5c77557f746249
 # data, e.g. "OpenPGP10171", but we don't match that.
 OpenPGP	^4f70656e504750
 
+# Observed on Fortinet ForteGate Firewalls.
+# Probably an MD5 hash of something.
+FortiGate	^1d6e178f6c2c0be284985465450fe9d4
+
 # Other things I've seen but not fully classified yet.
 # If anyone can confirm any of these, please let me know.
 Maybe Cisco IOS	^bdb41038a7ec5e5534dd004d0f91f927
