@@ -987,8 +987,8 @@ process_attr(unsigned char **cp, size_t *len) {
    char *attr_value_str;
    size_t value_len;
    size_t size;
-   static const id_name_map attr_map[] = {	/* From RFC 2409 App. A */
-      {1, "Enc"},
+   static const id_name_map attr_map[] = {	/* From RFC 2409 App. A and */
+      {1, "Enc"},			/* draft-ietf-ipsec-isakmp-gss-auth */
       {2, "Hash"},
       {3, "Auth"},
       {4, "Group"},
@@ -1004,6 +1004,7 @@ process_attr(unsigned char **cp, size_t *len) {
       {14, "KeyLength"},
       {15, "FieldSize"},
       {16, "GroupOrder"},
+      {16384, "GSSIdentityName"},
       {-1, NULL}
    };
    static const id_name_map enc_map[] = {	/* From RFC 2409 App. A */
