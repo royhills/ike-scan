@@ -62,9 +62,11 @@
 
 # Microsoft/Cisco IPsec implementation for Win-2000 and above.
 # The first 16 bytes are the MD5 hash of "MS NT5 ISAKMPOAKLEY"
+# I've seen extra data following the XP-SP1 and 2003 patterns, but I'm not sure
+# what this represents.
 Windows-2000	^1e2b516905991c7d7c96fcbfb587e46100000002
-Windows-XP	^1e2b516905991c7d7c96fcbfb587e4610000000300000000
-Windows-2003	^1e2b516905991c7d7c96fcbfb587e461000000040d000014
+Windows-XP-SP1	^1e2b516905991c7d7c96fcbfb587e46100000003
+Windows-2003-or-XP-SP2	^1e2b516905991c7d7c96fcbfb587e46100000004
 
 # Checkpoint Firewall-1/VPN-1
 #
