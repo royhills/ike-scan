@@ -71,12 +71,15 @@
 #
 
 # Discovered by: Roy Hills, November 2002
-# Observed on: Cisco 2503 running IOS 11.3(11b)T2
+# Observed on: Cisco 2503 running IP-PLUS-IPsec56 IOS 11.3(11b)T2
+# Observed on: Cisco 2503 running IP-PLUS-IPsec56 IOS 12.0(28c)
 # Observed on: Cisco PIX (unknown model) running (unknown version)
-# Note:	I've had a report of Cisco IOS 12.2(2)T having the pattern
-#	0,10,10,10,10 which incorrectly matches Watchguard Firebox.
-#	Thanks to Adam Scott for this observation.
-Cisco IOS / PIX	0, 15, 15
+# Note: Cisco IOS 12.1 and 12.2 (and possibly later versions as well)
+#	have a different pattern: 0,10,10,10,10,10.  This is listed later
+#	under a different name.
+# Note: IPsec was introduced in Cisco IOS 11.3.  Previous versions only
+#	supported the Cisco proprietary CET encryption.
+Cisco IOS 11.3 or 12.0 / PIX	0, 15, 15
 
 # 1st Pattern Discovered by: Roy Hills, November 2002
 # Observed on: Cisco VPN Concentrator 3005 running (unknown version)
@@ -110,9 +113,11 @@ Nortel Contivity	0, 16/600, 16, 16
 # Discovered by: Roy Hills, December 2002
 # Observed on: Watchguard Firebox 700 v6.1
 # Observed on: Gnat Box (version unknown)
+# Observed on: Cisco 2503 running IP-PLUS-IPsec56 IOS 12.1(27a)
+# Observed on: Cisco 2503 running IP-PLUS-IPsec56 IOS 12.2(29)
 # Note that the Gnat box has a much larger variance than the watchguard, but
 # they are both essentially the same pattern.
-Watchguard Firebox or Gnat Box	0, 10/1000, 10/1000, 10/1000, 10/1000, 10/1000
+Cisco IOS 12.1 or 12.2 / Watchguard Firebox / Gnat Box	0, 10/1000, 10/1000, 10/1000, 10/1000, 10/1000
 
 # Discovered by: Roy Hills, December 2002
 # Observed on: Windows 2000 Server SP1
