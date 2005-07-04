@@ -215,6 +215,7 @@ KAME/racoon	^7003cbc1097dbe9c2600ba6983bc8b35
 # http://www.sandelman.ottawa.on.ca/ipsec/2002/04/msg00233.html
 # Jan 2005: RFC released as RFC 3947 "Negotiation of NAT-Traversal in the IKE"
 # VID is MD5 hash of "RFC 3947"
+draft-ietf-ipsec-nat-t-ike	^4df37928e9fc4fd1b3262170d515c662
 draft-ietf-ipsec-nat-t-ike-00	^4485152d18b6bbcd0be8a8469579ddcc
 draft-ietf-ipsec-nat-t-ike-01	^16f6ca16e4a4066d83821a0f0aeaa862
 draft-ietf-ipsec-nat-t-ike-02\n	^90cb80913ebb696e086381b5ec427b1f
