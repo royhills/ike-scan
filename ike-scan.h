@@ -175,6 +175,7 @@ unsigned char *SHA1(const unsigned char *, size_t, unsigned char *);
 #define OPT_HDRMSGID 258
 #define OPT_COOKIE 259
 #define OPT_EXCHANGE 260
+#define OPT_NEXTPAYLOAD 261
 #undef DEBUG_TIMINGS			/* Define to 1 to debug timing code */
 /*
  * If ALPHA is defined, then it is used as the smoothing factor for the
@@ -304,6 +305,7 @@ typedef struct {	/* IKE Packet Parameters */
    unsigned spi_size;	/* Proposal SPI Size */
    int hdr_flags;	/* ISAKMP Header flags */
    unsigned hdr_msgid;	/* ISAKMP Header message id */
+   unsigned hdr_next_payload;	/* Next payload in ISAKMP header */
 } ike_packet_params;
 
 /* Functions */
