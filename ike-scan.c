@@ -136,6 +136,7 @@ main(int argc, char *argv[]) {
       {"hdrflags", required_argument, 0, OPT_HDRFLAGS},
       {"hdrmsgid", required_argument, 0, OPT_HDRMSGID},
       {"cookie", required_argument, 0, OPT_COOKIE},
+      {"exchange", required_argument, 0, OPT_EXCHANGE},
       {"experimental", required_argument, 0, 'X'},
       {0, 0, 0, 0}
    };
@@ -491,6 +492,9 @@ main(int argc, char *argv[]) {
             if (cookie_data_len > 8)
                cookie_data_len = 8;
             break;
+         case OPT_EXCHANGE:	/* --exchange */
+            ike_params.exchange_type=strtoul(optarg, (char **)NULL, 0);
+            break;
          case 'X':	/* --experimental */
             experimental_value = strtoul(optarg, (char **)NULL, 0);
             break;
@@ -721,8 +725,6 @@ main(int argc, char *argv[]) {
       float_interval = (((packet_out_len + PACKET_OVERHEAD) * 8) /
                        (double) bandwidth) * 1000000;
       interval = (unsigned) float_interval;
-      warn_msg("DEBUG: pkt len: %u bytes, bandwith: %u bps, int=%u us",
-               packet_out_len+PACKET_OVERHEAD, bandwidth, interval);
    }
 /*
  *	Display initial message.
@@ -1608,19 +1610,7 @@ recvfrom_wto(int s, unsigned char *buf, size_t len, struct sockaddr *saddr,
  *	Inputs:
  *
  *	packet_out_len	Size of output packet.
- *	lifetime	Lifetime in seconds.  Zero for no lifetime.
- *	lifesize	Lifesize in KB.  Zero for no lifesize.
- *	auth_method	Authentication method.
- *	dhgroup		Diffie Hellman Group.
- *	idtype		Identification Type (aggressive only).
- *	id_data		Identification Data (aggressive only).
- *	id_data_len	Identification Data Length (aggressive only).
- *	vendor_id_flag	Vendor ID Present.
- *	trans_flag	Custom Transforms Present.
- *	exchange_type	ISAKMP Exchange Type (Main or Aggressive mode)
- *	gss_id_flag	GSS Identification Present
- *	gss_data	GSS ID Data
- *	gss_data_len	GSS ID Length.
+ *	params		Structure containing the required packet parameters.
  *
  *	Returns:
  *
@@ -1728,7 +1718,7 @@ initialise_ike_packet(size_t *packet_out_len, ike_packet_params *params) {
  *	Transform payloads
  */
    if (!params->trans_flag) {	/* Use standard transform set if none specified */
-      if (params->exchange_type == ISAKMP_XCHG_IDPROT) {	/* Main Mode */
+      if (params->exchange_type != ISAKMP_XCHG_AGGR) {	/* Main Mode */
          add_trans(0, NULL, OAKLEY_3DES_CBC, 0, OAKLEY_SHA,
                    params->auth_method, 2, params->lifetime, params->lifesize,
                    params->gss_id_flag, params->gss_data, params->gss_data_len,
@@ -2968,6 +2958,9 @@ usage(int status, int detailed) {
       fprintf(stderr, "\t\t\tthen you can only specify a single target, because\n");
       fprintf(stderr, "\t\t\tike-scan requires unique cookie values to match up\n");
       fprintf(stderr, "\t\t\tthe response packets.\n");
+      fprintf(stderr, "\n--exchange=<n>\t\tSet the exchange type to <n>\n");
+      fprintf(stderr, "\t\t\tThis option allows you to change the exchange type in\n");
+      fprintf(stderr, "\t\t\tthe ISAKMP header to an arbitary value.\n");
    } else {
       fprintf(stderr, "use \"ike-scan --help\" for detailed information on the available options.\n");
    }
