@@ -143,7 +143,7 @@ unsigned char *SHA1(const unsigned char *, size_t, unsigned char *);
 #define DEFAULT_BACKOFF_FACTOR 1.5	/* Default timeout backoff factor */
 #define DEFAULT_RETRY 3			/* Default number of retries */
 #define DEFAULT_TIMEOUT 500		/* Default per-host timeout in ms */
-#define DEFAULT_INTERVAL 75		/* Default delay between packets (ms) */
+#define DEFAULT_BANDWIDTH 56000		/* Default bandwidth in bits/sec */
 #define DEFAULT_SOURCE_PORT 500		/* Default UDP source port */
 #define DEFAULT_DEST_PORT 500		/* Default UDP destination port */
 #define DEFAULT_LIFETIME 28800		/* Default lifetime in seconds */
