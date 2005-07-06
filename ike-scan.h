@@ -174,6 +174,7 @@ unsigned char *SHA1(const unsigned char *, size_t, unsigned char *);
 #define OPT_HDRFLAGS 257
 #define OPT_HDRMSGID 258
 #define OPT_COOKIE 259
+#define OPT_EXCHANGE 260
 #undef DEBUG_TIMINGS			/* Define to 1 to debug timing code */
 /*
  * If ALPHA is defined, then it is used as the smoothing factor for the
