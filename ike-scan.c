@@ -158,7 +158,7 @@ main(int argc, char *argv[]) {
    unsigned source_port = DEFAULT_SOURCE_PORT;	/* UDP source port */
    unsigned dest_port = DEFAULT_DEST_PORT;	/* UDP destination port */
    unsigned retry = DEFAULT_RETRY;	/* Number of retries */
-   unsigned interval = 1000 * DEFAULT_INTERVAL;	/* Interval between packets */
+   unsigned interval = 0;	/* Interval between packets */
    double backoff_factor = DEFAULT_BACKOFF_FACTOR;	/* Backoff factor */
    unsigned end_wait = 1000 * DEFAULT_END_WAIT; /* Time to wait after all done in ms */
    unsigned timeout = DEFAULT_TIMEOUT;	/* Per-host timeout in ms */
@@ -230,7 +230,7 @@ main(int argc, char *argv[]) {
    int quiet=0;			/* Only print the basic info if nonzero */
    int multiline=0;		/* Split decodes across lines if nonzero */
    int hostno;
-   unsigned bandwidth=0;	/* Bandwidth in bits per sec, or zero */
+   unsigned bandwidth=DEFAULT_BANDWIDTH; /* Bandwidth in bits per sec */
    unsigned char *cookie_data=NULL;
    size_t cookie_data_len;
 /*
@@ -593,7 +593,7 @@ main(int argc, char *argv[]) {
    if (psk_crack_flag && num_hosts > 1)
       err_msg("ERROR: You can only specify one target host with the --pskcrack (-P) option.");
 
-   if (bandwidth && interval != 1000 * DEFAULT_INTERVAL)
+   if (interval && bandwidth != DEFAULT_BANDWIDTH)
       err_msg("ERROR: You cannot specify both --bandwidth and --interval.");
 /*
  *      Create and initialise array of pointers to host entries.
@@ -712,10 +712,10 @@ main(int argc, char *argv[]) {
    Gettimeofday(&last_recv_time);
    packet_out=initialise_ike_packet(&packet_out_len, &ike_params);
 /*
- *	If the --bandwidth option was used, calculate the required interval
- *	to achieve the required outgoing bandwidth.
+ *	Calculate the appropriate interval to achieve the required outgoing
+ *	bandwidth unless an interval was specified.
  */
-   if (bandwidth) {
+   if (!interval) {
       double float_interval;
 
       float_interval = (((packet_out_len + PACKET_OVERHEAD) * 8) /
@@ -2707,30 +2707,22 @@ usage(int status, int detailed) {
       fprintf(stderr, "\t\t\tThis timeout is for the first packet sent to each host.\n");
       fprintf(stderr, "\t\t\tsubsequent timeouts are multiplied by the backoff\n");
       fprintf(stderr, "\t\t\tfactor which is set with --backoff.\n");
-      fprintf(stderr, "\n--interval=<n> or -i <n> Set minimum packet interval to <n> ms, default=%d.\n", DEFAULT_INTERVAL);
-      fprintf(stderr, "\t\t\tThis controls the outgoing bandwidth usage by limiting\n");
-      fprintf(stderr, "\t\t\tthe rate at which packets can be sent.  The packet\n");
-      fprintf(stderr, "\t\t\tinterval will be no smaller than this number.\n");
-      fprintf(stderr, "\t\t\tThe outgoing packets have a total size of 364 bytes\n");
-      fprintf(stderr, "\t\t\t(20 bytes IP hdr + 8 bytes UDP hdr + 336 bytes data)\n");
-      fprintf(stderr, "\t\t\twhen the default transform set is used, or 112 bytes\n");
-      fprintf(stderr, "\t\t\tif a single custom transform is specified.  Therefore\n");
-      fprintf(stderr, "\t\t\tfor default transform set: 50=58240bps, 80=36400bps and\n");
-      fprintf(stderr, "\t\t\tfor custom transform: 15=59733bps, 30=35840bps.\n");
-      fprintf(stderr, "\t\t\tThe interval specified is in milliseconds by default,\n");
-      fprintf(stderr, "\t\t\tor in microseconds if \"u\" is appended to the value.\n");
-      fprintf(stderr, "\t\t\tIf you want to use up to a given bandwidth, then it is\n");
-      fprintf(stderr, "\t\t\teasier to use the --bandwidth option instead.\n");
-      fprintf(stderr, "\n--bandwidth=<n> or -B <n> Set desired outbound bandwidth to <n>.\n");
+      fprintf(stderr, "\n--bandwidth=<n> or -B <n> Set desired outbound bandwidth to <n>, default=%u\n", DEFAULT_BANDWIDTH);
       fprintf(stderr, "\t\t\tThe value is in bits per second by default.  If you\n");
       fprintf(stderr, "\t\t\tappend \"K\" to the value, then the units are kilobits\n");
       fprintf(stderr, "\t\t\tper sec; and if you append \"M\" to the value, the\n");
       fprintf(stderr, "\t\t\tunits are megabits per second.\n");
       fprintf(stderr, "\t\t\tThe \"K\" and \"M\" suffixes represent the decimal, not\n");
       fprintf(stderr, "\t\t\tbinary, multiples.  So 64K is 64000, not 65536.\n");
+      fprintf(stderr, "\n--interval=<n> or -i <n> Set minimum packet interval to <n> ms.\n");
+      fprintf(stderr, "\t\t\tThe packet interval will be no smaller than this number\n");
+      fprintf(stderr, "\t\t\tThe interval specified is in milliseconds by default,\n");
+      fprintf(stderr, "\t\t\tor in microseconds if \"u\" is appended to the value.\n");
+      fprintf(stderr, "\t\t\tIf you want to use up to a given bandwidth, then it is\n");
+      fprintf(stderr, "\t\t\teasier to use the --bandwidth option instead.\n");
       fprintf(stderr, "\t\t\tYou cannot specify both --interval and --bandwidth\n");
       fprintf(stderr, "\t\t\tbecause they are just different ways to change the\n");
-      fprintf(stderr, "\t\t\tsame parameter.\n");
+      fprintf(stderr, "\t\t\tsame underlying variable.\n");
       fprintf(stderr, "\n--backoff=<b> or -b <b>\tSet timeout backoff factor to <b>, default=%.2f.\n", DEFAULT_BACKOFF_FACTOR);
       fprintf(stderr, "\t\t\tThe per-host timeout is multiplied by this factor\n");
       fprintf(stderr, "\t\t\tafter each timeout.  So, if the number of retrys\n");
