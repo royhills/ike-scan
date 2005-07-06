@@ -137,6 +137,7 @@ main(int argc, char *argv[]) {
       {"hdrmsgid", required_argument, 0, OPT_HDRMSGID},
       {"cookie", required_argument, 0, OPT_COOKIE},
       {"exchange", required_argument, 0, OPT_EXCHANGE},
+      {"nextpayload", required_argument, 0, OPT_NEXTPAYLOAD},
       {"experimental", required_argument, 0, 'X'},
       {0, 0, 0, 0}
    };
@@ -188,7 +189,8 @@ main(int argc, char *argv[]) {
       DEFAULT_TRANS_ID,		/* Transform ID */
       0,			/* Proposal SPI Size */
       0,			/* ISAKMP Header Flags */
-      0				/* ISAKMP Header Message ID */
+      0,			/* ISAKMP Header Message ID */
+      0				/* ISAKMP Header Next Payload */
    };
    unsigned pattern_fuzz = DEFAULT_PATTERN_FUZZ; /* Pattern matching fuzz in ms */
    unsigned tcp_connect_timeout = DEFAULT_TCP_CONNECT_TIMEOUT;
@@ -494,6 +496,9 @@ main(int argc, char *argv[]) {
             break;
          case OPT_EXCHANGE:	/* --exchange */
             ike_params.exchange_type=strtoul(optarg, (char **)NULL, 0);
+            break;
+         case OPT_NEXTPAYLOAD:	/* --nextpayload */
+            ike_params.hdr_next_payload=strtoul(optarg, (char **)NULL, 0);
             break;
          case 'X':	/* --experimental */
             experimental_value = strtoul(optarg, (char **)NULL, 0);
@@ -1644,6 +1649,7 @@ initialise_ike_packet(size_t *packet_out_len, ike_packet_params *params) {
    size_t kx_data_len=0;
    unsigned no_trans=0;	/* Number of transforms */
    unsigned next_payload;
+   unsigned header_len;	/* Length in ISAKMP header */
 
    *packet_out_len = 0;
    next_payload = ISAKMP_NEXT_NONE;
@@ -1798,27 +1804,25 @@ initialise_ike_packet(size_t *packet_out_len, ike_packet_params *params) {
  *	ISAKMP Header
  */
    *packet_out_len += sizeof(struct isakmp_hdr);
+   header_len = *packet_out_len;	/* Set header len to correct value */
    if (params->header_length) {	/* Manually specify header length */
-      unsigned fake_header_len;
       char *cp;
 
-      fake_header_len = *packet_out_len;
       cp = params->header_length;
       if (*cp == '+') {
-         fake_header_len += strtoul(++cp, (char **)NULL, 0);
+         header_len += strtoul(++cp, (char **)NULL, 0);
       } else if (*cp == '-') {
-         fake_header_len -= strtoul(++cp, (char **)NULL, 0);
+         header_len -= strtoul(++cp, (char **)NULL, 0);
       } else {
-         fake_header_len = strtoul(cp, (char **)NULL, 0);
+         header_len = strtoul(cp, (char **)NULL, 0);
       }
-      hdr = make_isakmp_hdr(params->exchange_type, next_payload,
-                            fake_header_len, params->header_version,
-                            params->hdr_flags, params->hdr_msgid);
-   } else {		/* Use correct header length */
-      hdr = make_isakmp_hdr(params->exchange_type, next_payload,
-                            *packet_out_len, params->header_version,
-                            params->hdr_flags, params->hdr_msgid);
    }
+   if (params->hdr_next_payload) {	/* Manually specify next payload */
+      next_payload = params->hdr_next_payload;
+   }
+   hdr = make_isakmp_hdr(params->exchange_type, next_payload,
+                         header_len, params->header_version,
+                         params->hdr_flags, params->hdr_msgid);
 /*
  *	Allocate packet and copy payloads into packet.
  */
@@ -2705,7 +2709,7 @@ usage(int status, int detailed) {
       fprintf(stderr, "\t\t\tThe \"K\" and \"M\" suffixes represent the decimal, not\n");
       fprintf(stderr, "\t\t\tbinary, multiples.  So 64K is 64000, not 65536.\n");
       fprintf(stderr, "\n--interval=<n> or -i <n> Set minimum packet interval to <n> ms.\n");
-      fprintf(stderr, "\t\t\tThe packet interval will be no smaller than this number\n");
+      fprintf(stderr, "\t\t\tThe packet interval will be no smaller than this number.\n");
       fprintf(stderr, "\t\t\tThe interval specified is in milliseconds by default,\n");
       fprintf(stderr, "\t\t\tor in microseconds if \"u\" is appended to the value.\n");
       fprintf(stderr, "\t\t\tIf you want to use up to a given bandwidth, then it is\n");
@@ -2961,6 +2965,15 @@ usage(int status, int detailed) {
       fprintf(stderr, "\n--exchange=<n>\t\tSet the exchange type to <n>\n");
       fprintf(stderr, "\t\t\tThis option allows you to change the exchange type in\n");
       fprintf(stderr, "\t\t\tthe ISAKMP header to an arbitary value.\n");
+      fprintf(stderr, "\t\t\tNote that ike-scan only supports Main and Aggressive\n");
+      fprintf(stderr, "\t\t\tmodes (values 2 and 4 respectively).  Specifying\n");
+      fprintf(stderr, "\t\t\tother values will change the exchange type value in\n");
+      fprintf(stderr, "\t\t\tthe ISAKMP header, but will not adjust the other\n");
+      fprintf(stderr, "\t\t\tpayloads.\n");
+      fprintf(stderr, "\t\t\tThe exchange types are defined in RFC 2408 sec 3.1.\n");
+      fprintf(stderr, "\n--nextpayload=<n>\tSet the next payload in the ISAKMP header to <n>\n");
+      fprintf(stderr, "\t\t\tNormally, the next payload is automatically set to the\n");
+      fprintf(stderr, "\t\t\tcorrect value.\n");
    } else {
       fprintf(stderr, "use \"ike-scan --help\" for detailed information on the available options.\n");
    }
