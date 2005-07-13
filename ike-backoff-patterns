@@ -122,9 +122,9 @@ Cisco IOS 12.1 or 12.2 / Watchguard Firebox / Gnat Box	0, 10/1000, 10/1000, 10/1
 # Discovered by: Roy Hills, December 2002
 # Observed on: Windows 2000 Server SP1
 # Observed on: Windows XP Pro SP1
-# Note: Backoff fingerprinting cannot distinguish between 2000 and XP, but
-#	vendor IDs can.
-Windows-2000 or XP	0, 1, 2, 4, 8, 16, 32
+# Note: Backoff fingerprinting cannot distinguish between 2000, 2003 and XP,
+#	but vendor IDs can.
+Windows 2000, 2003 or XP	0, 1, 2, 4, 8, 16, 32
 
 # 1st pattern Discovered by: Thomas Walpuski, Jan 2003
 # Observed on: Various OpenBSD systems running isakmpd
