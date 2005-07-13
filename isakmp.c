@@ -1008,13 +1008,14 @@ process_attr(unsigned char **cp, size_t *len) {
       {-1, NULL}
    };
    static const id_name_map enc_map[] = {	/* From RFC 2409 App. A */
-      {1, "DES"},				/* and RFC 3602 */	
+      {1, "DES"},
       {2, "IDEA"},
       {3, "Blowfish"},
       {4, "RC5"},
       {5, "3DES"},
       {6, "CAST"},
-      {7, "AES"},
+      {7, "AES"},		/* RFC 3602 */
+      {8, "Camellia"},		/* draft-kato-ipsec-ciph-camellia-01.txt */
       {-1, NULL}
    };
    static const id_name_map hash_map[] = {	/* From RFC 2409 App. A */
