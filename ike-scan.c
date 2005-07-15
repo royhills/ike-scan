@@ -509,6 +509,85 @@ main(int argc, char *argv[]) {
       }
    }
 /*
+ *	Create network socket and bind to local source port.
+ */
+   if (tcp_flag) {
+      const int on = 1;	/* for setsockopt() */
+
+      if ((sockfd = socket(AF_INET, SOCK_STREAM, 0)) < 0)
+         err_sys("ERROR: socket");
+      if ((setsockopt(sockfd, IPPROTO_TCP, TCP_NODELAY, &on, sizeof(on))) < 0)
+         err_sys("ERROR: setsockopt() failed");
+      if ((setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &on, sizeof(on))) < 0) 
+         err_sys("ERROR: setsockopt() failed");
+   } else {
+      const int on = 1;	/* for setsockopt() */
+
+      if ((sockfd = socket(AF_INET, SOCK_DGRAM, 0)) < 0)
+         err_sys("ERROR: socket");
+      if ((setsockopt(sockfd, SOL_SOCKET, SO_BROADCAST, &on, sizeof(on))) != 0)
+         err_sys("setsockopt");
+   }
+
+   memset(&sa_local, '\0', sizeof(sa_local));
+   sa_local.sin_family = AF_INET;
+   sa_local.sin_addr.s_addr = htonl(INADDR_ANY);
+   sa_local.sin_port = htons(source_port);
+
+   if ((bind(sockfd, (struct sockaddr *)&sa_local, sizeof(sa_local))) < 0) {
+      warn_msg("ERROR: Could not bind network socket to local port %u", source_port);
+      if (errno == EACCES)
+         warn_msg("You need to be root, or ike-scan must be suid root to bind to ports below 1024.");
+      if (errno == EADDRINUSE)
+         warn_msg("Only one process may bind to the source port at any one time.");
+      err_sys("ERROR: bind");
+   }
+/*
+ *	If we are using TCP transport, then connect the socket to the peer.
+ *	We know that there is only one entry in the host list if we're using
+ *	TCP.
+ */
+   if (tcp_flag) {
+      struct sockaddr_in sa_tcp;
+      NET_SIZE_T sa_tcp_len;
+      struct sigaction act, oact;  /* For sigaction */
+/*
+ *      Set signal handler for alarm.
+ *      Must use sigaction() rather than signal() to prevent SA_RESTART
+ */
+      act.sa_handler=sig_alarm;
+      sigemptyset(&act.sa_mask);
+      act.sa_flags=0;
+      sigaction(SIGALRM,&act,&oact);
+/*
+ *	Set alarm
+ */
+      alarm(tcp_connect_timeout);
+/*
+ *	Connect to peer
+ */
+      memset(&sa_tcp, '\0', sizeof(sa_tcp));
+      sa_tcp.sin_family = AF_INET;
+      sa_tcp.sin_addr.s_addr = helist->addr.s_addr;
+      sa_tcp.sin_port = htons(dest_port);
+      sa_tcp_len = sizeof(sa_tcp);
+      if ((connect(sockfd, (struct sockaddr *) &sa_tcp, sa_tcp_len)) != 0) {
+         if (errno == EINTR)
+            errno = ETIMEDOUT;
+         err_sys("ERROR: TCP connect");
+      }
+/*
+ *	Cancel alarm
+ */
+      alarm(0);
+   }
+/*
+ *      Drop privileges if we are SUID.
+ */
+   if ((setuid(getuid())) < 0) {
+      err_sys("setuid");
+   }
+/*
  *	If we're not reading from a file, then we must have some hosts
  *	given as command line arguments.
  */
@@ -629,85 +708,6 @@ main(int argc, char *argv[]) {
          helistptr[i] = helistptr[r];
          helistptr[r] = temp;
       }
-   }
-/*
- *	Create network socket and bind to local source port.
- */
-   if (tcp_flag) {
-      const int on = 1;	/* for setsockopt() */
-
-      if ((sockfd = socket(AF_INET, SOCK_STREAM, 0)) < 0)
-         err_sys("ERROR: socket");
-      if ((setsockopt(sockfd, IPPROTO_TCP, TCP_NODELAY, &on, sizeof(on))) < 0)
-         err_sys("ERROR: setsockopt() failed");
-      if ((setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &on, sizeof(on))) < 0) 
-         err_sys("ERROR: setsockopt() failed");
-   } else {
-      const int on = 1;	/* for setsockopt() */
-
-      if ((sockfd = socket(AF_INET, SOCK_DGRAM, 0)) < 0)
-         err_sys("ERROR: socket");
-      if ((setsockopt(sockfd, SOL_SOCKET, SO_BROADCAST, &on, sizeof(on))) != 0)
-         err_sys("setsockopt");
-   }
-
-   memset(&sa_local, '\0', sizeof(sa_local));
-   sa_local.sin_family = AF_INET;
-   sa_local.sin_addr.s_addr = htonl(INADDR_ANY);
-   sa_local.sin_port = htons(source_port);
-
-   if ((bind(sockfd, (struct sockaddr *)&sa_local, sizeof(sa_local))) < 0) {
-      warn_msg("ERROR: Could not bind network socket to local port %u", source_port);
-      if (errno == EACCES)
-         warn_msg("You need to be root, or ike-scan must be suid root to bind to ports below 1024.");
-      if (errno == EADDRINUSE)
-         warn_msg("Only one process may bind to the source port at any one time.");
-      err_sys("ERROR: bind");
-   }
-/*
- *	If we are using TCP transport, then connect the socket to the peer.
- *	We know that there is only one entry in the host list if we're using
- *	TCP.
- */
-   if (tcp_flag) {
-      struct sockaddr_in sa_tcp;
-      NET_SIZE_T sa_tcp_len;
-      struct sigaction act, oact;  /* For sigaction */
-/*
- *      Set signal handler for alarm.
- *      Must use sigaction() rather than signal() to prevent SA_RESTART
- */
-      act.sa_handler=sig_alarm;
-      sigemptyset(&act.sa_mask);
-      act.sa_flags=0;
-      sigaction(SIGALRM,&act,&oact);
-/*
- *	Set alarm
- */
-      alarm(tcp_connect_timeout);
-/*
- *	Connect to peer
- */
-      memset(&sa_tcp, '\0', sizeof(sa_tcp));
-      sa_tcp.sin_family = AF_INET;
-      sa_tcp.sin_addr.s_addr = helist->addr.s_addr;
-      sa_tcp.sin_port = htons(dest_port);
-      sa_tcp_len = sizeof(sa_tcp);
-      if ((connect(sockfd, (struct sockaddr *) &sa_tcp, sa_tcp_len)) != 0) {
-         if (errno == EINTR)
-            errno = ETIMEDOUT;
-         err_sys("ERROR: TCP connect");
-      }
-/*
- *	Cancel alarm
- */
-      alarm(0);
-   }
-/*
- *      Drop privileges if we are SUID.
- */
-   if ((setuid(getuid())) < 0) {
-      err_sys("setuid");
    }
 /*
  *	Set current host pointer (cursor) to start of list, zero
