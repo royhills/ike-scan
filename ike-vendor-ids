@@ -336,6 +336,26 @@ OpenPGP	^4f70656e504750
 # Probably an MD5 hash of something.
 FortiGate	^1d6e178f6c2c0be284985465450fe9d4
 
+# Juniper NetScreen
+# There are many different entries for this implementation.
+# The first 20 bytes are suspected to be an SHA1 hash of something
+# It is followed by eight bytes, which we don't include in the pattern.
+# This eight bytes consists of two four-byte values in big endian format,
+# e.g. 0000000900000500, which may indicate the ScreenOS version.
+Netscreen-01	^299ee8289f40a8973bc78687e2e7226b532c3b76
+Netscreen-02	^3a15e1f3cf2a63582e3ac82d1c64cbe3b6d779e7
+Netscreen-03	^47d2b126bfcd83489760e2cf8c5d4d5a03497c15
+Netscreen-04	^4a4340b543e02b84c88a8b96a8af9ebe77d9accc
+Netscreen-05	^64405f46f03b7660a23be116a1975058e69e8387
+Netscreen-06	^699369228741c6d4ca094c93e242c9de19e7b7c6
+Netscreen-07	^8c0dc6cf62a0ef1b5c6eabd1b67ba69866adf16a
+Netscreen-08	^92d27a9ecb31d99246986d3453d0c3d57a222a61
+Netscreen-09	^9b096d9ac3275a7d6fe8b91c583111b09efed1a0
+Netscreen-10	^bf03746108d746c904f1f3547de24f78479fed12
+Netscreen-11	^c2e80500f4cc5fbf5daaeed3bb59abaeee56c652
+Netscreen-12	^c8660a62b03b1b6130bf781608d32a6a8d0fb89f
+Netscreen-13	^f885da40b1e7a9abd17655ec5bbec0f21f0ed52e
+
 # Other things I've seen but not fully classified yet.
 # If anyone can confirm any of these, please let me know.
 Maybe Cisco IOS	^bdb41038a7ec5e5534dd004d0f91f927
@@ -350,13 +370,8 @@ Unknown 8	^4c5647362e303a627269636b3a362e302e353732
 Unknown 9	^3499691eb82f9eaefed378f5503671debd0663b4000000040000023c
 # I've seen Unknown 10 sent from SonicWall Global VPN Client
 Unknown 10	^975b7816f69789600dda89040576e0db
-Netscreen	^9b096d9ac3275a7d6fe8b91c583111b09efed1a0
 # The "Safenet or Watchguard" Vendor ID has also been seen sent from SonicWall
 # Global VPN client.  It is normally followed by 80010000 which looks like a
 # version number.
 Safenet or Watchguard	^da8e9378
 Unknown-cisco	^e23ae9f51a46876ff93d89ba725d649d
-# The "Maybe Netscreen" Vendor ID has been observed to be followed by 16
-# additional hex digits (8 bytes) which appear to be two 4-byte values.
-# An example is: 92d27a9ecb31d99246986d3453d0c3d57a222a610000000700000500
-Maybe Netscreen	^92d27a9ecb31d99246986d3453d0c3d57a222a61
