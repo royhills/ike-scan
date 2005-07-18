@@ -168,7 +168,11 @@ sonicwall-pro	0, 6.5/1500, 9/1000, 13/2000, 22/3000
 
 # Discovered by: Florent Trupheme, April 2005
 # Observed on Side Winder G2 Firewall
+# Also observed on a separate Sidewinder G2 by Tim Ecott, July 2005
+# Two different patterns have been observed: the 0,3,6,15,48 appears to be the
+# more common one, but 0,3,4,12,36 has also been seen.
 SideWinder G2 Firewall	0, 3, 6, 15, 48
+SideWinder G2 Firewall	0, 3, 4, 12, 36
 
 # Discovered by: Florent Trupheme, April 2005
 # Observed on SonicWall unknown version
