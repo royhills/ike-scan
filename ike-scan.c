@@ -81,6 +81,8 @@ const id_name_map payload_map[] = {	/* Payload types from RFC 2408 3.1 */
    {13, "VendorID"},
    {-1, NULL}
 };
+uint32_t lifetime_be;	/* Default lifetime in big endian format */
+uint32_t lifesize_be;	/* Default lifesize in big endian format */
 
 int
 main(int argc, char *argv[]) {
@@ -165,8 +167,10 @@ main(int argc, char *argv[]) {
    unsigned end_wait = 1000 * DEFAULT_END_WAIT; /* Time to wait after all done in ms */
    unsigned timeout = DEFAULT_TIMEOUT;	/* Per-host timeout in ms */
    ike_packet_params ike_params = {
-      DEFAULT_LIFETIME,		/* Lifetime in seconds */
-      DEFAULT_LIFESIZE,		/* Lifesize in KB */
+      NULL,			/* Lifetime in seconds */
+      0,			/* Lifetime data length */
+      NULL,			/* Lifesize in KB */
+      0,			/* Lifesize data length */
       DEFAULT_AUTH_METHOD,	/* Authentication method */
       DEFAULT_DH_GROUP,		/* Diffie Hellman Group */
       DEFAULT_IDTYPE,		/* IKE Identification type */
@@ -268,6 +272,19 @@ main(int argc, char *argv[]) {
    patfile[0] = '\0';
    vidfile[0] = '\0';
 /*
+ *	Set lifetime and lifesize parameters to the default.
+ */
+   if (DEFAULT_LIFETIME) {
+      lifetime_be = htonl(DEFAULT_LIFETIME);
+      ike_params.lifetime_data = (unsigned char *) &lifetime_be;
+      ike_params.lifetime_data_len = 4;
+   }
+   if (DEFAULT_LIFESIZE) {
+      lifesize_be = htonl(DEFAULT_LIFETIME);
+      ike_params.lifesize_data = (unsigned char *) &lifesize_be;
+      ike_params.lifesize_data_len = 4;
+   }
+/*
  *	Seed random number generator.
  */
    srand((unsigned) time(NULL));
@@ -324,10 +341,22 @@ main(int argc, char *argv[]) {
             verbose++;
             break;
          case 'l':	/* --lifetime */
-            ike_params.lifetime=strtoul(optarg, (char **)NULL, 10);
+            if ((strcmp(optarg, "none")) == 0) {
+               ike_params.lifetime_data = NULL;
+               ike_params.lifetime_data_len = 0;
+            } else {
+               ike_params.lifetime_data=
+                  hex_or_num(optarg, &(ike_params.lifetime_data_len));
+            }
             break;
          case 'z':	/* --lifesize */
-            ike_params.lifesize=strtoul(optarg, (char **)NULL, 10);
+            if ((strcmp(optarg, "none")) == 0) {
+               ike_params.lifesize_data = NULL;
+               ike_params.lifesize_data_len = 0;
+            } else {
+               ike_params.lifesize_data=
+                  hex_or_num(optarg, &(ike_params.lifesize_data_len));
+            }
             break;
          case 'm':	/* --auth */
             ike_params.auth_method=strtoul(optarg, (char **)NULL, 10);
@@ -362,8 +391,10 @@ main(int argc, char *argv[]) {
             decode_trans(trans_str, &trans_enc, &trans_keylen, &trans_hash,
                          &trans_auth, &trans_group);
             add_trans(0, NULL, trans_enc, trans_keylen, trans_hash,
-                      trans_auth, trans_group, ike_params.lifetime,
-                      ike_params.lifesize, ike_params.gss_id_flag,
+                      trans_auth, trans_group, ike_params.lifetime_data,
+                      ike_params.lifetime_data_len,
+                      ike_params.lifesize_data, ike_params.lifesize_data_len,
+                      ike_params.gss_id_flag,
                       ike_params.gss_data, ike_params.gss_data_len,
                       ike_params.trans_id);
             break;
@@ -1726,55 +1757,75 @@ initialise_ike_packet(size_t *packet_out_len, ike_packet_params *params) {
    if (!params->trans_flag) {	/* Use standard transform set if none specified */
       if (params->exchange_type != ISAKMP_XCHG_AGGR) {	/* Main Mode */
          add_trans(0, NULL, OAKLEY_3DES_CBC, 0, OAKLEY_SHA,
-                   params->auth_method, 2, params->lifetime, params->lifesize,
+                   params->auth_method, 2, params->lifetime_data,
+                   params->lifetime_data_len, params->lifesize_data,
+                   params->lifesize_data_len,
                    params->gss_id_flag, params->gss_data, params->gss_data_len,
                    params->trans_id);
          add_trans(0, NULL, OAKLEY_3DES_CBC, 0, OAKLEY_MD5,
-                   params->auth_method, 2, params->lifetime, params->lifesize,
+                   params->auth_method, 2, params->lifetime_data,
+                   params->lifetime_data_len, params->lifesize_data,
+                   params->lifesize_data_len,
                    params->gss_id_flag, params->gss_data, params->gss_data_len,
                    params->trans_id);
          add_trans(0, NULL, OAKLEY_DES_CBC,  0, OAKLEY_SHA,
-                   params->auth_method, 2, params->lifetime, params->lifesize,
+                   params->auth_method, 2, params->lifetime_data,
+                   params->lifetime_data_len, params->lifesize_data,
+                   params->lifesize_data_len,
                    params->gss_id_flag, params->gss_data, params->gss_data_len,
                    params->trans_id);
          add_trans(0, NULL, OAKLEY_DES_CBC,  0, OAKLEY_MD5,
-                   params->auth_method, 2, params->lifetime, params->lifesize,
+                   params->auth_method, 2, params->lifetime_data,
+                   params->lifetime_data_len, params->lifesize_data,
+                   params->lifesize_data_len,
                    params->gss_id_flag, params->gss_data, params->gss_data_len,
                    params->trans_id);
          add_trans(0, NULL, OAKLEY_3DES_CBC, 0, OAKLEY_SHA,
-                   params->auth_method, 1, params->lifetime, params->lifesize,
+                   params->auth_method, 1, params->lifetime_data,
+                   params->lifetime_data_len, params->lifesize_data,
+                   params->lifesize_data_len,
                    params->gss_id_flag, params->gss_data, params->gss_data_len,
                    params->trans_id);
          add_trans(0, NULL, OAKLEY_3DES_CBC, 0, OAKLEY_MD5,
-                   params->auth_method, 1, params->lifetime, params->lifesize,
+                   params->auth_method, 1, params->lifetime_data,
+                   params->lifetime_data_len, params->lifesize_data,
+                   params->lifesize_data_len,
                    params->gss_id_flag, params->gss_data, params->gss_data_len,
                    params->trans_id);
          add_trans(0, NULL, OAKLEY_DES_CBC,  0, OAKLEY_SHA,
-                   params->auth_method, 1, params->lifetime, params->lifesize,
+                   params->auth_method, 1, params->lifetime_data,
+                   params->lifetime_data_len, params->lifesize_data,
+                   params->lifesize_data_len,
                    params->gss_id_flag, params->gss_data, params->gss_data_len,
                    params->trans_id);
          add_trans(0, NULL, OAKLEY_DES_CBC,  0, OAKLEY_MD5,
-                   params->auth_method, 1, params->lifetime, params->lifesize,
+                   params->auth_method, 1, params->lifetime_data,
+                   params->lifetime_data_len, params->lifesize_data,
+                   params->lifesize_data_len,
                    params->gss_id_flag, params->gss_data, params->gss_data_len,
                    params->trans_id);
          no_trans=8;
       } else {	/* presumably aggressive mode */
          add_trans(0, NULL, OAKLEY_3DES_CBC, 0, OAKLEY_SHA,
-                   params->auth_method, params->dhgroup, params->lifetime,
-                   params->lifesize, params->gss_id_flag, params->gss_data,
-                   params->gss_data_len, params->trans_id);
+                   params->auth_method, params->dhgroup, params->lifetime_data,
+                   params->lifetime_data_len, params->lifesize_data,
+                   params->lifesize_data_len, params->gss_id_flag,
+                   params->gss_data, params->gss_data_len, params->trans_id);
          add_trans(0, NULL, OAKLEY_3DES_CBC, 0, OAKLEY_MD5,
-                   params->auth_method, params->dhgroup, params->lifetime,
-                   params->lifesize, params->gss_id_flag, params->gss_data,
-                   params->gss_data_len, params->trans_id);
+                   params->auth_method, params->dhgroup, params->lifetime_data,
+                   params->lifetime_data_len, params->lifesize_data,
+                   params->lifesize_data_len, params->gss_id_flag,
+                   params->gss_data, params->gss_data_len, params->trans_id);
          add_trans(0, NULL, OAKLEY_DES_CBC,  0, OAKLEY_SHA,
-                   params->auth_method, params->dhgroup, params->lifetime,
-                   params->lifesize, params->gss_id_flag, params->gss_data,
-                   params->gss_data_len, params->trans_id);
+                   params->auth_method, params->dhgroup, params->lifetime_data,
+                   params->lifetime_data_len, params->lifesize_data,
+                   params->lifesize_data_len, params->gss_id_flag,
+                   params->gss_data, params->gss_data_len, params->trans_id);
          add_trans(0, NULL, OAKLEY_DES_CBC,  0, OAKLEY_MD5,
-                   params->auth_method, params->dhgroup, params->lifetime,
-                   params->lifesize, params->gss_id_flag, params->gss_data,
-                   params->gss_data_len, params->trans_id);
+                   params->auth_method, params->dhgroup, params->lifetime_data,
+                   params->lifetime_data_len, params->lifesize_data,
+                   params->lifesize_data_len, params->gss_id_flag,
+                   params->gss_data, params->gss_data_len, params->trans_id);
          no_trans=4;
       }
       if (params->gss_data)
@@ -1782,7 +1833,8 @@ initialise_ike_packet(size_t *packet_out_len, ike_packet_params *params) {
    } else {	/* Custom transforms */
       no_trans = params->trans_flag;
    }
-   transforms = add_trans(1, &trans_len, 0,  0, 0, 0, 0, 0, 0, 0, NULL, 0, 0);
+   transforms = add_trans(1, &trans_len, 0, 0, 0, 0, 0, NULL, 0, NULL, 0, 0,
+                          NULL, 0, 0);
    *packet_out_len += trans_len;
 /*
  *	Proposal payload
@@ -2742,13 +2794,23 @@ usage(int status, int detailed) {
       fprintf(stderr, "\n--lifetime=<s> or -l <s> Set IKE lifetime to <s> seconds, default=%d.\n", DEFAULT_LIFETIME);
       fprintf(stderr, "\t\t\tRFC 2407 specifies 28800 as the default, but some\n");
       fprintf(stderr, "\t\t\timplementations may require different values.\n");
-      fprintf(stderr, "\t\t\tIf you specify 0, then no lifetime will be specified.\n");
+      fprintf(stderr, "\t\t\tIf you specify this as a a decimal integer, e.g.\n");
+      fprintf(stderr, "\t\t\t86400, then the attribute will use a 4-byte value.\n");
+      fprintf(stderr, "\t\t\tIf you specify it as a hex number, e.g. 0xFF, then\n");
+      fprintf(stderr, "\t\t\tthe attribute will use the appropriate size value\n");
+      fprintf(stderr, "\t\t\t(one byte for this example).\n");
+      fprintf(stderr, "\t\t\tIf you specify the string \"none\" then no lifetime\n");
+      fprintf(stderr, "\t\t\tattribute will be added at all.\n");
       fprintf(stderr, "\t\t\tYou can use this option more than once in conjunction\n");
       fprintf(stderr, "\t\t\twith the --trans options to produce multiple transform\n");
       fprintf(stderr, "\t\t\tpayloads with different lifetimes.  Each --trans option\n");
       fprintf(stderr, "\t\t\twill use the previously specified lifetime value.\n");
       fprintf(stderr, "\n--lifesize=<s> or -z <s> Set IKE lifesize to <s> Kilobytes, default=%d.\n", DEFAULT_LIFESIZE);
-      fprintf(stderr, "\t\t\tIf you specify 0, then no lifesize will be specified.\n");
+      fprintf(stderr, "\t\t\tIf you specify this as a a decimal integer, e.g.\n");
+      fprintf(stderr, "\t\t\t86400, then the attribute will use a 4-byte value.\n");
+      fprintf(stderr, "\t\t\tIf you specify it as a hex number, e.g. 0xFF, then\n");
+      fprintf(stderr, "\t\t\tthe attribute will use the appropriate size value\n");
+      fprintf(stderr, "\t\t\t(one byte for this example).\n");
       fprintf(stderr, "\t\t\tYou can use this option more than once in conjunction\n");
       fprintf(stderr, "\t\t\twith the --trans options to produce multiple transform\n");
       fprintf(stderr, "\t\t\tpayloads with different lifesizes.  Each --trans option\n");
