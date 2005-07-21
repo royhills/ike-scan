@@ -280,8 +280,10 @@ typedef struct {		/* Used for encapsulated IKE */
  * conform to the new order.
  */
 typedef struct {	/* IKE Packet Parameters */
-   unsigned lifetime;
-   unsigned lifesize;
+   unsigned char *lifetime_data;
+   size_t lifetime_data_len;
+   unsigned char *lifesize_data;
+   size_t lifesize_data_len;
    unsigned auth_method;
    unsigned dhgroup;
    unsigned idtype;
@@ -348,17 +350,19 @@ void dump_vid(void);
 unsigned int hstr_i(const char *);
 unsigned char* hex2data(const char *, size_t *);
 unsigned char* hex_or_str(const char *, size_t *);
+unsigned char* hex_or_num(const char *, size_t *);
 struct isakmp_hdr* make_isakmp_hdr(unsigned, unsigned, unsigned, int, int,
                                    unsigned);
 struct isakmp_sa* make_sa_hdr(unsigned, unsigned, unsigned, unsigned);
 unsigned char* make_prop(size_t *, unsigned, unsigned, unsigned, unsigned);
 unsigned char* make_trans(size_t *, unsigned, unsigned, unsigned,
                           unsigned, unsigned, unsigned, unsigned,
-                          unsigned, unsigned, int, unsigned char *, size_t,
-                          unsigned);
+                          unsigned char *, size_t, unsigned char *, size_t,
+                          int, unsigned char *, size_t, unsigned);
 unsigned char* add_trans(int, size_t *, unsigned, unsigned, unsigned, unsigned,
-                         unsigned, unsigned, unsigned, int, unsigned char *,
-                         size_t, unsigned);
+                         unsigned,
+                         unsigned char *, size_t, unsigned char *, size_t,
+                         int, unsigned char *, size_t, unsigned);
 unsigned char* make_attr(size_t *, int, unsigned, size_t, unsigned, void *);
 unsigned char* add_attr(int, size_t *, int, unsigned, size_t, unsigned,
                         void *);
