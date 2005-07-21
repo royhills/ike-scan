@@ -30,7 +30,7 @@
 # The Vendor_ID_Pattern should be specified as a Posix extended regular
 # expression that will match the hex value of the Vendor ID.  The Posix regular
 # expression routines "regcomp" and "regexec" are used to compile and
-# match the petterns.
+# match the patterns.
 #
 # The hex value of the Vendor ID can only contain the characters [0-9a-f].
 # The regular expression match is case insensitive so you can use either
@@ -169,7 +169,7 @@ Cisco VPN Concentrator	^1f07f70eaa6514d3b0fa96542a
 # c0000000.  I don't know what these represent.
 IKE Fragmentation	^4048b7d56ebce88525e7de7f00d6c2d3
 
-# Various IKE internet drafts.  The VID payload is the MD5 hash of the
+# Various IKE Internet drafts.  The VID payload is the MD5 hash of the
 # implementation name given below.
 draft-stenberg-ipsec-nat-traversal-01	^27bab5dc01ea0760ea4e3190ac27c0d0
 draft-stenberg-ipsec-nat-traversal-02	^6105c422e76847e43f9684801292aecd
@@ -232,7 +232,7 @@ RFC 3947 NAT-T	^4a131c81070358455c5728f20e95452f
 
 # A GSS-API Authentication Method for IKE - draft-ietf-ipsec-isakmp-gss-auth
 # This is used by Windows 2000 and later.  Specific Windows VIDs are in a
-# seperate section.
+# separate section.
 # Note that the MD5 hash for "A GSS-API ..." in draft version 07 is given as
 # the hash of the string with a newline appended.  I think that this is an
 # error, so I've added patterns both with and without the trailing newline.
@@ -311,7 +311,7 @@ Microsoft Initial-Contact	^26244d38eddb61b3172a36e3d0cfb819
 # FreeS/WAN and Openswan
 # VID is a 12-byte printable string.  The first two bytes are "OE", which
 # stands for "Opportunistic Encryption" (the FreeS/WAN designers were
-# enthusiastic about opportunistic encryption); the remaining twn bytes are
+# enthusiastic about opportunistic encryption); the remaining ten bytes are
 # a truncated, "ASCIIfied" MD5 hash of the implementation name given below.
 # The "ASCIIfication" process involves clearing bit 7 and setting bit 6 in
 # each byte, thus constraining the range to 64-127 inclusive.
@@ -371,7 +371,9 @@ Unknown 9	^3499691eb82f9eaefed378f5503671debd0663b4000000040000023c
 # I've seen Unknown 10 sent from SonicWall Global VPN Client
 Unknown 10	^975b7816f69789600dda89040576e0db
 # The "Safenet or Watchguard" Vendor ID has also been seen sent from SonicWall
-# Global VPN client.  It is normally followed by 80010000 which looks like a
+# Global VPN client.  It is normally followed by 80010000, which looks like a
 # version number.
 Safenet or Watchguard	^da8e9378
 Unknown-cisco	^e23ae9f51a46876ff93d89ba725d649d
+Maybe Sidewinder G2	^8404adf9cda05760b2ca292e4bff537b
+Maybe Sidewinder G2	^e720cdd49d2ee7b83ce1970a6c69b528
