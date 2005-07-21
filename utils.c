@@ -222,6 +222,57 @@ hex_or_str(const char *string, size_t *data_len) {
 }
 
 /*
+ *	hex_or_num -- Convert hex or number to binary data
+ *
+ *	Inputs:
+ *
+ *	string		The hex or string to convert
+ *	data_len	(output) The length of the resultant binary data
+ *
+ *	Returns:
+ *
+ *	Pointer to the binary data, or NULL if an error occurred.
+ *
+ *	The input string must be in one of the following two formats:
+ *
+ *	0x<hex-data>	Input is in hex format
+ *	decimal number	Input is in numeric format
+ *
+ *	For numeric input, the binary data will be a 32-bit value in
+ *	big endian format.
+ *
+ *	The returned pointer points to malloc'ed storage which should be
+ *	free'ed by the caller when it's no longer needed.  If the length of
+ *	the inputs string is not even, the function will return NULL and
+ *	set data_len to 0.
+ */
+unsigned char *
+hex_or_num(const char *string, size_t *data_len) {
+
+   if (strlen(string) < 1) {	/* Input string too short */
+      *data_len = 0;
+      return NULL;
+   }
+
+   if (string[0] == '0' && string[1] == 'x') {	/* Hex input format */
+      return hex2data((string+2), data_len);
+   } else {					/* Assume number input format */
+      unsigned char *data;
+      size_t len = 4;	/* 32-bit value */
+      unsigned long value;
+      unsigned long value_be;
+
+      value = strtoul(string, (char **)NULL, 10);
+      value_be = htonl(value);
+      data = Malloc(len);
+      memcpy(data, &value_be, len);
+      
+      *data_len = len;
+      return data;
+   }
+}
+
+/*
  * make_message -- allocate a sufficiently large string and print into it.
  *
  * Inputs:
