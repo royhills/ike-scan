@@ -543,45 +543,6 @@ main(int argc, char *argv[]) {
       err_sys("ERROR: bind");
    }
 /*
- *	If we are using TCP transport, then connect the socket to the peer.
- *	We know that there is only one entry in the host list if we're using
- *	TCP.
- */
-   if (tcp_flag) {
-      struct sockaddr_in sa_tcp;
-      NET_SIZE_T sa_tcp_len;
-      struct sigaction act, oact;  /* For sigaction */
-/*
- *      Set signal handler for alarm.
- *      Must use sigaction() rather than signal() to prevent SA_RESTART
- */
-      act.sa_handler=sig_alarm;
-      sigemptyset(&act.sa_mask);
-      act.sa_flags=0;
-      sigaction(SIGALRM,&act,&oact);
-/*
- *	Set alarm
- */
-      alarm(tcp_connect_timeout);
-/*
- *	Connect to peer
- */
-      memset(&sa_tcp, '\0', sizeof(sa_tcp));
-      sa_tcp.sin_family = AF_INET;
-      sa_tcp.sin_addr.s_addr = helist->addr.s_addr;
-      sa_tcp.sin_port = htons(dest_port);
-      sa_tcp_len = sizeof(sa_tcp);
-      if ((connect(sockfd, (struct sockaddr *) &sa_tcp, sa_tcp_len)) != 0) {
-         if (errno == EINTR)
-            errno = ETIMEDOUT;
-         err_sys("ERROR: TCP connect");
-      }
-/*
- *	Cancel alarm
- */
-      alarm(0);
-   }
-/*
  *      Drop privileges if we are SUID.
  */
    if ((setuid(getuid())) < 0) {
@@ -629,6 +590,45 @@ main(int argc, char *argv[]) {
                           cookie_data, cookie_data_len);
          argv++;
       }
+   }
+/*
+ *	If we are using TCP transport, then connect the socket to the peer.
+ *	We know that there is only one entry in the host list if we're using
+ *	TCP.
+ */
+   if (tcp_flag) {
+      struct sockaddr_in sa_tcp;
+      NET_SIZE_T sa_tcp_len;
+      struct sigaction act, oact;  /* For sigaction */
+/*
+ *      Set signal handler for alarm.
+ *      Must use sigaction() rather than signal() to prevent SA_RESTART
+ */
+      act.sa_handler=sig_alarm;
+      sigemptyset(&act.sa_mask);
+      act.sa_flags=0;
+      sigaction(SIGALRM,&act,&oact);
+/*
+ *	Set alarm
+ */
+      alarm(tcp_connect_timeout);
+/*
+ *	Connect to peer
+ */
+      memset(&sa_tcp, '\0', sizeof(sa_tcp));
+      sa_tcp.sin_family = AF_INET;
+      sa_tcp.sin_addr.s_addr = helist->addr.s_addr;
+      sa_tcp.sin_port = htons(dest_port);
+      sa_tcp_len = sizeof(sa_tcp);
+      if ((connect(sockfd, (struct sockaddr *) &sa_tcp, sa_tcp_len)) != 0) {
+         if (errno == EINTR)
+            errno = ETIMEDOUT;
+         err_sys("ERROR: TCP connect");
+      }
+/*
+ *	Cancel alarm
+ */
+      alarm(0);
    }
 /*
  *	If we are displaying the backoff table, load known backoff
@@ -2736,7 +2736,7 @@ usage(int status, int detailed) {
       fprintf(stderr, "\t\t\toutput lines are shorter.\n");
       fprintf(stderr, "\n--multiline or -M\tSplit the payload decode across multiple lines.\n");
       fprintf(stderr, "\t\t\tWith this option, the decode for each payload is\n");
-      fprintf(stderr, "\t\t\tprinted on a seperate line starting with a TAB.\n");
+      fprintf(stderr, "\t\t\tprinted on a separate line starting with a TAB.\n");
       fprintf(stderr, "\t\t\tThis option makes the output easier to read, especially\n");
       fprintf(stderr, "\t\t\twhen there are many payloads.\n");
       fprintf(stderr, "\n--lifetime=<s> or -l <s> Set IKE lifetime to <s> seconds, default=%d.\n", DEFAULT_LIFETIME);
@@ -2773,7 +2773,7 @@ usage(int status, int detailed) {
       fprintf(stderr, "\t\t\tand --trans=7/256,1,1,5 specifies\n");
       fprintf(stderr, "\t\t\tEnc=AES-256, Hash=MD5, Auth=shared key, DH Group=5\n");
       fprintf(stderr, "\t\t\tYou can use this option more than once to send\n");
-      fprintf(stderr, "\t\t\tan arbitary number of custom transforms.\n");
+      fprintf(stderr, "\t\t\tan arbitrary number of custom transforms.\n");
       fprintf(stderr, "\n--showbackoff[=<n>] or -o[<n>]\tDisplay the backoff fingerprint table.\n");
       fprintf(stderr, "\t\t\tDisplay the backoff table to fingerprint the IKE\n");
       fprintf(stderr, "\t\t\timplementation on the remote hosts.\n");
@@ -2964,7 +2964,7 @@ usage(int status, int detailed) {
       fprintf(stderr, "\t\t\tthe response packets.\n");
       fprintf(stderr, "\n--exchange=<n>\t\tSet the exchange type to <n>\n");
       fprintf(stderr, "\t\t\tThis option allows you to change the exchange type in\n");
-      fprintf(stderr, "\t\t\tthe ISAKMP header to an arbitary value.\n");
+      fprintf(stderr, "\t\t\tthe ISAKMP header to an arbitrary value.\n");
       fprintf(stderr, "\t\t\tNote that ike-scan only supports Main and Aggressive\n");
       fprintf(stderr, "\t\t\tmodes (values 2 and 4 respectively).  Specifying\n");
       fprintf(stderr, "\t\t\tother values will change the exchange type value in\n");
