@@ -186,8 +186,10 @@ make_prop(size_t *outlen, unsigned length, unsigned notrans,
 unsigned char*
 make_trans(size_t *length, unsigned next, unsigned number, unsigned cipher,
            unsigned keylen, unsigned hash, unsigned auth, unsigned group,
-           unsigned lifetime, unsigned lifesize, int gss_id_flag,
-           unsigned char *gss_data, size_t gss_data_len, unsigned trans_id) {
+           unsigned char *lifetime_data, size_t lifetime_data_len,
+           unsigned char *lifesize_data, size_t lifesize_data_len,
+           int gss_id_flag, unsigned char *gss_data, size_t gss_data_len,
+           unsigned trans_id) {
 
    struct isakmp_transform* hdr;	/* Transform header */
    unsigned char *payload;
@@ -217,18 +219,16 @@ make_trans(size_t *length, unsigned next, unsigned number, unsigned cipher,
    if (keylen)
       add_attr(0, NULL, 'B', OAKLEY_KEY_LENGTH, 0, keylen, NULL);
 
-   if (lifetime) {
-      uint32_t lifetime_n = htonl(lifetime);
-
+   if (lifetime_data_len) {
       add_attr(0, NULL, 'B', OAKLEY_LIFE_TYPE, 0, SA_LIFE_TYPE_SECONDS, NULL);
-      add_attr(0, NULL, 'V', OAKLEY_LIFE_DURATION, 4, 0, &lifetime_n);
+      add_attr(0, NULL, 'V', OAKLEY_LIFE_DURATION, lifetime_data_len, 0,
+               lifetime_data);
    }
 
-   if (lifesize) {
-      uint32_t lifesize_n = htonl(lifesize);
-
+   if (lifesize_data_len) {
       add_attr(0, NULL, 'B', OAKLEY_LIFE_TYPE, 0, SA_LIFE_TYPE_KBYTES, NULL);
-      add_attr(0, NULL, 'V', OAKLEY_LIFE_DURATION, 4, 0, &lifesize_n);
+      add_attr(0, NULL, 'V', OAKLEY_LIFE_DURATION, lifesize_data_len, 0,
+               lifesize_data);
    }
 
    if (gss_id_flag)
@@ -286,7 +286,9 @@ make_trans(size_t *length, unsigned next, unsigned number, unsigned cipher,
 unsigned char*
 add_trans(int finished, size_t *length,
           unsigned cipher, unsigned keylen, unsigned hash, unsigned auth,
-          unsigned group, unsigned lifetime, unsigned lifesize,
+          unsigned group,
+          unsigned char *lifetime_data, size_t lifetime_data_len,
+          unsigned char *lifesize_data, size_t lifesize_data_len,
           int gss_id_flag, unsigned char *gss_data, size_t gss_data_len,
           unsigned trans_id) {
 
@@ -303,8 +305,9 @@ add_trans(int finished, size_t *length,
  */
    if (!finished) {
       trans = make_trans(&len, 3, trans_no, cipher, keylen, hash, auth,
-                         group, lifetime, lifesize, gss_id_flag, gss_data,
-                         gss_data_len, trans_id);
+                         group, lifetime_data, lifetime_data_len,
+                         lifesize_data, lifesize_data_len, gss_id_flag,
+                         gss_data, gss_data_len, trans_id);
       trans_no++;
       if (first_transform) {
          cur_offset = 0;
