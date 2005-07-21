@@ -1,5 +1,92 @@
 $Id$
 
+2005-07-21 Roy Hills <Roy.Hills@nta-monitor.com>
+
+	* ike-scan.c, isakmp.c, utils.c: Added support for variable length
+	  lifetime and lifesize transform attributes.  Now, the --lifetime
+	  and --lifesize options can take three options:
+
+	  a) "none" - Do not add any lifetime or lifesize attribute
+	  b) decimal interger, e.g. 86400 - Add a 4-byte value
+	  c) hex number, e.g. 0xff - Add a variable length value
+
+	  This allows arbitrary length lifetime and lifesize attributes to
+	  be added using the hex notation.
+
+2005-07-06 Roy Hills <Roy.Hills@nta-monitor.com>
+
+	* ike-scan.c: Added --exchange option to allow the exchange field
+	  in the ISAKMP header to be set to arbitary values.
+
+	* ike-scan.c: Changed default packet rate calculation from interval
+	  to bandwidth.  The default bandwidth is 56000 bits per second.  It's
+	  still possible to set the interval instead for backwards
+	  compatibility, and for those applications where it's important to
+	  be able to specify the exact packet rate.
+
+2005-06-21 Roy Hills <Roy.Hills@nta-monitor.com>
+
+	* ike-scan.c, isakmp.c: Added --hdrflags and --hdrmsgid options to
+	  allow Flags and MsgID fields in the ISAKMP header to be specified.
+
+	* ike-scan.c: Added --cookie option to allow the initiator cookie in
+	  the ISAKMP header to be set to a static value.
+
+	* isakmp.c: Added support for Checkpoint notify code 9110.  This was
+	  observed when sending a large volume of requests to a VPN-1 system,
+	  and is believed to be related to the Client Puzzles VPN DoS avoidance
+	  mechanism.
+
+	* isakmp.c: Display the Version, flags, or msgid from the ISAKMP
+	  header if they don't contain the expected value.
+
+2005-06-21 Roy Hills <Roy.Hills@nta-monitor.com>
+
+	* make-win32-zipfile.sh: New file to create the Windows binary
+	  zipfile.  Used under Cygwin.  Previously, I had manually created
+	  the zip files using "winzip", which was error-prone.
+
+2005-06-20 Roy Hills <Roy.Hills@nta-monitor.com>
+
+	* ike-scan.c: Add 64-bit cast to calculation of microsecond-resolution
+	  time differences to ensure that the calculation is performed with
+	  64-bit quantities.  Previously, the calculation was performed
+	  with 32-bit quantities before being assigned to a 64-bit value.
+
+2005-06-18 Roy Hills <Roy.Hills@nta-monitor.com>
+
+	* utils.c: Modify timeval_diff() to prevent it changing its input
+	  arguments.  Previously, it was sometimes changing its second
+	  argument, b, because of the carry calculation; now it uses a
+	  temporary value to perform the carry on.
+
+2005-06-17 Roy Hills <Roy.Hills@nta-monitor.com>
+
+	* ike-scan.c, isakmp.c: Added Delete payload processing.  We now
+	  display details of an ISAKMP Delete payload if one is returned,
+	  rather than just displaying generic payload information.
+
+2005-06-16 Roy Hills <Roy.Hills@nta-monitor.com>
+
+	* ike-scan.c, isakmp.c: Add --spisize option to allow a random SPI
+	  of the specified size to be added to the proposal payload.
+
+2005-06-15 Roy Hills <Roy.Hills@nta-monitor.com>
+
+	* ike-scan.c, isakmp.c: Display responder cookie value as a hex string
+	  when displaying SA and Notify payloads, unless quiet is in effect.
+
+	* ike-scan.c: Added support for SIGUSR1 handling.  Not fully
+	  implemented.  NOTE: This was removed later in June 2005, because the
+	  bug we were looking for was found and fixed.
+
+	* isakmp.c: Print the SA Proposal SPI as hex if the SPI size in the
+	  proposal header is non-zero.  During Phase-1, the SPI size is
+	  normally zero.  However it has been observed to be non-zero on rare
+	  occasions, and RFC 2408 allows this: "[during phase-1, the SPI is]
+	  redundant and MAY be set to 0 or it MAY contain the transmitting
+	  entity's cookie".
+
 2005-05-31 Roy Hills <Roy.Hills@nta-monitor.com>
 
 	* psk-crack.c: Fixed error which caused psk-crack to incorrectly report
