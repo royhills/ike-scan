@@ -30,7 +30,7 @@
  * This file contains various utility functions used by ike-scan.
  *
  * These functions were originally in ike-scan.c, but were moved to utils.c
- * because ike-scan.c was gettign rather large.
+ * because ike-scan.c was getting rather large.
  */
 
 #include "ike-scan.h"
