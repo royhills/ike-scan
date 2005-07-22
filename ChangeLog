@@ -7,7 +7,7 @@ $Id$
 	  and --lifesize options can take three options:
 
 	  a) "none" - Do not add any lifetime or lifesize attribute
-	  b) decimal interger, e.g. 86400 - Add a 4-byte value
+	  b) decimal integer, e.g. 86400 - Add a 4-byte value
 	  c) hex number, e.g. 0xff - Add a variable length value
 
 	  This allows arbitrary length lifetime and lifesize attributes to
@@ -16,7 +16,7 @@ $Id$
 2005-07-06 Roy Hills <Roy.Hills@nta-monitor.com>
 
 	* ike-scan.c: Added --exchange option to allow the exchange field
-	  in the ISAKMP header to be set to arbitary values.
+	  in the ISAKMP header to be set to arbitrary values.
 
 	* ike-scan.c: Changed default packet rate calculation from interval
 	  to bandwidth.  The default bandwidth is 56000 bits per second.  It's
@@ -111,7 +111,7 @@ $Id$
 	  stepped through the strings using pointers.  POSIX regex is more
 	  complex, but it allows for more flexible and precise matching.
 
-	* ike-scan.c: Add SO_REUSEADDR option to TCP soacket when performing
+	* ike-scan.c: Add SO_REUSEADDR option to TCP socket when performing
 	  TCP scanning (--tcp option).
 
 	* ike-vendor-ids: Added 16 new Vendor IDs, and revised some comments
@@ -138,9 +138,9 @@ $Id$
 
 	* ike-scan.c: Changed initialise_ike_packet() function to use the
 	  struct ike_packet_params rather than taking the various parameters
-	  as seperate arguments, as the argument count for this function was
+	  as separate arguments, as the argument count for this function was
 	  up to 15 and growing (c89 std only guarantees up to 31 I believe).
-	  Also removed some unecessary global varables and placed these in
+	  Also removed some unnecessary global variables and placed these in
 	  the new struct, which currently contains 18 members.
 
 	* ike-scan.c: Added --doi (-D) and --situation (-S) options to allow
@@ -193,10 +193,10 @@ $Id$
 
 	* ike-scan.h, ike-scan.c, isakmp.c: Change structure definitions to
 	  typedefs.  i.e. change "struct foo {defs};" to
-	  typedef strct {defs} foo;".
+	  typedef struct {defs} foo;".
 
 	* ike-scan.h: Added extra data structure to the host entry structure.
-	  This is designed to allow arbitary extra data, such as an id string
+	  This is designed to allow arbitrary extra data, such as an id string
 	  or a transform specification, to be attached to a host entry.
 
 2005-02-15 Roy Hills <Roy.Hills@nta-monitor.com>
@@ -427,7 +427,7 @@ $Id$
 	* ike-scan.c: Added experimental support for Aggressive Mode
 	  Pre-Shared Key (PSK) cracking with --pskcrack (-P) option.
 	  This outputs the PSK parameters as colon-separated hex values
-	  for input into a seperate cracking program (which has not yet
+	  for input into a separate cracking program (which has not yet
 	  been written).
 
 2004-07-08 Roy Hills <Roy.Hills@nta-monitor.com>
@@ -446,7 +446,7 @@ $Id$
 	* ike-scan.c: Added experimental support for Cisco encapsulated
 	  IKE over TCP as used by Cisco VPN Concentrator.  Changed --tcp (-T)
 	  option to take an optional numeric argument: 1 (default) meaning
-	  raw IKE over TCP, and 2 meaning Cisco propriatary encapsulation.
+	  raw IKE over TCP, and 2 meaning Cisco proprietary encapsulation.
 
 	* ike-scan.c: Add timeout for TCP connect() when using the --tcp (-T)
 	  option.  This uses the alarm() call to interrupt connect() which
@@ -541,7 +541,7 @@ $Id$
 
 	* ike-scan.c: Cast char * to unsigned char * before passing to
 	  isdigit().  isdigit can have problems with char if char is signed
-	  and value >127, esp. when it's implemeted as a macro that indexes
+	  and value >127, esp. when it's implemented as a macro that indexes
 	  into an array as on Solaris 8.
 
 	* Use hexstring() to print cookie values rather than using htonl()
@@ -616,7 +616,7 @@ $Id$
 
 	* isakmp.c: Added experimental support for displaying transform
 	  attributes.  This code is only enabled if the --experimental option is
-	  specified.  New attribute parseing function process_attr(),
+	  specified.  New attribute parsing function process_attr(),
 	  new macro STR_OR_ID, and new function numstr() as well as additional
 	  code in process_sa() function.
 
@@ -636,11 +636,11 @@ $Id$
 	  IPstart-IPend as well as the traditional single host or IP address.
 	  The new function add_host_pattern() deals with these new formats.
 	  Added details to usage() to explain these additional formats.
-	  This functionallity was first requested by Chris Gripp in Jan 2003.
+	  This functionality was first requested by Chris Gripp in Jan 2003.
 
 2003-11-28 Roy Hills <Roy.Hills@nta-monitor.com>
 
-	* ike-scan.c: Removed unecessary gethostbyname() call.
+	* ike-scan.c: Removed unnecessary gethostbyname() call.
 
 2003-11-23 Roy Hills <Roy.Hills@nta-monitor.com>
 
@@ -675,7 +675,7 @@ $Id$
 	  packet in a flexible way using functions in isakmp.c.  This
 	  allows us to display multiple Vendor ID payloads (previously we
 	  could only display the first), and also to detect and print
-	  vendor ID payloads anwhere in the packet (previously it had to be
+	  vendor ID payloads anywhere in the packet (previously it had to be
 	  immediately after the SA payload, which may not be the case with
 	  aggressive mode).
 
@@ -708,7 +708,7 @@ $Id$
 	* isakmp.c: Changed to use wrapper function for Malloc.
 	* isakmp.c: Wrote new add_trans() function.  This allows a multi-
 	  transform payload to be built, it calls make_trans.
-	* ike-scan.c: Use new add_trans() function in intialise_ike_packet()
+	* ike-scan.c: Use new add_trans() function in initialise_ike_packet()
 	  rather than manually building the transform payload using
 	  make_trans().
 	* isakmp.c: Add new add_vid() function.
@@ -766,13 +766,13 @@ $Id$
 	  payload.
 	* ike-scan.c: allocate vid_data using malloc rather than having a
 	  fixed-length array.  This allows the supplied vendor id to be of
-	  arbitary length.
+	  arbitrary length.
 
 2003-07-16 Roy Hills <Roy.Hills@nta-monitor.com>
 
-	* ike-scan.c: Changed --vendor option to use a hex string of arbitary
+	* ike-scan.c: Changed --vendor option to use a hex string of arbitrary
 	  length (up to MAXLINE) rather than an md5 hash of the supplied
-	  string.  This allows us to specify any vandor ID e.g. the one that
+	  string.  This allows us to specify any vendor ID e.g. the one that
 	  SecuRemote uses with main mode.
 
 2003-07-10 Roy Hills <Roy.Hills@nta-monitor.com>
@@ -811,9 +811,9 @@ $Id$
 	* ike-scan.c: Improved backoff pattern display in dump_backoff().
 	  Use integer arithmetic in add_pattern() to avoid rounding errors.
 	* ike-scan.h: Remove math.h include.  Not needed now that we use
-	  integer aritmetic in add_pattern().
+	  integer arithmetic in add_pattern().
 	* configure.ac: Removed check for maths library.  Not needed now that
-	  we use integer aritmetic in add_pattern().
+	  we use integer arithmetic in add_pattern().
 
 2003-06-17 Roy Hills <Roy.Hills@nta-monitor.com>
 
