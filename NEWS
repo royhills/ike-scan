@@ -23,7 +23,7 @@ ike-scan v1.7.2:
   o --situation (-S) allows the Situation in the SA to be changed from the
     default
 
-* We now drop root priviledge after binding the local port if we are running
+* We now drop root privilege after binding the local port if we are running
   SUID.  This improves security somewhat.
 
 * Errors from gethostbyname() or inet_aton() when resolving hosts are now
@@ -160,10 +160,10 @@ ike-scan v1.5:
 * Aggressive mode is now supported.  The --aggressive (-A) option specifies
   aggressive mode.
 
-* The --trans option can be specified multiple times to generate an arbitary
+* The --trans option can be specified multiple times to generate an arbitrary
   number of custom transforms in the ISAKMP SA Proposal.
 
-* The --vendor option can be specified multiple times to generate an arbitary
+* The --vendor option can be specified multiple times to generate an arbitrary
   number of Vendor ID payloads.
 
 * UDP engine improvements: Dynamically adjust select() timeout, removing the
@@ -175,7 +175,7 @@ ike-scan v1.5:
 ike-scan v1.4:
 
 * Two additions to permit Vendor ID fingerprinting.
-  1. Allow the specification of an arbitary Vendor ID payload using the
+  1. Allow the specification of an arbitrary Vendor ID payload using the
      --vendor option.
   2. Display any Vendor ID payload returned by the target host.
 

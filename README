@@ -37,7 +37,7 @@ ike-scan to use the OpenSSL hash functions rather than its built-in functions
 because the OpenSSL ones are normally faster.  To do this, make sure you have
 the OpenSSL include files and libraries installed, and run configure as
 "./configure --with-openssl" in step (c) above.  Whether you use OpenSSL or
-not won't affect the functionallity of ike-scan, just the speed of pre-shared
+not won't affect the functionality of ike-scan, just the speed of pre-shared
 key cracking with psk-crack.
 
 Some operating systems install the OpenSSL headers and libraries by default;
@@ -84,7 +84,7 @@ c) Transform Enumeration: Find which transform attributes are supported by the
 d) User Enumeration: For some VPN systems, discover valid VPN usernames.
 
 e) Pre-Shared Key Cracking: Perform offline dictionary or brute-force password
-   cracking for IKE Aggressice Mode with Pre-Shared Key authentication. This
+   cracking for IKE Aggressive Mode with Pre-Shared Key authentication. This
    uses ike-scan to obtain the hash and other parameters, and psk-crack (which
    is part of the ike-scan package) to perform the cracking.
 
@@ -187,7 +187,7 @@ Options:
 
 --multiline or -M	Split the payload decode across multiple lines.
 			With this option, the decode for each payload is
-			printed on a seperate line starting with a TAB.
+			printed on a separate line starting with a TAB.
 			This option makes the output easier to read, especially
 			when there are many payloads.
 
@@ -230,7 +230,7 @@ Options:
 			and --trans=7/256,1,1,5 specifies
 			Enc=AES-256, Hash=MD5, Auth=shared key, DH Group=5
 			You can use this option more than once to send
-			an arbitary number of custom transforms.
+			an arbitrary number of custom transforms.
 
 --showbackoff[=<n>] or -o[<n>]	Display the backoff fingerprint table.
 			Display the backoff table to fingerprint the IKE
@@ -360,7 +360,7 @@ packet rate can be raised by lowering the minimum packet interval using
 --interval=<n> which sets the minimum packet interval to n ms.  ike-scan
 uses select(2) and gettimeofday(2) to implement the rate limiting.
 
-To determine the required inter-packet interval to acheive a given bandwidth,
+To determine the required inter-packet interval to achieve a given bandwidth,
 you can use the following formula:
 
 interval in ms = ((packet size in bytes * 8) / bandwidth in bps) * 1000
@@ -441,7 +441,7 @@ It is possible to specify the Authentication Method with --auth
 (default is 1 - pre-shared key) and the IKE lifetime in seconds with
 --lifetime (default is 28800 seconds or 8 hours as recommended by RFC 2407).
 If you specify --lifetime as 0, then no lifetime attribute is included in
-the transfrom payloads.  If you are specifying custom transforms, you can
+the transform payloads.  If you are specifying custom transforms, you can
 you can use this option more than once to produce transform payloads with
 different lifetimes.  Each --trans option will use the previously specified
 lifetime value.
@@ -455,7 +455,7 @@ For example: "--trans=5,2,1,2" specifies:
 Enc=5 (3DES-CBC), Hash=2 (SHA1), Auth=1 (shared key), DH Group=2 (modp 1024)
 and "--trans=7/256,1,1,5" specifies:
 Enc=7 (AES), Keylen=256 bits, Hash=MD5, Auth=shared key, DH Group=5 (modp 1536)
-You can use the --trans option more than once to send an arbitary number of
+You can use the --trans option more than once to send an arbitrary number of
 custom transforms in the proposal.
 
 Specifying a custom transform set overrides any authentication method
@@ -501,7 +501,7 @@ that ike-scan doesn't try to use too much bandwidth as a result.  If you use
 Aggressive Mode, you can also use the following options:
 
 --id		Set identification value.
---idtype	Set identificatiion type (Default 3 (ID_USER_FQDN)).
+--idtype	Set identification type (Default 3 (ID_USER_FQDN)).
 --dhgroup	Specify Diffie-Hellman group (Default 2 - MODP 1024).
 
 If you use Aggressive Mode, then you can only use one Diffie Hellman group
