@@ -220,7 +220,7 @@ Recv time	The time when this response packet was received.  This time
 		midnight on Jan 1, 1970 (the Epoch used by Unix systems).
 
 Delta Time	The difference between the time when this response packet was
-		received and the time when the previous reponse packet was
+		received and the time when the previous response packet was
 		received.  This is always zero for the first response packet.
 		The difference is shown in seconds and microseconds.
 
