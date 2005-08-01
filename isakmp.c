@@ -35,6 +35,46 @@
 
 static char rcsid[] = "$Id$";	/* RCS ID for ident(1) */
 
+static const id_name_map notification_map[] = { /* From RFC 2408 3.14.1 */
+   {0, "UNSPECIFIED"},
+   {1, "INVALID-PAYLOAD-TYPE"},
+   {2, "DOI-NOT-SUPPORTED"},
+   {3, "SITUATION-NOT-SUPPORTED"},
+   {4, "INVALID-COOKIE"},
+   {5, "INVALID-MAJOR-VERSION"},
+   {6, "INVALID-MINOR-VERSION"},
+   {7, "INVALID-EXCHANGE-TYPE"},
+   {8, "INVALID-FLAGS"},
+   {9, "INVALID-MESSAGE-ID"},
+   {10, "INVALID-PROTOCOL-ID"},
+   {11, "INVALID-SPI"},
+   {12, "INVALID-TRANSFORM-ID"},
+   {13, "ATTRIBUTES-NOT-SUPPORTED"},
+   {14, "NO-PROPOSAL-CHOSEN"},
+   {15, "BAD-PROPOSAL-SYNTAX"},
+   {16, "PAYLOAD-MALFORMED"},
+   {17, "INVALID-KEY-INFORMATION"},
+   {18, "INVALID-ID-INFORMATION"},
+   {19, "INVALID-CERT-ENCODING"},
+   {20, "INVALID-CERTIFICATE"},
+   {21, "CERT-TYPE-UNSUPPORTED"},
+   {22, "INVALID-CERT-AUTHORITY"},
+   {23, "INVALID-HASH-INFORMATION"},
+   {24, "AUTHENTICATION-FAILED"},
+   {25, "INVALID-SIGNATURE"},
+   {26, "ADDRESS-NOTIFICATION"},
+   {27, "NOTIFY-SA-LIFETIME"},
+   {28, "CERTIFICATE-UNAVAILABLE"},
+   {29, "UNSUPPORTED-EXCHANGE-TYPE"},
+   {30, "UNEQUAL-PAYLOAD-LENGTHS"},
+   {9101, "Checkpoint-Firewall-1"},
+   {9110, "Checkpoint-Firewall-1"},
+   {24576, "RESPONDER-LIFETIME"},	/* Next 3 are from RFC 2407 4.6.3 */
+   {24577, "REPLAY-STATUS"},
+   {24578, "INITIAL-CONTACT"},
+   {-1, NULL}
+};
+
 extern int experimental_value;
 extern psk_crack psk_values;
 extern int mbz_value;
@@ -54,7 +94,7 @@ extern const id_name_map payload_map[];
  *	Pointer to created ISAKMP Header.
  *
  *	This constructs an ISAKMP header.  It fills in the static values.
- *	The initator cookie should be changed to a unique per-host value
+ *	The initiator cookie should be changed to a unique per-host value
  *	before the packet is sent.
  */
 struct isakmp_hdr*
@@ -351,7 +391,7 @@ add_trans(int finished, size_t *length,
  *
  *	For variable attribute types, the data must be in network byte
  *	order, and its length should be a multiple of 4 bytes to avoid
- *	allignment issues.
+ *	alignment issues.
  *
  *	If type is "B", then length and v_value are ignored.  If type is "V",
  *	then b_value is ignored.
@@ -420,7 +460,7 @@ add_attr(int finished, size_t *outlen, int type, unsigned class, size_t length,
    static size_t end_offset;			/* End of attr list */
    size_t len;					/* Attr length */
 /*
- *	Construct a new attribute if we are not fianlising.
+ *	Construct a new attribute if we are not finalising.
  */
    if (!finished) {
       attr = make_attr(&len, type, class, length, b_value, v_value);
@@ -831,7 +871,7 @@ process_isakmp_hdr(unsigned char *cp, size_t *len, unsigned *next,
       msg = make_message("%s, flags=0x%.2x", msg2, hdr->isa_flags);
       free(msg2);
    }
-   if (hdr->isa_msgid != 0) {	/* Non-Zero msgid - should't happen */
+   if (hdr->isa_msgid != 0) {	/* Non-Zero msgid - shouldn't happen */
       msg2 = msg;
       msg = make_message("%s, msgid=%.8x", msg2, ntohl(hdr->isa_msgid));
       free(msg2);
@@ -1095,7 +1135,7 @@ process_attr(unsigned char **cp, size_t *len) {
       case 3:		/* Authentication Method */
          attr_value_str = make_message("%s", id_to_name(attr_value, auth_map));
          break;
-      case 4:		/* Group Desription */
+      case 4:		/* Group Description */
          attr_value_str = make_message("%s", id_to_name(attr_value, dh_map));
          break;
       case 11:		/* Life Type */
@@ -1198,6 +1238,11 @@ process_vid(unsigned char *cp, size_t len, vid_pattern_list *vidlist) {
  *
  *	Pointer to notify description string.
  *
+ *	This function is only used for notification messages that are part
+ *	of an informational exchange.  Notification messages that are part
+ *	of another exchange type are handled with process_notification()
+ *	instead.  This is an ugly hack.
+ *
  *	The description string pointer returned points to malloc'ed storage
  *	which should be free'ed by the caller when it's no longer needed.
  */
@@ -1211,43 +1256,6 @@ process_notify(unsigned char *cp, size_t len, int quiet, int multiline,
    size_t msg_len;
    unsigned char *msg_data;
    char *notify_msg;
-   static const id_name_map notification_map[] = { /* From RFC 2408 3.14.1 */
-      {0, "UNSPECIFIED"},
-      {1, "INVALID-PAYLOAD-TYPE"},
-      {2, "DOI-NOT-SUPPORTED"},
-      {3, "SITUATION-NOT-SUPPORTED"},
-      {4, "INVALID-COOKIE"},
-      {5, "INVALID-MAJOR-VERSION"},
-      {6, "INVALID-MINOR-VERSION"},
-      {7, "INVALID-EXCHANGE-TYPE"},
-      {8, "INVALID-FLAGS"},
-      {9, "INVALID-MESSAGE-ID"},
-      {10, "INVALID-PROTOCOL-ID"},
-      {11, "INVALID-SPI"},
-      {12, "INVALID-TRANSFORM-ID"},
-      {13, "ATTRIBUTES-NOT-SUPPORTED"},
-      {14, "NO-PROPOSAL-CHOSEN"},
-      {15, "BAD-PROPOSAL-SYNTAX"},
-      {16, "PAYLOAD-MALFORMED"},
-      {17, "INVALID-KEY-INFORMATION"},
-      {18, "INVALID-ID-INFORMATION"},
-      {19, "INVALID-CERT-ENCODING"},
-      {20, "INVALID-CERTIFICATE"},
-      {21, "CERT-TYPE-UNSUPPORTED"},
-      {22, "INVALID-CERT-AUTHORITY"},
-      {23, "INVALID-HASH-INFORMATION"},
-      {24, "AUTHENTICATION-FAILED"},
-      {25, "INVALID-SIGNATURE"},
-      {26, "ADDRESS-NOTIFICATION"},
-      {27, "NOTIFY-SA-LIFETIME"},
-      {28, "CERTIFICATE-UNAVAILABLE"},
-      {29, "UNSUPPORTED-EXCHANGE-TYPE"},
-      {30, "UNEQUAL-PAYLOAD-LENGTHS"},
-      {24576, "RESPONDER-LIFETIME"},	/* Next 3 are from RFC 2407 4.6.3 */
-      {24577, "REPLAY-STATUS"},
-      {24578, "INITIAL-CONTACT"},
-      {-1, NULL}
-   };
 
    if (len < sizeof(struct isakmp_notification) ||
         ntohs(hdr->isan_length) < sizeof(struct isakmp_notification))
@@ -1274,6 +1282,55 @@ process_notify(unsigned char *cp, size_t len, int quiet, int multiline,
       msg = make_message("%s%s%s", msg2, multiline?"\n\t":" ", hdr_descr);
       free(msg2);
    }
+
+   return msg;
+}
+
+/*
+ *	process_notification -- Process notification Payload
+ *
+ *	Inputs:
+ *
+ *	cp	Pointer to start of notify payload
+ *	len	Packet length remaining
+ *
+ *	Returns:
+ *
+ *	Pointer to notify description string.
+ *
+ *	The description string pointer returned points to malloc'ed storage
+ *	which should be free'ed by the caller when it's no longer needed.
+ */
+char *
+process_notification(unsigned char *cp, size_t len) {
+   struct isakmp_notification *hdr = (struct isakmp_notification *) cp;
+   char *msg;
+   unsigned msg_type;
+   size_t msg_len;
+   unsigned char *msg_data;
+   char *hex_spi;
+   unsigned char *notification_spi;
+   char *hex_data;
+   size_t spi_len;
+
+   if (len < sizeof(struct isakmp_notification) ||
+        ntohs(hdr->isan_length) < sizeof(struct isakmp_notification))
+      return make_message("Notification (packet too short to decode)");
+
+   msg_type = ntohs(hdr->isan_type);
+   notification_spi = cp + sizeof(struct isakmp_notification);
+   spi_len = hdr->isan_spisize;
+   hex_spi = hexstring(notification_spi, spi_len);
+   msg_len = ntohs(hdr->isan_length) - sizeof(struct isakmp_notification) -
+             spi_len;
+   msg_data = cp + sizeof(struct isakmp_notification) + spi_len;
+   hex_data = hexstring(msg_data, msg_len);
+
+   msg=make_message("Notification=(Code=%u, Name=%s, SPI_Size=%u, SPI_Data=%s, Data_Len=%u, Data=%s",
+                    msg_type, id_to_name(msg_type, notification_map),
+                    spi_len, hex_spi, msg_len, hex_data);
+   free(hex_spi);
+   free(hex_data);
 
    return msg;
 }
