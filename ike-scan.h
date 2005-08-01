@@ -388,6 +388,7 @@ char *process_notify(unsigned char *, size_t, int, int, char *);
 char *process_id(unsigned char *, size_t);
 char *process_cert(unsigned char *, size_t, unsigned);
 char *process_delete(unsigned char *, size_t);
+char *process_notification(unsigned char *, size_t);
 void print_payload(unsigned char *cp, unsigned payload, int);
 void add_psk_crack_payload(unsigned char *cp, unsigned, int);
 void print_psk_crack_values(const char *);
