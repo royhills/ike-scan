@@ -1434,6 +1434,12 @@ display_packet(int n, unsigned char *packet_in, host_entry *he,
             msg=make_message("%s%s%s", msg2, multiline?"\n\t":" ", cp);
             free(msg2);	/* Free old message */
             free(cp);	/* Free payload message */
+         } else if (next == ISAKMP_NEXT_N) {
+            msg2=msg;
+            cp = process_notification(pkt_ptr, bytes_left);
+            msg=make_message("%s%s%s", msg2, multiline?"\n\t":" ", cp);
+            free(msg2);	/* Free old message */
+            free(cp);	/* Free payload message */
          } else {
             if (psk_crack_flag)
                add_psk_crack_payload(pkt_ptr, next, 'R');
