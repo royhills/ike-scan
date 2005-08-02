@@ -308,6 +308,7 @@ typedef struct {	/* IKE Packet Parameters */
    int hdr_flags;	/* ISAKMP Header flags */
    unsigned hdr_msgid;	/* ISAKMP Header message id */
    unsigned hdr_next_payload;	/* Next payload in ISAKMP header */
+   int advanced_trans_flag;
 } ike_packet_params;
 
 /* Functions */
@@ -355,14 +356,15 @@ struct isakmp_hdr* make_isakmp_hdr(unsigned, unsigned, unsigned, int, int,
                                    unsigned);
 struct isakmp_sa* make_sa_hdr(unsigned, unsigned, unsigned, unsigned);
 unsigned char* make_prop(size_t *, unsigned, unsigned, unsigned, unsigned);
-unsigned char* make_trans(size_t *, unsigned, unsigned, unsigned,
-                          unsigned, unsigned, unsigned, unsigned,
-                          unsigned char *, size_t, unsigned char *, size_t,
-                          int, unsigned char *, size_t, unsigned);
-unsigned char* add_trans(int, size_t *, unsigned, unsigned, unsigned, unsigned,
-                         unsigned,
-                         unsigned char *, size_t, unsigned char *, size_t,
-                         int, unsigned char *, size_t, unsigned);
+unsigned char* make_trans_simple(size_t *, unsigned, unsigned, unsigned,
+                                 unsigned, unsigned, unsigned, unsigned,
+                                 unsigned char *, size_t, unsigned char *,
+                                 size_t, int, unsigned char *, size_t,
+                                 unsigned);
+unsigned char* add_trans_simple(int, size_t *, unsigned, unsigned, unsigned,
+                                unsigned, unsigned, unsigned char *, size_t,
+                                unsigned char *, size_t, int, unsigned char *,
+                                size_t, unsigned);
 unsigned char* make_attr(size_t *, int, unsigned, size_t, unsigned, void *);
 unsigned char* add_attr(int, size_t *, int, unsigned, size_t, unsigned,
                         void *);
@@ -376,8 +378,9 @@ unsigned char* make_udphdr(size_t *, int, int, unsigned);
 int Gettimeofday(struct timeval *);
 void *Malloc(size_t);
 void *Realloc(void *, size_t);
-void decode_trans(char *, unsigned *, unsigned *, unsigned *, unsigned *,
-                  unsigned *);
+void decode_trans_simple(char *, unsigned *, unsigned *, unsigned *,
+                         unsigned *, unsigned *);
+unsigned char *decode_transform(char *, size_t *);
 unsigned char *skip_payload(unsigned char *, size_t *, unsigned *);
 unsigned char *process_isakmp_hdr(unsigned char *, size_t *, unsigned *,
                                   unsigned *, char **);
@@ -389,6 +392,9 @@ char *process_id(unsigned char *, size_t);
 char *process_cert(unsigned char *, size_t, unsigned);
 char *process_delete(unsigned char *, size_t);
 char *process_notification(unsigned char *, size_t);
+unsigned char *make_transform(size_t *, unsigned, unsigned, unsigned,
+                              unsigned char *, size_t);
+unsigned char* add_transform(int, size_t *, unsigned, unsigned char *, size_t);
 void print_payload(unsigned char *cp, unsigned payload, int);
 void add_psk_crack_payload(unsigned char *cp, unsigned, int);
 void print_psk_crack_values(const char *);

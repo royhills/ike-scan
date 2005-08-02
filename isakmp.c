@@ -201,7 +201,7 @@ make_prop(size_t *outlen, unsigned length, unsigned notrans,
 }
 
 /*
- *	make_trans -- Construct a single transform payload
+ *	make_trans_simple -- Construct a single simple transform payload
  *
  *	Inputs:
  *
@@ -220,32 +220,25 @@ make_prop(size_t *outlen, unsigned length, unsigned notrans,
  *
  *	Pointer to transform payload.
  *
- *	This constructs a single transform payload.
+ *	This constructs a single simple transform payload.
  *	Most of the values are defined in RFC 2409 Appendix A.
+ *
+ *	This function can only create a transform with a restricted set of
+ *	attributes in a defined order. To create a transform with an arbitrary
+ *	set of attributes in any order, use the make_transform function
+ *	instead.
  */
 unsigned char*
-make_trans(size_t *length, unsigned next, unsigned number, unsigned cipher,
-           unsigned keylen, unsigned hash, unsigned auth, unsigned group,
-           unsigned char *lifetime_data, size_t lifetime_data_len,
-           unsigned char *lifesize_data, size_t lifesize_data_len,
-           int gss_id_flag, unsigned char *gss_data, size_t gss_data_len,
-           unsigned trans_id) {
+make_trans_simple(size_t *length, unsigned next, unsigned number,
+           unsigned cipher, unsigned keylen, unsigned hash, unsigned auth,
+           unsigned group, unsigned char *lifetime_data,
+           size_t lifetime_data_len, unsigned char *lifesize_data,
+           size_t lifesize_data_len, int gss_id_flag, unsigned char *gss_data,
+           size_t gss_data_len, unsigned trans_id) {
 
-   struct isakmp_transform* hdr;	/* Transform header */
    unsigned char *payload;
    unsigned char *attr;
-   unsigned char *cp;
    size_t attr_len;			/* Attribute Length */
-   size_t len;				/* Payload Length */
-
-/* Allocate and initialise the transform header */
-
-   hdr = Malloc(sizeof(struct isakmp_transform));
-   memset(hdr, mbz_value, sizeof(struct isakmp_transform));
-
-   hdr->isat_np = next;			/* Next payload type */
-   hdr->isat_transnum = number;		/* Transform Number */
-   hdr->isat_transid = trans_id;
 
 /* Allocate and initialise the mandatory attributes */
 
@@ -280,26 +273,17 @@ make_trans(size_t *length, unsigned next, unsigned number, unsigned cipher,
 /* Finalise attributes and fill in length value */
 
    attr = add_attr(1, &attr_len, '\0', 0, 0, 0, NULL);
-   len = attr_len + sizeof(struct isakmp_transform);
-   hdr->isat_length = htons(len);	/* Transform length */
-   *length = len;
 
-/* Allocate memory for payload and copy structures to payload */
+/* Create transform */
 
-   payload = Malloc(len);
-
-   cp = payload;
-   memcpy(cp, hdr, sizeof(struct isakmp_transform));
-   free(hdr);
-   cp += sizeof(struct isakmp_transform);
-   memcpy(cp, attr, attr_len);
+   payload = make_transform(length, next, number, trans_id, attr, attr_len);
    free(attr);
 
    return payload;
 }
 
 /*
- *	add_trans -- Add a transform payload onto the set of transforms.
+ *	add_trans_simple -- Add a simple transform payload to set of transforms.
  *
  *	Inputs:
  *
@@ -322,15 +306,20 @@ make_trans(size_t *length, unsigned next, unsigned number, unsigned cipher,
  *	in which case cipher, keylen, hash, auth, group and lifetime are
  *	ignored and the function will return a pointer to the finished
  *	payload and will set *length to the length of this payload.
+ *
+ *	This function can only create transforms with a restricted set of
+ *	attributes in a defined order. To create transforms with an arbitrary
+ *	set of attributes in any order, use the add_transform function
+ *	instead.
  */
 unsigned char*
-add_trans(int finished, size_t *length,
-          unsigned cipher, unsigned keylen, unsigned hash, unsigned auth,
-          unsigned group,
-          unsigned char *lifetime_data, size_t lifetime_data_len,
-          unsigned char *lifesize_data, size_t lifesize_data_len,
-          int gss_id_flag, unsigned char *gss_data, size_t gss_data_len,
-          unsigned trans_id) {
+add_trans_simple(int finished, size_t *length, unsigned cipher,
+                 unsigned keylen, unsigned hash, unsigned auth,
+                 unsigned group, unsigned char *lifetime_data,
+                 size_t lifetime_data_len, unsigned char *lifesize_data,
+                 size_t lifesize_data_len, int gss_id_flag,
+                 unsigned char *gss_data, size_t gss_data_len,
+                 unsigned trans_id) {
 
    static int first_transform = 1;
    static unsigned char *trans_start=NULL;	/* Start of set of transforms */
@@ -344,10 +333,10 @@ add_trans(int finished, size_t *length,
  * Set next to 3 (more transforms), and increment trans_no for next time round.
  */
    if (!finished) {
-      trans = make_trans(&len, 3, trans_no, cipher, keylen, hash, auth,
-                         group, lifetime_data, lifetime_data_len,
-                         lifesize_data, lifesize_data_len, gss_id_flag,
-                         gss_data, gss_data_len, trans_id);
+      trans = make_trans_simple(&len, 3, trans_no, cipher, keylen, hash, auth,
+                                group, lifetime_data, lifetime_data_len,
+                                lifesize_data, lifesize_data_len, gss_id_flag,
+                                gss_data, gss_data_len, trans_id);
       trans_no++;
       if (first_transform) {
          cur_offset = 0;
@@ -361,6 +350,123 @@ add_trans(int finished, size_t *length,
          trans_start = Realloc(trans_start, end_offset);
          memcpy(trans_start+cur_offset, trans, len);
       }
+      free(trans);
+      return NULL;
+   } else {
+      struct isakmp_transform* hdr =
+         (struct isakmp_transform*) (trans_start+cur_offset);	/* Overlay */
+
+      first_transform = 1;
+      hdr->isat_np = 0;		/* No more transforms */
+      *length = end_offset;
+      return trans_start;
+   }
+}
+
+/*
+ *	make_transform -- Construct a single transform payload
+ *
+ *	Inputs:
+ *
+ *	length	(output) length of entire transform payload.
+ *	next    Next Payload Type (3 = More transforms; 0=No more transforms)
+ *	number	Transform number
+ *	trans_id Transform ID (generally KEY_IKE)
+ *	attr	Pointer to list of attributes
+ *	attr_len Attribute length in bytes
+ *
+ *	Returns:
+ *
+ *	Pointer to transform payload.
+ *
+ *	This constructs a single transform payload.
+ *	Most of the values are defined in RFC 2409 Appendix A.
+ */
+unsigned char*
+make_transform(size_t *length, unsigned next, unsigned number,
+               unsigned trans_id, unsigned char *attr, size_t attr_len) {
+
+   struct isakmp_transform* hdr;	/* Transform header */
+   unsigned char *payload;
+   unsigned char *cp;
+   size_t len;				/* Payload Length */
+
+/* Allocate and initialise the transform header */
+
+   hdr = Malloc(sizeof(struct isakmp_transform));
+   memset(hdr, mbz_value, sizeof(struct isakmp_transform));
+
+   hdr->isat_np = next;			/* Next payload type */
+   hdr->isat_transnum = number;		/* Transform Number */
+   hdr->isat_transid = trans_id;
+
+   len = attr_len + sizeof(struct isakmp_transform);
+   hdr->isat_length = htons(len);	/* Transform length */
+   *length = len;
+
+/* Allocate memory for payload and copy structures to payload */
+
+   payload = Malloc(len);
+
+   cp = payload;
+   memcpy(cp, hdr, sizeof(struct isakmp_transform));
+   free(hdr);
+   cp += sizeof(struct isakmp_transform);
+   memcpy(cp, attr, attr_len);
+
+   return payload;
+}
+
+/*
+ *	add_transform -- Add a transform payload to set of transforms.
+ *
+ *	Inputs:
+ *
+ *	finished	0 if adding a new transform; 1 if finalising.
+ *	length	(output) length of entire transform payload.
+ *	trans_id	Transform ID
+ *
+ *	Returns:
+ *
+ *	Pointer to new set of transform payloads.
+ *
+ *	This function can either be called with finished = 0, in which case
+ *	attr and attr_len must be specified, and the function will return NULL,
+ *	OR it can be called with finished = 1 in which case attr and attr_len
+ *	are ignored and the function will return a pointer to the finished
+ *	payload and will set *length to the length of this payload.
+ */
+unsigned char*
+add_transform(int finished, size_t *length, unsigned trans_id,
+              unsigned char *attr, size_t attr_len) {
+
+   static int first_transform = 1;
+   static unsigned char *trans_start=NULL;	/* Start of set of transforms */
+   static size_t cur_offset;			/* Start of current transform */
+   static size_t end_offset;			/* End of transforms */
+   static unsigned trans_no=1;
+   unsigned char *trans;			/* Transform payload */
+   size_t len;					/* Transform length */
+/*
+ * Construct a transform if we are not finalising.
+ * Set next to 3 (more transforms), and increment trans_no for next time round.
+ */
+   if (!finished) {
+      trans = make_transform(&len, 3, trans_no, trans_id, attr, attr_len);
+      trans_no++;
+      if (first_transform) {
+         cur_offset = 0;
+         end_offset = len;
+         trans_start = Malloc(end_offset);
+         memcpy(trans_start, trans, len);
+         first_transform = 0;
+      } else {
+         cur_offset = end_offset;
+         end_offset += len;
+         trans_start = Realloc(trans_start, end_offset);
+         memcpy(trans_start+cur_offset, trans, len);
+      }
+      free(trans);
       return NULL;
    } else {
       struct isakmp_transform* hdr =

@@ -194,7 +194,8 @@ main(int argc, char *argv[]) {
       0,			/* Proposal SPI Size */
       0,			/* ISAKMP Header Flags */
       0,			/* ISAKMP Header Message ID */
-      0				/* ISAKMP Header Next Payload */
+      0,			/* ISAKMP Header Next Payload */
+      0				/* advanced_trans_flag */
    };
    unsigned pattern_fuzz = DEFAULT_PATTERN_FUZZ; /* Pattern matching fuzz in ms */
    unsigned tcp_connect_timeout = DEFAULT_TCP_CONNECT_TIMEOUT;
@@ -388,15 +389,26 @@ main(int argc, char *argv[]) {
          case 'a':	/* --trans */
             strncpy(trans_str, optarg, MAXLINE);
             ike_params.trans_flag++;
-            decode_trans(trans_str, &trans_enc, &trans_keylen, &trans_hash,
-                         &trans_auth, &trans_group);
-            add_trans(0, NULL, trans_enc, trans_keylen, trans_hash,
-                      trans_auth, trans_group, ike_params.lifetime_data,
-                      ike_params.lifetime_data_len,
-                      ike_params.lifesize_data, ike_params.lifesize_data_len,
-                      ike_params.gss_id_flag,
-                      ike_params.gss_data, ike_params.gss_data_len,
-                      ike_params.trans_id);
+            if (trans_str[0] == '(') {	/* Advanced transform specification */
+               unsigned char *attr=NULL;
+               size_t attr_len;
+
+               attr = decode_transform(trans_str, &attr_len);
+               add_transform(0, NULL, ike_params.trans_id, attr, attr_len);
+               ike_params.advanced_trans_flag = 1;
+            } else {	/* Simple transform specification */
+               decode_trans_simple(trans_str, &trans_enc, &trans_keylen,
+                                   &trans_hash, &trans_auth, &trans_group);
+               add_trans_simple(0, NULL, trans_enc, trans_keylen, trans_hash,
+                                trans_auth, trans_group,
+                                ike_params.lifetime_data,
+                                ike_params.lifetime_data_len,
+                                ike_params.lifesize_data,
+                                ike_params.lifesize_data_len,
+                                ike_params.gss_id_flag,
+                                ike_params.gss_data, ike_params.gss_data_len,
+                                ike_params.trans_id);
+            }
             break;
          case 'o':	/* --showbackoff */
             showbackoff_flag=1;
@@ -1675,7 +1687,7 @@ initialise_ike_packet(size_t *packet_out_len, ike_packet_params *params) {
    unsigned char *ke=NULL;	/* Key Exchange */
    unsigned char *cp;
    unsigned char *packet_out;	/* Constructed IKE packet */
-   unsigned char *sa_cp=NULL;	/* For experimental payload printing XXXXX */
+   unsigned char *sa_cp=NULL;	/* For payload printing */
    size_t prop_len;
    size_t certreq_len;
    size_t vid_len;
@@ -1762,49 +1774,49 @@ initialise_ike_packet(size_t *packet_out_len, ike_packet_params *params) {
  */
    if (!params->trans_flag) {	/* Use standard transform set if none specified */
       if (params->exchange_type != ISAKMP_XCHG_AGGR) {	/* Main Mode */
-         add_trans(0, NULL, OAKLEY_3DES_CBC, 0, OAKLEY_SHA,
+         add_trans_simple(0, NULL, OAKLEY_3DES_CBC, 0, OAKLEY_SHA,
                    params->auth_method, 2, params->lifetime_data,
                    params->lifetime_data_len, params->lifesize_data,
                    params->lifesize_data_len,
                    params->gss_id_flag, params->gss_data, params->gss_data_len,
                    params->trans_id);
-         add_trans(0, NULL, OAKLEY_3DES_CBC, 0, OAKLEY_MD5,
+         add_trans_simple(0, NULL, OAKLEY_3DES_CBC, 0, OAKLEY_MD5,
                    params->auth_method, 2, params->lifetime_data,
                    params->lifetime_data_len, params->lifesize_data,
                    params->lifesize_data_len,
                    params->gss_id_flag, params->gss_data, params->gss_data_len,
                    params->trans_id);
-         add_trans(0, NULL, OAKLEY_DES_CBC,  0, OAKLEY_SHA,
+         add_trans_simple(0, NULL, OAKLEY_DES_CBC,  0, OAKLEY_SHA,
                    params->auth_method, 2, params->lifetime_data,
                    params->lifetime_data_len, params->lifesize_data,
                    params->lifesize_data_len,
                    params->gss_id_flag, params->gss_data, params->gss_data_len,
                    params->trans_id);
-         add_trans(0, NULL, OAKLEY_DES_CBC,  0, OAKLEY_MD5,
+         add_trans_simple(0, NULL, OAKLEY_DES_CBC,  0, OAKLEY_MD5,
                    params->auth_method, 2, params->lifetime_data,
                    params->lifetime_data_len, params->lifesize_data,
                    params->lifesize_data_len,
                    params->gss_id_flag, params->gss_data, params->gss_data_len,
                    params->trans_id);
-         add_trans(0, NULL, OAKLEY_3DES_CBC, 0, OAKLEY_SHA,
+         add_trans_simple(0, NULL, OAKLEY_3DES_CBC, 0, OAKLEY_SHA,
                    params->auth_method, 1, params->lifetime_data,
                    params->lifetime_data_len, params->lifesize_data,
                    params->lifesize_data_len,
                    params->gss_id_flag, params->gss_data, params->gss_data_len,
                    params->trans_id);
-         add_trans(0, NULL, OAKLEY_3DES_CBC, 0, OAKLEY_MD5,
+         add_trans_simple(0, NULL, OAKLEY_3DES_CBC, 0, OAKLEY_MD5,
                    params->auth_method, 1, params->lifetime_data,
                    params->lifetime_data_len, params->lifesize_data,
                    params->lifesize_data_len,
                    params->gss_id_flag, params->gss_data, params->gss_data_len,
                    params->trans_id);
-         add_trans(0, NULL, OAKLEY_DES_CBC,  0, OAKLEY_SHA,
+         add_trans_simple(0, NULL, OAKLEY_DES_CBC,  0, OAKLEY_SHA,
                    params->auth_method, 1, params->lifetime_data,
                    params->lifetime_data_len, params->lifesize_data,
                    params->lifesize_data_len,
                    params->gss_id_flag, params->gss_data, params->gss_data_len,
                    params->trans_id);
-         add_trans(0, NULL, OAKLEY_DES_CBC,  0, OAKLEY_MD5,
+         add_trans_simple(0, NULL, OAKLEY_DES_CBC,  0, OAKLEY_MD5,
                    params->auth_method, 1, params->lifetime_data,
                    params->lifetime_data_len, params->lifesize_data,
                    params->lifesize_data_len,
@@ -1812,22 +1824,22 @@ initialise_ike_packet(size_t *packet_out_len, ike_packet_params *params) {
                    params->trans_id);
          no_trans=8;
       } else {	/* presumably aggressive mode */
-         add_trans(0, NULL, OAKLEY_3DES_CBC, 0, OAKLEY_SHA,
+         add_trans_simple(0, NULL, OAKLEY_3DES_CBC, 0, OAKLEY_SHA,
                    params->auth_method, params->dhgroup, params->lifetime_data,
                    params->lifetime_data_len, params->lifesize_data,
                    params->lifesize_data_len, params->gss_id_flag,
                    params->gss_data, params->gss_data_len, params->trans_id);
-         add_trans(0, NULL, OAKLEY_3DES_CBC, 0, OAKLEY_MD5,
+         add_trans_simple(0, NULL, OAKLEY_3DES_CBC, 0, OAKLEY_MD5,
                    params->auth_method, params->dhgroup, params->lifetime_data,
                    params->lifetime_data_len, params->lifesize_data,
                    params->lifesize_data_len, params->gss_id_flag,
                    params->gss_data, params->gss_data_len, params->trans_id);
-         add_trans(0, NULL, OAKLEY_DES_CBC,  0, OAKLEY_SHA,
+         add_trans_simple(0, NULL, OAKLEY_DES_CBC,  0, OAKLEY_SHA,
                    params->auth_method, params->dhgroup, params->lifetime_data,
                    params->lifetime_data_len, params->lifesize_data,
                    params->lifesize_data_len, params->gss_id_flag,
                    params->gss_data, params->gss_data_len, params->trans_id);
-         add_trans(0, NULL, OAKLEY_DES_CBC,  0, OAKLEY_MD5,
+         add_trans_simple(0, NULL, OAKLEY_DES_CBC,  0, OAKLEY_MD5,
                    params->auth_method, params->dhgroup, params->lifetime_data,
                    params->lifetime_data_len, params->lifesize_data,
                    params->lifesize_data_len, params->gss_id_flag,
@@ -1839,8 +1851,12 @@ initialise_ike_packet(size_t *packet_out_len, ike_packet_params *params) {
    } else {	/* Custom transforms */
       no_trans = params->trans_flag;
    }
-   transforms = add_trans(1, &trans_len, 0, 0, 0, 0, 0, NULL, 0, NULL, 0, 0,
-                          NULL, 0, 0);
+   if (params->advanced_trans_flag) {
+      transforms = add_transform(1, &trans_len, 0, NULL, 0);
+   } else {
+      transforms = add_trans_simple(1, &trans_len, 0, 0, 0, 0, 0, NULL, 0,
+                                    NULL, 0, 0, NULL, 0, 0);
+   }
    *packet_out_len += trans_len;
 /*
  *	Proposal payload
@@ -2610,7 +2626,7 @@ add_vid_pattern(char *line) {
 }
 
 /*
- *	decode_trans -- Decode a custom transform specification
+ *	decode_trans_simple -- Decode a simple custom transform specification
  *
  *	Inputs:
  *
@@ -2625,8 +2641,8 @@ add_vid_pattern(char *line) {
  *
  */
 void
-decode_trans(char *str, unsigned *enc, unsigned *keylen, unsigned *hash,
-             unsigned *auth, unsigned *group) {
+decode_trans_simple(char *str, unsigned *enc, unsigned *keylen, unsigned *hash,
+                    unsigned *auth, unsigned *group) {
    char *cp;
    int pos;	/* 1=enc, 2=hash, 3=auth, 4=group */
    unsigned val;
@@ -2663,6 +2679,77 @@ decode_trans(char *str, unsigned *enc, unsigned *keylen, unsigned *hash,
          cp++;		/* Move on to next entry */
       pos++;
    }
+}
+
+/*
+ *	decode_transform -- Decode a custom transform specification
+ *
+ *	Inputs:
+ *
+ *	trans_str	Input transform specification
+ *	attr_len	Output length of attribute list
+ *
+ *	Returns: Pointer to attribute list
+ *
+ */
+unsigned char *
+decode_transform(char *trans_str, size_t *attr_len) {
+   char *str;
+   char *tok;
+   char *key_str;
+   char *value_str;
+   char *cp;
+   unsigned key;
+   unsigned b_value;		/* Basic attr value */
+   unsigned char *v_value;	/* Variable attr value */
+   size_t v_len;		/* Variable attr length */
+   unsigned char *attr;
+/*
+ *	Make a copy of the transform string, because strtok modifies it's
+ *	argument.
+ */
+   str = Malloc(strlen(trans_str)+1);
+   strcpy(str, trans_str);
+/*
+ *	Split the transform string into key=value tokens, and process each
+ *	of these tokens.
+ */
+   tok = strtok(str, "(),");
+   while (tok != NULL) {
+/*
+ *	Split token into key and value
+ */
+      cp = strchr(tok, '=');
+      if (cp == NULL)
+         err_msg("Error in transform attribute specification: %s", tok);
+      key_str = tok;
+      value_str = cp+1;
+      *cp = '\0';
+/*
+ *	Construct attribute from key and value.
+ *	If the value is a decimal number, then construct a basic attribute,
+ *	otherwise construct a variable attribute.
+ */
+      key = strtoul(key_str, (char **)NULL, 10);
+      if (value_str[0] == '0' && value_str[1] == 'x') { /* Variable Attribute */
+         if (strlen(value_str) %2 )	/* length is odd */
+            err_msg("Length of variable attribute value must be even");
+         v_value=hex2data(value_str+2, &v_len);
+         add_attr(0, NULL, 'V', key, v_len, 0, v_value);
+      } else {	/* Basic attribute */
+         b_value = strtoul(value_str, (char **)NULL, 10);
+         add_attr(0, NULL, 'B', key, 0, b_value, NULL);
+      }
+/*
+ *	Get next token
+ */
+      tok = strtok(NULL, "(),");
+   }
+/*
+ *	Finalise attributes.
+ */
+   attr = add_attr(1, attr_len, '\0', 0, 0, 0, NULL);
+   return attr;
 }
 
 /*
