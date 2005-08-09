@@ -264,7 +264,7 @@ typedef struct {
 
 typedef struct {
    int id;			/* IKE IDs are generally 8 or 16-bits */
-   char *name;
+   const char *name;
 } id_name_map;
 
 typedef struct {		/* Used for encapsulated IKE */
