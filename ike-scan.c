@@ -412,7 +412,7 @@ main(int argc, char *argv[]) {
             break;
          case 'o':	/* --showbackoff */
             showbackoff_flag=1;
-            if (optarg == NULL) {
+            if (optarg == NULL || *optarg == '\0') {
                end_wait=1000 * DEFAULT_END_WAIT;
             } else {
                end_wait=1000 * strtoul(optarg, (char **)NULL, 10);
@@ -458,7 +458,7 @@ main(int argc, char *argv[]) {
             random_flag=1;
             break;
          case 'T':	/* --tcp */
-            if (optarg == NULL) {
+            if (optarg == NULL || *optarg == '\0') {
                tcp_flag = TCP_PROTO_RAW;
             } else {
                tcp_flag = strtoul(optarg, (char **)NULL, 10);
@@ -466,10 +466,10 @@ main(int argc, char *argv[]) {
             break;
          case 'P':	/* --pskcrack */
             psk_crack_flag=1;
-            if (optarg) {
-               strncpy(psk_crack_file, optarg, MAXLINE);
-            } else {
+            if (optarg == NULL || *optarg == '\0') {
                psk_crack_file[0] = '\0'; /* use stdout */
+            } else {
+               strncpy(psk_crack_file, optarg, MAXLINE);
             }
             break;
          case 'O':	/* --tcptimeout */
@@ -1880,15 +1880,15 @@ initialise_ike_packet(size_t *packet_out_len, ike_packet_params *params) {
    *packet_out_len += sizeof(struct isakmp_hdr);
    header_len = *packet_out_len;	/* Set header len to correct value */
    if (params->header_length) {	/* Manually specify header length */
-      char *cp;
+      char *temp_cp;
 
-      cp = params->header_length;
-      if (*cp == '+') {
-         header_len += strtoul(++cp, (char **)NULL, 0);
-      } else if (*cp == '-') {
-         header_len -= strtoul(++cp, (char **)NULL, 0);
+      temp_cp = params->header_length;
+      if (*temp_cp == '+') {
+         header_len += strtoul(++temp_cp, (char **)NULL, 0);
+      } else if (*temp_cp == '-') {
+         header_len -= strtoul(++temp_cp, (char **)NULL, 0);
       } else {
-         header_len = strtoul(cp, (char **)NULL, 0);
+         header_len = strtoul(temp_cp, (char **)NULL, 0);
       }
    }
    if (params->hdr_next_payload) {	/* Manually specify next payload */
@@ -2351,8 +2351,7 @@ add_pattern(char *line, unsigned pattern_fuzz) {
  *	error. 
  */
    result = regexec(&backoff_pat, line, 4, pmatch, 0);
-   if (result == REG_NOMATCH || pmatch[1].rm_so < 0 ||
-       line+pmatch[2].rm_so < 0) {
+   if (result == REG_NOMATCH || pmatch[1].rm_so < 0 || pmatch[2].rm_so < 0) {
       warn_msg("WARNING: Could not parse backoff pattern: %s", line);
       return;
    } else if (result != 0) {
@@ -2560,8 +2559,7 @@ add_vid_pattern(char *line) {
  *	Separate line from VID patterns file into name and pattern.
  */
    result = regexec(&vid_pat, line, 4, pmatch, 0);
-   if (result == REG_NOMATCH || pmatch[1].rm_so < 0 ||
-       line+pmatch[2].rm_so < 0) {
+   if (result == REG_NOMATCH || pmatch[1].rm_so < 0 || pmatch[2].rm_so < 0) {
       warn_msg("WARNING: Could not parse vendor id pattern: %s", line);
       return;
    } else if (result != 0) {
