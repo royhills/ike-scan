@@ -2326,10 +2326,10 @@ add_pattern(char *line, unsigned pattern_fuzz) {
    static const char *backoff_pat_str = "([^\t]+)\t[\t ]*([^\t\n]+)";
    static regex_t backoff_pat;
    static int first_call=1;
-   regmatch_t pmatch[4];
+   regmatch_t pmatch[3];
    int result;
-   int name_len;
-   int pat_len;
+   size_t name_len;
+   size_t pat_len;
 /*
  *	Compile the regex if this is the first call.
  *	Die if we cannot compile the regex.
@@ -2350,7 +2350,7 @@ add_pattern(char *line, unsigned pattern_fuzz) {
  *	Issue a warning if we cannot parse the line.  Die if we get a regex
  *	error. 
  */
-   result = regexec(&backoff_pat, line, 4, pmatch, 0);
+   result = regexec(&backoff_pat, line, 3, pmatch, 0);
    if (result == REG_NOMATCH || pmatch[1].rm_so < 0 || pmatch[2].rm_so < 0) {
       warn_msg("WARNING: Could not parse backoff pattern: %s", line);
       return;
@@ -2538,9 +2538,9 @@ add_vid_pattern(char *line) {
    static const char *vid_pat_str = "([^\t]+)\t[\t ]*([^\t\n]+)";
    static regex_t vid_pat;
    static int first_call=1;
-   regmatch_t pmatch[4];
-   int name_len;
-   int pat_len;
+   regmatch_t pmatch[3];
+   size_t name_len;
+   size_t pat_len;
 /*
  *      Compile the regex if this is the first call.
  *      Die if we cannot compile the regex.
@@ -2558,7 +2558,7 @@ add_vid_pattern(char *line) {
 /*
  *	Separate line from VID patterns file into name and pattern.
  */
-   result = regexec(&vid_pat, line, 4, pmatch, 0);
+   result = regexec(&vid_pat, line, 3, pmatch, 0);
    if (result == REG_NOMATCH || pmatch[1].rm_so < 0 || pmatch[2].rm_so < 0) {
       warn_msg("WARNING: Could not parse vendor id pattern: %s", line);
       return;
