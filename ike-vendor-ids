@@ -356,6 +356,11 @@ Netscreen-11	^c2e80500f4cc5fbf5daaeed3bb59abaeee56c652
 Netscreen-12	^c8660a62b03b1b6130bf781608d32a6a8d0fb89f
 Netscreen-13	^f885da40b1e7a9abd17655ec5bbec0f21f0ed52e
 
+# Avaya
+# Observed on Avaya VSU 100R
+# Not sure if this is common to all Avaya equipment
+avaya	^4485152d18b6bbcc0be8a8469579ddcc
+
 # Other things I've seen but not fully classified yet.
 # If anyone can confirm any of these, please let me know.
 Maybe Cisco IOS	^bdb41038a7ec5e5534dd004d0f91f927
