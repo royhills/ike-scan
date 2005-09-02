@@ -209,3 +209,9 @@ cyberguard	0, 3.5, 7, 10, 10
 # Observed on: Fortinet FortiGate Firewall (exact model and version unknown)
 # Note: some FortiGate Firewalls appear to have a 0,10,20 pattern instead
 FortiGate	0, 6, 12
+
+# Discovered by: Tony Lloyd, August 2005
+# Observed on: Avaya VSU 100R
+# The backoffs have quite a bit of variance, but the delays always seem to be
+# between 13.3 and 15.7 seconds.
+Avaya VSU	0, 14.5/1200, 14.5/1200, 14.5/1200, 14.5/1200
