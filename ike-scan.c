@@ -55,6 +55,7 @@ host_entry **helistptr;		/* Array of pointers to host entries */
 host_entry **cursor;		/* Pointer to current list entry */
 pattern_list *patlist = NULL;	/* Backoff pattern list */
 vid_pattern_list *vidlist = NULL;	/* Vendor ID pattern list */
+char **idlist = NULL;		/* Array of pointers to ID strings */
 static int verbose=0;			/* Verbose level */
 unsigned experimental_value=0;		/* Experimental value */
 int tcp_flag=0;				/* TCP flag */
@@ -83,6 +84,8 @@ const id_name_map payload_map[] = {	/* Payload types from RFC 2408 3.1 */
 };
 uint32_t lifetime_be;	/* Default lifetime in big endian format */
 uint32_t lifesize_be;	/* Default lifesize in big endian format */
+char *idstringlist = NULL;
+char **idstringlist_ptr = NULL;
 
 int
 main(int argc, char *argv[]) {
@@ -222,6 +225,7 @@ main(int argc, char *argv[]) {
    int arg_str_space;		/* Used to avoid buffer overruns when copying */
    char patfile[MAXLINE];	/* IKE Backoff pattern file name */
    char vidfile[MAXLINE];	/* IKE Vendor ID pattern file name */
+   char idfile[MAXLINE];	/* Aggressive Mode ID list */
    char psk_crack_file[MAXLINE];/* PSK crack data output file name */
    unsigned pass_no=0;
    int first_timeout=1;
@@ -268,10 +272,11 @@ main(int argc, char *argv[]) {
  */
    Gettimeofday(&start_time);
 /*
- *	Initialise IKE pattern file names to the empty string.
+ *	Initialise file names to the empty string.
  */
    patfile[0] = '\0';
    vidfile[0] = '\0';
+   idfile[0]  = '\0';
 /*
  *	Set lifetime and lifesize parameters to the default.
  */
@@ -520,6 +525,7 @@ main(int argc, char *argv[]) {
             ike_params.trans_id = strtoul(optarg, (char **)NULL, 0);
             break;
          case 'F':	/* --idfile */
+            strncpy(idfile, optarg, MAXLINE);
             break;
          case OPT_SPISIZE:	/* --spisize */
             ike_params.spi_size=strtoul(optarg, (char **)NULL, 0);
@@ -600,6 +606,19 @@ main(int argc, char *argv[]) {
    if (!filename_flag) 
       if ((argc - optind) < 1)
          usage(EXIT_FAILURE, 0);
+/*
+ *	If an ID file was specified, create the ID list from the contents
+ *	of this file.
+ */
+   if (idfile[0] != '\0') {
+      char **cpp;	/* XXXX */
+      load_id_strings(idfile);
+/* XXXX */
+      for (cpp=idstringlist_ptr; *cpp != NULL; cpp++) {
+         printf("String: %s\n", *cpp);
+      }
+/* XXXX */
+   }
 /*
  *	Populate the list from the specified file if --file was specified, or
  *	otherwise from the remaining command line arguments.
@@ -2287,7 +2306,7 @@ load_backoff_patterns(const char *patfile, unsigned pattern_fuzz) {
       line_no=0;
       while (fgets(line, MAXLINE, fp)) {
          line_no++;
-         if (line[0] != '#' && line[0] != '\n') /* Not comment or empty */
+         if (line[0] != '#' && line[0] != '\n' && line[0] != '\r') /* Not comment or empty */
             add_pattern(line, pattern_fuzz);
       }
       fclose(fp);
@@ -2323,7 +2342,7 @@ add_pattern(char *line, unsigned pattern_fuzz) {
    char back_usec_str[7];       /* Backoff microseconds as string */
    int len;
    unsigned fuzz;	/* Pattern matching fuzz in ms */
-   static const char *backoff_pat_str = "([^\t]+)\t[\t ]*([^\t\n]+)";
+   static const char *backoff_pat_str = "([^\t]+)\t[\t ]*([^\t\r\n]+)";
    static regex_t backoff_pat;
    static int first_call=1;
    regmatch_t pmatch[3];
@@ -2507,7 +2526,7 @@ load_vid_patterns(const char *vidfile) {
       line_no=0;
       while (fgets(line, MAXLINE, fp)) {
          line_no++;
-         if (line[0] != '#' && line[0] != '\n') /* Not comment or empty */
+         if (line[0] != '#' && line[0] != '\n' && line[0] != '\r') /* Not comment or empty */
             add_vid_pattern(line);
       }
       fclose(fp);
@@ -2535,7 +2554,7 @@ add_vid_pattern(char *line) {
    vid_pattern_list *pe;     /* Pattern entry */
    vid_pattern_list *p;      /* Temp pointer */
    int result;
-   static const char *vid_pat_str = "([^\t]+)\t[\t ]*([^\t\n]+)";
+   static const char *vid_pat_str = "([^\t]+)\t[\t ]*([^\t\n\r]+)";
    static regex_t vid_pat;
    static int first_call=1;
    regmatch_t pmatch[3];
@@ -2621,6 +2640,61 @@ add_vid_pattern(char *line) {
       strcpy(cp, name);
       pe->name = cp;
    }
+}
+
+/*
+ *	load_id_strings -- Load ID strings from file into memory
+ *
+ *	Inputs:
+ *
+ *	filename	ID strings file name
+ *
+ *	Returns:
+ *
+ *	None.
+ */
+void
+load_id_strings(char *filename) {
+   FILE *fp;
+   char line[MAXLINE];
+   char *cp;
+   int i;
+   size_t idstringlist_len = 0;
+   size_t old_idstringlist_len = 0;
+   int line_count = 0;
+
+   if ((fp = fopen(filename, "r")) == NULL)
+      err_sys("ERROR: Cannot open ID file %s", filename);
+/*
+ *	Copy IDs from the file to the list of strings starting at
+ *	idstringlist.
+ */
+   while (fgets(line, MAXLINE, fp)) {
+      line_count++;
+      for (cp = line; *cp != '\0'; cp++) {
+         if (*cp == '\r' || *cp == '\n')
+            *cp = '\0';	/* Remove trailing newline */
+      }
+      old_idstringlist_len = idstringlist_len;
+      idstringlist_len += strlen(line)+1;
+      if (idstringlist) {
+         idstringlist=Realloc(idstringlist, idstringlist_len);
+      } else {
+         idstringlist=Malloc(idstringlist_len);
+      }
+      strcpy(idstringlist+old_idstringlist_len, line);
+   }
+   fclose(fp);
+/*
+ *	Create array of pointers to ID strings.
+ */
+   idstringlist_ptr=Malloc(sizeof(char *) * (line_count+1));
+   cp = idstringlist;
+   for (i=0; i<line_count; i++) {
+      idstringlist_ptr[i] = cp;
+      cp += strlen(cp)+1;
+   }
+   idstringlist_ptr[line_count] = NULL;
 }
 
 /*
