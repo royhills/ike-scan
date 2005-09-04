@@ -344,6 +344,7 @@ void load_backoff_patterns(const char *, unsigned);
 void add_pattern(char *, unsigned);
 void load_vid_patterns(const char *);
 void add_vid_pattern(char *);
+void load_id_strings(char *);
 char *match_pattern(host_entry *);
 int times_close_enough(struct timeval *, struct timeval *, unsigned);
 void dump_backoff(unsigned);
