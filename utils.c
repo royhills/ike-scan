@@ -880,7 +880,8 @@ void sig_alarm(int signo) {
  *	but could be time consuming if the map contains a large number of
  *	entries.
  */
-char *id_to_name(int id, const id_name_map map[]) {
+const char *
+id_to_name(int id, const id_name_map map[]) {
    int found = 0;
    int i = 0;
 
