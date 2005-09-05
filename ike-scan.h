@@ -344,7 +344,7 @@ void load_backoff_patterns(const char *, unsigned);
 void add_pattern(char *, unsigned);
 void load_vid_patterns(const char *);
 void add_vid_pattern(char *);
-void load_id_strings(char *);
+char **load_id_strings(char *);
 char *match_pattern(host_entry *);
 int times_close_enough(struct timeval *, struct timeval *, unsigned);
 void dump_backoff(unsigned);
@@ -409,7 +409,7 @@ unsigned char *hmac_md5(const unsigned char *, size_t,
                         const unsigned char *, size_t, unsigned char *);
 unsigned char *hmac_sha1(const unsigned char *, size_t,
                          const unsigned char *, size_t, unsigned char *);
-char *id_to_name(int, const id_name_map[]);
+const char *id_to_name(int, const id_name_map[]);
 int name_to_id(char *, const id_name_map[]);
 /* The following functions are just to prevent rcsid being optimised away */
 void error_use_rcsid(void);
