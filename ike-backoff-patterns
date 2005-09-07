@@ -215,3 +215,7 @@ FortiGate	0, 6, 12
 # The backoffs have quite a bit of variance, but the delays always seem to be
 # between 13.3 and 15.7 seconds.
 Avaya VSU	0, 14.5/1200, 14.5/1200, 14.5/1200, 14.5/1200
+
+# Discovered by: Tony Lloyd, September 2005
+# Observed on: Stonegate V2.2.0 on Linux
+Stonegate	0, 0.5, 1, 2, 4, 8, 16, 30, 30, 30, 30
