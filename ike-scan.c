@@ -84,8 +84,6 @@ const id_name_map payload_map[] = {	/* Payload types from RFC 2408 3.1 */
 };
 uint32_t lifetime_be;	/* Default lifetime in big endian format */
 uint32_t lifesize_be;	/* Default lifesize in big endian format */
-char *idstringlist = NULL;
-char **idstringlist_ptr = NULL;
 
 int
 main(int argc, char *argv[]) {
@@ -245,6 +243,7 @@ main(int argc, char *argv[]) {
    unsigned bandwidth=DEFAULT_BANDWIDTH; /* Bandwidth in bits per sec */
    unsigned char *cookie_data=NULL;
    size_t cookie_data_len;
+   char **idstrings=NULL;
 /*
  *	Open syslog channel and log arguments if required.
  *	We must be careful here to avoid overflowing the arg_str buffer
@@ -611,13 +610,7 @@ main(int argc, char *argv[]) {
  *	of this file.
  */
    if (idfile[0] != '\0') {
-      char **cpp;	/* XXXX */
-      load_id_strings(idfile);
-/* XXXX */
-      for (cpp=idstringlist_ptr; *cpp != NULL; cpp++) {
-         printf("String: %s\n", *cpp);
-      }
-/* XXXX */
+      idstrings=load_id_strings(idfile);
    }
 /*
  *	Populate the list from the specified file if --file was specified, or
@@ -2651,9 +2644,9 @@ add_vid_pattern(char *line) {
  *
  *	Returns:
  *
- *	None.
+ *	Pointer to ID strings array.
  */
-void
+char **
 load_id_strings(char *filename) {
    FILE *fp;
    char line[MAXLINE];
@@ -2662,6 +2655,8 @@ load_id_strings(char *filename) {
    size_t idstringlist_len = 0;
    size_t old_idstringlist_len = 0;
    int line_count = 0;
+   char *idstringlist = NULL;
+   char **idstringlist_ptr = NULL;
 
    if ((fp = fopen(filename, "r")) == NULL)
       err_sys("ERROR: Cannot open ID file %s", filename);
@@ -2695,6 +2690,8 @@ load_id_strings(char *filename) {
       cp += strlen(cp)+1;
    }
    idstringlist_ptr[line_count] = NULL;
+
+   return idstringlist_ptr;
 }
 
 /*
