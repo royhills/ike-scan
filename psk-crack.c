@@ -160,7 +160,7 @@ main (int argc, char *argv[]) {
             exit(EXIT_SUCCESS);
             break;
          case 'B':      /* --bruteforce */
-            brute_len=strtoul(optarg, (char **)NULL, 10);
+            brute_len=Strtoul(optarg, 10);
             break;
          case 'c':      /* --charset */
             charset=make_message("%s", optarg);
