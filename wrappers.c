@@ -91,6 +91,17 @@ void *Realloc(void *ptr, size_t size) {
    return result;
 }
 
+unsigned long int Strtoul(const char *nptr, int base) {
+   char *endptr;
+   unsigned long int result;
+
+   result=strtoul(nptr, &endptr, base);
+   if (endptr == nptr)	/* No digits converted */
+      err_msg("ERROR: \"%s\" is not a valid numeric value", nptr);
+
+   return result;
+}
+
 void wrappers_use_rcsid(void) {
    fprintf(stderr, "%s\n", rcsid);	/* Use rcsid to stop compiler optimising away */
 }
