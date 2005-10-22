@@ -273,7 +273,7 @@ hex_or_num(const char *string, size_t *data_len) {
       unsigned long value;
       unsigned long value_be;
 
-      value = strtoul(string, (char **)NULL, 10);
+      value = Strtoul(string, 10);
       value_be = htonl(value);
       data = Malloc(len);
       memcpy(data, &value_be, len);
