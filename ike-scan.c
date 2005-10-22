@@ -327,24 +327,24 @@ main(int argc, char *argv[]) {
             usage(EXIT_SUCCESS, 1);
             break;
          case 's':	/* --sport */
-            source_port=strtoul(optarg, (char **)NULL, 10);
+            source_port=Strtoul(optarg, 10);
             break;
          case 'd':	/* --dport */
-            dest_port=strtoul(optarg, (char **)NULL, 10);
+            dest_port=Strtoul(optarg, 10);
             break;
          case 'r':	/* --retry */
-            retry=strtoul(optarg, (char **)NULL, 10);
+            retry=Strtoul(optarg, 10);
             break;
          case 't':	/* --timeout */
-            timeout=strtoul(optarg, (char **)NULL, 10);
+            timeout=Strtoul(optarg, 10);
             break;
          case 'i':	/* --interval */
             strncpy(interval_str, optarg, MAXLINE);
             interval_len=strlen(interval_str);
             if (interval_str[interval_len-1] == 'u') {
-               interval=strtoul(interval_str, (char **)NULL, 10);
+               interval=Strtoul(interval_str, 10);
             } else {
-               interval=1000 * strtoul(interval_str, (char **)NULL, 10);
+               interval=1000 * Strtoul(interval_str, 10);
             }
             break;
          case 'b':	/* --backoff */
@@ -375,7 +375,7 @@ main(int argc, char *argv[]) {
             }
             break;
          case 'm':	/* --auth */
-            ike_params.auth_method=strtoul(optarg, (char **)NULL, 10);
+            ike_params.auth_method=Strtoul(optarg, 10);
             break;
          case 'V':	/* --version */
             fprintf(stderr, "%s\n\n", PACKAGE_STRING);
@@ -430,11 +430,11 @@ main(int argc, char *argv[]) {
             if (optarg == NULL || *optarg == '\0') {
                end_wait=1000 * DEFAULT_END_WAIT;
             } else {
-               end_wait=1000 * strtoul(optarg, (char **)NULL, 10);
+               end_wait=1000 * Strtoul(optarg, 10);
             }
             break;
          case 'u':	/* --fuzz */
-            pattern_fuzz=strtoul(optarg, (char **)NULL, 10);
+            pattern_fuzz=Strtoul(optarg, 10);
             break;
          case 'n':	/* --id */
             if (ike_params.id_data)
@@ -442,10 +442,10 @@ main(int argc, char *argv[]) {
             ike_params.id_data=hex_or_str(optarg, &(ike_params.id_data_len));
             break;
          case 'y':	/* --idtype */
-            ike_params.idtype = strtoul(optarg, (char **)NULL, 10);
+            ike_params.idtype = Strtoul(optarg, 10);
             break;
          case 'g':	/* --dhgroup */
-            ike_params.dhgroup = strtoul(optarg, (char **)NULL, 10);
+            ike_params.dhgroup = Strtoul(optarg, 10);
             break;
          case 'p':	/* --patterns */
             strncpy(patfile, optarg, MAXLINE);
@@ -476,7 +476,7 @@ main(int argc, char *argv[]) {
             if (optarg == NULL || *optarg == '\0') {
                tcp_flag = TCP_PROTO_RAW;
             } else {
-               tcp_flag = strtoul(optarg, (char **)NULL, 10);
+               tcp_flag = Strtoul(optarg, 10);
             }
             break;
          case 'P':	/* --pskcrack */
@@ -488,23 +488,23 @@ main(int argc, char *argv[]) {
             }
             break;
          case 'O':	/* --tcptimeout */
-            tcp_connect_timeout = strtoul(optarg, (char **)NULL, 10);
+            tcp_connect_timeout = Strtoul(optarg, 10);
             break;
          case 'N':	/* --nodns */
             no_dns_flag=1;
             break;
          case 'c':	/* --noncelen */
-            ike_params.nonce_data_len = strtoul(optarg, (char **)NULL, 10);
+            ike_params.nonce_data_len = Strtoul(optarg, 10);
             break;
          case 'B':	/* --bandwidth */
             strncpy(bandwidth_str, optarg, MAXLINE);
             bandwidth_len=strlen(bandwidth_str);
             if (bandwidth_str[bandwidth_len-1] == 'M') {
-               bandwidth=1000000 * strtoul(bandwidth_str, (char **)NULL, 10);
+               bandwidth=1000000 * Strtoul(bandwidth_str, 10);
             } else if (bandwidth_str[bandwidth_len-1] == 'K') {
-               bandwidth=1000 * strtoul(bandwidth_str, (char **)NULL, 10);
+               bandwidth=1000 * Strtoul(bandwidth_str, 10);
             } else {
-               bandwidth=strtoul(bandwidth_str, (char **)NULL, 10);
+               bandwidth=Strtoul(bandwidth_str, 10);
             }
             break;
          case 'L':	/* --headerlen */
@@ -512,10 +512,10 @@ main(int argc, char *argv[]) {
             strcpy(ike_params.header_length, optarg);
             break;
          case 'Z':	/* --mbz */
-            mbz_value = strtoul(optarg, (char **)NULL, 0);
+            mbz_value = Strtoul(optarg, 0);
             break;
          case 'E':	/* --headerver */
-            ike_params.header_version = strtoul(optarg, (char **)NULL, 0);
+            ike_params.header_version = Strtoul(optarg, 0);
             break;
          case 'C':	/* --certreq */
             if (strlen(optarg) % 2)	/* Length is odd */
@@ -523,28 +523,28 @@ main(int argc, char *argv[]) {
             ike_params.cr_data=hex2data(optarg, &(ike_params.cr_data_len));
             break;
          case 'D':	/* --doi */
-            ike_params.doi = strtoul(optarg, (char **)NULL, 0);
+            ike_params.doi = Strtoul(optarg, 0);
             break;
          case 'S':	/* --situation */
-            ike_params.situation = strtoul(optarg, (char **)NULL, 0);
+            ike_params.situation = Strtoul(optarg, 0);
             break;
          case 'j':	/* --protocol */
-            ike_params.protocol = strtoul(optarg, (char **)NULL, 0);
+            ike_params.protocol = Strtoul(optarg, 0);
             break;
          case 'k':	/* --transid */
-            ike_params.trans_id = strtoul(optarg, (char **)NULL, 0);
+            ike_params.trans_id = Strtoul(optarg, 0);
             break;
          case 'F':	/* --idfile */
             strncpy(idfile, optarg, MAXLINE);
             break;
          case OPT_SPISIZE:	/* --spisize */
-            ike_params.spi_size=strtoul(optarg, (char **)NULL, 0);
+            ike_params.spi_size=Strtoul(optarg, 0);
             break;
          case OPT_HDRFLAGS:	/* --hdrflags */
-            ike_params.hdr_flags=strtoul(optarg, (char **)NULL, 0);
+            ike_params.hdr_flags=Strtoul(optarg, 0);
             break;
          case OPT_HDRMSGID:	/* --hdrmsgid */
-            ike_params.hdr_msgid=strtoul(optarg, (char **)NULL, 0);
+            ike_params.hdr_msgid=Strtoul(optarg, 0);
             break;
          case OPT_COOKIE:	/* --cookie */
             if (strlen(optarg) % 2)	/* Length is odd */
@@ -554,13 +554,13 @@ main(int argc, char *argv[]) {
                cookie_data_len = 8;
             break;
          case OPT_EXCHANGE:	/* --exchange */
-            ike_params.exchange_type=strtoul(optarg, (char **)NULL, 0);
+            ike_params.exchange_type=Strtoul(optarg, 0);
             break;
          case OPT_NEXTPAYLOAD:	/* --nextpayload */
-            ike_params.hdr_next_payload=strtoul(optarg, (char **)NULL, 0);
+            ike_params.hdr_next_payload=Strtoul(optarg, 0);
             break;
          case 'X':	/* --experimental */
-            experimental_value = strtoul(optarg, (char **)NULL, 0);
+            experimental_value = Strtoul(optarg, 0);
             break;
          default:	/* Unknown option */
             usage(EXIT_FAILURE, 0);
@@ -1083,7 +1083,7 @@ add_host_pattern(const char *pattern, unsigned timeout, unsigned *num_hosts,
       if (!(inet_aton(patcopy, &in_val)))
          err_msg("ERROR: %s is not a valid IP address", patcopy);
       ipnet_val=ntohl(in_val.s_addr);	/* We need host byte order */
-      numbits=strtoul(cp, (char **) NULL, 10);
+      numbits=Strtoul(cp, 10);
       if (numbits<3 || numbits>32)
          err_msg("ERROR: Number of bits in %s must be between 3 and 32",
                  pattern);
@@ -1907,11 +1907,11 @@ initialise_ike_packet(size_t *packet_out_len, ike_packet_params *params) {
 
       temp_cp = params->header_length;
       if (*temp_cp == '+') {
-         header_len += strtoul(++temp_cp, (char **)NULL, 0);
+         header_len += Strtoul(++temp_cp, 0);
       } else if (*temp_cp == '-') {
-         header_len -= strtoul(++temp_cp, (char **)NULL, 0);
+         header_len -= Strtoul(++temp_cp, 0);
       } else {
-         header_len = strtoul(temp_cp, (char **)NULL, 0);
+         header_len = Strtoul(temp_cp, 0);
       }
    }
    if (params->hdr_next_payload) {	/* Manually specify next payload */
@@ -2724,6 +2724,7 @@ void
 decode_trans_simple(char *str, unsigned *enc, unsigned *keylen, unsigned *hash,
                     unsigned *auth, unsigned *group) {
    char *cp;
+   char *endp;
    int pos;	/* 1=enc, 2=hash, 3=auth, 4=group */
    unsigned val;
    unsigned len;
@@ -2732,10 +2733,16 @@ decode_trans_simple(char *str, unsigned *enc, unsigned *keylen, unsigned *hash,
    pos = 1;
    len = 0;
    while (*cp != '\0') {
-      val = strtoul(cp, &cp, 0);
+      val = strtoul(cp, &endp, 0);
+      if (endp == cp)  /* No digits converted */
+         err_msg("ERROR: \"%s\" is not a valid numeric value", cp);
+      cp=endp;	/* Advance cp past converted value */
       if (*cp == '/' && pos == 1) {	/* Keylength */
          cp++;
-         len = strtoul(cp, &cp, 0);
+         len = strtoul(cp, &endp, 0);
+         if (endp == cp)  /* No digits converted */
+            err_msg("ERROR: \"%s\" is not a valid numeric value", cp);
+         cp=endp;	/* Advance cp past converted value */
       }
       switch(pos) {
          case 1:
@@ -2810,14 +2817,14 @@ decode_transform(char *trans_str, size_t *attr_len) {
  *	If the value is a decimal number, then construct a basic attribute,
  *	otherwise construct a variable attribute.
  */
-      key = strtoul(key_str, (char **)NULL, 10);
+      key = Strtoul(key_str, 10);
       if (value_str[0] == '0' && value_str[1] == 'x') { /* Variable Attribute */
          if (strlen(value_str) %2 )	/* length is odd */
             err_msg("Length of variable attribute value must be even");
          v_value=hex2data(value_str+2, &v_len);
          add_attr(0, NULL, 'V', key, v_len, 0, v_value);
       } else {	/* Basic attribute */
-         b_value = strtoul(value_str, (char **)NULL, 10);
+         b_value = Strtoul(value_str, 10);
          add_attr(0, NULL, 'B', key, 0, b_value, NULL);
       }
 /*
