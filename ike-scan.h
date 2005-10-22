@@ -390,6 +390,7 @@ unsigned char* make_udphdr(size_t *, int, int, unsigned);
 int Gettimeofday(struct timeval *);
 void *Malloc(size_t);
 void *Realloc(void *, size_t);
+unsigned long int Strtoul(const char *, int);
 void decode_trans_simple(char *, unsigned *, unsigned *, unsigned *,
                          unsigned *, unsigned *);
 unsigned char *decode_transform(char *, size_t *);
