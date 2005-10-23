@@ -2735,13 +2735,14 @@ decode_trans_simple(char *str, unsigned *enc, unsigned *keylen, unsigned *hash,
    while (*cp != '\0') {
       val = strtoul(cp, &endp, 0);
       if (endp == cp)  /* No digits converted */
-         err_msg("ERROR: \"%s\" is not a valid numeric value", cp);
+         err_msg("ERROR: \"%s\" is not a valid transform specification", str);
       cp=endp;	/* Advance cp past converted value */
       if (*cp == '/' && pos == 1) {	/* Keylength */
          cp++;
          len = strtoul(cp, &endp, 0);
          if (endp == cp)  /* No digits converted */
-            err_msg("ERROR: \"%s\" is not a valid numeric value", cp);
+            err_msg("ERROR: \"%s\" is not a valid transform specification",
+                    str);
          cp=endp;	/* Advance cp past converted value */
       }
       switch(pos) {
