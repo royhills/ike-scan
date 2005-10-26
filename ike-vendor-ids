@@ -361,6 +361,11 @@ Netscreen-13	^f885da40b1e7a9abd17655ec5bbec0f21f0ed52e
 # Not sure if this is common to all Avaya equipment
 avaya	^4485152d18b6bbcc0be8a8469579ddcc
 
+# Stonegate
+# Observed on Stonesoft StoneGate v2.2.1
+StoneGate-01	^c573b056d7faca36c2fba28374127cbf
+StoneGate-02	^baeb239037e17787d730eed9d95d48aa
+
 # Other things I've seen but not fully classified yet.
 # If anyone can confirm any of these, please let me know.
 Maybe Cisco IOS	^bdb41038a7ec5e5534dd004d0f91f927
