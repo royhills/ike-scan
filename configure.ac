@@ -5,7 +5,7 @@ AC_INIT([ike-scan],[1.7.9],[ike-scan@nta-monitor.com])
 AC_PREREQ(2.59)
 AC_REVISION($Revision$)
 AC_CONFIG_SRCDIR([ike-scan.c])
-AM_INIT_AUTOMAKE(1.8)	dnl Require Automake 1.8 or later
+AM_INIT_AUTOMAKE(1.9)
 
 AM_CONFIG_HEADER([config.h])
 
@@ -144,14 +144,17 @@ AC_ARG_ENABLE(lookup,
 )
 
 dnl The big OpenSSL hunt.
+dnl
 dnl Check for OpenSSL headers and libraries if the --with-openssl[=PATH]
 dnl option was specified.
+dnl
 dnl We search for "include/openssl/ssl.h" and "openssl/ssl.h" in the
 dnl given path (if specified) plus a number of standard locations.
 dnl When we find it, we use the directory we found it in to add the
 dnl required -I option to CPPFLAGS (so we can find the include files),
 dnl the -L option to LDFLAGS (so we can find the libraries), and add
 dnl "-lcrypto" to LIBS (so we link against the OpenSSL libraries).
+dnl
 have_openssl="no"
 AC_MSG_CHECKING([if OpenSSL libraries are required])
 AC_ARG_WITH(openssl,
@@ -177,7 +180,13 @@ AC_ARG_WITH(openssl,
          else
             AC_MSG_NOTICE([OpenSSL libraries found in $ssldir])
          fi
-         LDFLAGS="-L${ssldir}/lib ${LDFLAGS}"
+         if test -f "${ssldir}/lib/libcrypto.a"; then
+            LDFLAGS="-L${ssldir}/lib ${LDFLAGS}"
+         elif test -f "${ssldir}/libcrypto.a"; then
+            LDFLAGS="-L${ssldir} ${LDFLAGS}"
+         else
+            AC_MSG_ERROR([Cannot find libcrypto.a under $ssldir])
+         fi
          LIBS="-lcrypto $LIBS"
 
          AC_MSG_CHECKING([that OpenSSL libraries in ${ssldir} work])
