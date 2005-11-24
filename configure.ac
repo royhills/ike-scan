@@ -1,7 +1,7 @@
 dnl $Id$
 dnl Process this file with autoconf to produce a configure script.
 
-AC_INIT([ike-scan],[1.7.8],[ike-scan@nta-monitor.com])
+AC_INIT([ike-scan],[1.7.9],[ike-scan@nta-monitor.com])
 AC_PREREQ(2.59)
 AC_REVISION($Revision$)
 AC_CONFIG_SRCDIR([ike-scan.c])
@@ -130,6 +130,18 @@ dnl Do we have inet_aton?  Most systems do, but some e.g. Solaris don't
 dnl If we don't have it, then use Russ Allbery's implementation as a
 dnl replacement function.
 AC_CHECK_FUNC(inet_aton, , [ AC_LIBOBJ(inet_aton) ])
+
+dnl Do we want to disable the initial gethostbyname() call?
+dnl The default is for it to be enabled.
+AC_ARG_ENABLE(lookup,
+   AC_HELP_STRING([--enable-lookup],[Enable or disable initial DNS lookup]),
+   [
+      if test "x$enableval" = "xno" ; then
+         AC_MSG_NOTICE([Disabling initial lookup])
+         AC_DEFINE(DISABLE_LOOKUP, 1, [Define to disable initial lookup])
+      fi
+   ]
+)
 
 dnl The big OpenSSL hunt.
 dnl Check for OpenSSL headers and libraries if the --with-openssl[=PATH]
