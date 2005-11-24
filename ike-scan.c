@@ -215,7 +215,6 @@ main(int argc, char *argv[]) {
    struct sockaddr_in sa_peer;
    struct timeval now;
    unsigned char packet_in[MAXUDP];	/* Received packet */
-   struct hostent *hp;
    int n;
    host_entry *temp_cursor;
    struct timeval diff;		/* Difference between two timevals */
@@ -255,6 +254,9 @@ main(int argc, char *argv[]) {
    unsigned char *cookie_data=NULL;
    size_t cookie_data_len;
    char **idstrings=NULL;
+#ifndef DISABLE_LOOKUP
+   struct hostent *hp;
+#endif
 /*
  *	Open syslog channel and log arguments if required.
  *	We must be careful here to avoid overflowing the arg_str buffer
@@ -611,8 +613,10 @@ main(int argc, char *argv[]) {
  *	If we're not reading from a file, then we must have some hosts
  *	given as command line arguments.
  */
+#ifndef DISABLE_LOOKUP
    if (!no_dns_flag)
       hp = gethostbyname("ike-scan-target.test.nta-monitor.com");
+#endif
    if (!filename_flag) 
       if ((argc - optind) < 1)
          usage(EXIT_FAILURE, 0);
