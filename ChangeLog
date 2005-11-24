@@ -1,5 +1,69 @@
 $Id$
 
+2005-10-22 Roy Hills <Roy.Hills@nta-monitor.com>
+
+	* wrappers.c: Added new wrapper function, Strtoul(), which
+	  calls strtoul() and checks for errors.
+
+	* ike-scan.c: Change most calls to strtoul() to use the new
+	  wrapper function Strtoul() instead, because this checks for
+	  errors.  Previously, a non-numeric value would be converted to
+	  zero without any error, meaning something like "--sport=xxx"
+	  would be silently accepted.  Now, such invalid inputs result in
+	  an error.
+
+	* ike-scan.c: Modify decode_trans_simple() to detect invalid values
+	  which could previously result in an infinate loop.  Now, invalid
+	  values cause an error.
+
+2005-09-08 Roy Hills <Roy.Hills@nta-monitor.com>
+
+	* Upgraded automake from 1.8 to 1.9.  No code changes required.
+
+2005-09-08 Roy Hills <Roy.Hills@nta-monitor.com>
+
+	* check-hash.c, check-sizes.c, error.c, ike-scan.c, isakmp.c,
+	  psk-crack.c, utils.c, wrappers.c, ike-scan.h, isakmp.h: Added
+	  OpenSSL exception to the copyright notice at the beginning of
+	  these files.  This allows linking of the program against OpenSSL
+	  and distributing linked versions.  This exception is intended to
+	  allow the use of OpenSSL in this GPL v2 application.  The added
+	  text reads:
+
+	  "In addition, as a special exception, the copyright holders give
+	  permission to link the code of portions of this program with the
+	  OpenSSL library, and distribute linked combinations including the two.
+
+	  You must obey the GNU General Public License in all respects
+	  for all of the code used other than OpenSSL.  If you modify
+	  file(s) with this exception, you may extend this exception to your
+	  version of the file(s), but you are not obligated to do so.  If you
+	  do not wish to do so, delete this exception statement from your
+	  version."
+
+2005-08-02 Roy Hills <Roy.Hills@nta-monitor.com>
+
+	* ike-scan.c, isakmp.c: Added support for advanced transform
+	  creation using new functions add_transform() and make_transform().
+	  These new functions take a pre-built attribute list, which has
+	  previously been created with add_attr(), and can therefore create
+	  transforms with arbitrary attributes.
+
+	  The old add_trans() and make_trans() functions have been renamed
+	  to add_trans_simple() and make_trans_simple() to reflect the fact
+	  that they are simplified versions.  These simple versions are now
+	  wrappers that use the advanced functions.
+
+	  Added support for advanced transform creation, which uses these new
+	  functions.  This involves an alternative syntax for the --trans
+	  option: --trans=(attr=value, ...).
+
+2005-08-01 Roy Hills <Roy.Hills@nta-monitor.com>
+
+	* ike-scan.c, isakmp.c: Added Notification payload processing.  We now
+	  display details of an ISAKMP Notification payload if one is returned,
+	  rather than just displaying generic payload information.
+
 2005-07-21 Roy Hills <Roy.Hills@nta-monitor.com>
 
 	* ike-scan.c, isakmp.c, utils.c: Added support for variable length
