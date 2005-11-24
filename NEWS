@@ -5,6 +5,8 @@ release.  For more details please read the ChangeLog file.
 
 ike-scan v1.7.8:
 
+* Added many new vendor ID and UDP backoff patterns.
+
 * Several bugs fixed in both psk-crack and ike-scan.  Notable fixes include:
 
   o Numeric arguments are now checked for validity
@@ -12,10 +14,6 @@ ike-scan v1.7.8:
   o Correct psk-crack handling of multiple PSK records
   o Fixed bug which caused hostnames containing hyphens to fail with an error.
   o Name lookup errors are now non-fatal.
-
-* Added OpenSSL exception to the copyright notice, which permits linking of the
-  program against OpenSSL.  This is to allow the use of OpenSSL in this GPL v2
-  licensed program.
 
 * Added support for more flexible transform specification, which allows
   an arbitary number of transform attributes to be specified in any order.
@@ -89,6 +87,10 @@ ike-scan v1.7.8:
 
 * Added SO_BROADCAST option to UDP socket to allow sending to broadcast
   addresses.  Previously this gave a permission denied error, even for root.
+
+* Added OpenSSL exception to the copyright notice, which permits linking of the
+  program against OpenSSL.  This is to allow the use of OpenSSL in this GPL v2
+  licensed program.
 
 ike-scan v1.7:
 
