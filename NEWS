@@ -3,45 +3,85 @@ $Id$
 This file gives a brief overview of the major changes between each ike-scan
 release.  For more details please read the ChangeLog file.
 
-ike-scan v1.7.2:
+ike-scan v1.7.8:
 
-* The full help output is now only displayed if it is specifically requested
-  by running ike-scan with the --help (-h) option.  Usage errors now result in
-  a smaller help output.
+* Several bugs fixed in both psk-crack and ike-scan.  Notable fixes include:
 
-* Added various options to allow the outgoing packet to be made non-RFC
-  compliant in various ways:
+  o Numeric arguments are now checked for validity
+  o Perform 64-bit time calculations correctly
+  o Correct psk-crack handling of multiple PSK records
+  o Fixed bug which caused hostnames containing hyphens to fail with an error.
+  o Name lookup errors are now non-fatal.
 
+* Added OpenSSL exception to the copyright notice, which permits linking of the
+  program against OpenSSL.  This is to allow the use of OpenSSL in this GPL v2
+  licensed program.
+
+* Added support for more flexible transform specification, which allows
+  an arbitary number of transform attributes to be specified in any order.
+
+  This new method is specified by using an alternative syntax for the --trans
+  option: --trans=(attr=value, ...).  The old syntax of --trans=(a,b,c,d) is
+  still available.
+
+* Made the specification of the lifetime and lifesize transform attributes
+  with the --lifetime and --lifesize options more flexible.  Now, the argument
+  to these options can take three different forms:
+
+  o The string "none" - Do not add any lifetime or lifesize attribute.
+  o A decimal integer, e.g. 86400 - Add a 4-byte value.
+  o A hex number, e.g. 0xff - Add a variable length value.
+
+  This allows arbitary length lifetime and lifesize attributes to be added
+  using the hex notation.
+
+* Changed default packet-rate calculation from interval to bandwidth.  The
+  default outgoing bandwidth is 56000 bits per second, and can be changed with
+  the --bandwidth option.  It is still possible to specify an inter-packet
+  interval instead with the --interval option.
+
+* Display the version, flags and msgid from the ISAKMP header if they don't
+  contain the expected value.
+
+* Decode and display CERTIFICATE, DELETE and NOTIFICATION payloads if they
+  are received.
+
+* Display the responder cookie from the ISAKMP header unless quiet is in effect.
+
+* Display the SPI if its size is non-zero.  Normally, the SPI size is zero
+  during Phase-1, but I've observed some implementations to use a non-zero
+  length, which is permitted by RFC 2408.
+
+* Added new options to allow more control of the outgoing packet.  Note that
+  some of these options can make the outgoing packet non RFC compliant:
+
+  o --spisize Adds a random SPI of the specified length to the proposal payload
+  o --cookie Sets the initiatior cookie to the specified static value
+  o --hdrflags Sets the flags field in the ISAKMP header
+  o --hdrmsgid Sets the MsgID field in the ISAKMP header
+  o --exchange sets the exchange field in the ISAKMP header to the specified value
+  o --noncelen (-c) allows the length of the nonce data to be specified
+  o --bandwidth (-B) specify desired outgoing bandwidth usage
+  o --certreq (-C) Adds a CertificateRequest payload to the outgoing packet
   o --headerlen (-L) allows the ISAKMP header length to be manually specified
-  o --mbz (-Z) allows the value for the reserved fields to be sent to a non-
-    zero value
-  o --headerver (-E) allows the header version in the ISAKMP header to be
-    changed from the default of 0x10 (v1.0)
+  o --mbz (-Z) allows the value for the reserved fields that "must be zero" to be sent to a specified non-zero value
+  o --headerver (-E) allows the header version in the ISAKMP header to be changed from the default of 0x10 (v1.0)
   o --protocol (-j) allows the proposal protocol to be changed from the default
   o --transid (-k) allows the transform id to be changed from the default
   o --doi (-D) allows the DOI in the SA to be changed from the default
-  o --situation (-S) allows the Situation in the SA to be changed from the
-    default
+  o --situation (-S) allows the Situation in the SA to be changed from the default
 
-* We now drop root privilege after binding the local port if we are running
-  SUID.  This improves security somewhat.
+* The full help output is now only displayed if it is specifically requested
+  by running ike-scan with the --help (-h) option.  Usage errors now result in
+  a smaller help output.  This avoids outputting a multi-screen usage message
+  just because of a typo on the command line.
 
-* Errors from gethostbyname() or inet_aton() when resolving hosts are now
-  non-fatal, so a single bad host in the input won't now cause the whole
-  scan to fail.
-
-* Added --noncelen (-c) option to allow the length of the nonce data to be
-  changed from the default of 20 bytes.  Applicable to aggressive mode only.
-
-* Added --bandwidth (-B) option to allow the interval between outgoing
-  packets to be calculated based on the desired outgoing bandwidth usage
-  rather than being specified in milliseconds.
+* drop root privilege after binding the local port if we are running SUID.
+  This improves security somewhat.
 
 * Make POSIX regular expression support mandatory.  Previously, it was
   optional, but I'm not aware of any supported systems that lack it, and we
   are using it in more and more places.
-
-* Fixed bug which caused hostnames containing hyphens to fail with an error.
 
 * Improved mapping of ID numbers to names in decode.  This allows sparse IDs
   ranges (e.g. 1,2,3,65000) to be supported, which means that we can now decode

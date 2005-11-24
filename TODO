@@ -1,9 +1,9 @@
 $Id$
 
-Write a user guide.  The README is getting too long now: a seperate document
+Write a user guide.  The README is getting too long now: a separate document
 with proper formatting is required.  This will probably be written in LyX.
 
-Write custom packet creation code.  This would allow an arbitary IKE packet
+Write custom packet creation code.  This would allow an arbitrary IKE packet
 to be created and sent.  The generation rules would be some sort of
 specification file as command-line arguments are not flexible enough for this
 task.  Probably parse with yacc/lex to avoid having to write C string handling
@@ -39,3 +39,29 @@ method.  This support can be merged from the file: psk-crack-nortel.c
 
 Add support for Main Mode PSK cracking using a MitM attack.  Suggested by
 Anton Rager.
+
+Allow an id file to be specified, which would contain multiple identities
+(usernames).  Each identity would create a separate host entry, with a
+pointer to the associated ID so that it could be correctly displayed.
+
+Increase PSK cracking speed by using faster hash functions.  Possibilities
+include Jean-Luc Cooke's MD5crk MD5 cores which use SIMD instructions.
+
+Allow sending of zero values for all the various parameters.  For 1 and 2-byte
+sized parameters, this can be achieved by using int instead of unsigned and
+using -1 to represent the default rather than 0.  For 4-byte values, it
+requires a separate flag variable.  Another option is to define a struct like:
+
+struct value {
+   int flag;
+   unsigned val;
+}
+
+We can use the existing add_attr() function to create the attribute list prior
+to calling the new transform creation function.  The make_trans_simple and
+add_trans_simple functions would then just be wrappers which call the
+add_attr() and transform creation functions.
+
+Improve the OpenSSL search in configure, so that it can find the libraries and
+header files in seperate directories.  This happens for example when OpenSSL
+is built from source, but not installed.
