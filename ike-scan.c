@@ -95,6 +95,7 @@ const id_name_map payload_map[] = {	/* Payload types from RFC 2408 3.1 */
 };
 uint32_t lifetime_be;	/* Default lifetime in big endian format */
 uint32_t lifesize_be;	/* Default lifesize in big endian format */
+int write_pkt_to_file=0;	/* Write packet to file for debugging */
 
 int
 main(int argc, char *argv[]) {
@@ -152,6 +153,7 @@ main(int argc, char *argv[]) {
       {"cookie", required_argument, 0, OPT_COOKIE},
       {"exchange", required_argument, 0, OPT_EXCHANGE},
       {"nextpayload", required_argument, 0, OPT_NEXTPAYLOAD},
+      {"writepkttofile", required_argument, 0, OPT_WRITEPKTTOFILE},
       {"experimental", required_argument, 0, 'X'},
       {0, 0, 0, 0}
    };
@@ -560,6 +562,11 @@ main(int argc, char *argv[]) {
             break;
          case OPT_NEXTPAYLOAD:	/* --nextpayload */
             ike_params.hdr_next_payload=Strtoul(optarg, 0);
+            break;
+         case OPT_WRITEPKTTOFILE: /* --writepkttofile */
+            write_pkt_to_file = open(optarg, O_WRONLY|O_CREAT);
+            if (write_pkt_to_file == -1)
+               err_sys("open %s", optarg);
             break;
          case 'X':	/* --experimental */
             experimental_value = Strtoul(optarg, 0);
@@ -974,6 +981,8 @@ main(int argc, char *argv[]) {
       } /* End If */
    } /* End While */
    close(sockfd);
+   if (write_pkt_to_file)
+      close(write_pkt_to_file);
 /*
  *	Display the backoff times if --showbackoff option was specified
  *	and we have at least one system returning a handshake.
@@ -1596,8 +1605,12 @@ send_packet(int s, unsigned char *packet_out, size_t packet_out_len,
    if (verbose > 1)
       warn_msg("---\tSending packet #%u to host entry %u (%s) tmo %d us",
                he->num_sent, he->n, inet_ntoa(he->addr), he->timeout);
-   nsent = sendto(s, packet_out, packet_out_len, 0,
-                  (struct sockaddr *) &sa_peer, sa_peer_len);
+   if (write_pkt_to_file) {
+      nsent = write(write_pkt_to_file, packet_out, packet_out_len);
+   } else {
+      nsent = sendto(s, packet_out, packet_out_len, 0,
+                     (struct sockaddr *) &sa_peer, sa_peer_len);
+   }
    if (nsent < 0) {
       err_sys("ERROR: sendto");
    } else if (nsent != packet_out_len) {
