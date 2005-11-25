@@ -1,5 +1,28 @@
 $Id$
 
+2005-11-25 Roy Hills <Roy.Hills@nta-monitor.com>
+
+	* ike-scan.c, ike-scan.h, configure.ac: Added new --writepkttofile
+	  option.  This option writes the output packet to the specified file
+	  rather than sending it to the remote host.  It is intended for
+	  debugging and testing purposes, to allow the IKE packet to be
+	  easily checked.  This option is not documented, because it is
+	  designed purely for testing.
+
+	* check-packet: New test to check IKE scan packet data.  Currently
+	  tests two sample packets: one default proposal, and one custom
+	  proposal.
+
+2005-11-24 Roy Hills <Roy.Hills@nta-monitor.com>
+
+	* configure.ac: Support the OpenSSL libcrypto.a library in either
+	  $ssldir/lib or in $ssldir.
+
+	* configure.ac: Added --disable-lookup option which allows the
+	  initial DNS lookup to be disabled.  This is in response to
+	  Debian bug ID 327220.  Thanks to Florian Weimer for reporting this,
+	  and to Benoit Mortier for forwarding the bug to me.
+
 2005-10-22 Roy Hills <Roy.Hills@nta-monitor.com>
 
 	* wrappers.c: Added new wrapper function, Strtoul(), which
@@ -40,6 +63,9 @@ $Id$
 	  version of the file(s), but you are not obligated to do so.  If you
 	  do not wish to do so, delete this exception statement from your
 	  version."
+
+	  This text was taken from
+	  http://www.gnome.org/~markmc/openssl-and-the-gpl.html
 
 2005-08-02 Roy Hills <Roy.Hills@nta-monitor.com>
 
