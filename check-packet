@@ -1,0 +1,50 @@
+#!/bin/sh
+# $Id$
+#
+# check-packet -- Shell script to test ike-scan packet data
+#
+# Author: Roy Hills
+# Date: 25 November 2005
+#
+# This script checks that ike-scan builds the correct ISAKMP packets.
+# It uses the undocumented ike-scan option --writepkttofile to write the
+# packet to a file rather than sending it via the network.
+#
+TMPFILE=/tmp/ike-scan-test.$$.tmp
+#
+SAMPLE01=pkt-default-proposal.dat
+SAMPLE02=pkt-custom-proposal.dat
+#
+echo "Checking default ike-scan packet against $SAMPLE01 ..."
+IKEARGS="--sport=0 --retry=1 --nodns --cookie=deadbeefdeadbeef"
+$srcdir/ike-scan $IKEARGS --writepkttofile=$TMPFILE 127.0.0.1 >/dev/null 2>&1
+if test $? -ne 0; then
+   rm -f $TMPFILE
+   echo "FAILED"
+   exit 1
+fi
+cmp -s $TMPFILE $SAMPLE01
+if test $? -ne 0; then
+   rm -f $TMPFILE
+   echo "FAILED"
+   exit 1
+fi
+echo "ok"
+rm -f $TMPFILE
+#
+echo "Checking custom ike-scan packet against $SAMPLE02 ..."
+IKEARGS="--sport=0 --retry=1 --nodns --cookie=deadbeefdeadbeef --mbz=255 --trans=(1=1,2=1,3=1,4=1) --vendor=deadbeef"
+$srcdir/ike-scan $IKEARGS --writepkttofile=$TMPFILE 127.0.0.1 >/dev/null 2>&1
+if test $? -ne 0; then
+   rm -f $TMPFILE
+   echo "FAILED"
+   exit 1
+fi
+cmp -s $TMPFILE $SAMPLE02
+if test $? -ne 0; then
+   rm -f $TMPFILE
+   echo "FAILED"
+   exit 1
+fi
+echo "ok"
+rm -f $TMPFILE
