@@ -134,6 +134,14 @@
 #include <regex.h>	/* Posix regular expression support */
 #endif
 
+#ifdef HAVE_SYS_STAT_H
+#include <sys/stat.h>
+#endif
+
+#ifdef HAVE_FCNTL_H
+#include <fcntl.h>
+#endif
+
 #ifdef HAVE_OPENSSL
 #include <openssl/md5.h>
 #include <openssl/sha.h>
@@ -187,6 +195,7 @@ unsigned char *SHA1(const unsigned char *, size_t, unsigned char *);
 #define OPT_COOKIE 259
 #define OPT_EXCHANGE 260
 #define OPT_NEXTPAYLOAD 261
+#define OPT_WRITEPKTTOFILE 262
 #undef DEBUG_TIMINGS			/* Define to 1 to debug timing code */
 /*
  * If ALPHA is defined, then it is used as the smoothing factor for the
