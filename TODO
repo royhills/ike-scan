@@ -56,12 +56,3 @@ struct value {
    int flag;
    unsigned val;
 }
-
-We can use the existing add_attr() function to create the attribute list prior
-to calling the new transform creation function.  The make_trans_simple and
-add_trans_simple functions would then just be wrappers which call the
-add_attr() and transform creation functions.
-
-Improve the OpenSSL search in configure, so that it can find the libraries and
-header files in seperate directories.  This happens for example when OpenSSL
-is built from source, but not installed.
