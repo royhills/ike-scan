@@ -166,32 +166,38 @@ AC_ARG_WITH(openssl,
          for ssldir in $withval /usr/local/ssl /usr/lib/ssl /usr/ssl /usr/pkg /usr/local /usr; do
             if test -f "${ssldir}/include/openssl/ssl.h"; then
                found_openssl="yes"
-               CPPFLAGS="-I${ssldir}/include ${CPPFLAGS}"
+               openssl_header_dir="${ssldir}/include"
                break
             fi
             if test -f "${ssldir}/openssl/ssl.h"; then
                found_openssl="yes"
-               CPPFLAGS="-I${ssldir} ${CPPFLAGS}"
+               openssl_header_dir="${ssldir}"
                break
             fi
          done
          if test x$found_openssl != xyes; then
-            AC_MSG_ERROR([Cannot find OpenSSL libraries])
+            AC_MSG_ERROR([Cannot find OpenSSL header files])
          else
-            AC_MSG_NOTICE([OpenSSL libraries found in $ssldir])
+            AC_MSG_NOTICE([OpenSSL header files found in $openssl_header_dir])
+            CPPFLAGS="-I${openssl_header_dir} ${CPPFLAGS}"
          fi
          if test -f "${ssldir}/lib/libcrypto.a"; then
-            LDFLAGS="-L${ssldir}/lib ${LDFLAGS}"
+            openssl_lib_dir="${ssldir}/lib"
          elif test -f "${ssldir}/libcrypto.a"; then
-            LDFLAGS="-L${ssldir} ${LDFLAGS}"
+            openssl_lib_dir="${ssldir}"
          else
             AC_MSG_ERROR([Cannot find libcrypto.a under $ssldir])
          fi
+         AC_MSG_NOTICE([OpenSSL libraries found in $openssl_lib_dir])
+         LDFLAGS="-L${openssl_lib_dir} ${LDFLAGS}"
          LIBS="-lcrypto $LIBS"
 
-         AC_MSG_CHECKING([that OpenSSL libraries in ${ssldir} work])
+         AC_MSG_CHECKING([that OpenSSL headers and libraries in ${ssldir} work])
          AC_LINK_IFELSE([AC_LANG_PROGRAM(
 [[
+#ifdef STDC_HEADERS
+#include <stdlib.h>
+#endif
 #include <openssl/md5.h>
 #include <openssl/sha.h>
 ]],
