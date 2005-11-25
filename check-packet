@@ -12,8 +12,8 @@
 #
 TMPFILE=/tmp/ike-scan-test.$$.tmp
 #
-SAMPLE01=pkt-default-proposal.dat
-SAMPLE02=pkt-custom-proposal.dat
+SAMPLE01="$srcdir/pkt-default-proposal.dat"
+SAMPLE02="$srcdir/pkt-custom-proposal.dat"
 #
 echo "Checking default ike-scan packet against $SAMPLE01 ..."
 IKEARGS="--sport=0 --retry=1 --nodns --cookie=deadbeefdeadbeef"
