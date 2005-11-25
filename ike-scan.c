@@ -564,7 +564,7 @@ main(int argc, char *argv[]) {
             ike_params.hdr_next_payload=Strtoul(optarg, 0);
             break;
          case OPT_WRITEPKTTOFILE: /* --writepkttofile */
-            write_pkt_to_file = open(optarg, O_WRONLY|O_CREAT);
+            write_pkt_to_file = open(optarg, O_WRONLY|O_CREAT, 0666);
             if (write_pkt_to_file == -1)
                err_sys("open %s", optarg);
             break;
@@ -3036,6 +3036,8 @@ usage(int status, int detailed) {
       fprintf(stderr, "\t\t\tan arbitary number of attribute/value pairs.\n");
       fprintf(stderr, "\t\t\tSee RFC 2409 Appendix A for details of the attributes\n");
       fprintf(stderr, "\t\t\tand values.\n");
+      fprintf(stderr, "\t\t\tNote that brackets are special to some shells, so you\n");
+      fprintf(stderr, "\t\t\tmay need to quote them, e.g. --trans=\"(1=1,2=2,3=3,4=4)\"\n");
       fprintf(stderr, "\t\t\tFor example, --trans=(1=1,2=2,3=1,4=2) specifies\n");
       fprintf(stderr, "\t\t\tEnc=3DES-CBC, Hash=SHA1, Auth=shared key, DH Group=2\n");
       fprintf(stderr, "\t\t\tand --trans=(1=7,14=128,2=1,3=3,4=5) specifies\n");
@@ -3232,6 +3234,7 @@ usage(int status, int detailed) {
       fprintf(stderr, "\n--hdrmsgid=<n>\t\tSet the ISAKMP header message ID to <n>.  Default=0\n");
       fprintf(stderr, "\t\t\tThis should be zero for IKE Phase-1.\n");
       fprintf(stderr, "\n--cookie=<n>\t\tSet the ISAKMP initiator cookie to <n>\n");
+      fprintf(stderr, "\t\t\tThe cookie value should be specified in hex.\n");
       fprintf(stderr, "\t\t\tBy default, the cookies are automatically generated\n");
       fprintf(stderr, "\t\t\tand have unique values.  If you specify this option,\n");
       fprintf(stderr, "\t\t\tthen you can only specify a single target, because\n");
