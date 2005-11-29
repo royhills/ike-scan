@@ -181,12 +181,16 @@ AC_ARG_WITH(openssl,
             AC_MSG_NOTICE([OpenSSL header files found in $openssl_header_dir])
             CPPFLAGS="-I${openssl_header_dir} ${CPPFLAGS}"
          fi
-         if test -f "${ssldir}/lib/libcrypto.a"; then
+         if test -f "${ssldir}/lib/libcrypto.so"; then
+            openssl_lib_dir="${ssldir}/lib"
+         elif test -f "${ssldir}/libcrypto.so"; then
+            openssl_lib_dir="${ssldir}"
+         elif test -f "${ssldir}/lib/libcrypto.a"; then
             openssl_lib_dir="${ssldir}/lib"
          elif test -f "${ssldir}/libcrypto.a"; then
             openssl_lib_dir="${ssldir}"
          else
-            AC_MSG_ERROR([Cannot find libcrypto.a under $ssldir])
+            AC_MSG_ERROR([Cannot find libcrypto.so or libcrypto.a under $ssldir])
          fi
          AC_MSG_NOTICE([OpenSSL libraries found in $openssl_lib_dir])
          LDFLAGS="-L${openssl_lib_dir} ${LDFLAGS}"
