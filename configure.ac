@@ -189,6 +189,12 @@ AC_ARG_WITH(openssl,
          elif test -f "${ssldir}/libcrypto.so"; then
             openssl_lib_dir="${ssldir}"
             AC_MSG_NOTICE([Found ${ssldir}/libcrypto.so])
+         elif test -f "${ssldir}/lib/libcrypto.dylib"; then
+            openssl_lib_dir="${ssldir}/lib"
+            AC_MSG_NOTICE([Found ${ssldir}/lib/libcrypto.dylib])
+         elif test -f "${ssldir}/libcrypto.dylib"; then
+            openssl_lib_dir="${ssldir}"
+            AC_MSG_NOTICE([Found ${ssldir}/libcrypto.dylib])
          elif test -f "${ssldir}/lib/libcrypto.a"; then
             openssl_lib_dir="${ssldir}/lib"
             AC_MSG_NOTICE([Found ${ssldir}/lib/libcrypto.a])
@@ -196,7 +202,7 @@ AC_ARG_WITH(openssl,
             openssl_lib_dir="${ssldir}"
             AC_MSG_NOTICE([Found ${ssldir}/libcrypto.a])
          else
-            AC_MSG_ERROR([Cannot find libcrypto.so or libcrypto.a under $ssldir])
+            AC_MSG_ERROR([Cannot find libcrypto.so, libcrypto.dylib or libcrypto.a under $ssldir])
          fi
          AC_MSG_NOTICE([OpenSSL libraries found in $openssl_lib_dir])
          LDFLAGS="-L${openssl_lib_dir} ${LDFLAGS}"
