@@ -15,7 +15,7 @@
 #
 FILES="udp-backoff-fingerprinting-paper.txt AUTHORS ChangeLog COPYING ike-backoff-patterns ike-scan.exe ike-vendor-ids NEWS psk-crack.exe psk-crack-dictionary README README-WIN32 TODO /cygdrive/c/cygwin/bin/cygwin1.dll"
 
-ZIPFILE="ike-scan-win32-1.7.4.zip"
+ZIPFILE="ike-scan-win32-1.7.9.zip"
 OPTS="-j -9"
 #
 zip $OPTS $ZIPFILE $FILES
