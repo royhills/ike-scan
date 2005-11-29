@@ -419,13 +419,13 @@ extern struct_desc isakmp_notification_desc;
  */
 struct isakmp_delete
 {
-    u_int8_t    isad_np;
-    u_int8_t    isad_reserved;
-    u_int16_t   isad_length;
-    u_int32_t   isad_doi;
-    u_int8_t    isad_protoid;
-    u_int8_t    isad_spisize;
-    u_int16_t   isad_nospi;
+    uint8_t    isad_np;
+    uint8_t    isad_reserved;
+    uint16_t   isad_length;
+    uint32_t   isad_doi;
+    uint8_t    isad_protoid;
+    uint8_t    isad_spisize;
+    uint16_t   isad_nospi;
 };
 
 /*
