@@ -167,11 +167,13 @@ AC_ARG_WITH(openssl,
             if test -f "${ssldir}/include/openssl/ssl.h"; then
                found_openssl="yes"
                openssl_header_dir="${ssldir}/include"
+               AC_MSG_NOTICE([Found ${ssldir}/include/openssl/ssl.h])
                break
             fi
             if test -f "${ssldir}/openssl/ssl.h"; then
                found_openssl="yes"
                openssl_header_dir="${ssldir}"
+               AC_MSG_NOTICE([Found ${ssldir}/openssl/ssl.h])
                break
             fi
          done
@@ -183,12 +185,16 @@ AC_ARG_WITH(openssl,
          fi
          if test -f "${ssldir}/lib/libcrypto.so"; then
             openssl_lib_dir="${ssldir}/lib"
+            AC_MSG_NOTICE([Found ${ssldir}/lib/libcrypto.so])
          elif test -f "${ssldir}/libcrypto.so"; then
             openssl_lib_dir="${ssldir}"
+            AC_MSG_NOTICE([Found ${ssldir}/libcrypto.so])
          elif test -f "${ssldir}/lib/libcrypto.a"; then
             openssl_lib_dir="${ssldir}/lib"
+            AC_MSG_NOTICE([Found ${ssldir}/lib/libcrypto.a])
          elif test -f "${ssldir}/libcrypto.a"; then
             openssl_lib_dir="${ssldir}"
+            AC_MSG_NOTICE([Found ${ssldir}/libcrypto.a])
          else
             AC_MSG_ERROR([Cannot find libcrypto.so or libcrypto.a under $ssldir])
          fi
