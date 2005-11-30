@@ -3,9 +3,10 @@ $Id$
 This file gives a brief overview of the major changes between each ike-scan
 release.  For more details please read the ChangeLog file.
 
-ike-scan v1.7.8:
+ike-scan v1.7.9:
 
-* Added many new vendor ID and UDP backoff patterns.
+* Added many new vendor ID and UDP backoff patterns.  There are now a total
+  of 27 backoff patterns, and 135 vendor ID patterns.
 
 * Several bugs fixed in both psk-crack and ike-scan.  Notable fixes include:
 
@@ -20,7 +21,8 @@ ike-scan v1.7.8:
 
   This new method is specified by using an alternative syntax for the --trans
   option: --trans=(attr=value, ...).  The old syntax of --trans=(a,b,c,d) is
-  still available.
+  still available.  Note that the brackets are special to some shells, and
+  may need to be quoted.
 
 * Made the specification of the lifetime and lifesize transform attributes
   with the --lifetime and --lifesize options more flexible.  Now, the argument
