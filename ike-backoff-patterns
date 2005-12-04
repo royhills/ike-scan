@@ -219,3 +219,15 @@ Avaya VSU	0, 14.5/1200, 14.5/1200, 14.5/1200, 14.5/1200
 # Discovered by: Tony Lloyd, September 2005
 # Observed on: Stonegate V2.2.0 on Linux
 Stonegate	0, 0.5, 1, 2, 4, 8, 16, 30, 30, 30, 30
+
+# Discovered by Paul Askew, December 2005
+# Observed on: Netgear FVS328 ProSafe VPN Firewall Version 1.0.15
+# The time between the first and second packets has quite a bit of variance,
+# but the delays between subsequent packets do not.
+Netgear ProSafe	0, 4.5/1000, 5, 5, 5
+
+# Discovered by Paul Askew, December 2005
+# Observed on: Netgear DG834V2 ADSL Firewall Router Version 2.10.22
+# Interestingly, the backoff pattern for this device differs from that for
+# the Netgear FVS328 ProSafe VPN Firewall.
+Netgear ADSL Firewall Router	0, 10, 20
