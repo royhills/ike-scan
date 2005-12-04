@@ -6,7 +6,7 @@ release.  For more details please read the ChangeLog file.
 ike-scan v1.7.9:
 
 * Added many new vendor ID and UDP backoff patterns.  There are now a total
-  of 27 backoff patterns, and 135 vendor ID patterns.
+  of 29 backoff patterns, and 135 vendor ID patterns.
 
 * Several bugs fixed in both psk-crack and ike-scan.  Notable fixes include:
 
