@@ -1,5 +1,31 @@
 $Id$
 
+2005-12-06 Roy Hills <Roy.Hills@nta-monitor.com>
+
+	* configure.ac: Incremented version number to 1.8 in preparation
+	  for release.
+
+2005-12-04 Roy Hills <Roy.Hills@nta-monitor.com>
+
+	* ike-backoff-patterns: Added backoff patterns for Netgear ProSafe
+	  and Netgear ADSL Firewall Router.  Submitted by Paul Askew.
+
+2005-11-30 Roy Hills <Roy.Hills@nta-monitor.com>
+
+	* Removed automake boilerplace files, and ran automake --add-missing
+	  --copy to obtain the latest versions as of automake 1.9.  The updated
+	  files were: missing, install-sh, depcomp and INSTALL.  mkinstalldirs
+	  is no longer installed by automake and is probably no longer needed.
+	  However, I have kept the old version just in case.
+
+2005-11-29 Roy Hills <Roy.Hills@nta-monitor.com>
+
+	* isakmp.h: Changed u_int8_t, u_int16_t and u_int32_t to uint8_t,
+	  uint16_t and uint32_t in definition of delete payload.
+
+	* configure.ac: Improved OpenSSL detection by adding support for
+	  libcrypto.so and libcrypto.dylib as well as libcrypto.a.
+
 2005-11-25 Roy Hills <Roy.Hills@nta-monitor.com>
 
 	* ike-scan.c, ike-scan.h, configure.ac: Added new --writepkttofile
@@ -12,6 +38,12 @@ $Id$
 	* check-packet: New test to check IKE scan packet data.  Currently
 	  tests two sample packets: one default proposal, and one custom
 	  proposal.
+
+	* configure.ac: Added conditional #include <stdlib.h> to the
+	  AC_LINK_IFELSE that checks if the OpenSSL headers and libraries
+	  work.  This is needed because the OpenSSL md5.h and sha1.h in
+	  recent versions use size_t but don't include any header to
+	  define it.
 
 2005-11-24 Roy Hills <Roy.Hills@nta-monitor.com>
 
