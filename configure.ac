@@ -202,7 +202,8 @@ AC_ARG_WITH(openssl,
             openssl_lib_dir="${ssldir}"
             AC_MSG_NOTICE([Found ${ssldir}/libcrypto.a])
          else
-            AC_MSG_ERROR([Cannot find libcrypto.so, libcrypto.dylib or libcrypto.a under $ssldir])
+            openssl_lib_dir="${ssldir}/lib"
+            AC_MSG_NOTICE([Cannot find libcrypto under $ssldir - assuming its in the standard search path])
          fi
          AC_MSG_NOTICE([OpenSSL libraries found in $openssl_lib_dir])
          LDFLAGS="-L${openssl_lib_dir} ${LDFLAGS}"
