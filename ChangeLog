@@ -1,5 +1,14 @@
 $Id$
 
+2005-12-07 Roy Hills <Roy.Hills@nta-monitor.com>
+
+	* Released v1.8  Tarball size: 1376995, Zip size: 2090803.
+	  tarball md5sum: 961310e6f3c07d26c90447e392dfb97e
+	  Zip md5sum: 884e1c3eb03ea1519ab7537e095d2c0b
+
+	* configure.ac: Incremented version number to 1.8.1 in preparation
+	  for post 1.8 changes.
+
 2005-12-06 Roy Hills <Roy.Hills@nta-monitor.com>
 
 	* configure.ac: Incremented version number to 1.8 in preparation
