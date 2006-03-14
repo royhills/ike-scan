@@ -1,5 +1,9 @@
 $Id$
 
+2006-03-14 Roy Hills <Roy.Hills@nta-monitor.com>
+
+	* Moved ike-scan source code from RCS to CVS revision control.
+
 2005-12-07 Roy Hills <Roy.Hills@nta-monitor.com>
 
 	* Released v1.8  Tarball size: 1376995, Zip size: 2090803.
