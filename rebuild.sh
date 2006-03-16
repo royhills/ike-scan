@@ -4,9 +4,9 @@
 #
 echo "aclocal"
 aclocal
-echo "automake"
-automake
-echo "autoconf"
-autoconf
 echo "autoheader"
 autoheader
+echo "automake --add-missing"
+automake --add-missing
+echo "autoconf"
+autoconf
