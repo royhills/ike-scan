@@ -802,11 +802,12 @@ main(int argc, char *argv[]) {
  *	bandwidth unless an interval was specified.
  */
    if (!interval) {
-      double float_interval;
-
-      float_interval = (((packet_out_len + PACKET_OVERHEAD) * 8) /
-                       (double) bandwidth) * 1000000;
-      interval = (unsigned) float_interval;
+      interval = ((IKE_UINT64)(packet_out_len+PACKET_OVERHEAD) * 8 * 1000000) /
+                 bandwidth;
+      if (verbose) {
+         warn_msg("DEBUG: pkt len=%u bytes, bandwidth=%u bps, int=%u us",
+                  packet_out_len, bandwidth, interval);
+      }
    }
 /*
  *	Display initial message.
