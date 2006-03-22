@@ -1727,8 +1727,8 @@ print_payload(unsigned char *cp, unsigned payload, int dir) {
  *
  *	None
  *
- *	This function is used for debugging.  It trusts the length in the
- *	generic ISAKMP header, and so could misbehave with corrupted packets.
+ *	This function trusts the length in the generic ISAKMP header, so
+ *	could misbehave with corrupted packets.
  */
 void
 add_psk_crack_payload(unsigned char *cp, unsigned payload, int dir) {
@@ -1737,7 +1737,7 @@ add_psk_crack_payload(unsigned char *cp, unsigned payload, int dir) {
    unsigned char *data;
    size_t data_len;
 
-   if (payload) {	/* Some other payload */
+   if (payload) {	/* Normal ISAKMP payload */
       data_len = ntohs(hdr->isag_length) - sizeof(struct isakmp_generic);
       data = Malloc(data_len);
       memcpy(data, cp + sizeof(struct isakmp_generic), data_len);

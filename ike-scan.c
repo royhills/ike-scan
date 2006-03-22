@@ -154,6 +154,7 @@ main(int argc, char *argv[]) {
       {"exchange", required_argument, 0, OPT_EXCHANGE},
       {"nextpayload", required_argument, 0, OPT_NEXTPAYLOAD},
       {"writepkttofile", required_argument, 0, OPT_WRITEPKTTOFILE},
+      {"randomseed", required_argument, 0, OPT_RANDOMSEED},
       {"experimental", required_argument, 0, 'X'},
       {0, 0, 0, 0}
    };
@@ -256,6 +257,7 @@ main(int argc, char *argv[]) {
    unsigned char *cookie_data=NULL;
    size_t cookie_data_len;
    char **idstrings=NULL;
+   unsigned int random_seed=0;
 #ifndef DISABLE_LOOKUP
    struct hostent *hp;
 #endif
@@ -304,10 +306,6 @@ main(int argc, char *argv[]) {
       ike_params.lifesize_data = (unsigned char *) &lifesize_be;
       ike_params.lifesize_data_len = 4;
    }
-/*
- *	Seed random number generator.
- */
-   srand((unsigned) time(NULL));
 /*
  *	Process options and arguments.
  */
@@ -568,6 +566,9 @@ main(int argc, char *argv[]) {
             if (write_pkt_to_file == -1)
                err_sys("open %s", optarg);
             break;
+         case OPT_RANDOMSEED: /* --randomseed */
+            random_seed=Strtoul(optarg, 0);
+            break;
          case 'X':	/* --experimental */
             experimental_value = Strtoul(optarg, 0);
             break;
@@ -576,6 +577,18 @@ main(int argc, char *argv[]) {
             break;
       }
    }
+/*
+ *	Seed random number generator.
+ *	If the random seed has been specified (is non-zero), then use that.
+ *	Otherwise, seed the RNG with an unpredictable value.
+ */
+   if (!random_seed) {
+      struct timeval tv;
+
+      Gettimeofday(&tv);
+      random_seed = ((unsigned) tv.tv_usec ^ (unsigned) getpid());
+   }
+   srand(random_seed);
 /*
  *	Create network socket and bind to local source port.
  */
@@ -771,13 +784,9 @@ main(int argc, char *argv[]) {
  *	Uses Knuth's shuffle algorithm.
  */
    if (random_flag) {
-      struct timeval tv;
       int i;
       int r;
       host_entry *temp;
-
-      Gettimeofday(&tv);
-      srand((unsigned) tv.tv_usec ^ (unsigned) getpid());
 
       for (i=num_hosts-1; i>0; i--) {
          r = (int)((double)rand() / ((double)RAND_MAX + 1) * i);  /* 0<=r<i */
@@ -3253,6 +3262,13 @@ usage(int status, int detailed) {
       fprintf(stderr, "\n--nextpayload=<n>\tSet the next payload in the ISAKMP header to <n>\n");
       fprintf(stderr, "\t\t\tNormally, the next payload is automatically set to the\n");
       fprintf(stderr, "\t\t\tcorrect value.\n");
+      fprintf(stderr, "\n--randomseed=<n>\tUse <n> to seed the pseudo random number generator.\n");
+      fprintf(stderr, "\t\t\tThis option seeds the PRNG with the specified number,\n");
+      fprintf(stderr, "\t\t\twhich can be useful if you want to ensure that the\n");
+      fprintf(stderr, "\t\t\tpacket data is exactly repeatable when it includes\n");
+      fprintf(stderr, "\t\t\tpayloads with random data such as key exchange or nonce.\n");
+      fprintf(stderr, "\t\t\tBy default, the PRNG is seeded with an unpredictable\n");
+      fprintf(stderr, "\t\t\tvalue.\n");
    } else {
       fprintf(stderr, "use \"ike-scan --help\" for detailed information on the available options.\n");
    }

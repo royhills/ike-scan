@@ -1,5 +1,19 @@
 $Id$
 
+2006-03-22 Roy Hills <Roy.Hills@nta-monitor.com>
+
+	* ike-scan.c: Added --randomseed option, which allows the PRNG seed
+	  to be specified.  This enables packets with payloads containing
+	  random data, such as Key Exchange and Nonce, to be compared with
+	  known good examples for testing.  It also allows the packet data to
+	  be exactly repeatable, which can be useful in some situations.
+
+2006-03-19 Roy Hills <Roy.Hills@nta-monitor.com>
+
+	* ike-scan.c: Use unsigned 64-bit integer arithmetic for interval
+	  calculation instead of double-precision floating point.  This
+	  avoids the small rounding errors that can occur with floating point.
+
 2006-03-14 Roy Hills <Roy.Hills@nta-monitor.com>
 
 	* Moved ike-scan source code from RCS to CVS revision control.
