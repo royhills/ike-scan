@@ -4,6 +4,7 @@ autom4te.cache
 *.o
 *~
 ike-scan
+psk-crack
 Makefile
 Makefile.in
 aclocal.m4
