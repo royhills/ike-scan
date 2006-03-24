@@ -1726,9 +1726,9 @@ recvfrom_wto(int s, unsigned char *buf, size_t len, struct sockaddr *saddr,
  */
 unsigned char *
 initialise_ike_packet(size_t *packet_out_len, ike_packet_params *params) {
-   struct isakmp_hdr *hdr;
-   struct isakmp_sa *sa;
-   unsigned char *prop;
+   unsigned char *hdr;		/* ISAKMP Header */
+   unsigned char *sa;		/* Security Association */
+   unsigned char *prop;		/* Proposal */
    unsigned char *transforms;	/* All transforms */
    unsigned char *certreq=NULL;
    unsigned char *vid=NULL;

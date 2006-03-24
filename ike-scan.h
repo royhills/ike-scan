@@ -374,9 +374,9 @@ unsigned int hstr_i(const char *);
 unsigned char* hex2data(const char *, size_t *);
 unsigned char* hex_or_str(const char *, size_t *);
 unsigned char* hex_or_num(const char *, size_t *);
-struct isakmp_hdr* make_isakmp_hdr(unsigned, unsigned, unsigned, int, int,
-                                   unsigned);
-struct isakmp_sa* make_sa_hdr(unsigned, unsigned, unsigned, unsigned);
+unsigned char* make_isakmp_hdr(unsigned, unsigned, unsigned, int, int,
+                               unsigned);
+unsigned char* make_sa_hdr(unsigned, unsigned, unsigned, unsigned);
 unsigned char* make_prop(size_t *, unsigned, unsigned, unsigned, unsigned);
 unsigned char* make_trans_simple(size_t *, unsigned, unsigned, unsigned,
                                  unsigned, unsigned, unsigned, unsigned,
@@ -418,6 +418,8 @@ char *process_notification(unsigned char *, size_t);
 unsigned char *make_transform(size_t *, unsigned, unsigned, unsigned,
                               unsigned char *, size_t);
 unsigned char* add_transform(int, size_t *, unsigned, unsigned char *, size_t);
+unsigned char *add_isakmp_payload(unsigned char *, size_t,
+                                  unsigned char *, size_t, unsigned char **);
 void print_payload(unsigned char *cp, unsigned payload, int);
 void add_psk_crack_payload(unsigned char *cp, unsigned, int);
 void print_psk_crack_values(const char *);

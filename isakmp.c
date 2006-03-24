@@ -96,9 +96,12 @@ extern const id_name_map payload_map[];
  *
  *	Inputs:
  *
- *	xchg	Exchange Type (e.g. ISAKMP_XCHG_IDPROT for main mode)
- *	next	Next Payload Type
- *	length	ISAKMP Message total length
+ *	xchg		Exchange Type (e.g. ISAKMP_XCHG_IDPROT for main mode)
+ *	next		Next Payload Type
+ *	length		ISAKMP Message total length
+ *	header_version	Version number to put in the header
+ *	hdr_flags	Flags to put in the header
+ *	hdr_msgid	Message ID to put in the header
  *
  *	Returns:
  *
@@ -108,12 +111,14 @@ extern const id_name_map payload_map[];
  *	The initiator cookie should be changed to a unique per-host value
  *	before the packet is sent.
  */
-struct isakmp_hdr*
+unsigned char*
 make_isakmp_hdr(unsigned xchg, unsigned next, unsigned length,
                 int header_version, int hdr_flags, unsigned hdr_msgid) {
+   unsigned char *payload;
    struct isakmp_hdr* hdr;
 
-   hdr = Malloc(sizeof(struct isakmp_hdr));
+   payload = Malloc(sizeof(struct isakmp_hdr));
+   hdr = (struct isakmp_hdr*) payload;	/* Overlay header struct on payload */
    memset(hdr, mbz_value, sizeof(struct isakmp_hdr));
 
    hdr->isa_icookie[0] = 0xdeadbeef;	/* Initiator cookie */
@@ -127,7 +132,7 @@ make_isakmp_hdr(unsigned xchg, unsigned next, unsigned length,
    hdr->isa_msgid = htonl(hdr_msgid);	/* Message ID */
    hdr->isa_length = htonl(length);	/* Total ISAKMP message length */
 
-   return hdr;
+   return payload;
 }
 
 /*
@@ -137,6 +142,8 @@ make_isakmp_hdr(unsigned xchg, unsigned next, unsigned length,
  *
  *	next    Next Payload Type
  *	length	SA payload length
+ *	doi	Domain of interpretation
+ *	situation	Situation
  *
  *	Returns:
  *
@@ -144,11 +151,13 @@ make_isakmp_hdr(unsigned xchg, unsigned next, unsigned length,
  *
  *	This constructs an SA header.  It fills in the static values.
  */
-struct isakmp_sa*
+unsigned char*
 make_sa_hdr(unsigned next, unsigned length, unsigned doi, unsigned situation) {
+   unsigned char *payload;
    struct isakmp_sa* hdr;
 
-   hdr = Malloc(sizeof(struct isakmp_sa));
+   payload = Malloc(sizeof(struct isakmp_sa));
+   hdr = (struct isakmp_sa*) payload;	/* Overlay SA struct on payload */
    memset(hdr, mbz_value, sizeof(struct isakmp_sa));
 
    hdr->isasa_np = next;		/* Next Payload Type */
@@ -156,7 +165,7 @@ make_sa_hdr(unsigned next, unsigned length, unsigned doi, unsigned situation) {
    hdr->isasa_doi = htonl(doi);	/* Default is IPsec DOI */
    hdr->isasa_situation = htonl(situation); /* Default SIT_IDENTITY_ONLY */
 
-   return hdr;
+   return payload;
 }
 
 /*
@@ -164,11 +173,11 @@ make_sa_hdr(unsigned next, unsigned length, unsigned doi, unsigned situation) {
  *
  *	Inputs:
  *
- *	outlen	(output) Proposal payload length
- *	length	Proposal payload length
- *	notrans	Number of transforms in this proposal
- *	protocol
- *	spi_size
+ *	outlen		(output) Proposal payload length
+ *	length		Proposal payload length
+ *	notrans		Number of transforms in this proposal
+ *	protocol	Protocol
+ *	spi_size	SPI Size
  *
  *	Returns:
  *
@@ -1652,6 +1661,54 @@ process_delete(unsigned char *cp, size_t len) {
    free(hex_spi);
 
    return msg;
+}
+
+/*
+ *	add_isakmp_payload -- Add an ISAKMP payload to the current packet
+ *
+ *	Inputs:
+ *
+ *	packet		Pointer to the old packet
+ *	packet_len	Length of the old packet
+ *	payload		Pointer to the payload to add
+ *	payload_len	Length of the payload
+ *	new_payload	Pointer to the new payload within the new packet
+ *
+ *	Returns:
+ *
+ *	A pointer to the new packet.
+ *
+ *	This function assumes that "payload" is a pointed to malloc'ed
+ *	storage, and will free it after use.
+ *
+ *	If "packet" is NULL, then a new packet will be created with the
+ *	payload as the initial contents.
+ *
+ *	The new packet pointer is often the same as the old packet pointer
+ *	because the packet can generally be grown in place with realloc().
+ *	However, this cannot be relied on as realloc() will sometimes need
+ *	to reallocate the packet.
+ */
+unsigned char *
+add_isakmp_payload(unsigned char *packet, size_t packet_len,
+                   unsigned char *payload, size_t payload_len,
+                   unsigned char **new_payload) {
+
+   unsigned char *new_packet;
+   size_t offset;
+
+   if (packet == NULL) {
+      new_packet = Malloc(payload_len);
+      offset = 0;
+   } else {
+      new_packet = Realloc(packet, packet_len+payload_len);
+      offset = packet_len;
+   }
+   *new_payload = new_packet+offset;
+   memcpy(*new_payload, payload, payload_len);
+   free(payload);
+
+   return new_packet;
 }
 
 /*
