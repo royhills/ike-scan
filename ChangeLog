@@ -2,6 +2,11 @@ $Id$
 
 2006-03-22 Roy Hills <Roy.Hills@nta-monitor.com>
 
+	* ike-scan.c: Delay opening the file specified by --writepkttofile
+	  until after we've dropped SUID to avoid security issues.
+
+2006-03-22 Roy Hills <Roy.Hills@nta-monitor.com>
+
 	* ike-scan.c: Added --randomseed option, which allows the PRNG seed
 	  to be specified.  This enables packets with payloads containing
 	  random data, such as Key Exchange and Nonce, to be compared with

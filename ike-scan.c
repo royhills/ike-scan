@@ -172,6 +172,8 @@ main(int argc, char *argv[]) {
    int options_index=0;
    char filename[MAXLINE];
    int filename_flag=0;
+   char pkt_filename[MAXLINE];	/* for --writepkttofile option */
+   int pkt_filename_flag=0;
    int random_flag=0;		/* Should we randomise the list? */
    int sockfd;			/* UDP socket file descriptor */
    unsigned source_port = DEFAULT_SOURCE_PORT;	/* UDP source port */
@@ -562,9 +564,8 @@ main(int argc, char *argv[]) {
             ike_params.hdr_next_payload=Strtoul(optarg, 0);
             break;
          case OPT_WRITEPKTTOFILE: /* --writepkttofile */
-            write_pkt_to_file = open(optarg, O_WRONLY|O_CREAT, 0666);
-            if (write_pkt_to_file == -1)
-               err_sys("open %s", optarg);
+            strncpy(pkt_filename, optarg, MAXLINE);
+            pkt_filename_flag=1;
             break;
          case OPT_RANDOMSEED: /* --randomseed */
             random_seed=Strtoul(optarg, 0);
@@ -736,6 +737,14 @@ main(int argc, char *argv[]) {
  */
    if (!num_hosts)
       err_msg("ERROR: No hosts to process.");
+/*
+ *	If --writepkttofile was specified, open the specified output file.
+ */
+   if (pkt_filename_flag) {
+      write_pkt_to_file = open(pkt_filename, O_WRONLY|O_CREAT, 0666);
+      if (write_pkt_to_file == -1)
+         err_sys("open %s", pkt_filename);
+   }
 /*
  *	Check that the combination of specified options and arguments is
  *	valid.
