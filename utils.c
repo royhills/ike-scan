@@ -602,7 +602,7 @@ MD5(const unsigned char *d, size_t n, unsigned char *md) {
  *	The SHA1 hash.
  *
  *	This function is a wrapper for the SHA1 routines in sha1.c.  If ike-scan
- *	was compiled with OpenSSL, then the OpenSSL MD5 routines are used
+ *	was compiled with OpenSSL, then the OpenSSL SHA1 routines are used
  *	instead, and this wrapper is not used.
  */
 unsigned char *
