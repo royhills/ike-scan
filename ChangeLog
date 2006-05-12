@@ -1,5 +1,13 @@
 $Id$
 
+2006-05-12 Roy Hills <Roy.Hills@nta-monitor.com>
+
+	* ike-scan.c: Allow --interval to be expressed in seconds by
+	  appending "s" to the value.
+
+	* ike-scan.c: Add experimental option to display packet received
+	  time in %H:%M:%S.%u format before the packet details.
+
 2006-03-22 Roy Hills <Roy.Hills@nta-monitor.com>
 
 	* ike-scan.c: Delay opening the file specified by --writepkttofile

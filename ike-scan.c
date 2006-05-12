@@ -347,6 +347,8 @@ main(int argc, char *argv[]) {
             interval_len=strlen(interval_str);
             if (interval_str[interval_len-1] == 'u') {
                interval=Strtoul(interval_str, 10);
+            } else if (interval_str[interval_len-1] == 's') {
+               interval=1000000 * Strtoul(interval_str, 10);
             } else {
                interval=1000 * Strtoul(interval_str, 10);
             }
@@ -1418,10 +1420,31 @@ display_packet(int n, unsigned char *packet_in, host_entry *he,
    unsigned char *pkt_ptr;
    char *hdr_descr;		/* ISAKMP header description */
 /*
+ *	Set message to the empty string.
+ */
+   msg = make_message("");
+/*
+ *	Display the time when this packet was received if required.
+ */
+   if (experimental_value) {
+      struct tm *time_tm;
+      struct timeval time_tv;
+
+      Gettimeofday(&time_tv);
+      time_tm = localtime(&(time_tv.tv_sec));
+      cp = msg;
+      msg = make_message("%s%02d:%02d:%02d.%06u ", cp,
+                         time_tm->tm_hour, time_tm->tm_min, time_tm->tm_sec,
+                         time_tv.tv_usec);
+      free(cp);
+   }
+/*
  *	Set msg to the IP address of the host entry, plus the address of the
  *	responder if different, and a tab.
  */
-   msg = make_message("%s\t", inet_ntoa(he->addr));
+   cp = msg;
+   msg = make_message("%s%s\t", cp, inet_ntoa(he->addr));
+   free(cp);
    if (((he->addr).s_addr != recv_addr->s_addr) && !tcp_flag) {
       cp = msg;
       msg = make_message("%s(%s) ", cp, inet_ntoa(*recv_addr));
@@ -2979,8 +3002,10 @@ usage(int status, int detailed) {
       fprintf(stderr, "\t\t\tbinary, multiples.  So 64K is 64000, not 65536.\n");
       fprintf(stderr, "\n--interval=<n> or -i <n> Set minimum packet interval to <n> ms.\n");
       fprintf(stderr, "\t\t\tThe packet interval will be no smaller than this number.\n");
-      fprintf(stderr, "\t\t\tThe interval specified is in milliseconds by default,\n");
-      fprintf(stderr, "\t\t\tor in microseconds if \"u\" is appended to the value.\n");
+      fprintf(stderr, "\t\t\tThe interval specified is in milliseconds by default.\n");
+      fprintf(stderr, "\t\t\tif \"u\" is appended to the value, then the interval\n");
+      fprintf(stderr, "\t\t\tis in microseconds, and if \"s\" is appended, the\n");
+      fprintf(stderr, "\t\t\tinterval is in seconds.\n");
       fprintf(stderr, "\t\t\tIf you want to use up to a given bandwidth, then it is\n");
       fprintf(stderr, "\t\t\teasier to use the --bandwidth option instead.\n");
       fprintf(stderr, "\t\t\tYou cannot specify both --interval and --bandwidth\n");
