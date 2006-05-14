@@ -93,9 +93,22 @@ const id_name_map payload_map[] = {	/* Payload types from RFC 2408 3.1 */
    {13, "VendorID"},
    {-1, NULL}
 };
+const id_name_map doi_map[] = {
+   {0, "ISAKMP"},
+   {1, "IPsec"},
+   {-1, NULL}
+};
+const id_name_map protocol_map[] = {
+   {1, "PROTO_ISAKMP"},
+   {2, "PROTO_IPSEC_AH"},
+   {3, "PROTO_IPSEC_ESP"},
+   {4, "PROTO_IPSEC_COMP"},
+   {-1, NULL}
+};
 uint32_t lifetime_be;	/* Default lifetime in big endian format */
 uint32_t lifesize_be;	/* Default lifesize in big endian format */
 int write_pkt_to_file=0;	/* Write packet to file for debugging */
+int timestamp_flag=0;		/* Timestamp flag */
 
 int
 main(int argc, char *argv[]) {
@@ -155,6 +168,7 @@ main(int argc, char *argv[]) {
       {"nextpayload", required_argument, 0, OPT_NEXTPAYLOAD},
       {"writepkttofile", required_argument, 0, OPT_WRITEPKTTOFILE},
       {"randomseed", required_argument, 0, OPT_RANDOMSEED},
+      {"timestamp", no_argument, 0, OPT_TIMESTAMP},
       {"experimental", required_argument, 0, 'X'},
       {0, 0, 0, 0}
    };
@@ -571,6 +585,9 @@ main(int argc, char *argv[]) {
             break;
          case OPT_RANDOMSEED: /* --randomseed */
             random_seed=Strtoul(optarg, 0);
+            break;
+         case OPT_TIMESTAMP: /* --timestamp */
+            timestamp_flag = 1;
             break;
          case 'X':	/* --experimental */
             experimental_value = Strtoul(optarg, 0);
@@ -1426,7 +1443,7 @@ display_packet(int n, unsigned char *packet_in, host_entry *he,
 /*
  *	Display the time when this packet was received if required.
  */
-   if (experimental_value) {
+   if (timestamp_flag) {
       struct tm *time_tm;
       struct timeval time_tv;
 
@@ -2936,18 +2953,6 @@ usage(int status, int detailed) {
       {11, "ID_KEY_ID"},
       {-1, NULL}
    };
-   static const id_name_map doi_map[] = {
-      {0, "ISAKMP"},
-      {1, "IPsec"},
-      {-1, NULL}
-   };
-   static const id_name_map protocol_map[] = {
-      {1, "PROTO_ISAKMP"},
-      {2, "PROTO_IPSEC_AH"},
-      {3, "PROTO_IPSEC_ESP"},
-      {4, "PROTO_IPSEC_COMP"},
-      {-1, NULL}
-   };
 
    fprintf(stderr, "Usage: ike-scan [options] [hosts...]\n");
    fprintf(stderr, "\n");
@@ -3303,6 +3308,9 @@ usage(int status, int detailed) {
       fprintf(stderr, "\t\t\tpayloads with random data such as key exchange or nonce.\n");
       fprintf(stderr, "\t\t\tBy default, the PRNG is seeded with an unpredictable\n");
       fprintf(stderr, "\t\t\tvalue.\n");
+      fprintf(stderr, "\n--timestamp\t\tDisplay timestamps for received packets.\n");
+      fprintf(stderr, "\t\t\tThis option causes a timestamp to be displayed for\n");
+      fprintf(stderr, "\t\t\teach received packet.\n");
    } else {
       fprintf(stderr, "use \"ike-scan --help\" for detailed information on the available options.\n");
    }

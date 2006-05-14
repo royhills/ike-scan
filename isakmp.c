@@ -90,6 +90,8 @@ extern int experimental_value;
 extern psk_crack psk_values;
 extern int mbz_value;
 extern const id_name_map payload_map[];
+extern const id_name_map doi_map[];
+extern const id_name_map protocol_map[];
 
 /*
  *	make_isakmp_hdr -- Construct an ISAKMP Header
@@ -1431,6 +1433,7 @@ char *
 process_notification(unsigned char *cp, size_t len) {
    struct isakmp_notification *hdr = (struct isakmp_notification *) cp;
    char *msg;
+   char *msg2;
    unsigned msg_type;
    size_t msg_len;
    unsigned char *msg_data;
@@ -1438,11 +1441,15 @@ process_notification(unsigned char *cp, size_t len) {
    unsigned char *notification_spi;
    char *hex_data;
    size_t spi_len;
+   uint32_t doi;
+   unsigned proto_id;
 
    if (len < sizeof(struct isakmp_notification) ||
         ntohs(hdr->isan_length) < sizeof(struct isakmp_notification))
       return make_message("Notification (packet too short to decode)");
 
+   doi = ntohl(hdr->isan_doi);
+   proto_id = hdr->isan_protoid;
    msg_type = ntohs(hdr->isan_type);
    notification_spi = cp + sizeof(struct isakmp_notification);
    spi_len = hdr->isan_spisize;
@@ -1452,9 +1459,22 @@ process_notification(unsigned char *cp, size_t len) {
    msg_data = cp + sizeof(struct isakmp_notification) + spi_len;
    hex_data = hexstring(msg_data, msg_len);
 
-   msg=make_message("Notification=(Code=%u, Name=%s, SPI_Size=%u, SPI_Data=%s, Data_Len=%u, Data=%s",
-                    msg_type, id_to_name(msg_type, notification_map),
-                    spi_len, hex_spi, msg_len, hex_data);
+   msg=make_message("Notification=(");
+   if (doi != 1) {	/* DOI not IPsec */
+      msg2 = msg;
+      msg = make_message("DOI=%s, ", id_to_name(doi, doi_map));
+      free(msg2);
+   }
+   if (proto_id != 1) {	/* Protocol ID not ISAKMP */
+      msg2 = msg;
+      msg = make_message("Proto_ID=%s, ", id_to_name(proto_id, protocol_map));
+      free(msg2);
+   }
+   msg2 = msg;
+   msg=make_message("Type=%s, SPI=%s, Data=%s)",
+                    id_to_name(msg_type, notification_map),
+                    hex_spi, hex_data);
+   free(msg2);
    free(hex_spi);
    free(hex_data);
 

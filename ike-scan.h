@@ -197,6 +197,7 @@ unsigned char *SHA1(const unsigned char *, size_t, unsigned char *);
 #define OPT_NEXTPAYLOAD 261
 #define OPT_WRITEPKTTOFILE 262
 #define OPT_RANDOMSEED 263
+#define OPT_TIMESTAMP 264
 #undef DEBUG_TIMINGS			/* Define to 1 to debug timing code */
 /*
  * If ALPHA is defined, then it is used as the smoothing factor for the

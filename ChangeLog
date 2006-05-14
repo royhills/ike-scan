@@ -1,5 +1,14 @@
 $Id$
 
+2006-05-14 Roy Hills <Roy.Hills@nta-monitor.com>
+
+	* ike-scan.c: Add --timestamp option.
+
+	* isakmp.c: Improve decoding of notification payload.  Tony has found
+	  an IKE implementation which returnes a notification payload after
+	  the SA payload, and this uncovered shortcomings in the notification
+	  processing code.
+
 2006-05-12 Roy Hills <Roy.Hills@nta-monitor.com>
 
 	* ike-scan.c: Allow --interval to be expressed in seconds by
@@ -8,7 +17,12 @@ $Id$
 	* ike-scan.c: Add experimental option to display packet received
 	  time in %H:%M:%S.%u format before the packet details.
 
-2006-03-22 Roy Hills <Roy.Hills@nta-monitor.com>
+	* Moved ike-scan source code from CVS to SVN revision control.
+	  This changes the revision numbers from 1.x, where x is a relatively
+	  small number, to y, where y is a larger number (currently four
+	  digits).
+
+2006-05-05 Roy Hills <Roy.Hills@nta-monitor.com>
 
 	* ike-scan.c: Delay opening the file specified by --writepkttofile
 	  until after we've dropped SUID to avoid security issues.
