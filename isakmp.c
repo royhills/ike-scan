@@ -1462,16 +1462,17 @@ process_notification(unsigned char *cp, size_t len) {
    msg=make_message("Notification=(");
    if (doi != 1) {	/* DOI not IPsec */
       msg2 = msg;
-      msg = make_message("DOI=%s, ", id_to_name(doi, doi_map));
+      msg = make_message("%sDOI=%s, ", msg2, id_to_name(doi, doi_map));
       free(msg2);
    }
    if (proto_id != 1) {	/* Protocol ID not ISAKMP */
       msg2 = msg;
-      msg = make_message("Proto_ID=%s, ", id_to_name(proto_id, protocol_map));
+      msg = make_message("%sProto_ID=%s, ", msg2,
+                         id_to_name(proto_id, protocol_map));
       free(msg2);
    }
    msg2 = msg;
-   msg=make_message("Type=%s, SPI=%s, Data=%s)",
+   msg=make_message("%sType=%s, SPI=%s, Data=%s)", msg2,
                     id_to_name(msg_type, notification_map),
                     hex_spi, hex_data);
    free(msg2);
