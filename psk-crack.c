@@ -226,7 +226,7 @@ main (int argc, char *argv[]) {
  *	Get program start time for statistics displayed on completion
  *	and print starting message.
  */
-   printf("Starting psk-crack [%s] (http://www.nta-monitor.com/ike-scan/)\n",
+   printf("Starting psk-crack [%s] (http://www.nta-monitor.com/tools/ike-scan/)\n",
           PACKAGE_STRING);
    if (brute_len) {
       printf("Running in brute-force cracking mode\n");
@@ -443,6 +443,6 @@ psk_crack_usage(int status) {
    fprintf(stderr, "\t\t\tDefault is \"%s\"\n", default_charset);
    fprintf(stderr, "\n");
    fprintf(stderr, "Report bugs or send suggestions to %s\n", PACKAGE_BUGREPORT);
-   fprintf(stderr, "See the ike-scan homepage at http://www.nta-monitor.com/ike-scan/\n");
+   fprintf(stderr, "See the ike-scan homepage at http://www.nta-monitor.com/tools/ike-scan/\n");
    exit(status);
 }

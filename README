@@ -333,7 +333,7 @@ Options:
 			specified as IP addresses.
 
 Report bugs or send suggestions to ike-scan@nta-monitor.com
-See the ike-scan homepage at http://www.nta-monitor.com/ike-scan/
+See the ike-scan homepage at http://www.nta-monitor.com/tools/ike-scan/
 
 4.  IMPLEMENTATION DETAILS
 
@@ -565,7 +565,7 @@ backoff patterns contained in the text file "ike-backoff-patterns".  It is
 possible to add new patterns to this file.  If you discover new backoff
 patterns, you are encouraged to submit them so that they can be included
 in future releases of ike-scan.  See:
-http://www.nta-monitor.com/ike-scan/submit.htm
+http://www.nta-monitor.com/tools/ike-scan/submit-patterns.html
 for details on how to submit new backoff patterns.
 
 Note that only hosts which respond with a handshake can be fingerprinted by
@@ -577,7 +577,7 @@ If you discover IKE hosts with backoff patterns which are not recognised by
 ike-scan, then you are encouraged to submit the pattern and details of
 the IKE implementation to me so I can incorporate it into future versions of
 ike-scan.  See:
-http://www.nta-monitor.com/ike-scan/submit.htm
+http://www.nta-monitor.com/tools/ike-scan/submit-patterns.html
 For details of how to submit new backoff patterns.
 
 Note that any packet loss will prevent the backoff fingerprinting from working
@@ -795,7 +795,7 @@ All of these RFCs can be obtained from: http://www.ietf.org/rfc
 
 Email:  ike-scan@nta-monitor.com
 
-Web:  http://www.nta-monitor.com/ike-scan/
+Web:  http://www.nta-monitor.com/tools/ike-scan/
 
 Postal address:
 

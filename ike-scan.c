@@ -849,7 +849,7 @@ main(int argc, char *argv[]) {
 /*
  *	Display initial message.
  */
-   printf("Starting %s with %u hosts (http://www.nta-monitor.com/ike-scan/)\n", PACKAGE_STRING, num_hosts);
+   printf("Starting %s with %u hosts (http://www.nta-monitor.com/tools/ike-scan/)\n", PACKAGE_STRING, num_hosts);
 /*
  *	Display the lists if verbose setting is 3 or more.
  */
@@ -2226,7 +2226,7 @@ dump_times(unsigned num_hosts) {
       printf("If you know the implementation name, and the pattern is reproducible, you\n");
       printf("are encouraged to submit the pattern and implementation details for\n");
       printf("inclusion in future versions of ike-scan.  See:\n");
-      printf("http://www.nta-monitor.com/ike-scan/submit.htm\n");
+      printf("http://www.nta-monitor.com/tools/ike-scan/submit-patterns.html\n");
    }
 }
 
@@ -3316,6 +3316,6 @@ usage(int status, int detailed) {
    }
    fprintf(stderr, "\n");
    fprintf(stderr, "Report bugs or send suggestions to %s\n", PACKAGE_BUGREPORT);
-   fprintf(stderr, "See the ike-scan homepage at http://www.nta-monitor.com/ike-scan/\n");
+   fprintf(stderr, "See the ike-scan homepage at http://www.nta-monitor.com/tools/ike-scan/\n");
    exit(status);
 }

@@ -5,7 +5,7 @@ Date:	17 January 2003
 
 This paper may be freely distributed providing that the contents are not
 altered in any way.  The latest version is available at:
-http://www.nta-monitor.com/ike-scan/
+http://www.nta-monitor.com/tools/ike-scan/
 
 1.  ABSTRACT
 
@@ -18,7 +18,7 @@ other UDP services.
 The paper also describes an example program called "ike-scan" which is able
 to discover and identify IPsec VPN systems running IKE.  This program is
 publicly available under the GNU Public License (GPL).  See
-http://www.nta-monitor.com/ike-scan/ for details.
+http://www.nta-monitor.com/tools/ike-scan/ for details.
 
 2.  OVERVIEW
 
@@ -133,7 +133,7 @@ VPN systems.  The backoff patterns are stored in a text file which makes
 it easy to add new patterns as they are discovered.
 
 This program is available for free download from:
-http://www.nta-monitor.com/ike-scan/
+http://www.nta-monitor.com/tools/ike-scan/
 
 ike-scan sends an initial IKE main-mode packet to each of the specified
 hosts and records all the responses returned.  It will display the responses
@@ -227,7 +227,7 @@ Delta Time	The difference between the time when this response packet was
 5.  CONTACT ADDRESS
 
 Please send any questions or comments to ike-scan@nta-monitor.com
-See the ike-scan homepage at: http://www.nta-monitor.com/ike-scan/
+See the ike-scan homepage at: http://www.nta-monitor.com/tools/ike-scan/
 
 6.  GLOSSARY OF TERMS
 

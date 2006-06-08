@@ -1,5 +1,10 @@
 $Id$
 
+2006-06-06 Roy Hills <Roy.Hills@nta-monitor.com>
+
+	* Changed web URLs to correspond with the new layout of the NTA
+	  website.
+
 2006-05-14 Roy Hills <Roy.Hills@nta-monitor.com>
 
 	* ike-scan.c: Add --timestamp option.
