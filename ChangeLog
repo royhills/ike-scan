@@ -1,5 +1,11 @@
 $Id$
 
+2006-06-24 Roy Hills <Roy.Hills@nta-monitor.com>
+
+	* utils.c: Changed printable() and hexstring() to make the first
+	  arg "const unsigned char *" instead of "unsigned char *".  This
+	  change was integrated from the arp-scan source.
+
 2006-06-06 Roy Hills <Roy.Hills@nta-monitor.com>
 
 	* Changed web URLs to correspond with the new layout of the NTA

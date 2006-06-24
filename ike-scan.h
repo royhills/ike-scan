@@ -426,8 +426,8 @@ void add_psk_crack_payload(unsigned char *cp, unsigned, int);
 void print_psk_crack_values(const char *);
 char *make_message(const char *, ...);
 char *numstr(unsigned);
-char *printable(unsigned char*, size_t);
-char *hexstring(unsigned char*, size_t);
+char *printable(const unsigned char*, size_t);
+char *hexstring(const unsigned char*, size_t);
 void print_times(void);
 void sig_alarm(int);
 unsigned char *hmac_md5(const unsigned char *, size_t,

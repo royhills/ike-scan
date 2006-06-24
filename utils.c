@@ -367,10 +367,10 @@ numstr(unsigned num) {
  *	free'ed by the caller when it's no longer needed.
  */
 char *
-printable(unsigned char *string, size_t size) {
+printable(const unsigned char *string, size_t size) {
    char *result;
    char *r;
-   unsigned char *cp;
+   const unsigned char *cp;
    size_t outlen;
    unsigned i;
 /*
@@ -385,7 +385,7 @@ printable(unsigned char *string, size_t size) {
  *	Determine required size of output string.
  */
    if (!size)
-      size = strlen((char *) string);
+      size = strlen((const char *) string);
 
    outlen = size;
    cp = string;
@@ -479,10 +479,10 @@ printable(unsigned char *string, size_t size) {
  *	free'ed by the caller when it's no longer needed.
  */
 char *
-hexstring(unsigned char *data, size_t size) {
+hexstring(const unsigned char *data, size_t size) {
    char *result;
    char *r;
-   unsigned char *cp;
+   const unsigned char *cp;
    unsigned i;
 /*
  *	If the input data is NULL, return an empty string.
