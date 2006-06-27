@@ -56,3 +56,12 @@ struct value {
    int flag;
    unsigned val;
 }
+
+From: Antoine Brodin <antoine.brodin@laposte.net>
+To: ike-scan@nta-monitor.com
+Subject: Suggestion about psk-crack
+
+It would be nice if psk-crack could read psk candidates from stdin
+instead of a dictionary file.  That way, you can feed ike-crack with an
+external program for example:
+"john --incremental --stdout | psk-crack options psk-parameters-file"
