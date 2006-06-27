@@ -65,3 +65,10 @@ It would be nice if psk-crack could read psk candidates from stdin
 instead of a dictionary file.  That way, you can feed ike-crack with an
 external program for example:
 "john --incremental --stdout | psk-crack options psk-parameters-file"
+
+Another thing: in psk-crack.c, you do Malloc() (lines 251 to 259 and
+276 to 298) for each PSK you have to crack, but you never free() the
+memory (the pointer is overriden and the memory is leaked).  You should
+free() near line 281.  This might be a problem if there are thousands of
+PSK to crack (I don't know if there are people cracking thousands of
+PSK).
