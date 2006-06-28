@@ -72,3 +72,6 @@ memory (the pointer is overriden and the memory is leaked).  You should
 free() near line 281.  This might be a problem if there are thousands of
 PSK to crack (I don't know if there are people cracking thousands of
 PSK).
+
+Add support for IKE v2, defined in rfc 4306 "Internet Key Exchange (IKEv2)
+Protocol"
