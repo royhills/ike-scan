@@ -11,6 +11,10 @@ $Id$
 	  never been used, and tests indicate that it performed worse
 	  than the standard timing error correction code.
 
+	* psk-crack.c: Free malloc'ed data when we are finished with
+	  each PSK to prevent a memory leak when cracking many PSKs.
+	  Thanks to Antoine Brodin for finding and reporting this bug.
+
 2006-06-24 Roy Hills <Roy.Hills@nta-monitor.com>
 
 	* utils.c: Changed printable() and hexstring() to make the first

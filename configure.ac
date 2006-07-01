@@ -12,9 +12,11 @@ AM_CONFIG_HEADER([config.h])
 dnl Check for programs.
 AC_PROG_CC
  if test -n "$GCC"; then
-      CFLAGS="$CFLAGS -Wall "
+      CFLAGS="${CFLAGS} -Wall "
 dnl Uncomment the line below for testing with stricter warnings.
-dnl      CFLAGS="$CFLAGS -pedantic -Wshadow -Wpointer-arith -Wcast-qual -Wcast-align -Wwrite-strings -Wconversion -Wstrict-prototypes -Wmissing-prototypes -Wmissing-declarations -Wnested-externs "
+dnl      CFLAGS="${CFLAGS} -pedantic -Wshadow -Wpointer-arith -Wcast-qual -Wcast-align -Wwrite-strings -Wconversion -Wstrict-prototypes -Wmissing-prototypes -Wmissing-declarations -Wnested-externs "
+dnl Uncomment the line below to check malloc/free with electric fence
+dnl      LIBS="-lefence ${LIBS}"
  fi
 AC_PROG_INSTALL
 AC_PROG_LN_S
@@ -202,7 +204,7 @@ AC_ARG_WITH(openssl,
          fi
          AC_MSG_NOTICE([OpenSSL libraries found in $openssl_lib_dir])
          LDFLAGS="-L${openssl_lib_dir} ${LDFLAGS}"
-         LIBS="-lcrypto $LIBS"
+         LIBS="-lcrypto ${LIBS}"
 
          AC_MSG_CHECKING([that OpenSSL headers and libraries in ${ssldir} work])
          AC_LINK_IFELSE([AC_LANG_PROGRAM(

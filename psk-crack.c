@@ -379,6 +379,22 @@ main (int argc, char *argv[]) {
          printf("no match found for %s hash %s\n", hash_name,
                 expected_hash_r_hex);
       }
+/*
+ *	Free malloc'ed data.
+ */
+      free(g_xr);
+      free(g_xi);
+      free(cky_r);
+      free(cky_i);
+      free(sai_b);
+      free(idir_b);
+      free(ni_b);
+      free(nr_b);
+      free(expected_hash_r);
+      free(skeyid_data);
+      free(skeyid);
+      free(hash_r_data);
+      free(hash_r);
    }
 /*
  *      Get program end time and calculate elapsed time.
