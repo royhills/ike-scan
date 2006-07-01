@@ -274,9 +274,6 @@ main(int argc, char *argv[]) {
    size_t cookie_data_len;
    char **idstrings=NULL;
    unsigned int random_seed=0;
-#ifndef DISABLE_LOOKUP
-   struct hostent *hp;
-#endif
 /*
  *	Open syslog channel and log arguments if required.
  *	We must be careful here to avoid overflowing the arg_str buffer
@@ -653,10 +650,6 @@ main(int argc, char *argv[]) {
  *	If we're not reading from a file, then we must have some hosts
  *	given as command line arguments.
  */
-#ifndef DISABLE_LOOKUP
-   if (!no_dns_flag)
-      hp = gethostbyname("ike-scan-target.test.nta-monitor.com");
-#endif
    if (!filename_flag) 
       if ((argc - optind) < 1)
          usage(EXIT_FAILURE, 0);
@@ -901,13 +894,7 @@ main(int argc, char *argv[]) {
                req_interval = interval;
                reset_cum_err = 0;
             } else {
-#ifdef ALPHA
-               s_err = (ALPHA*s_err) +
-                       (1-ALPHA)*(long)(loop_timediff - interval);
-               cum_err += s_err;
-#else
                cum_err += loop_timediff - interval;
-#endif
                if (req_interval > cum_err) {
                   req_interval = req_interval - cum_err;
                } else {

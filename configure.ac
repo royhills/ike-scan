@@ -134,13 +134,8 @@ AC_CHECK_FUNC(inet_aton, , [ AC_LIBOBJ(inet_aton) ])
 dnl Do we want to disable the initial gethostbyname() call?
 dnl The default is for it to be enabled.
 AC_ARG_ENABLE(lookup,
-   AC_HELP_STRING([--enable-lookup],[Enable or disable initial DNS lookup]),
-   [
-      if test "x$enableval" = "xno" ; then
-         AC_MSG_NOTICE([Disabling initial lookup])
-         AC_DEFINE(DISABLE_LOOKUP, 1, [Define to disable initial lookup])
-      fi
-   ]
+   AC_HELP_STRING([--enable-lookup],[Legacy option, present for compatibility]),
+   AC_MSG_NOTICE([The --enable-lookup option is depreciated])
 )
 
 dnl The big OpenSSL hunt.

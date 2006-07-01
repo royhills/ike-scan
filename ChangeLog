@@ -1,5 +1,16 @@
 $Id$
 
+2006-07-01 Roy Hills <Roy.Hills@nta-monitor.com>
+
+	* configure.ac, ike-scan.c: Removed initial lookup and configure
+	  option --enable-lookup to control it.  This is legacy code
+	  that has never been required.
+
+	* ike-scan.h, ike-scan.c: Removed low-pass filter in timing
+	  error correction code, and associated ALPHA macro.  This had
+	  never been used, and tests indicate that it performed worse
+	  than the standard timing error correction code.
+
 2006-06-24 Roy Hills <Roy.Hills@nta-monitor.com>
 
 	* utils.c: Changed printable() and hexstring() to make the first
@@ -23,7 +34,9 @@ $Id$
 2006-05-12 Roy Hills <Roy.Hills@nta-monitor.com>
 
 	* ike-scan.c: Allow --interval to be expressed in seconds by
-	  appending "s" to the value.
+	  appending "s" to the value.  This is useful if you want to send
+	  packets very slowly, as it avoids having to add lots of trailing
+	  zeros.
 
 	* ike-scan.c: Add experimental option to display packet received
 	  time in %H:%M:%S.%u format before the packet details.

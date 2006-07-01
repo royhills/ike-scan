@@ -199,22 +199,6 @@ unsigned char *SHA1(const unsigned char *, size_t, unsigned char *);
 #define OPT_RANDOMSEED 263
 #define OPT_TIMESTAMP 264
 #undef DEBUG_TIMINGS			/* Define to 1 to debug timing code */
-/*
- * If ALPHA is defined, then it is used as the smoothing factor for the
- * per-packet timing error using the TCP RTT smoothing algorithm from RFC 793:
- *
- * s_err = ( ALPHA * s_err ) + ((1-ALPHA) * err)
- *
- * Where err is the computed error, and s_err is the smoothed error.
- *
- * Alpha should be in the range 0<=ALPHA<1 with a larger value for alpha
- * resulting in more smoothing and a lower alpha resulting in less
- * smoothing (with zero being no smoothing).  A reasonable value is 0.9.
- *
- * If it is not defined, then no smoothing is performed (as if ALPHA were set
- * to zero, but more efficient since the calculation is not performed).
- */
-#undef ALPHA				/* Smoothing factor */
 
 /* Structures */
 typedef struct time_list_ {
