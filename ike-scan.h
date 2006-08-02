@@ -154,6 +154,9 @@ unsigned char *SHA1(const unsigned char *, size_t, unsigned char *);
 
 #include "isakmp.h"
 
+#include "ip.h"
+#include "udp.h"
+
 /* Defines */
 
 #define MAXLINE 255			/* Max line length for input files */

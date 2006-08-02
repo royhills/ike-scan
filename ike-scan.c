@@ -618,6 +618,15 @@ main(int argc, char *argv[]) {
          err_sys("ERROR: setsockopt() failed");
       if ((setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &on, sizeof(on))) < 0) 
          err_sys("ERROR: setsockopt() failed");
+   } else if (experimental_value) {	/* Raw IP socket */
+      const int on = 1;	/* for setsockopt() */
+
+      if ((sockfd = socket(AF_INET, SOCK_RAW, IPPROTO_RAW)) < 0)
+         err_sys("socket");
+      if ((setsockopt(sockfd, IPPROTO_IP, IP_HDRINCL, &on, sizeof(on))) != 0)
+         err_sys("setsockopt");
+      if ((setsockopt(sockfd, SOL_SOCKET, SO_BROADCAST, &on, sizeof(on))) != 0)
+         err_sys("setsockopt");
    } else {
       const int on = 1;	/* for setsockopt() */
 
@@ -1644,6 +1653,70 @@ send_packet(int s, unsigned char *packet_out, size_t packet_out_len,
       cp += 16;
 
       packet_out_len += 40;
+   }
+/*
+ *	Spoof source address XXXX
+ */
+   if (experimental_value != 0) {
+      unsigned char *orig_packet_out = packet_out;
+      unsigned char *cp;
+      struct iphdr *iph;
+      struct udphdr *udph;
+      struct pseudo_hdr {  /* For computing TCP checksum */
+         uint32_t s_addr;
+         uint32_t d_addr;
+         uint8_t  mbz;
+         uint8_t  proto;
+         uint16_t len;
+      };
+      struct pseudo_hdr *pseudo;
+      uint32_t source_address;
+
+      source_address = rand();
+      packet_out=Malloc(sizeof(struct iphdr) + sizeof(struct udphdr) +
+                        packet_out_len);
+      iph = (struct iphdr *) packet_out;
+      udph = (struct udphdr *) (packet_out + sizeof(struct iphdr));
+      pseudo = (struct pseudo_hdr *) (packet_out + sizeof(struct iphdr) -
+                                      sizeof(struct pseudo_hdr));
+      cp = packet_out + sizeof(struct iphdr) + sizeof(struct udphdr);
+/*
+ *      Construct the pseudo header (for UDP checksum purposes).
+ *      Note that this overlaps the IP header and gets overwritten later.
+ */
+      memset(pseudo, '\0', sizeof(struct pseudo_hdr));
+      pseudo->s_addr = source_address;
+      pseudo->d_addr = he->addr.s_addr;
+      pseudo->proto  = 17;	/* UDP */
+      pseudo->len    = htons(sizeof(struct tcphdr));
+/*
+ *      Construct the UDP header.
+ */
+      memset(udph, '\0', sizeof(struct udphdr));
+      udph->source = htons(500);
+      udph->dest = htons(500);
+      udph->len = htons(packet_out_len + sizeof(struct udphdr));
+/*
+ *      Construct the IP Header.
+ *      This overwrites the now unneeded pseudo header.
+ */
+      memset(iph, '\0', sizeof(struct iphdr));
+      iph->ihl = 5;        /* 5 * 32-bit longwords = 20 bytes */
+      iph->version = 4;
+      iph->tos = 0;
+      iph->tot_len = sizeof(struct iphdr) + sizeof(struct udphdr) +
+                     packet_out_len;
+      iph->id = 0;         /* Linux kernel fills this in */
+      iph->frag_off = htons(0x0);
+      iph->ttl = 128;
+      iph->protocol = 17;	/* UDP */
+      iph->check = 0;      /* Linux kernel fills this in */
+      iph->saddr = source_address;
+      iph->daddr = he->addr.s_addr;
+
+      memcpy(cp, orig_packet_out, packet_out_len);
+
+      packet_out_len += 28;
    }
 /*
  *	Send the packet.

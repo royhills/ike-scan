@@ -1,5 +1,15 @@
 $Id$
 
+2006-08-02 Roy Hills <Roy.Hills@nta-monitor.com>
+
+	* ike-scan.c: Added experimental support for source IP spoofing.
+	  Currently, this only works on Linux.
+
+	* ip.h, udp.h: New header files to support IP spoofing.  Copied
+	  from the GNU C Library.
+
+	* configure.ac: incremented version number to 1.8.2
+
 2006-07-01 Roy Hills <Roy.Hills@nta-monitor.com>
 
 	* configure.ac, ike-scan.c: Removed initial lookup and configure

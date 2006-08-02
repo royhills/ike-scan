@@ -68,3 +68,6 @@ external program for example:
 
 Add support for IKE v2, defined in rfc 4306 "Internet Key Exchange (IKEv2)
 Protocol"
+
+Allow specification of the source IP address (to support source IP spoofing).
+This would require the use of raw sockets.
