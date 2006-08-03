@@ -952,6 +952,43 @@ int name_to_id(char *name, const id_name_map map[]) {
       return -1;
 }
 
+/* Standard BSD internet checksum routine */
+uint16_t
+in_cksum(uint16_t *ptr, int nbytes) {
+
+   register uint32_t sum;
+   uint16_t oddbyte;
+   register uint16_t answer;
+
+/*
+ * Our algorithm is simple, using a 32-bit accumulator (sum),
+ * we add sequential 16-bit words to it, and at the end, fold back
+ * all the carry bits from the top 16 bits into the lower 16 bits.
+ */
+
+   sum = 0;
+   while (nbytes > 1)  {
+      sum += *ptr++;
+      nbytes -= 2;
+   }
+
+/* mop up an odd byte, if necessary */
+   if (nbytes == 1) {
+      oddbyte = 0;            /* make sure top half is zero */
+      *((u_char *) &oddbyte) = *(u_char *)ptr;   /* one byte only */
+      sum += oddbyte;
+   }
+
+/*
+ * Add back carry outs from top 16 bits to low 16 bits.
+ */
+
+   sum  = (sum >> 16) + (sum & 0xffff);    /* add high-16 to low-16 */
+   sum += (sum >> 16);                     /* add carry */
+   answer = ~sum;          /* ones-complement, then truncate to 16 bits */
+   return(answer);
+}
+
 void utils_use_rcsid(void) {
    fprintf(stderr, "%s\n", rcsid);	/* Use rcsid to stop compiler optimising away */
 }

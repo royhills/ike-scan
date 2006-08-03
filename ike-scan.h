@@ -334,7 +334,7 @@ void add_host_pattern(const char *, unsigned, unsigned *, unsigned char *,
                       size_t);
 void add_host(const char *, unsigned, unsigned *, unsigned char *,
               size_t);
-void send_packet(int, unsigned char *, size_t, host_entry *, unsigned,
+void send_packet(int, unsigned char *, size_t, host_entry *, unsigned, unsigned,
                  struct timeval *);
 int recvfrom_wto(int, unsigned char *, size_t, struct sockaddr *, int);
 void remove_host(host_entry **, unsigned *, unsigned);
@@ -423,6 +423,7 @@ unsigned char *hmac_sha1(const unsigned char *, size_t,
                          const unsigned char *, size_t, unsigned char *);
 const char *id_to_name(int, const id_name_map[]);
 int name_to_id(char *, const id_name_map[]);
+uint16_t in_cksum(uint16_t *, int);
 /* The following functions are just to prevent rcsid being optimised away */
 void error_use_rcsid(void);
 void isakmp_use_rcsid(void);

@@ -949,7 +949,7 @@ main(int argc, char *argv[]) {
                if ((*cursor)->num_sent)
                   (*cursor)->timeout *= backoff_factor;
                send_packet(sockfd, packet_out, packet_out_len, *cursor,
-                           dest_port, &last_packet_time);
+                           source_port, dest_port, &last_packet_time);
                advance_cursor(live_count, num_hosts);
             }
          } else {	/* We can't send a packet to this host yet */
@@ -1578,6 +1578,7 @@ display_packet(int n, unsigned char *packet_in, host_entry *he,
  *	packet_out	IKE packet to send
  *	packet_out_len	Length of IKE packet to send
  *	he              Host entry to send to
+ *	source_port     Source UDP port
  *	dest_port       Destination UDP port
  *	last_packet_time        Time when last packet was sent
  *	
@@ -1591,7 +1592,7 @@ display_packet(int n, unsigned char *packet_in, host_entry *he,
  */
 void
 send_packet(int s, unsigned char *packet_out, size_t packet_out_len,
-            host_entry *he, unsigned dest_port,
+            host_entry *he, unsigned source_port, unsigned dest_port,
             struct timeval *last_packet_time) {
    struct sockaddr_in sa_peer;
    NET_SIZE_T sa_peer_len;
@@ -1639,7 +1640,8 @@ send_packet(int s, unsigned char *packet_out, size_t packet_out_len,
       packet_out=Malloc(packet_out_len+40);	/* 8 for udphdr + 32 extra */
       cp = packet_out;
 
-      udphdr = make_udphdr(&udphdr_len, 500, 500, packet_out_len+8+16);
+      udphdr = make_udphdr(&udphdr_len, source_port, dest_port,
+                           packet_out_len+8+16);
       memcpy(cp, udphdr, udphdr_len);
       cp += udphdr_len;
 
@@ -1659,7 +1661,7 @@ send_packet(int s, unsigned char *packet_out, size_t packet_out_len,
  */
    if (experimental_value != 0) {
       unsigned char *orig_packet_out = packet_out;
-      unsigned char *cp;
+      size_t orig_packet_out_len = packet_out_len;
       struct iphdr *iph;
       struct udphdr *udph;
       struct pseudo_hdr {  /* For computing TCP checksum */
@@ -1679,7 +1681,13 @@ send_packet(int s, unsigned char *packet_out, size_t packet_out_len,
       udph = (struct udphdr *) (packet_out + sizeof(struct iphdr));
       pseudo = (struct pseudo_hdr *) (packet_out + sizeof(struct iphdr) -
                                       sizeof(struct pseudo_hdr));
-      cp = packet_out + sizeof(struct iphdr) + sizeof(struct udphdr);
+/*
+ *	Copy the data to the new buffer, leaving space for the IP and
+ *	UDP headers.
+ */
+      memcpy(packet_out + sizeof(struct iphdr) + sizeof(struct udphdr),
+             orig_packet_out, packet_out_len);
+      packet_out_len += sizeof(struct iphdr) + sizeof(struct udphdr);
 /*
  *      Construct the pseudo header (for UDP checksum purposes).
  *      Note that this overlaps the IP header and gets overwritten later.
@@ -1688,14 +1696,16 @@ send_packet(int s, unsigned char *packet_out, size_t packet_out_len,
       pseudo->s_addr = source_address;
       pseudo->d_addr = he->addr.s_addr;
       pseudo->proto  = 17;	/* UDP */
-      pseudo->len    = htons(sizeof(struct tcphdr));
+      pseudo->len    = htons(sizeof(struct udphdr) + orig_packet_out_len);
 /*
  *      Construct the UDP header.
  */
       memset(udph, '\0', sizeof(struct udphdr));
-      udph->source = htons(500);
-      udph->dest = htons(500);
-      udph->len = htons(packet_out_len + sizeof(struct udphdr));
+      udph->source = htons(source_port);
+      udph->dest = htons(dest_port);
+      udph->len = htons(sizeof(struct udphdr) + orig_packet_out_len);
+      udph->check = in_cksum((uint16_t *)pseudo, sizeof(struct pseudo_hdr) +
+                             sizeof(struct udphdr) + orig_packet_out_len);
 /*
  *      Construct the IP Header.
  *      This overwrites the now unneeded pseudo header.
@@ -1704,8 +1714,7 @@ send_packet(int s, unsigned char *packet_out, size_t packet_out_len,
       iph->ihl = 5;        /* 5 * 32-bit longwords = 20 bytes */
       iph->version = 4;
       iph->tos = 0;
-      iph->tot_len = sizeof(struct iphdr) + sizeof(struct udphdr) +
-                     packet_out_len;
+      iph->tot_len = packet_out_len;
       iph->id = 0;         /* Linux kernel fills this in */
       iph->frag_off = htons(0x0);
       iph->ttl = 128;
@@ -1713,10 +1722,6 @@ send_packet(int s, unsigned char *packet_out, size_t packet_out_len,
       iph->check = 0;      /* Linux kernel fills this in */
       iph->saddr = source_address;
       iph->daddr = he->addr.s_addr;
-
-      memcpy(cp, orig_packet_out, packet_out_len);
-
-      packet_out_len += 28;
    }
 /*
  *	Send the packet.
