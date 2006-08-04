@@ -71,3 +71,6 @@ Protocol"
 
 Allow specification of the source IP address (to support source IP spoofing).
 This would require the use of raw sockets.
+
+Make random source IP address more intellegent, by not generating obviously
+incorrect addresses like 127.0.0.0/8 and the multicast ranges.
