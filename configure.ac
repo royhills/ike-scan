@@ -263,5 +263,12 @@ else
    AC_LIBSOURCE(sha1.h)
 fi
 
+dnl	XXXX
+dnl	Include "ip.h" and "udp.h" for raw packet support
+dnl	This should be changed to only include raw packet support if the host
+dnl	OS supports it.
+dnl	XXXX
+AC_LIBSOURCES([ip.h, udp.h])
+
 AC_CONFIG_FILES([Makefile])
 AC_OUTPUT
