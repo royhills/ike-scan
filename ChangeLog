@@ -1,5 +1,14 @@
 $Id$
 
+2006-08-04 Roy Hills <Roy.Hills@nta-monitor.com>
+
+	* ike-scan.c, ike-scan.h: Added new --randsrc option for source IP
+	  spoofing.
+
+	* ike-scan.c, ike-scan.h: Added new --shownum option to display the
+	  return packet number.  This is useful when looking for DoS
+          conditions.
+
 2006-08-02 Roy Hills <Roy.Hills@nta-monitor.com>
 
 	* ike-scan.c: Added experimental support for source IP spoofing.

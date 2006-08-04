@@ -109,6 +109,8 @@ uint32_t lifetime_be;	/* Default lifetime in big endian format */
 uint32_t lifesize_be;	/* Default lifesize in big endian format */
 int write_pkt_to_file=0;	/* Write packet to file for debugging */
 int timestamp_flag=0;		/* Timestamp flag */
+int randsrc_flag=0;		/* Randominse source IP address flag */
+int shownum_flag=0;		/* Display packet number */
 
 int
 main(int argc, char *argv[]) {
@@ -169,6 +171,8 @@ main(int argc, char *argv[]) {
       {"writepkttofile", required_argument, 0, OPT_WRITEPKTTOFILE},
       {"randomseed", required_argument, 0, OPT_RANDOMSEED},
       {"timestamp", no_argument, 0, OPT_TIMESTAMP},
+      {"randsrc", no_argument, 0, OPT_RANDSRC},
+      {"shownum", no_argument, 0, OPT_SHOWNUM},
       {"experimental", required_argument, 0, 'X'},
       {0, 0, 0, 0}
    };
@@ -586,6 +590,12 @@ main(int argc, char *argv[]) {
          case OPT_TIMESTAMP: /* --timestamp */
             timestamp_flag = 1;
             break;
+         case OPT_RANDSRC: /* --randsrc */
+            randsrc_flag = 1;
+            break;
+         case OPT_SHOWNUM: /* --shownum */
+            shownum_flag = 1;
+            break;
          case 'X':	/* --experimental */
             experimental_value = Strtoul(optarg, 0);
             break;
@@ -618,7 +628,7 @@ main(int argc, char *argv[]) {
          err_sys("ERROR: setsockopt() failed");
       if ((setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &on, sizeof(on))) < 0) 
          err_sys("ERROR: setsockopt() failed");
-   } else if (experimental_value) {	/* Raw IP socket */
+   } else if (randsrc_flag) {	/* Raw IP socket */
       const int on = 1;	/* for setsockopt() */
 
       if ((sockfd = socket(AF_INET, SOCK_RAW, IPPROTO_RAW)) < 0)
@@ -1437,6 +1447,14 @@ display_packet(int n, unsigned char *packet_in, host_entry *he,
  */
    msg = make_message("");
 /*
+ *	Display the packet number if required.
+ */
+   if (shownum_flag) {
+      cp = msg;
+      msg = make_message("%s%u ", cp, he->n);
+      free(cp);
+   }
+/*
  *	Display the time when this packet was received if required.
  */
    if (timestamp_flag) {
@@ -1659,7 +1677,7 @@ send_packet(int s, unsigned char *packet_out, size_t packet_out_len,
 /*
  *	Spoof source address XXXX
  */
-   if (experimental_value != 0) {
+   if (randsrc_flag != 0) {
       unsigned char *orig_packet_out = packet_out;
       size_t orig_packet_out_len = packet_out_len;
       struct iphdr *iph;
@@ -3376,6 +3394,13 @@ usage(int status, int detailed) {
       fprintf(stderr, "\n--timestamp\t\tDisplay timestamps for received packets.\n");
       fprintf(stderr, "\t\t\tThis option causes a timestamp to be displayed for\n");
       fprintf(stderr, "\t\t\teach received packet.\n");
+      fprintf(stderr, "\n--randsrc\t\tRandomise source IP address for sent packets.\n");
+      fprintf(stderr, "\t\t\tThis option causes the IKE packets that are sent\n");
+      fprintf(stderr, "\t\t\tby ike-scan to have random source IP addresses.\n");
+      fprintf(stderr, "\t\t\tIf this option is used, no packets will be received\n");
+      fprintf(stderr, "\t\t\tbecause they will be sent to the spoofed source\n");
+      fprintf(stderr, "\t\t\taddress instead.\n");
+      fprintf(stderr, "\n--shownum\t\tDisplay the host number for received packets.\n");
    } else {
       fprintf(stderr, "use \"ike-scan --help\" for detailed information on the available options.\n");
    }

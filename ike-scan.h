@@ -201,6 +201,8 @@ unsigned char *SHA1(const unsigned char *, size_t, unsigned char *);
 #define OPT_WRITEPKTTOFILE 262
 #define OPT_RANDOMSEED 263
 #define OPT_TIMESTAMP 264
+#define OPT_RANDSRC 265
+#define OPT_SHOWNUM 266
 #undef DEBUG_TIMINGS			/* Define to 1 to debug timing code */
 
 /* Structures */
