@@ -426,6 +426,11 @@ unsigned char *hmac_sha1(const unsigned char *, size_t,
 const char *id_to_name(int, const id_name_map[]);
 int name_to_id(char *, const id_name_map[]);
 uint16_t in_cksum(uint16_t *, int);
+uint8_t random_byte(void);
+uint32_t random_ip(void);
+void init_genrand(unsigned long);
+unsigned long genrand_int32(void);
+double genrand_real2(void);
 /* The following functions are just to prevent rcsid being optimised away */
 void error_use_rcsid(void);
 void isakmp_use_rcsid(void);

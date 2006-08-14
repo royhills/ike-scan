@@ -615,7 +615,7 @@ main(int argc, char *argv[]) {
       Gettimeofday(&tv);
       random_seed = ((unsigned) tv.tv_usec ^ (unsigned) getpid());
    }
-   srand(random_seed);
+   init_genrand(random_seed);
 /*
  *	Create network socket and bind to local source port.
  */
@@ -829,7 +829,7 @@ main(int argc, char *argv[]) {
       host_entry *temp;
 
       for (i=num_hosts-1; i>0; i--) {
-         r = (int)((double)rand() / ((double)RAND_MAX + 1) * i);  /* 0<=r<i */
+         r = (int)(genrand_real2() * i);  /* 0<=r<i */
          temp = helistptr[i];
          helistptr[i] = helistptr[r];
          helistptr[r] = temp;
@@ -1692,7 +1692,7 @@ send_packet(int s, unsigned char *packet_out, size_t packet_out_len,
       struct pseudo_hdr *pseudo;
       uint32_t source_address;
 
-      source_address = rand();
+      source_address = random_ip();
       packet_out=Malloc(sizeof(struct iphdr) + sizeof(struct udphdr) +
                         packet_out_len);
       iph = (struct iphdr *) packet_out;

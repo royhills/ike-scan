@@ -1,5 +1,21 @@
 $Id$
 
+2006-08-14 Roy Hills <Roy.Hills@nta-monitor.com>
+
+	* ike-scan.c, isakmp.c: Changed random number implementation to use
+	  the mersenne twister functions from mt19937ar.c rather than the
+	  standard rand() from the C library.
+
+	  This improves the quality of the random numbers, as some C library
+	  rand() functions are very bad.  More importantly, it makes the
+	  random number generation process repeatable across different
+	  platforms.
+
+	* mt19937ar.c: Mersenne Twister random number generator source.
+
+	* utils.c: New functions random_byte() and random_ip(), which use
+	  the mersenne twister random number functions.
+
 2006-08-04 Roy Hills <Roy.Hills@nta-monitor.com>
 
 	* ike-scan.c, ike-scan.h: Added new --randsrc option for source IP

@@ -215,7 +215,7 @@ make_prop(size_t *outlen, unsigned length, unsigned notrans,
    if (spi_size > 0) {
       cp = payload+sizeof(struct isakmp_proposal);
       for (i=0; i<spi_size; i++)
-         *(cp++) = (unsigned char) (rand() & 0xff);
+         *(cp++) = (unsigned char) random_byte();
    }
    *outlen = sizeof(struct isakmp_proposal) + spi_size;
 
@@ -740,7 +740,7 @@ make_ke(size_t *length, unsigned next, size_t kx_data_len) {
 
    kx_data = payload + sizeof(struct isakmp_kx);
    for (i=0; i<kx_data_len; i++)
-      *(kx_data++) = (unsigned char) (rand() & 0xff);
+      *(kx_data++) = (unsigned char) random_byte();
 
    hdr->isakx_np = next;		/* Next payload type */
    hdr->isakx_length = htons(sizeof(struct isakmp_kx)+kx_data_len);
@@ -763,10 +763,6 @@ make_ke(size_t *length, unsigned next, size_t kx_data_len) {
  *
  *	Pointer to nonce payload.
  *
- *	For a real implementation, the nonce should use strong random numbers.
- *	However, we just use rand() because we don't care about the quality of
- *	the random numbers for this tool.
- *
  *	RFC 2409 states that: "The length of nonce payload MUST be between 8
  *	and 256 bytes inclusive".  However, this function doesn't enforce the
  *	restriction.
@@ -787,7 +783,7 @@ make_nonce(size_t *length, unsigned next, size_t nonce_len) {
 
    cp = payload+sizeof(struct isakmp_vid);
    for (i=0; i<nonce_len; i++)
-      *(cp++) = (unsigned char) (rand() & 0xff);
+      *(cp++) = (unsigned char) random_byte();
 
    *length = sizeof(struct isakmp_nonce)+nonce_len;
    return payload;

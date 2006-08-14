@@ -989,6 +989,42 @@ in_cksum(uint16_t *ptr, int nbytes) {
    return(answer);
 }
 
+/*
+ *	random_byte -- Return a random byte in range 0..255
+ *
+ *	Inputs:	None
+ *
+ *	Returns: The random byte
+ */
+uint8_t
+random_byte(void) {
+   static union {
+      uint32_t longword;
+      uint8_t byte[4];
+   } random_data;
+   static int num_bytes = 0;	/* Number of bytes available */
+
+   if (num_bytes == 0) {
+      random_data.longword = genrand_int32();
+      num_bytes = 4;
+   }
+   return random_data.byte[--num_bytes];
+}
+
+/*
+ *	random_ip	-- Return a random IP address
+ *
+ *	Imputs:	None
+ *	Returns: A random IP address
+ */
+uint32_t
+random_ip(void) {
+   uint32_t random_value;
+
+   random_value = genrand_int32();
+   return random_value;
+}
+
 void utils_use_rcsid(void) {
    fprintf(stderr, "%s\n", rcsid);	/* Use rcsid to stop compiler optimising away */
 }
