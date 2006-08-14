@@ -1016,12 +1016,34 @@ random_byte(void) {
  *
  *	Imputs:	None
  *	Returns: A random IP address
+ *
+ *	This returns a random IP address as a 32-bit value in host byte
+ *	order.
+ *
+ *	It will not return the following IP address ranges, because they
+ *	are invalid:
+ *
+ *	0/8, 1/8 or 2/8 - IANA reserved
+ *	127/8 - Localhost
+ *	Class D (Multicast)
+ *	Class E (Reserved)
  */
 uint32_t
 random_ip(void) {
    uint32_t random_value;
+   int acceptable;
 
-   random_value = genrand_int32();
+   do {
+      random_value = genrand_int32();
+      if ((random_value & 0xff000000) == 0x7f000000 ||	/* 127.x.x.x */
+          random_value > 0xefffffff ||			/* Class D or E */
+          random_value < 0x03000000) {			/* 0/8, 1/8 or 2/8 */
+         acceptable = 0;
+      } else {
+         acceptable = 1;
+      }
+   } while (!acceptable);
+
    return random_value;
 }
 

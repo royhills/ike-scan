@@ -7,14 +7,21 @@ $Id$
 	  standard rand() from the C library.
 
 	  This improves the quality of the random numbers, as some C library
-	  rand() functions are very bad.  More importantly, it makes the
+	  rand() functions are quite bad.  More importantly, it makes the
 	  random number generation process repeatable across different
 	  platforms.
 
-	* mt19937ar.c: Mersenne Twister random number generator source.
+	* mt19937ar.c: New file - Mersenne Twister random number generator.
 
 	* utils.c: New functions random_byte() and random_ip(), which use
 	  the mersenne twister random number functions.
+
+	* pkt-aggressive.dat: New file - sample aggressive mode packet.
+
+	* check-packet: Added aggressive mode packet check.  This is possible
+	  now that the random number generator is repeatable across platforms.
+
+	* configure.ac: Incremented version number to 1.8.4.
 
 2006-08-04 Roy Hills <Roy.Hills@nta-monitor.com>
 

@@ -1690,9 +1690,11 @@ send_packet(int s, unsigned char *packet_out, size_t packet_out_len,
          uint16_t len;
       };
       struct pseudo_hdr *pseudo;
+      uint32_t source_address_host;
       uint32_t source_address;
 
-      source_address = random_ip();
+      source_address_host = random_ip();
+      source_address = htonl(source_address_host);
       packet_out=Malloc(sizeof(struct iphdr) + sizeof(struct udphdr) +
                         packet_out_len);
       iph = (struct iphdr *) packet_out;

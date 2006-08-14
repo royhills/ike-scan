@@ -16,4 +16,4 @@ check_sizes_SOURCES = check-sizes.c error.c ike-scan.h
 check_hash_SOURCES = check-hash.c error.c utils.c wrappers.c ike-scan.h mt19937ar.c
 check_hash_LDADD = $(LIBOBJS)
 TESTS = $(check_PROGRAMS) $(dist_check_SCRIPTS)
-EXTRA_DIST = udp-backoff-fingerprinting-paper.txt README-WIN32 make-win32-zipfile.sh pkt-default-proposal.dat pkt-custom-proposal.dat
+EXTRA_DIST = udp-backoff-fingerprinting-paper.txt README-WIN32 make-win32-zipfile.sh pkt-default-proposal.dat pkt-custom-proposal.dat pkt-aggressive.dat
