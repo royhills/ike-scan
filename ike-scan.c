@@ -1460,9 +1460,11 @@ display_packet(int n, unsigned char *packet_in, host_entry *he,
    if (timestamp_flag) {
       struct tm *time_tm;
       struct timeval time_tv;
+      time_t clock_seconds;
 
       Gettimeofday(&time_tv);
-      time_tm = localtime(&(time_tv.tv_sec));
+      clock_seconds = time_tv.tv_sec;
+      time_tm = localtime(&clock_seconds);
       cp = msg;
       msg = make_message("%s%02d:%02d:%02d.%06u ", cp,
                          time_tm->tm_hour, time_tm->tm_min, time_tm->tm_sec,

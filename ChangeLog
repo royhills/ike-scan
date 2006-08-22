@@ -14,6 +14,9 @@ $Id$
 	* utils.c: Change random_ip() so that it generates the same sequence
 	  on both little-endian and big-endian systems.
 
+	* ike-scan.c: --randsrc option now works on Solaris 9 and FreeBSD 5.3
+	  as well as Linux.
+
 2006-08-14 Roy Hills <Roy.Hills@nta-monitor.com>
 
 	* ike-scan.c, isakmp.c: Changed random number implementation to use
