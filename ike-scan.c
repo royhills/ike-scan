@@ -1682,13 +1682,6 @@ send_packet(int s, unsigned char *packet_out, size_t packet_out_len,
       size_t orig_packet_out_len = packet_out_len;
       struct iphdr *iph;
       struct udphdr *udph;
-      struct pseudo_hdr {  /* For computing TCP checksum */
-         uint32_t s_addr;
-         uint32_t d_addr;
-         uint8_t  mbz;
-         uint8_t  proto;
-         uint16_t len;
-      };
       struct pseudo_hdr *pseudo;
       uint32_t source_address_host;
       uint32_t source_address;
@@ -1713,10 +1706,10 @@ send_packet(int s, unsigned char *packet_out, size_t packet_out_len,
  *      Note that this overlaps the IP header and gets overwritten later.
  */
       memset(pseudo, '\0', sizeof(struct pseudo_hdr));
-      pseudo->s_addr = source_address;
-      pseudo->d_addr = he->addr.s_addr;
-      pseudo->proto  = 17;	/* UDP */
-      pseudo->len    = htons(sizeof(struct udphdr) + orig_packet_out_len);
+      pseudo->src_addr = source_address;
+      pseudo->dst_addr = he->addr.s_addr;
+      pseudo->proto    = 17;	/* UDP */
+      pseudo->length   = htons(sizeof(struct udphdr) + orig_packet_out_len);
 /*
  *      Construct the UDP header.
  */

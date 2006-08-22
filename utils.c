@@ -1005,7 +1005,10 @@ random_byte(void) {
    static int num_bytes = 0;	/* Number of bytes available */
 
    if (num_bytes == 0) {
-      random_data.longword = genrand_int32();
+      uint32_t random_value;
+
+      random_value = genrand_int32();
+      random_data.longword = htonl(random_value);
       num_bytes = 4;
    }
    return random_data.byte[--num_bytes];

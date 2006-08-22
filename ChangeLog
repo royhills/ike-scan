@@ -1,5 +1,19 @@
 $Id$
 
+2006-08-22 Roy Hills <Roy.Hills@nta-monitor.com>
+
+	* udp.h: Removed unneeded BSD-flavour declarations and unneeded macros.
+	  Changed types from u_int{8,16,32}_t to uint{8,16,32}_t.  Added
+	  definition of struct pseudo_hdr (moved from ike-scan.c).
+	  Changed names of pseudo_hdr struct members to avoid problem due
+	  to s_addr being defined as a macro on some systems (e.g. Solaris).
+
+	* ip.h: Changed types from u_int{8,16,32}_t to uint{8,16,32}_t.
+	  Removed unneeded macros.
+
+	* utils.c: Change random_ip() so that it generates the same sequence
+	  on both little-endian and big-endian systems.
+
 2006-08-14 Roy Hills <Roy.Hills@nta-monitor.com>
 
 	* ike-scan.c, isakmp.c: Changed random number implementation to use
