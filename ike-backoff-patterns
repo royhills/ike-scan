@@ -81,6 +81,10 @@
 #	supported the Cisco proprietary CET encryption.
 Cisco IOS 11.3 or 12.0 / PIX	0, 15, 15
 
+# Discovered by: Tony Lloyd, May 2006
+# Observed on: Cisco PIX 520 running PIXOS 6.3(5)
+Cisco PIX	0, 5, 5, 5, 5, 5
+
 # 1st Pattern Discovered by: Roy Hills, November 2002
 # Observed on: Cisco VPN Concentrator 3005 running (unknown version)
 # Observed on: VPN 3000 Concentrator Version 3.6.3.Rel Oct 04 2002 16:23:00
