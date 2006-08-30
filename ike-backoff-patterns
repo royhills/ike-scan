@@ -73,17 +73,21 @@
 # Discovered by: Roy Hills, November 2002
 # Observed on: Cisco 2503 running IP-PLUS-IPsec56 IOS 11.3(11b)T2
 # Observed on: Cisco 2503 running IP-PLUS-IPsec56 IOS 12.0(28c)
-# Observed on: Cisco PIX (unknown model) running (unknown version)
-# Note: Cisco IOS 12.1 and 12.2 (and possibly later versions as well)
+# Observed on: Cisco PIX 520 running 6.0(4)
+# Observed on: Cisco PIX 520 running 6.1(5)
+# Observed on: Cisco PIX 520 running 6.2(4)
+# Note: Cisco IOS 12.1, 12.2 and 12.3 (and possibly later versions as well)
 #	have a different pattern: 0,10,10,10,10,10.  This is listed later
+#	under a different name.
+# Note: PIX OS 6.3 has a different pattern: 0, 5, 5, 5, 5, 5.  This is listed
 #	under a different name.
 # Note: IPsec was introduced in Cisco IOS 11.3.  Previous versions only
 #	supported the Cisco proprietary CET encryption.
-Cisco IOS 11.3 or 12.0 / PIX	0, 15, 15
+Cisco IOS 11.3 or 12.0 / PIX <= 6.2	0, 15, 15
 
 # Discovered by: Tony Lloyd, May 2006
 # Observed on: Cisco PIX 520 running PIXOS 6.3(5)
-Cisco PIX	0, 5, 5, 5, 5, 5
+Cisco PIX >= 6.3	0, 5, 5, 5, 5, 5
 
 # 1st Pattern Discovered by: Roy Hills, November 2002
 # Observed on: Cisco VPN Concentrator 3005 running (unknown version)
