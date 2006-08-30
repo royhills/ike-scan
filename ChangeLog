@@ -1,5 +1,10 @@
 $Id$
 
+2006-08-30 Roy Hills <Roy.Hills@nta-monitor.com>
+
+	* ike-backoff-patterns: Added new PIX backoff pattern, with details
+	  of the PIX versions for both patterns.
+
 2006-08-22 Roy Hills <Roy.Hills@nta-monitor.com>
 
 	* udp.h: Removed unneeded BSD-flavour declarations and unneeded macros.
