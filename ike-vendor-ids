@@ -125,7 +125,8 @@ Firewall-1 NGX	^f4ed19e0c114eb516faaac0ee37daf2807b4381f000000010000138d........
 Firewall-1 Unknown Vsn	^f4ed19e0c114eb516faaac0ee37daf2807b4381f
 
 # Dead Peer Detection (DPD), detailed in RFC 3706.
-# Last 2 bytes (4 hex chars) are major & minor version.
+# This is a truncated MD5 hash of "CISCO-DEAD-PEER-DETECTION"
+# The last 2 bytes (4 hex chars) are major & minor version.
 # Current version is 1.0.
 # Thanks to Hakan Olsson for clarifing this.
 Dead Peer Detection	^afcad71368a1f1c96b8696fc7757....
@@ -133,6 +134,7 @@ Dead Peer Detection	^afcad71368a1f1c96b8696fc7757....
 # XAUTH
 # This is a truncated MD5 hash of "draft-ietf-ipsra-isakmp-xauth-06.txt"
 # Why "ipsra" and not "ipsec" as in the draft name I wonder?
+# Also known as "draft-beaulieu-ike-xauth-02.txt"
 XAUTH	^09002689dfd6b712
 
 # SSH Communications Security IPSEC Express
@@ -165,15 +167,19 @@ SSH IPSEC Express 5.1.1	^5925859f7377ed7816d2fb81c01fa551
 # the last two bytes replaced with 0x0100
 Cisco Unity	^12f5f28c457168a9702d9fe274cc0100
 
+# Cisco VPN 3000 Concentrator (formerly Altega Networks)
+# The VPN 3000 client VID is the MD5 hash of "ALTIGA NETWORKS"
+# The VPN 3000 concentrator VID is a truncated MD5 hash of "ALTIGA GATEWAY"
 # I've seen this pattern with trailing 500306 and 500400.  I suspect that
 # the last two bytes indicate the version number, e.g 0306 = 3.0.6.  However,
 # I need more examples before I'm confident that this is the case, so for
 # now I'm just including the generic pattern.
+VPN-3000-client	^f6f7efc7f5aeb8cb158cb9d094ba69e7
 Cisco VPN Concentrator	^1f07f70eaa6514d3b0fa96542a
 
 # IKE Fragmentation.  VID is the MD5 hash of the text "FRAGMENTATION"
 # I've seen extra bytes on the end of a fragmentation VID payload, e.g.
-# c0000000.  I don't know what these represent.
+# c0000000 and 80000000.  I don't know what these represent.
 IKE Fragmentation	^4048b7d56ebce88525e7de7f00d6c2d3
 
 # Various IKE Internet drafts.  The VID payload is the MD5 hash of the
