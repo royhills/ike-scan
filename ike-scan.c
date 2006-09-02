@@ -3397,6 +3397,9 @@ usage(int status, int detailed) {
       fprintf(stderr, "\t\t\tIf this option is used, no packets will be received\n");
       fprintf(stderr, "\t\t\tbecause they will be sent to the spoofed source\n");
       fprintf(stderr, "\t\t\taddress instead.\n");
+      fprintf(stderr, "\t\t\tThis option requires raw socket support, and you\n");
+      fprintf(stderr, "\t\t\twill need superuser privileges to use this option,\n");
+      fprintf(stderr, "\t\t\teven if you specify a high source port.\n");
       fprintf(stderr, "\n--shownum\t\tDisplay the host number for received packets.\n");
    } else {
       fprintf(stderr, "use \"ike-scan --help\" for detailed information on the available options.\n");

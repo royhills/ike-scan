@@ -61,16 +61,13 @@ From: Antoine Brodin <antoine.brodin@laposte.net>
 To: ike-scan@nta-monitor.com
 Subject: Suggestion about psk-crack
 
-It would be nice if psk-crack could read psk candidates from stdin
-instead of a dictionary file.  That way, you can feed ike-crack with an
-external program for example:
-"john --incremental --stdout | psk-crack options psk-parameters-file"
+ It would be nice if psk-crack could read psk candidates from stdin
+ instead of a dictionary file.  That way, you can feed ike-crack with an
+ external program for example:
+ "john --incremental --stdout | psk-crack options psk-parameters-file"
 
 Add support for IKE v2, defined in rfc 4306 "Internet Key Exchange (IKEv2)
 Protocol"
 
 Allow specification of the source IP address (to support source IP spoofing).
 This would require the use of raw sockets.
-
-Make random source IP address more intellegent, by not generating obviously
-incorrect addresses like 127.0.0.0/8 and the multicast ranges.
