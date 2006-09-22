@@ -388,6 +388,15 @@ avaya	^4485152d18b6bbcc0be8a8469579ddcc
 StoneGate-01	^c573b056d7faca36c2fba28374127cbf
 StoneGate-02	^baeb239037e17787d730eed9d95d48aa
 
+# Symantec Raptor / Enterprise Firewall
+# Observed on Symantec Enterprise Firewall 8.0 running on Windows 2000
+# An example vendor ID returned by these systems is:
+# 526170746f7220506f77657256706e20536572766572205b56382e315d
+# which corresponds to the ASCII string: "Raptor PowerVpn Server [V8.1]"
+# 
+Symantec-Raptor-v8.1	^526170746f7220506f77657256706e20536572766572205b56382e315d
+Symantec-Raptor	^526170746f7220506f77657256706e20536572766572
+
 # Other things I've seen but not fully classified yet.
 # If anyone can confirm any of these, please let me know.
 Maybe Cisco IOS	^bdb41038a7ec5e5534dd004d0f91f927
