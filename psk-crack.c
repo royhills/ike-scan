@@ -65,9 +65,10 @@ main (int argc, char *argv[]) {
       {"bruteforce", required_argument, 0, 'B'},
       {"charset", required_argument, 0, 'c'},
       {"dictionary", required_argument, 0, 'd'},
+      {"username", required_argument, 0, 'u'},
       {0, 0, 0, 0}
    };
-   const char *short_options = "hvVB:c:d:";
+   const char *short_options = "hvVB:c:d:u:";
    int arg;
    int options_index=0;
    int verbose=0;
@@ -77,6 +78,12 @@ main (int argc, char *argv[]) {
    unsigned brute_len=0; /* Bruteforce len.  0=dictionary attack (default) */
    char *charset = NULL;
    char dict_file_name[MAXLINE];	/* Dictionary file name */
+   int nortel_contivity_flag = 0; /* Are we cracking a Nortel Contivity password? */
+   unsigned char *password_hash; /* SHA1 hash of password required for Nortel Contivity password cracking only */
+   unsigned char *psk; /* When cracking Nortel Contivity password, this is set to hmac_sha1(sha1(password), username)*/
+
+   char username[MAXLINE]; /* For cracking Nortel Contivity passwords only */
+   username[0] = '\0';
    FILE *dictionary_file=NULL;	/* Dictionary file, one word per line */
    FILE *data_file;	/* PSK parameters in colon separated format */
    IKE_UINT64 iterations=0;
@@ -168,6 +175,10 @@ main (int argc, char *argv[]) {
          case 'd':      /* --dictionary */
             strncpy(dict_file_name, optarg, MAXLINE);
             brute_len = 0;
+            break;
+         case 'u':      /* --username */
+            strncpy(username, optarg, MAXLINE);
+	    nortel_contivity_flag = 1;
             break;
          default:       /* Unknown option */
             psk_crack_usage(EXIT_FAILURE);
@@ -273,6 +284,12 @@ main (int argc, char *argv[]) {
                  expected_hash_r_len);
       }
 
+/*
+ *     Allocate memory for storing Nortel Contivity variables
+ */
+      password_hash = Malloc(SHA1_HASH_LEN);
+      psk = Malloc(SHA1_HASH_LEN);
+
       skeyid_data_len = ni_b_len + nr_b_len;
       skeyid_data = Malloc(skeyid_data_len);
       cp = skeyid_data;
@@ -328,12 +345,40 @@ main (int argc, char *argv[]) {
             if (verbose)
                printf("Trying key \"%s\"\n", line);
             if (hash_type == HASH_TYPE_MD5) {
-               hmac_md5(skeyid_data, skeyid_data_len, (unsigned char *) line,
-                        strlen(line), skeyid);
+              /* 
+               * Set skeyid_data
+               *
+               * This is based on the pre-shared key (which we're currently
+               * trying to guess).
+               *
+               * For "plain" aggressive mode exchanges:
+               *     psk = password
+               *
+               * For Nortel Contivity aggressive mode exchanges:
+               *     psk = hmac_sha1(sha1(password), username)
+               *
+               * For Mamros' Pre-Shared Key Extensions for ISAKMP/Oakley
+               * [http://www.potaroo.net/ietf/idref/draft-mamros-pskeyext/]
+               *     psk = hmac_sha1(password, username)
+               *
+               * Currently only "plain" and "Nortel Contivity" are implemented
+               */
+	       if (nortel_contivity_flag) {
+		  SHA1(line, strlen(line), password_hash);
+		  hmac_sha1(username, strlen(username), password_hash, SHA1_HASH_LEN, psk);
+		  hmac_md5(skeyid_data, skeyid_data_len, (unsigned char *) psk, SHA1_HASH_LEN, skeyid);
+	       } else {
+               	  hmac_md5(skeyid_data, skeyid_data_len, (unsigned char *) line, strlen(line), skeyid);
+	       }
                hmac_md5(hash_r_data, hash_r_data_len, skeyid, hash_len, hash_r);
             } else if (hash_type == HASH_TYPE_SHA1) {
-               hmac_sha1(skeyid_data, skeyid_data_len, (unsigned char *) line,
-                         strlen(line), skeyid);
+	       if (nortel_contivity_flag) {
+		  SHA1(line, strlen(line), password_hash);
+		  hmac_sha1(username, strlen(username), password_hash, SHA1_HASH_LEN, psk);
+		  hmac_sha1(skeyid_data, skeyid_data_len, (unsigned char *) psk, SHA1_HASH_LEN, skeyid);
+	       } else {
+               	  hmac_sha1(skeyid_data, skeyid_data_len, (unsigned char *) line, strlen(line), skeyid);
+	       }
                hmac_sha1(hash_r_data, hash_r_data_len, skeyid, hash_len, hash_r);
             } else {
                err_msg("Unknown hash_type: %d\n", hash_type);
@@ -355,13 +400,28 @@ main (int argc, char *argv[]) {
             if (verbose)
                printf("Trying key \"%s\"\n", line);
             if (hash_type == HASH_TYPE_MD5) {
-               hmac_md5(skeyid_data, skeyid_data_len, (unsigned char *) line,
-                        strlen(line), skeyid);
+
+	       if (nortel_contivity_flag) {
+		  SHA1(line, strlen(line), password_hash);
+		  hmac_sha1(username, strlen(username), password_hash, SHA1_HASH_LEN, psk);
+		  hmac_md5(skeyid_data, skeyid_data_len, (unsigned char *) psk, SHA1_HASH_LEN, skeyid);
+	       } else {
+               	  hmac_md5(skeyid_data, skeyid_data_len, (unsigned char *) line, strlen(line), skeyid);
+	       }
+
                hmac_md5(hash_r_data, hash_r_data_len, skeyid, hash_len, hash_r);
             } else if (hash_type == HASH_TYPE_SHA1) {
-               hmac_sha1(skeyid_data, skeyid_data_len, (unsigned char *) line,
-                         strlen(line), skeyid);
-               hmac_sha1(hash_r_data, hash_r_data_len, skeyid, hash_len, hash_r);
+
+	       if (nortel_contivity_flag) {
+		  SHA1(line, strlen(line), password_hash);
+		  hmac_sha1(username, strlen(username), password_hash, SHA1_HASH_LEN, psk);
+		  hmac_sha1(skeyid_data, skeyid_data_len, (unsigned char *) psk, SHA1_HASH_LEN, skeyid);
+	       } else {
+               	  hmac_sha1(skeyid_data, skeyid_data_len, (unsigned char *) line, strlen(line), skeyid);
+	       }
+
+		hmac_sha1(hash_r_data, hash_r_data_len, skeyid, hash_len, hash_r);
+
             } else {
                err_msg("Unknown hash_type: %d\n", hash_type);
             }
@@ -408,6 +468,7 @@ main (int argc, char *argv[]) {
    printf("Ending psk-crack: " IKE_UINT64_FORMAT
           " iterations in %.3f seconds (%.2f iterations/sec)\n",
           iterations, elapsed_seconds, iterations/elapsed_seconds);
+  
    fclose(data_file);
    if (!brute_len)
       fclose(dictionary_file);
@@ -454,6 +515,9 @@ psk_crack_usage(int status) {
 #else
    fprintf(stderr, "\t\t\tdefault=%s/%s.\n", IKEDATADIR, DICT_FILE);
 #endif
+   fprintf(stderr, "\n--username=<u> or -u <u> Set username to <u>.\n");
+   fprintf(stderr, "\t\t\tUse this option ONLY for cracking\n");
+   fprintf(stderr, "\t\t\tNortel Contivity password hashes.\n");
    fprintf(stderr, "\n--bruteforce=<n> or -B <n> Select bruteforce cracking up to <n> characters.\n");
    fprintf(stderr, "\n--charset=<s> or -c <s>\tSet bruteforce character set to <s>\n");
    fprintf(stderr, "\t\t\tDefault is \"%s\"\n", default_charset);
