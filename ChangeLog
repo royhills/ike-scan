@@ -1,9 +1,10 @@
 $Id$
 
-2006-09-23 Anonymous <l...@gmail.com>
+2006-09-23 Anonymous <l...e@gmail.com>
 
 	* psk-crack.c: Added code to allow cracking Nortel Contivity
-	  pre-shared keys, which use a variation of Mamro's method.
+	  pre-shared keys, which use a variation of Mamro's method.  Thanks
+	  to an anonymous benefactor.
 
 2006-08-30 Roy Hills <Roy.Hills@nta-monitor.com>
 

@@ -97,6 +97,9 @@ Cisco PIX >= 6.3	0, 5, 5, 5, 5, 5
 # Observed on: VPN 3000 Concentrator Version 3.6.3.Rel Oct 04 2002 16:23:00
 # 2nd Pattern Discovered by: Guy Widloecher, March 2003
 # Observed on: Cisco VPN 3005 Concentrator Version 3.5.2
+# There are several models: 3005, 3015, 3020, 3030, 3060 and 3080, which are
+# equivalent to the old Altiga C5, C15 Etc.  All models are believed to share
+# the same backoff pattern.
 Cisco VPN Concentrator	0, 8, 8, 8
 Cisco VPN Concentrator	0, 8, 8
 
@@ -208,7 +211,7 @@ Lynksys	0, 15/500, 15, 15
 # Discovered by: Tony Lloyd, January 2005
 # Observed on: suspected bordermanager box
 # July 2006: Observed on: BorderManager 3.8 on NetWare 6.5
-bordermanager	0, 4.5/1000, 6.9, 9.8
+Novell-BorderManager	0, 4.5/1000, 6.9, 9.8
 
 # Discovered by: Tony Lloyd, April 2005
 # Observed on: Draytek ADSL Routers (several different versions)

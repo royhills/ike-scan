@@ -168,6 +168,8 @@ SSH IPSEC Express 5.1.1	^5925859f7377ed7816d2fb81c01fa551
 Cisco Unity	^12f5f28c457168a9702d9fe274cc0100
 
 # Cisco VPN 3000 Concentrator (formerly Altega Networks)
+# There are several models: 3005, 3015, 3020, 3030, 3060 and 3080, which are
+# equivalent to the old Altiga C5, C15 Etc.
 # The VPN 3000 client VID is the MD5 hash of "ALTIGA NETWORKS"
 # The VPN 3000 concentrator VID is a truncated MD5 hash of "ALTIGA GATEWAY"
 # I've seen this pattern with trailing 500306 and 500400.  I suspect that
