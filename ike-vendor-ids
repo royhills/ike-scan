@@ -351,20 +351,26 @@ OpenPGP	^4f70656e504750
 # Probably an MD5 hash of something.
 FortiGate	^1d6e178f6c2c0be284985465450fe9d4
 
-# Juniper NetScreen
+# Juniper NetScreen running ScreenOS
+#
 # There are many different entries for this implementation.
-# The first 20 bytes are suspected to be an SHA1 hash of something
-# It is followed by eight bytes, which we don't include in the pattern.
+# The first 20 bytes are suspected to be an SHA1 hash of something.
+# This is followed by eight bytes, which we don't include in the pattern.
 # This eight bytes consists of two four-byte values in big endian format,
 # e.g. 0000000900000500, the last four bytes appear to indicate the ScreenOS
 # version.
 #
 # Examples:
 #
-# 64405f46f03b7660a23be116a1975058e69e83870000000400000403 ScreenOS 4.0.3r3.0
-# 299ee8289f40a8973bc78687e2e7226b532c3b760000000900000500 ScreenOS 5.0.0r1.0
-# 299ee8289f40a8973bc78687e2e7226b532c3b760000000900000500 ScreenOS 5.0.0r6.0
-# 299ee8289f40a8973bc78687e2e7226b532c3b760000000900000500 ScreenOS 5.0.0r9.0
+# For the examples below, we show the entire VID, the netscreen model, and
+# the ScreenOS version number.
+#
+# 64405f46f03b7660a23be116a1975058e69e83870000000400000403 ns5xp 4.0.3r3.0
+# 299ee8289f40a8973bc78687e2e7226b532c3b760000000900000500 ns5xp 5.0.0r1.0
+# 299ee8289f40a8973bc78687e2e7226b532c3b760000000900000500 ns5xp 5.0.0r6.0
+# 299ee8289f40a8973bc78687e2e7226b532c3b760000000900000500 ns5xp 5.0.0r9.0
+# 4a4340b543e02b84c88a8b96a8af9ebe77d9accc0000000b00000500 ns5gt 5.0.0r7.1
+# 2a2bcac19b8e91b426107807e02e7249569d6fd30000000b0000050a ns5gt 5.1.0r1.0
 #
 Netscreen-01	^299ee8289f40a8973bc78687e2e7226b532c3b76
 Netscreen-02	^3a15e1f3cf2a63582e3ac82d1c64cbe3b6d779e7
@@ -379,6 +385,7 @@ Netscreen-10	^bf03746108d746c904f1f3547de24f78479fed12
 Netscreen-11	^c2e80500f4cc5fbf5daaeed3bb59abaeee56c652
 Netscreen-12	^c8660a62b03b1b6130bf781608d32a6a8d0fb89f
 Netscreen-13	^f885da40b1e7a9abd17655ec5bbec0f21f0ed52e
+Netscreen-14	^2a2bcac19b8e91b426107807e02e7249569d6fd3
 
 # Avaya
 # Observed on Avaya VSU 100R

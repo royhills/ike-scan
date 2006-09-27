@@ -167,7 +167,8 @@ KAME/racoon-2	0, 21.5, 21.5, 21.5, 21.5, 21.5
 
 # Discovered by: Iain Lewis, February 2003
 # Observed on: Netscreen 500
-netscreen	0, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4
+# Observed on: Netscreen 5GT running ScreenOS 5.1.0r1.0
+Juniper-Netscreen	0, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4
 
 # Discovered by: Doug Monroe, January 2003
 # Observed on: Watchguard SOHO v5.1.7
