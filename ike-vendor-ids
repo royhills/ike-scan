@@ -353,8 +353,13 @@ FortiGate	^1d6e178f6c2c0be284985465450fe9d4
 
 # Juniper NetScreen running ScreenOS
 #
-# There are many different entries for this implementation.
+# There are many different entries for this implementation, because the VID
+# varies depending on the s/w version and h/w model, and maybe other things
+# as well.
+#
 # The first 20 bytes are suspected to be an SHA1 hash of something.
+# This suspected hash appears to include the s/w version and the h/w platform.
+#
 # This is followed by eight bytes, which we don't include in the pattern.
 # This eight bytes consists of two four-byte values in big endian format,
 # e.g. 0000000900000500, the last four bytes appear to indicate the ScreenOS
@@ -371,6 +376,13 @@ FortiGate	^1d6e178f6c2c0be284985465450fe9d4
 # 299ee8289f40a8973bc78687e2e7226b532c3b760000000900000500 ns5xp 5.0.0r9.0
 # 4a4340b543e02b84c88a8b96a8af9ebe77d9accc0000000b00000500 ns5gt 5.0.0r7.1
 # 2a2bcac19b8e91b426107807e02e7249569d6fd30000000b0000050a ns5gt 5.1.0r1.0
+# 166f932d55eb64d8e4df4fd37e2313f0d0fd84510000000000000000 ns5gt 5.2.0r3b.0
+# 166f932d55eb64d8e4df4fd37e2313f0d0fd84510000000000000000 ns5gt 5.3.0r4.0
+#
+# Netscreens also return:
+# 4865617274426561745f4e6f74696679386b0100 (Heartbeat Notify)
+# In addition, ScreenOS Version 5.3 returns:
+# afcad71368a1f1c96b8696fc77570100 (Dead Peer Detection)
 #
 Netscreen-01	^299ee8289f40a8973bc78687e2e7226b532c3b76
 Netscreen-02	^3a15e1f3cf2a63582e3ac82d1c64cbe3b6d779e7
@@ -386,6 +398,7 @@ Netscreen-11	^c2e80500f4cc5fbf5daaeed3bb59abaeee56c652
 Netscreen-12	^c8660a62b03b1b6130bf781608d32a6a8d0fb89f
 Netscreen-13	^f885da40b1e7a9abd17655ec5bbec0f21f0ed52e
 Netscreen-14	^2a2bcac19b8e91b426107807e02e7249569d6fd3
+Netscreen-15	^166f932d55eb64d8e4df4fd37e2313f0d0fd8451
 
 # Avaya
 # Observed on Avaya VSU 100R
