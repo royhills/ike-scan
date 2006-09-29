@@ -41,7 +41,19 @@
  * Date:	25 April 2004
  *
  *	Check the various message digest (HASH) functions using the test
- *	vectors given in the appropriate RFC.
+ *	vectors given in the appropriate RFC, and also determine the speeds
+ *	of the hash functions.
+ *
+ *	We perform the following tests:
+ *
+ *	a) MD5 hash test using seven test vectors from RFC 1321
+ *	b) SHA1 hash test using two test vectors from RFC 3174
+ *	c) HMAC-MD5 keyed hash test using one test vector from RFC 2104
+ *	d) HMAC-SHA1 keyed hash test using one test vector from RFC 2202
+ *	e) HMAC-MD5 PSK cracking speed
+ *	f) HMAC-SHA1 PSK cracking speed
+ *	g) Raw MD5 hash speed using 8-byte input
+ *	h) Raw SHA1 hash speed using 8-byte input
  */
 
 #include "ike-scan.h"
@@ -215,7 +227,7 @@ main(void) {
    printf("\nChecking HMAC-MD5 PSK cracking speed...\n");
    do {
 /*
- *	The values below are observed values from a Firewall-1 system
+ *	The values below are observed values from a Firewall-1 NG AI R54 system
  *	using IKE Aggressive mode with PSK authentication and MD5 hash.
  *	The ID used was "test", and the valid pre-shared key is "abc123".
  *      The expected hash_r is "f995ec2968f695aeb1d4e4b437f49d26".
@@ -316,7 +328,7 @@ main(void) {
    printf("\nChecking HMAC-SHA1 PSK cracking speed...\n");
    do {
 /*
- *	The values below are observed values from a Firewall-1 NG AI system
+ *	The values below are observed values from a Firewall-1 NG AI R54 system
  *	using IKE Aggressive mode with PSK authentication and SHA1 hash.
  *	The ID used was "test", and the valid pre-shared key is "abc123".
  *      The expected hash_r is "543ea42889c07b17390cc6f0440246c0148422df".
