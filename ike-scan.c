@@ -2267,7 +2267,7 @@ dump_times(unsigned num_hosts) {
    printf("IKE Backoff Patterns:\n");
    printf("\nIP Address\tNo.\tRecv time\t\tDelta Time\n");
    for (i=0; i<num_hosts; i++) {
-      if (helistptr[i]->recv_times != NULL && helistptr[i]->num_recv > 1) {
+      if (helistptr[i]->recv_times != NULL && helistptr[i]->num_recv > 0) {
          te = helistptr[i]->recv_times;
          time_no = 1;
          diff.tv_sec = 0;
