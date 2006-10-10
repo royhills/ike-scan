@@ -1,0 +1,120 @@
+#!/bin/sh
+# $Id$
+#
+# check-psk-crack-3 -- Shell script to test psk-crack for Nortel style hashes
+#
+# Author: Roy Hills
+# Date: 19 November 2004
+#
+# This shell script checks that psk-crack works for Nortel Contivity MD5 and
+# SHA1 based hashes.  The Nortel contivity VPN client uses a proprietary
+# authentication mechanism, based on Mamro's Pre-Shared Key Extensions for
+# ISAKMP/Oakley.
+#
+TMPFILE=/tmp/ike-scan-test.$$.tmp
+MD5PSK=/tmp/nortel-md5-psk.$$.tmp
+SHA1PSK=/tmp/nortel-sha1-psk.$$.tmp
+DICTFILE=/tmp/ike-dict-file.$$.tmp
+
+# Create PSK parameter files with known pre-shared keys.
+# These parameters were generated using ike-scan 1.8.4 and Nortel Contivity
+# server software v6.00.310.  In both cases, the username is "test", and the
+# pre-shared key is "abc123"
+echo "d629dabe8c05c518767cc19826f27f30769dee778143e0f7625647058f9e9788c67f32fc8fcdb40b1dc59c91b8001554bcf795b6e69562f7dfd1c16760a13e7abe22e9af399c4500e66f72287f0b943dcf20d2d7f0edd5dc7a7d8d94928b46e9:fc831092e3b20a9f9213dbed92adb7f52b6527b94ea563a25659f610b70d1a2e2c196d5c288ed235ab155e5ba5355d65d64ea3e56b98ee117d73c47d3648085a93a8331be5579df466a6b67a005fae9bdd38c090791df9b6ef6314bb9efdf13e:5bb290ba45868004:bcc589f4ac89e296:000000010000000100000024010100010000001c0101000080010001800200018003000180040001ffff001a:01000000c0a87c98:044010b3e3f3231853c86b242bd64a12e9d8449e:852dea148d592231ed90b386c8dabe7f97fd270b:1774127c7adf7bf24ce777a632d21679" > $MD5PSK
+echo "5f05e0324d421068c9d4a451ca6a6857762414dbdba9a15dab352f15aba604ced62cf32e87e36353f040691ef9b9fcd1b16379b1644489bd7dc3ecd1f7cb7c419795e9fd92f20392ef11e844e8b55261a7e272b2bd18dd3cdf9975f19ffdc47d:5dc25f869238b9b74c9fdec9447a16d1fb782be82c170587a02e303d37a848819488868a0795094532123446450a61b761ee24e783e799a66322e7e9337c8630a10621e5beb5d780fac715931a933d548e1c3f0c1ccf2bbe1bbd040c17fb03c2:945420d37bbe1d5b:4c101f369a221302:000000010000000100000024010100010000001c0101000080010001800200028003000180040001ffff001a:01000000c0a87c98:92a836a290f70df19959f6ab9e50a3e52b40ba88:dc17a196d52d3ce0527dd53eb534951dc48de290:3a60067bfb3db5118702dde8f2eb7c3860ff6f75" > $SHA1PSK
+#
+# Create dictionary file
+echo "notthisone"  > $DICTFILE
+echo "NotThisOne" >> $DICTFILE
+echo "NextOne"    >> $DICTFILE
+echo "abc123"     >> $DICTFILE
+echo "xyz123"     >> $DICTFILE
+#
+echo "Checking psk-crack bruteforce with Nortel Contivity MD5 hash ..."
+$srcdir/psk-crack --username=test --bruteforce=6 --charset=abc123 $MD5PSK >$TMPFILE
+if test $? -ne 0; then
+   rm -f $TMPFILE
+   rm -f $DICTFILE
+   rm -f $MD5PSK
+   rm -f $SHA1PSK
+   echo "FAILED"
+   exit 1
+fi
+grep '^key "abc123" matches MD5 hash ' $TMPFILE >/dev/null
+if test $? -ne 0; then
+   rm -f $TMPFILE
+   rm -f $DICTFILE
+   rm -f $MD5PSK
+   rm -f $SHA1PSK
+   echo "FAILED"
+   exit 1
+fi
+echo "ok"
+#
+echo "Checking psk-crack bruteforce with Nortel Contivity SHA1 hash ..."
+$srcdir/psk-crack --username=test --bruteforce=6 --charset=abc123 $SHA1PSK > $TMPFILE
+if test $? -ne 0; then
+   rm -f $TMPFILE
+   rm -f $DICTFILE
+   rm -f $MD5PSK
+   rm -f $SHA1PSK
+   echo "FAILED"
+   exit 1
+fi
+grep '^key "abc123" matches SHA1 hash ' $TMPFILE >/dev/null
+if test $? -ne 0; then
+   rm -f $TMPFILE
+   rm -f $DICTFILE
+   rm -f $MD5PSK
+   rm -f $SHA1PSK
+   echo "FAILED"
+   exit 1
+fi
+echo "ok"
+#
+echo "Checking psk-crack dictionary with Nortel Contivity MD5 hash ..."
+$srcdir/psk-crack --username=test --dictionary=$DICTFILE $MD5PSK >$TMPFILE
+if test $? -ne 0; then
+   rm -f $TMPFILE
+   rm -f $DICTFILE
+   rm -f $MD5PSK
+   rm -f $SHA1PSK
+   echo "FAILED"
+   exit 1
+fi
+grep '^key "abc123" matches MD5 hash ' $TMPFILE >/dev/null
+if test $? -ne 0; then
+   rm -f $TMPFILE
+   rm -f $DICTFILE
+   rm -f $MD5PSK
+   rm -f $SHA1PSK
+   echo "FAILED"
+   exit 1
+fi
+echo "ok"
+#
+echo "Checking psk-crack dictionary with Nortel Contivity SHA1 hash ..."
+$srcdir/psk-crack --username=test --dictionary=$DICTFILE $SHA1PSK > $TMPFILE
+if test $? -ne 0; then
+   rm -f $TMPFILE
+   rm -f $DICTFILE
+   rm -f $MD5PSK
+   rm -f $SHA1PSK
+   echo "FAILED"
+   exit 1
+fi
+grep '^key "abc123" matches SHA1 hash ' $TMPFILE >/dev/null
+if test $? -ne 0; then
+   rm -f $TMPFILE
+   rm -f $DICTFILE
+   rm -f $MD5PSK
+   rm -f $SHA1PSK
+   echo "FAILED"
+   exit 1
+fi
+echo "ok"
+#
+rm -f $TMPFILE
+rm -f $DICTFILE
+rm -f $MD5PSK
+rm -f $SHA1PSK

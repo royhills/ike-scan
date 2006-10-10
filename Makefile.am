@@ -6,7 +6,7 @@ AM_CPPFLAGS = -DIKEDATADIR=\"$(pkgdatadir)\"
 dist_pkgdata_DATA = ike-backoff-patterns ike-vendor-ids psk-crack-dictionary
 bin_PROGRAMS = ike-scan psk-crack
 check_PROGRAMS = check-sizes check-hash
-dist_check_SCRIPTS = check-run1 check-run2 check-run3 check-psk-crack-1 check-psk-crack-2 check-packet
+dist_check_SCRIPTS = check-run1 check-run2 check-run3 check-psk-crack-1 check-psk-crack-2 check-psk-crack-3 check-packet
 dist_man_MANS = ike-scan.1 psk-crack.1
 ike_scan_SOURCES = ike-scan.c ike-scan.h error.c isakmp.c isakmp.h wrappers.c utils.c mt19937ar.c
 ike_scan_LDADD = $(LIBOBJS)

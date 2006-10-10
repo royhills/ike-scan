@@ -1,11 +1,20 @@
 $Id$
 
+2006-10-10 Roy Hills <Roy.Hills@nta-monitor.com>
+
+	* check-psk-crack-3: New script to check Nortel Contivity PSK
+	  cracking.
+
+	* psk-crack.1: Added --username option description to psk-crack
+	  manpage.
+
 2006-10-01 Roy Hills <Roy.Hills@nta-monitor.com>
 
 	* ike-scan.c: Show backoff patterns even if there was only a
 	  single response.  Some implementations, e.g. linksys, don't
 	  retry at all, and this change allows these to be matched as
-	  well.
+	  well. The lack of a pattern is sufficiently unusual to be a
+	  pattern itself.
 
 2006-09-23 Anonymous <l...e@gmail.com>
 

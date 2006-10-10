@@ -516,8 +516,8 @@ psk_crack_usage(int status) {
    fprintf(stderr, "\t\t\tdefault=%s/%s.\n", IKEDATADIR, DICT_FILE);
 #endif
    fprintf(stderr, "\n--username=<u> or -u <u> Set username to <u>.\n");
-   fprintf(stderr, "\t\t\tUse this option ONLY for cracking\n");
-   fprintf(stderr, "\t\t\tNortel Contivity password hashes.\n");
+   fprintf(stderr, "\t\t\tUse this option only for cracking Nortel Contivity\n");
+   fprintf(stderr, "\t\t\tpassword hashes.\n");
    fprintf(stderr, "\n--bruteforce=<n> or -B <n> Select bruteforce cracking up to <n> characters.\n");
    fprintf(stderr, "\n--charset=<s> or -c <s>\tSet bruteforce character set to <s>\n");
    fprintf(stderr, "\t\t\tDefault is \"%s\"\n", default_charset);
