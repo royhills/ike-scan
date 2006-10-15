@@ -2331,7 +2331,7 @@ match_pattern(host_entry *he) {
  */
    if (he == NULL || patlist == NULL)
       return NULL;
-   if (he->recv_times == NULL || he->num_recv < 2)
+   if (he->recv_times == NULL || he->num_recv < 1)
       return NULL;
 /*
  *	Try to find a match in the pattern list.

@@ -248,3 +248,7 @@ Netgear ProSafe	0, 4.5/1000, 5, 5, 5
 # Interestingly, the backoff pattern for this device differs from that for
 # the Netgear FVS328 ProSafe VPN Firewall.
 Netgear ADSL Firewall Router	0, 10, 20
+
+# Discovered by Roy Hills, October 2006
+# Observed on: Linksys Etherfast DSL/Cable VPN Router, Model BEFVP41 V2 s/w 1.01.04
+Linksys Etherfast	0
