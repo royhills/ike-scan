@@ -1867,6 +1867,7 @@ initialise_ike_packet(size_t *packet_out_len, ike_packet_params *params) {
    unsigned char *cp;
    unsigned char *packet_out;	/* Constructed IKE packet */
    unsigned char *sa_cp=NULL;	/* For payload printing */
+   size_t sa_len;
    size_t prop_len;
    size_t certreq_len;
    size_t vid_len;
@@ -1939,7 +1940,8 @@ initialise_ike_packet(size_t *packet_out_len, ike_packet_params *params) {
             kx_data_len = 1024;	/* Group 18 - 8192 bits */
             break;
          default:
-            err_msg("ERROR: Bad Diffie Hellman group: %u, should be 1,2,5,14,15,16,17 or 18", params->dhgroup);
+            err_msg("ERROR: Bad Diffie Hellman group: %u, should be 1,2,5,14,15,16,17 or 18",
+                    params->dhgroup);
             break;	/* NOTREACHED */
       }
       ke = make_ke(&ke_len, next_payload, kx_data_len);
@@ -2036,22 +2038,20 @@ initialise_ike_packet(size_t *packet_out_len, ike_packet_params *params) {
       transforms = add_trans_simple(1, &trans_len, 0, 0, 0, 0, 0, NULL, 0,
                                     NULL, 0, 0, NULL, 0, 0);
    }
-   *packet_out_len += trans_len;
 /*
  *	Proposal payload
  */
-   prop = make_prop(&prop_len,
-                    trans_len+sizeof(struct isakmp_proposal)+params->spi_size,
-                    no_trans, params->protocol, params->spi_size);
-   *packet_out_len += prop_len;
+   add_prop(0, NULL, no_trans, params->protocol, params->spi_size, transforms,
+            trans_len);
+   prop = add_prop(1, &prop_len, 0, 0, 0, NULL, 0);
+   free(transforms);
 /*
- *	SA Header
+ *	SA payload
  */
-   sa = make_sa_hdr(next_payload, trans_len+
-                    prop_len+
-                    sizeof(struct isakmp_sa),
-                    params->doi, params->situation);
-   *packet_out_len += sizeof(struct isakmp_sa);
+   sa = make_sa(&sa_len, next_payload, params->doi, params->situation,
+                prop, prop_len);
+   *packet_out_len += sa_len;
+   free(prop);
    next_payload = ISAKMP_NEXT_SA;
 /*
  *	ISAKMP Header
@@ -2086,15 +2086,9 @@ initialise_ike_packet(size_t *packet_out_len, ike_packet_params *params) {
    cp += sizeof(struct isakmp_hdr);
    if (psk_crack_flag)
       sa_cp = cp;	/* Remember position of SA payload */
-   memcpy(cp, sa, sizeof(struct isakmp_sa));
+   memcpy(cp, sa, sa_len);
    free(sa);
-   cp += sizeof(struct isakmp_sa);
-   memcpy(cp, prop, prop_len);
-   free(prop);
-   cp += prop_len;
-   memcpy(cp, transforms, trans_len);
-   free(transforms);
-   cp += trans_len;
+   cp += sa_len;
    if (params->exchange_type == ISAKMP_XCHG_AGGR) {
       memcpy(cp, ke, ke_len);
       free(ke);

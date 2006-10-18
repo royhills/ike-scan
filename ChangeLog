@@ -55,6 +55,10 @@ $Id$
 	  random number generation process repeatable across different
 	  platforms.
 
+	  However, this change also means that packets created with the new
+	  PRNG will not be the same as packets created with the old one, even
+	  if the same random seed value is used.
+
 	* mt19937ar.c: New file - Mersenne Twister random number generator.
 
 	* utils.c: New functions random_byte() and random_ip(), which use

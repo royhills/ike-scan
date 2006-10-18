@@ -138,48 +138,63 @@ make_isakmp_hdr(unsigned xchg, unsigned next, unsigned length,
 }
 
 /*
- *	make_sa_hdr -- Construct an SA Header
+ *	make_sa -- Construct a SA payload
  *
  *	Inputs:
  *
+ *	outlen	(output) length of SA payload
  *	next    Next Payload Type
  *	length	SA payload length
  *	doi	Domain of interpretation
  *	situation	Situation
+ *	proposals	Pointer to list of proposals
+ *	proposal_len	length of proposal list
  *
  *	Returns:
  *
- *	Pointer to SA Header.
+ *	Pointer to the SA payload.
  *
- *	This constructs an SA header.  It fills in the static values.
+ *	This constructs an SA payload.
  */
 unsigned char*
-make_sa_hdr(unsigned next, unsigned length, unsigned doi, unsigned situation) {
+make_sa(size_t *outlen, unsigned next, unsigned doi, unsigned situation,
+        unsigned char *proposals, size_t proposal_len) {
    unsigned char *payload;
    struct isakmp_sa* hdr;
+   unsigned char *cp;
+   size_t len;
 
-   payload = Malloc(sizeof(struct isakmp_sa));
-   hdr = (struct isakmp_sa*) payload;	/* Overlay SA struct on payload */
+   hdr = Malloc(sizeof(struct isakmp_sa));
    memset(hdr, mbz_value, sizeof(struct isakmp_sa));
 
    hdr->isasa_np = next;		/* Next Payload Type */
-   hdr->isasa_length = htons(length);		/* SA Payload length */
    hdr->isasa_doi = htonl(doi);	/* Default is IPsec DOI */
    hdr->isasa_situation = htonl(situation); /* Default SIT_IDENTITY_ONLY */
 
+   len = sizeof(struct isakmp_sa) + proposal_len;
+   hdr->isasa_length = htons(len);		/* SA Payload length */
+   payload = Malloc(len);
+   cp = payload;
+
+   memcpy(cp, hdr, sizeof(struct isakmp_sa));
+   cp += sizeof(struct isakmp_sa);
+   memcpy(cp, proposals, proposal_len);
+
+   *outlen = len;
    return payload;
 }
 
 /*
- *	make_prop -- Construct a proposal payload
+ *	add_prop -- Construct a proposal payload
  *
  *	Inputs:
  *
  *	outlen		(output) Proposal payload length
- *	length		Proposal payload length
  *	notrans		Number of transforms in this proposal
  *	protocol	Protocol
  *	spi_size	SPI Size
+ *	transforms  Pointer to transform list
+ *	transform_len   Length of transform list
  *
  *	Returns:
  *
@@ -194,31 +209,124 @@ make_sa_hdr(unsigned next, unsigned length, unsigned doi, unsigned situation) {
  *	be multiple SA payloads."
  */
 unsigned char*
-make_prop(size_t *outlen, unsigned length, unsigned notrans,
-          unsigned protocol, unsigned spi_size) {
+add_prop(int finished, size_t *outlen,
+         unsigned notrans, unsigned protocol, unsigned spi_size,
+         unsigned char *transforms, size_t transform_len) {
+
+   static int first_proposal = 1;
+   static unsigned char *prop_start=NULL;	/* Start of set of proposals */
+   static size_t cur_offset;			/* Start of current proposal */
+   static size_t end_offset;			/* End of proposals */
+   static unsigned prop_no=1;
+   unsigned char *prop;			/* Proposal payload */
+   size_t len;					/* Proposal length */
+/*
+ * Construct a proposal if we are not finalising.
+ * Set next to ISAKMP_NEXT_P (more proposals), and increment prop_no for next
+ * time round.
+ */
+   if (!finished) {
+      prop = make_prop(&len, ISAKMP_NEXT_P, prop_no, notrans, protocol,
+                       spi_size, transforms, transform_len);
+      prop_no++;
+      if (first_proposal) {
+         cur_offset = 0;
+         end_offset = len;
+         prop_start = Malloc(end_offset);
+         memcpy(prop_start, prop, len);
+         first_proposal = 0;
+      } else {
+         cur_offset = end_offset;
+         end_offset += len;
+         prop_start = Realloc(prop_start, end_offset);
+         memcpy(prop_start+cur_offset, prop, len);
+      }
+      free(prop);
+      return NULL;
+   } else {
+      struct isakmp_proposal* hdr =
+         (struct isakmp_proposal*) (prop_start+cur_offset);	/* Overlay */
+
+      first_proposal = 1;
+      hdr->isap_np = ISAKMP_NEXT_NONE;		/* No more proposals */
+      *outlen = end_offset;
+      return prop_start;
+   }
+}
+
+/*
+ *	make_prop -- Construct a proposal payload
+ *
+ *	Inputs:
+ *
+ *	outlen		(output) Proposal payload length
+ *	next		next payload (2=more props, 0=no more props)
+ *	number		proposal number
+ *	notrans		Number of transforms in this proposal
+ *	protocol	Protocol
+ *	spi_size	SPI Size
+ *	transforms  Pointer to transform list
+ *	transform_len   Length of transform list
+ *
+ *	Returns:
+ *
+ *	Pointer to proposal payload.
+ *
+ *	This constructs a proposal payload.  It fills in the static values.
+ *	We assume only one proposal will be created.  ISAKMP SAs are only 
+ *	allowed to have one proposal anyway, RFC 2409 section 5 states:
+ *
+ *	"To put it another way, for phase 1 exchanges there MUST NOT be
+ *	multiple Proposal Payloads for a single SA payload and there MUST NOT
+ *	be multiple SA payloads."
+ */
+unsigned char*
+make_prop(size_t *outlen, unsigned next, unsigned number, unsigned notrans,
+          unsigned protocol, unsigned spi_size, unsigned char *transforms,
+          size_t transform_len) {
    unsigned char *payload;
    struct isakmp_proposal* hdr;
    unsigned char *cp;
-   int i;
+   size_t len;
 
-   payload = Malloc(sizeof(struct isakmp_proposal)+spi_size);
-   hdr = (struct isakmp_proposal*) payload;	/* Overlay */
+/* Allocate and initialise the proposal header */
+
+   hdr = Malloc(sizeof(struct isakmp_proposal));
    memset(hdr, mbz_value, sizeof(struct isakmp_proposal));
 
-   hdr->isap_np = 0;			/* No more proposals */
-   hdr->isap_length = htons(length);	/* Proposal payload length */
-   hdr->isap_proposal = 1;		/* Proposal #1 */
+   hdr->isap_np = next;
+   hdr->isap_proposal = number;
    hdr->isap_protoid = protocol;
    hdr->isap_spisize = spi_size;	/* SPI Size */
    hdr->isap_notrans = notrans;		/* Number of transforms */
 
+/* Determine total SA length and allocate payload memory */
+
+   len = sizeof(struct isakmp_proposal) + spi_size + transform_len;
+   hdr->isap_length = htons(len);	/* Proposal payload length */
+   payload = Malloc(len);
+   cp = payload;
+
+/* Copy the proposal header to the payload */
+
+   memcpy(cp, hdr, sizeof(struct isakmp_proposal));
+   cp += sizeof(struct isakmp_proposal);
+   free(hdr);
+
+/* If the SPI size is non-zero, add a random SPI of the specified length */
+
    if (spi_size > 0) {
-      cp = payload+sizeof(struct isakmp_proposal);
+      int i;
+
       for (i=0; i<spi_size; i++)
          *(cp++) = (unsigned char) random_byte();
    }
-   *outlen = sizeof(struct isakmp_proposal) + spi_size;
 
+/* Add the transforms */
+
+   memcpy(cp, transforms, transform_len);
+
+   *outlen = len;
    return payload;
 }
 
@@ -352,13 +460,15 @@ add_trans_simple(int finished, size_t *length, unsigned cipher,
    size_t len;					/* Transform length */
 /*
  * Construct a transform if we are not finalising.
- * Set next to 3 (more transforms), and increment trans_no for next time round.
+ * Set next to ISAKMP_NEXT_T (more transforms), and increment trans_no for
+ * next time round.
  */
    if (!finished) {
-      trans = make_trans_simple(&len, 3, trans_no, cipher, keylen, hash, auth,
-                                group, lifetime_data, lifetime_data_len,
-                                lifesize_data, lifesize_data_len, gss_id_flag,
-                                gss_data, gss_data_len, trans_id);
+      trans = make_trans_simple(&len, ISAKMP_NEXT_T, trans_no, cipher, keylen,
+                                hash, auth, group, lifetime_data,
+                                lifetime_data_len, lifesize_data,
+                                lifesize_data_len, gss_id_flag, gss_data,
+                                gss_data_len, trans_id);
       trans_no++;
       if (first_transform) {
          cur_offset = 0;
@@ -447,6 +557,8 @@ make_transform(size_t *length, unsigned next, unsigned number,
  *	finished	0 if adding a new transform; 1 if finalising.
  *	length	(output) length of entire transform payload.
  *	trans_id	Transform ID
+ *	attr		Pointer to list of attributes
+ *	attr_len	Length of attribute list
  *
  *	Returns:
  *
@@ -471,10 +583,12 @@ add_transform(int finished, size_t *length, unsigned trans_id,
    size_t len;					/* Transform length */
 /*
  * Construct a transform if we are not finalising.
- * Set next to 3 (more transforms), and increment trans_no for next time round.
+ * Set next to ISAKMP_NEXT_T (more transforms), and increment trans_no for
+ * next time round.
  */
    if (!finished) {
-      trans = make_transform(&len, 3, trans_no, trans_id, attr, attr_len);
+      trans = make_transform(&len, ISAKMP_NEXT_T, trans_no, trans_id, attr,
+                             attr_len);
       trans_no++;
       if (first_transform) {
          cur_offset = 0;
@@ -495,7 +609,7 @@ add_transform(int finished, size_t *length, unsigned trans_id,
          (struct isakmp_transform*) (trans_start+cur_offset);	/* Overlay */
 
       first_transform = 1;
-      hdr->isat_np = 0;		/* No more transforms */
+      hdr->isat_np = ISAKMP_NEXT_NONE;		/* No more transforms */
       *length = end_offset;
       return trans_start;
    }
@@ -1685,47 +1799,45 @@ process_delete(unsigned char *cp, size_t len) {
  *
  *	Inputs:
  *
- *	packet		Pointer to the old packet
- *	packet_len	Length of the old packet
  *	payload		Pointer to the payload to add
  *	payload_len	Length of the payload
- *	new_payload	Pointer to the new payload within the new packet
+ *	new_payload	Pointer to the new payload within the packet
  *
  *	Returns:
  *
- *	A pointer to the new packet.
+ *	A pointer to the ISAKMP packet.
  *
- *	This function assumes that "payload" is a pointed to malloc'ed
+ *	This function assumes that "payload" is a pointer to malloc'ed
  *	storage, and will free it after use.
- *
- *	If "packet" is NULL, then a new packet will be created with the
- *	payload as the initial contents.
- *
- *	The new packet pointer is often the same as the old packet pointer
- *	because the packet can generally be grown in place with realloc().
- *	However, this cannot be relied on as realloc() will sometimes need
- *	to reallocate the packet.
  */
 unsigned char *
-add_isakmp_payload(unsigned char *packet, size_t packet_len,
-                   unsigned char *payload, size_t payload_len,
+add_isakmp_payload(unsigned char *payload, size_t payload_len,
                    unsigned char **new_payload) {
 
-   unsigned char *new_packet;
-   size_t offset;
-
-   if (packet == NULL) {
-      new_packet = Malloc(payload_len);
-      offset = 0;
-   } else {
-      new_packet = Realloc(packet, packet_len+payload_len);
-      offset = packet_len;
+   static unsigned char *isakmp_packet = NULL;
+   static size_t offset = 0;
+   unsigned char *payload_ptr;
+/*
+ *	Allocate memory for the packet on the first call.
+ */
+   if (isakmp_packet == NULL) {
+      isakmp_packet = Malloc(MAXUDP);
    }
-   *new_payload = new_packet+offset;
-   memcpy(*new_payload, payload, payload_len);
+/*
+ *	Calculate position within the packet to add the new payload.
+ *	Copy the new payload starting at this position, then free the
+ *	payload memory.
+ */
+   payload_ptr = isakmp_packet+offset;
+   memcpy(payload_ptr, payload, payload_len);
    free(payload);
-
-   return new_packet;
+/*
+ *	Set the new_payload argument to the position of the newly added
+ *	payload within the packet, and return the address of the start
+ *	of the packet.
+ */
+   *new_payload = payload_ptr;
+   return isakmp_packet;
 }
 
 /*
