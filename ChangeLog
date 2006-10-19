@@ -1,9 +1,22 @@
 $Id$
 
+2006-10-18 Roy Hills <Roy.Hills@nta-monitor.com>
+
+	* isakmp.c: Modified creation of proposal and SA payloads, so that
+	  these payloads contain the transform and proposal payloads
+	  respectively (previously, they only returned the header, and it
+	  was down to the caller to add the rest).  Also added add_prop()
+	  function which allows for multiple proposals within an SA
+	  payload (although ike-scan does not have any way to use this yet).
+
+	* ike-scan.c: Modified initialise_ike_packet() function to use
+	  modified SA and proposal functions.
+
 2006-10-10 Roy Hills <Roy.Hills@nta-monitor.com>
 
 	* check-psk-crack-3: New script to check Nortel Contivity PSK
-	  cracking.
+	  cracking.  Uses test data obtained from a Contivity 1600 running
+	  software release 6.00.
 
 	* psk-crack.1: Added --username option description to psk-crack
 	  manpage.

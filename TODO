@@ -1,7 +1,7 @@
 $Id$
 
 Write a user guide.  The README is getting too long now: a separate document
-with proper formatting is required.  This will probably be written in LyX.
+with proper formatting is required.  I plan to use a wiki for this.
 
 Write custom packet creation code.  This would allow an arbitrary IKE packet
 to be created and sent.  The generation rules would be some sort of
@@ -32,10 +32,6 @@ metacharacters.
 Allow a variable number of packets in the UDP backoff pattern.  Some VPN
 servers will return different numbers of packets, but still have a unique
 pattern.
-
-Add support for Nortel Contivity PSK cracking.  This system uses a non-
-standard algorithm for calculating the hash, which is a variant of Mamro's
-method.  This support can be merged from the file: psk-crack-nortel.c
 
 Add support for Main Mode PSK cracking using a MitM attack.  Suggested by
 Anton Rager.
@@ -74,5 +70,5 @@ stdin.
 Add support for IKE v2, defined in rfc 4306 "Internet Key Exchange (IKEv2)
 Protocol"
 
-Allow specification of the source IP address (to support source IP spoofing).
-This would require the use of raw sockets.
+Improve specification of source IP address.  Allow either a specified address,
+or a random IP.
