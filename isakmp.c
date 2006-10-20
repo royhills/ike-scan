@@ -185,7 +185,7 @@ make_sa(size_t *outlen, unsigned next, unsigned doi, unsigned situation,
 }
 
 /*
- *	add_prop -- Construct a proposal payload
+ *	add_prop -- Add a proposal payload to the list of proposals
  *
  *	Inputs:
  *
@@ -200,13 +200,21 @@ make_sa(size_t *outlen, unsigned next, unsigned doi, unsigned situation,
  *
  *	Pointer to proposal payload.
  *
- *	This constructs a proposal payload.  It fills in the static values.
- *	We assume only one proposal will be created.  ISAKMP SAs are only 
- *	allowed to have one proposal anyway, RFC 2409 section 5 states:
+ *  This function can either be called with finished = 0, in which case
+ *  notrans, protocol, spi_size, transforms and transform_len must be
+ *  specified, and the function will return NULL, OR it can be called with
+ *  finished = 1 in which case notrans, protocol, spi_size, transforms and
+ *  transform_len are ignored and the function will return a pointer to the
+ *  finished payload and will set *length to the length of this payload.
+ *
+ *  ISAKMP SAs are only allowed to contain one proposal, RFC 2409 section 5
+ *  states:
  *
  *	"To put it another way, for phase 1 exchanges there MUST NOT be
  *	multiple Proposal Payloads for a single SA payload and there MUST NOT
  *	be multiple SA payloads."
+ *
+ *  However, this function does not enforce this restriction.
  */
 unsigned char*
 add_prop(int finished, size_t *outlen,
@@ -272,13 +280,7 @@ add_prop(int finished, size_t *outlen,
  *
  *	Pointer to proposal payload.
  *
- *	This constructs a proposal payload.  It fills in the static values.
- *	We assume only one proposal will be created.  ISAKMP SAs are only 
- *	allowed to have one proposal anyway, RFC 2409 section 5 states:
- *
- *	"To put it another way, for phase 1 exchanges there MUST NOT be
- *	multiple Proposal Payloads for a single SA payload and there MUST NOT
- *	be multiple SA payloads."
+ *	This constructs a single proposal payload.
  */
 unsigned char*
 make_prop(size_t *outlen, unsigned next, unsigned number, unsigned notrans,

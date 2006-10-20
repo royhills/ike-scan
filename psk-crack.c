@@ -65,7 +65,7 @@ main (int argc, char *argv[]) {
       {"bruteforce", required_argument, 0, 'B'},
       {"charset", required_argument, 0, 'c'},
       {"dictionary", required_argument, 0, 'd'},
-      {"username", required_argument, 0, 'u'},
+      {"norteluser", required_argument, 0, 'u'},
       {0, 0, 0, 0}
    };
    const char *short_options = "hvVB:c:d:u:";
@@ -80,10 +80,10 @@ main (int argc, char *argv[]) {
    char dict_file_name[MAXLINE];	/* Dictionary file name */
    int nortel_contivity_flag = 0; /* Are we cracking a Nortel Contivity password? */
    unsigned char *password_hash; /* SHA1 hash of password required for Nortel Contivity password cracking only */
-   unsigned char *psk; /* When cracking Nortel Contivity password, this is set to hmac_sha1(sha1(password), username)*/
+   unsigned char *psk; /* When cracking Nortel Contivity password, this is set to hmac_sha1(sha1(password), norteluser)*/
 
-   char username[MAXLINE]; /* For cracking Nortel Contivity passwords only */
-   username[0] = '\0';
+   char norteluser[MAXLINE]; /* For cracking Nortel Contivity passwords only */
+   norteluser[0] = '\0';
    FILE *dictionary_file=NULL;	/* Dictionary file, one word per line */
    FILE *data_file;	/* PSK parameters in colon separated format */
    IKE_UINT64 iterations=0;
@@ -176,8 +176,8 @@ main (int argc, char *argv[]) {
             strncpy(dict_file_name, optarg, MAXLINE);
             brute_len = 0;
             break;
-         case 'u':      /* --username */
-            strncpy(username, optarg, MAXLINE);
+         case 'u':      /* --norteluser */
+            strncpy(norteluser, optarg, MAXLINE);
 	    nortel_contivity_flag = 1;
             break;
          default:       /* Unknown option */
@@ -365,7 +365,7 @@ main (int argc, char *argv[]) {
                */
 	       if (nortel_contivity_flag) {
 		  SHA1(line, strlen(line), password_hash);
-		  hmac_sha1(username, strlen(username), password_hash, SHA1_HASH_LEN, psk);
+		  hmac_sha1(norteluser, strlen(norteluser), password_hash, SHA1_HASH_LEN, psk);
 		  hmac_md5(skeyid_data, skeyid_data_len, (unsigned char *) psk, SHA1_HASH_LEN, skeyid);
 	       } else {
                	  hmac_md5(skeyid_data, skeyid_data_len, (unsigned char *) line, strlen(line), skeyid);
@@ -374,7 +374,7 @@ main (int argc, char *argv[]) {
             } else if (hash_type == HASH_TYPE_SHA1) {
 	       if (nortel_contivity_flag) {
 		  SHA1(line, strlen(line), password_hash);
-		  hmac_sha1(username, strlen(username), password_hash, SHA1_HASH_LEN, psk);
+		  hmac_sha1(norteluser, strlen(norteluser), password_hash, SHA1_HASH_LEN, psk);
 		  hmac_sha1(skeyid_data, skeyid_data_len, (unsigned char *) psk, SHA1_HASH_LEN, skeyid);
 	       } else {
                	  hmac_sha1(skeyid_data, skeyid_data_len, (unsigned char *) line, strlen(line), skeyid);
@@ -403,7 +403,7 @@ main (int argc, char *argv[]) {
 
 	       if (nortel_contivity_flag) {
 		  SHA1(line, strlen(line), password_hash);
-		  hmac_sha1(username, strlen(username), password_hash, SHA1_HASH_LEN, psk);
+		  hmac_sha1(norteluser, strlen(norteluser), password_hash, SHA1_HASH_LEN, psk);
 		  hmac_md5(skeyid_data, skeyid_data_len, (unsigned char *) psk, SHA1_HASH_LEN, skeyid);
 	       } else {
                	  hmac_md5(skeyid_data, skeyid_data_len, (unsigned char *) line, strlen(line), skeyid);
@@ -414,7 +414,7 @@ main (int argc, char *argv[]) {
 
 	       if (nortel_contivity_flag) {
 		  SHA1(line, strlen(line), password_hash);
-		  hmac_sha1(username, strlen(username), password_hash, SHA1_HASH_LEN, psk);
+		  hmac_sha1(norteluser, strlen(norteluser), password_hash, SHA1_HASH_LEN, psk);
 		  hmac_sha1(skeyid_data, skeyid_data_len, (unsigned char *) psk, SHA1_HASH_LEN, skeyid);
 	       } else {
                	  hmac_sha1(skeyid_data, skeyid_data_len, (unsigned char *) line, strlen(line), skeyid);
@@ -515,9 +515,14 @@ psk_crack_usage(int status) {
 #else
    fprintf(stderr, "\t\t\tdefault=%s/%s.\n", IKEDATADIR, DICT_FILE);
 #endif
-   fprintf(stderr, "\n--username=<u> or -u <u> Set username to <u>.\n");
-   fprintf(stderr, "\t\t\tUse this option only for cracking Nortel Contivity\n");
-   fprintf(stderr, "\t\t\tpassword hashes.\n");
+   fprintf(stderr, "\n--norteluser=<u> or -u <u> Specify the username for Nortel Contivity cracking.\n");
+   fprintf(stderr, "\t\t\tThis option is required when cracking pre-shared keys\n");
+   fprintf(stderr, "\t\t\ton Nortel Contivity / VPN Router systems.  These\n");
+   fprintf(stderr, "\t\t\tsystems use a proprietary method to calculate the hash\n");
+   fprintf(stderr, "\t\t\tthat includes the username.\n");
+   fprintf(stderr, "\t\t\tThis option is only needed when cracking Nortel format\n");
+   fprintf(stderr, "\t\t\thashes, and should not be used for standard format\n");
+   fprintf(stderr, "\t\t\thashes.\n");
    fprintf(stderr, "\n--bruteforce=<n> or -B <n> Select bruteforce cracking up to <n> characters.\n");
    fprintf(stderr, "\n--charset=<s> or -c <s>\tSet bruteforce character set to <s>\n");
    fprintf(stderr, "\t\t\tDefault is \"%s\"\n", default_charset);
