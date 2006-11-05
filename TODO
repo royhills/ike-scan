@@ -72,3 +72,6 @@ Protocol"
 
 Improve specification of source IP address.  Allow either a specified address,
 or a random IP.
+
+Add support for IKE MitM attack, similar to FakeIKEd at
+http://www.roe.ch/FakeIKEd
