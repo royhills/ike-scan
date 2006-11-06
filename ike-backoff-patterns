@@ -251,4 +251,10 @@ Netgear ADSL Firewall Router	0, 10, 20
 
 # Discovered by Roy Hills, October 2006
 # Observed on: Linksys Etherfast DSL/Cable VPN Router, Model BEFVP41 V2 s/w 1.01.04
+# Not really a pattern as the Linksys doesn't retransmit at all.  However, this
+# lack of retransmission is sufficiently unusual to be a pattern itself.
 Linksys Etherfast	0
+
+# Discovered by Roy Hills, November 2005
+# Observed on: IBM RS/6000 runninx AIX 5.3
+IBM AIX	0, 16, 32
