@@ -378,11 +378,17 @@ FortiGate	^1d6e178f6c2c0be284985465450fe9d4
 # 2a2bcac19b8e91b426107807e02e7249569d6fd30000000b0000050a ns5gt 5.1.0r1.0
 # 166f932d55eb64d8e4df4fd37e2313f0d0fd84510000000000000000 ns5gt 5.2.0r3b.0
 # 166f932d55eb64d8e4df4fd37e2313f0d0fd84510000000000000000 ns5gt 5.3.0r4.0
+# 166f932d55eb64d8e4df4fd37e2313f0d0fd84510000000000000000 ns5gt 5.4.0r1.0
 # a35bfd05ca1ac0b3d2f24e9e82bfcbff9c9e52b50000000b00000514 unknown unknown
+#
+# The Netscreen hardware referenced above is:
+#
+# ns5xp model NS-5XP
+# ns5gt	model NS-5GT-103 serial no 0064062004015770
 #
 # Netscreens also return:
 # 4865617274426561745f4e6f74696679386b0100 (Heartbeat Notify)
-# In addition, ScreenOS Version 5.3 returns:
+# In addition, ScreenOS Version 5.3 and 5.4 returns:
 # afcad71368a1f1c96b8696fc77570100 (Dead Peer Detection)
 #
 Netscreen-01	^299ee8289f40a8973bc78687e2e7226b532c3b76
