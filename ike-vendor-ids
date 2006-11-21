@@ -89,8 +89,9 @@ Windows-Vista	^1e2b516905991c7d7c96fcbfb587e46100000005
 # 33-36		Reserved
 # 37-40		Features
 #
-# The Checkpoint VID is "f4ed19e0c114eb516faaac0ee37daf2807b4381f".  This
-# looks like an SHA1 hash.
+# The Checkpoint VID is "f4ed19e0c114eb516faaac0ee37daf2807b4381f".  I suspect
+# that this is an SHA1 hash of something, but I don't know what the input text
+# is.
 #
 # The Product is either 1 (0x00000001) for Firewall-1/VPN-1 or 2 (0x00000002)
 # for SecuRemote/SecureClient (Checkpoint's VPN client).
@@ -127,7 +128,7 @@ Firewall-1 Unknown Vsn	^f4ed19e0c114eb516faaac0ee37daf2807b4381f
 # Dead Peer Detection (DPD), detailed in RFC 3706.
 # This is a truncated MD5 hash of "CISCO-DEAD-PEER-DETECTION"
 # The last 2 bytes (4 hex chars) are major & minor version.
-# Current version is 1.0.
+# The current version, and the only one that has been observed, is 1.0.
 # Thanks to Hakan Olsson for clarifing this.
 Dead Peer Detection	^afcad71368a1f1c96b8696fc7757....
 
@@ -164,14 +165,16 @@ SSH IPSEC Express 5.1.0	^45e17f3abe93944cb202910c59ef806b
 SSH IPSEC Express 5.1.1	^5925859f7377ed7816d2fb81c01fa551
 
 # Cisco Unity compliant peer. VID is the MD5 hash of "CISCO-UNITY" with
-# the last two bytes replaced with 0x0100
+# the last two bytes replaced with 0x0100.
 Cisco Unity	^12f5f28c457168a9702d9fe274cc0100
 
 # Cisco VPN 3000 Concentrator (formerly Altega Networks)
 # There are several models: 3005, 3015, 3020, 3030, 3060 and 3080, which are
 # equivalent to the old Altiga C5, C15 Etc.
+#
 # The VPN 3000 client VID is the MD5 hash of "ALTIGA NETWORKS"
 # The VPN 3000 concentrator VID is a truncated MD5 hash of "ALTIGA GATEWAY"
+#
 # I've seen this pattern with trailing 500306 and 500400.  I suspect that
 # the last two bytes indicate the version number, e.g 0306 = 3.0.6.  However,
 # I need more examples before I'm confident that this is the case, so for
@@ -190,6 +193,7 @@ draft-stenberg-ipsec-nat-traversal-01	^27bab5dc01ea0760ea4e3190ac27c0d0
 draft-stenberg-ipsec-nat-traversal-02	^6105c422e76847e43f9684801292aecd
 draft-huttunen-ipsec-esp-in-udp-00.txt	^6a7434c19d7e36348090a02334c9c805
 
+# SafeNet SoftRemote VPN Client.
 # Extra data has been observed at the end of this VID payload.
 SafeNet SoftRemote	^47bbe7c993f1fc13b4e6d0db565c68e5
 
@@ -200,6 +204,7 @@ SafeNet SoftRemote	^47bbe7c993f1fc13b4e6d0db565c68e5
 # 4865617274426561745f4e6f74696679386b0100
 Heartbeat Notify	^4865617274426561745f4e6f74696679
 
+# OpenPGP
 OpenPGP	^4f70656e5047503130313731
 
 # draft-huttunen-ipsec-esp-in-udp-01.txt
