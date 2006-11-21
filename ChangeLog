@@ -1,5 +1,11 @@
 $Id$
 
+2006-11-21 Roy Hills <Roy.Hills@nta-monitor.com>
+
+	* psk-crack.h: New header file for psk-crack.
+	  This separates the psk-crack headers, defines, structures and
+	  prototypes from ike-scan.
+
 2006-10-18 Roy Hills <Roy.Hills@nta-monitor.com>
 
 	* isakmp.c: Modified creation of proposal and SA payloads, so that

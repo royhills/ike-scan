@@ -44,14 +44,8 @@
  *	psk-crack [options] <psk-parameters-file>
  *
  */
-#include "ike-scan.h"
+#include "psk-crack.h"
 static const char rcsid[] = "$Id$";	/* RCS ID for ident(1) */
-
-#define MAXLEN 4096
-#define HASH_TYPE_MD5 1
-#define HASH_TYPE_SHA1 2
-#define MD5_HASH_LEN 16
-#define SHA1_HASH_LEN 20
 
 char *default_charset =
    "0123456789abcdefghijklmnopqrstuvwxyz"; /* default bruteforce charset */
