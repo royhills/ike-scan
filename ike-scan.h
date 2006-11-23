@@ -253,22 +253,22 @@ typedef struct vid_pattern_list_ {
 
 typedef struct {
    unsigned char *g_xr;		/* Responder DH public value */
-   size_t g_xr_len;
    unsigned char *g_xi;		/* Initiator DH public value */
-   size_t g_xi_len;
    unsigned char *cky_r;	/* Responder cookie */
-   size_t cky_r_len;
    unsigned char *cky_i;	/* Initiator cookie */
-   size_t cky_i_len;
    unsigned char *sai_b;	/* Initiator SA payload */
-   size_t sai_b_len;
    unsigned char *idir_b;	/* Responder ID payload */
-   size_t idir_b_len;
    unsigned char *ni_b;		/* Initiator nonce */
-   size_t ni_b_len;
    unsigned char *nr_b;		/* Responder nonce */
-   size_t nr_b_len;
    unsigned char *hash_r;	/* Responder hash */
+   size_t g_xr_len;
+   size_t g_xi_len;
+   size_t cky_r_len;
+   size_t cky_i_len;
+   size_t sai_b_len;
+   size_t idir_b_len;
+   size_t ni_b_len;
+   size_t nr_b_len;
    size_t hash_r_len;
 } psk_crack;
 

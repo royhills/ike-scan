@@ -72,8 +72,8 @@ unsigned experimental_value=0;		/* Experimental value */
 int tcp_flag=0;				/* TCP flag */
 int psk_crack_flag=0;			/* Pre-shared key cracking flag */
 psk_crack psk_values = {		/* Pre-shared key values */
-   NULL, 0, NULL, 0, NULL, 0, NULL, 0, NULL, 0, NULL, 0, NULL, 0, NULL, 0,
-   NULL, 0
+   NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+   0, 0, 0, 0, 0, 0, 0, 0, 0
 };
 int no_dns_flag=0;			/* No DNS flag */
 int mbz_value=0;			/* Value for MBZ fields */

@@ -50,6 +50,8 @@ static const char rcsid[] = "$Id$";	/* RCS ID for ident(1) */
 char *default_charset =
    "0123456789abcdefghijklmnopqrstuvwxyz"; /* default bruteforce charset */
 
+psk_entry *psk_list;	/* List of PSK parameters */
+
 int
 main (int argc, char *argv[]) {
    const struct option long_options[] = {
@@ -66,9 +68,6 @@ main (int argc, char *argv[]) {
    int arg;
    int options_index=0;
    int verbose=0;
-   int hash_type=0;	/* Hash type: MD5 or SHA1 */
-   size_t hash_len=0;	/* Set to 0 to avoid uninitialised warning */
-   char *hash_name=NULL; /* Hash name: MD5 or SHA1 */
    unsigned brute_len=0; /* Bruteforce len.  0=dictionary attack (default) */
    char *charset = NULL;
    char dict_file_name[MAXLINE];	/* Dictionary file name */
@@ -79,58 +78,19 @@ main (int argc, char *argv[]) {
    char norteluser[MAXLINE]; /* For cracking Nortel Contivity passwords only */
    norteluser[0] = '\0';
    FILE *dictionary_file=NULL;	/* Dictionary file, one word per line */
-   FILE *data_file;	/* PSK parameters in colon separated format */
    IKE_UINT64 iterations=0;
    int found;
    struct timeval start_time;	/* Program start time */
    struct timeval end_time;	/* Program end time */
    struct timeval elapsed_time; /* Elapsed time as timeval */
    double elapsed_seconds;	/* Elapsed time in seconds */
-   int n;
-
-   char g_xr_hex[MAXLEN];
-   char g_xi_hex[MAXLEN];
-   char cky_r_hex[MAXLEN];
-   char cky_i_hex[MAXLEN];
-   char sai_b_hex[MAXLEN];
-   char idir_b_hex[MAXLEN];
-   char ni_b_hex[MAXLEN];
-   char nr_b_hex[MAXLEN];
-   char expected_hash_r_hex[MAXLEN];
-
-   unsigned char *g_xr;
-   unsigned char *g_xi;
-   unsigned char *cky_r;
-   unsigned char *cky_i;
-   unsigned char *sai_b;
-   unsigned char *idir_b;
-   unsigned char *ni_b;
-   unsigned char *nr_b;
-
-   size_t g_xr_len;
-   size_t g_xi_len;
-   size_t cky_r_len;
-   size_t cky_i_len;
-   size_t sai_b_len;
-   size_t idir_b_len;
-   size_t ni_b_len;
-   size_t nr_b_len;
-   size_t expected_hash_r_len;
+   int psk_idx;			/* Index into psk list */
+   unsigned psk_count;	/* Number of PSK entries in the list */
 
    unsigned char *skeyid;
    unsigned char *hash_r = NULL;	/* Initialised to avoid warning */
-   unsigned char *expected_hash_r;
-
-   unsigned char *skeyid_data;
-   unsigned char *hash_r_data;
-
-   size_t skeyid_data_len;
-   size_t hash_r_data_len;
-
-   unsigned char *cp;
 
    char line[MAXLINE];
-   char psk_data[MAXLEN];
 
    dict_file_name[0] = '\0';	/* Initialise to empty string */
 
@@ -186,14 +146,24 @@ main (int argc, char *argv[]) {
    if ((argc - optind) != 1) {
       psk_crack_usage(EXIT_FAILURE);
    }
-
+/*
+ *	Display the starting message.
+ */
+   printf("Starting psk-crack [%s] (http://www.nta-monitor.com/tools/ike-scan/)\n",
+          PACKAGE_STRING);
+/*
+ *	If the character set has not been specified, use the default one.
+ */
    if (!charset)
       charset = default_charset;
 /*
- *	Open data file.
+ *	Load the PSK entries from the data file.
  */
-   if ((data_file = fopen(argv[optind], "r")) == NULL)
-      err_sys("error opening data file %s", argv[optind]);
+   psk_count = load_psk_params(argv[optind]);
+   if (verbose)
+      printf("Loaded %u PSK entries from %s\n", psk_count, argv[optind]);
+   if (psk_count < 1)
+      err_msg("ERROR: No pre-shared keys to crack");
 /*
  *	Open dictionary file if required.
  */
@@ -228,11 +198,8 @@ main (int argc, char *argv[]) {
       free(fn);
    }
 /*
- *	Get program start time for statistics displayed on completion
- *	and print starting message.
+ *	Get program start time for statistics displayed on completion.
  */
-   printf("Starting psk-crack [%s] (http://www.nta-monitor.com/tools/ike-scan/)\n",
-          PACKAGE_STRING);
    if (brute_len) {
       printf("Running in brute-force cracking mode\n");
    } else {
@@ -240,73 +207,16 @@ main (int argc, char *argv[]) {
    }
    Gettimeofday(&start_time);
 
-   while ((fgets(psk_data, MAXLEN, data_file)) != NULL) {
-
+   for (psk_idx=0; psk_idx<psk_count; psk_idx++) {
       found=0;
-      n=sscanf(psk_data,
-               "%[^:]:%[^:]:%[^:]:%[^:]:%[^:]:%[^:]:%[^:]:%[^:]:%[^:\r\n]",
-               g_xr_hex, g_xi_hex, cky_r_hex, cky_i_hex, sai_b_hex,
-               idir_b_hex, ni_b_hex, nr_b_hex, expected_hash_r_hex);
-
-      if (n != 9)
-         err_msg("Error in data format.  Expected 9 fields, found %d", n);
-/*
- *	Convert input fields from ASCII hex to binary.
- */
-      g_xr = hex2data(g_xr_hex, &g_xr_len);
-      g_xi = hex2data(g_xi_hex, &g_xi_len);
-      cky_r = hex2data(cky_r_hex, &cky_r_len);
-      cky_i = hex2data(cky_i_hex, &cky_i_len);
-      sai_b = hex2data(sai_b_hex, &sai_b_len);
-      idir_b = hex2data(idir_b_hex, &idir_b_len);
-      ni_b = hex2data(ni_b_hex, &ni_b_len);
-      nr_b = hex2data(nr_b_hex, &nr_b_len);
-      expected_hash_r = hex2data(expected_hash_r_hex, &expected_hash_r_len);
-/*
- *	Determine hash type.
- */
-      if (expected_hash_r_len == MD5_HASH_LEN) {
-         hash_type=HASH_TYPE_MD5;
-         hash_len=MD5_HASH_LEN;
-         hash_name="MD5";
-      } else if (expected_hash_r_len == SHA1_HASH_LEN) {
-         hash_type=HASH_TYPE_SHA1;
-         hash_len=SHA1_HASH_LEN;
-         hash_name="SHA1";
-      } else {
-         err_msg("Cannot determine hash type from %u byte HASH_R",
-                 expected_hash_r_len);
-      }
-
 /*
  *     Allocate memory for storing Nortel Contivity variables
  */
       password_hash = Malloc(SHA1_HASH_LEN);
       psk = Malloc(SHA1_HASH_LEN);
 
-      skeyid_data_len = ni_b_len + nr_b_len;
-      skeyid_data = Malloc(skeyid_data_len);
-      cp = skeyid_data;
-      memcpy(cp, ni_b, ni_b_len);
-      cp += ni_b_len;
-      memcpy(cp, nr_b, nr_b_len);
-      skeyid = Malloc(hash_len);
-      hash_r_data_len = g_xr_len + g_xi_len + cky_r_len + cky_i_len +
-                        sai_b_len + idir_b_len;
-      hash_r_data = Malloc(hash_r_data_len);
-      cp = hash_r_data;
-      memcpy(cp, g_xr, g_xr_len);
-      cp += g_xr_len;
-      memcpy(cp, g_xi, g_xi_len);
-      cp += g_xi_len;
-      memcpy(cp, cky_r, cky_r_len);
-      cp += cky_r_len;
-      memcpy(cp, cky_i, cky_i_len);
-      cp += cky_i_len;
-      memcpy(cp, sai_b, sai_b_len);
-      cp += sai_b_len;
-      memcpy(cp, idir_b, idir_b_len);
-      hash_r = Malloc(hash_len);
+      skeyid = Malloc(psk_list[psk_idx].hash_r_len);
+      hash_r = Malloc(psk_list[psk_idx].hash_r_len);
 /*
  *	Cracking loop.
  */
@@ -336,9 +246,9 @@ main (int argc, char *argv[]) {
                *line_p++ = charset[digit];
             } while (val);
             *line_p = '\0';
-            if (verbose)
+            if (verbose > 1)
                printf("Trying key \"%s\"\n", line);
-            if (hash_type == HASH_TYPE_MD5) {
+            if (psk_list[psk_idx].hash_type == HASH_TYPE_MD5) {
               /* 
                * Set skeyid_data
                *
@@ -360,25 +270,25 @@ main (int argc, char *argv[]) {
 	       if (nortel_contivity_flag) {
 		  SHA1(line, strlen(line), password_hash);
 		  hmac_sha1(norteluser, strlen(norteluser), password_hash, SHA1_HASH_LEN, psk);
-		  hmac_md5(skeyid_data, skeyid_data_len, (unsigned char *) psk, SHA1_HASH_LEN, skeyid);
+		  hmac_md5(psk_list[psk_idx].skeyid_data, psk_list[psk_idx].skeyid_data_len, (unsigned char *) psk, SHA1_HASH_LEN, skeyid);
 	       } else {
-               	  hmac_md5(skeyid_data, skeyid_data_len, (unsigned char *) line, strlen(line), skeyid);
+               	  hmac_md5(psk_list[psk_idx].skeyid_data, psk_list[psk_idx].skeyid_data_len, (unsigned char *) line, strlen(line), skeyid);
 	       }
-               hmac_md5(hash_r_data, hash_r_data_len, skeyid, hash_len, hash_r);
-            } else if (hash_type == HASH_TYPE_SHA1) {
+               hmac_md5(psk_list[psk_idx].hash_r_data, psk_list[psk_idx].hash_r_data_len, skeyid, psk_list[psk_idx].hash_r_len, hash_r);
+            } else if (psk_list[psk_idx].hash_type == HASH_TYPE_SHA1) {
 	       if (nortel_contivity_flag) {
 		  SHA1(line, strlen(line), password_hash);
 		  hmac_sha1(norteluser, strlen(norteluser), password_hash, SHA1_HASH_LEN, psk);
-		  hmac_sha1(skeyid_data, skeyid_data_len, (unsigned char *) psk, SHA1_HASH_LEN, skeyid);
+		  hmac_sha1(psk_list[psk_idx].skeyid_data, psk_list[psk_idx].skeyid_data_len, (unsigned char *) psk, SHA1_HASH_LEN, skeyid);
 	       } else {
-               	  hmac_sha1(skeyid_data, skeyid_data_len, (unsigned char *) line, strlen(line), skeyid);
+               	  hmac_sha1(psk_list[psk_idx].skeyid_data, psk_list[psk_idx].skeyid_data_len, (unsigned char *) line, strlen(line), skeyid);
 	       }
-               hmac_sha1(hash_r_data, hash_r_data_len, skeyid, hash_len, hash_r);
+               hmac_sha1(psk_list[psk_idx].hash_r_data, psk_list[psk_idx].hash_r_data_len, skeyid, psk_list[psk_idx].hash_r_len, hash_r);
             } else {
-               err_msg("Unknown hash_type: %d\n", hash_type);
+               err_msg("Unknown hash type: %d\n", psk_list[psk_idx].hash_type);
             }
             iterations++;
-            if (!memcmp(hash_r, expected_hash_r, expected_hash_r_len)) {
+            if (!memcmp(hash_r, psk_list[psk_idx].hash_r, psk_list[psk_idx].hash_r_len)) {
                found=1;
                break;
             }
@@ -391,64 +301,48 @@ main (int argc, char *argv[]) {
                  *line_p != '\0'; line_p++)
                ;
             *line_p = '\0';
-            if (verbose)
+            if (verbose > 1)
                printf("Trying key \"%s\"\n", line);
-            if (hash_type == HASH_TYPE_MD5) {
+            if (psk_list[psk_idx].hash_type == HASH_TYPE_MD5) {
 
 	       if (nortel_contivity_flag) {
 		  SHA1(line, strlen(line), password_hash);
 		  hmac_sha1(norteluser, strlen(norteluser), password_hash, SHA1_HASH_LEN, psk);
-		  hmac_md5(skeyid_data, skeyid_data_len, (unsigned char *) psk, SHA1_HASH_LEN, skeyid);
+		  hmac_md5(psk_list[psk_idx].skeyid_data, psk_list[psk_idx].skeyid_data_len, (unsigned char *) psk, SHA1_HASH_LEN, skeyid);
 	       } else {
-               	  hmac_md5(skeyid_data, skeyid_data_len, (unsigned char *) line, strlen(line), skeyid);
+               	  hmac_md5(psk_list[psk_idx].skeyid_data, psk_list[psk_idx].skeyid_data_len, (unsigned char *) line, strlen(line), skeyid);
 	       }
 
-               hmac_md5(hash_r_data, hash_r_data_len, skeyid, hash_len, hash_r);
-            } else if (hash_type == HASH_TYPE_SHA1) {
+               hmac_md5(psk_list[psk_idx].hash_r_data, psk_list[psk_idx].hash_r_data_len, skeyid, psk_list[psk_idx].hash_r_len, hash_r);
+            } else if (psk_list[psk_idx].hash_type == HASH_TYPE_SHA1) {
 
 	       if (nortel_contivity_flag) {
 		  SHA1(line, strlen(line), password_hash);
 		  hmac_sha1(norteluser, strlen(norteluser), password_hash, SHA1_HASH_LEN, psk);
-		  hmac_sha1(skeyid_data, skeyid_data_len, (unsigned char *) psk, SHA1_HASH_LEN, skeyid);
+		  hmac_sha1(psk_list[psk_idx].skeyid_data, psk_list[psk_idx].skeyid_data_len, (unsigned char *) psk, SHA1_HASH_LEN, skeyid);
 	       } else {
-               	  hmac_sha1(skeyid_data, skeyid_data_len, (unsigned char *) line, strlen(line), skeyid);
+               	  hmac_sha1(psk_list[psk_idx].skeyid_data, psk_list[psk_idx].skeyid_data_len, (unsigned char *) line, strlen(line), skeyid);
 	       }
 
-		hmac_sha1(hash_r_data, hash_r_data_len, skeyid, hash_len, hash_r);
+		hmac_sha1(psk_list[psk_idx].hash_r_data, psk_list[psk_idx].hash_r_data_len, skeyid, psk_list[psk_idx].hash_r_len, hash_r);
 
             } else {
-               err_msg("Unknown hash_type: %d\n", hash_type);
+               err_msg("Unknown hash type: %d\n", psk_list[psk_idx].hash_type);
             }
             iterations++;
-            if (!memcmp(hash_r, expected_hash_r, expected_hash_r_len)) {
+            if (!memcmp(hash_r, psk_list[psk_idx].hash_r, psk_list[psk_idx].hash_r_len)) {
                found=1;
                break;
             }
          }
       }
       if (found) {
-         printf("key \"%s\" matches %s hash %s\n", line, hash_name,
-                expected_hash_r_hex);
+         printf("key \"%s\" matches %s hash %s\n", line,
+                psk_list[psk_idx].hash_name, psk_list[psk_idx].hash_r_hex);
       } else {
-         printf("no match found for %s hash %s\n", hash_name,
-                expected_hash_r_hex);
+         printf("no match found for %s hash %s\n", psk_list[psk_idx].hash_name,
+                psk_list[psk_idx].hash_r_hex);
       }
-/*
- *	Free malloc'ed data.
- */
-      free(g_xr);
-      free(g_xi);
-      free(cky_r);
-      free(cky_i);
-      free(sai_b);
-      free(idir_b);
-      free(ni_b);
-      free(nr_b);
-      free(expected_hash_r);
-      free(skeyid_data);
-      free(skeyid);
-      free(hash_r_data);
-      free(hash_r);
    }
 /*
  *      Get program end time and calculate elapsed time.
@@ -463,11 +357,182 @@ main (int argc, char *argv[]) {
           " iterations in %.3f seconds (%.2f iterations/sec)\n",
           iterations, elapsed_seconds, iterations/elapsed_seconds);
   
-   fclose(data_file);
    if (!brute_len)
       fclose(dictionary_file);
 
    return 0;
+}
+
+/*
+ *	load_psk_params -- Load PSK parameters from data file
+ *
+ *	Inputs:
+ *
+ *	filename	The name of the data file
+ *
+ *	Returns:
+ *
+ *	The number of PSK parameters successfully loaded into the list.
+ *
+ *	This function loads the pre-shared key parameters from the input
+ *	data file into the psk parameters list, which is an array of structs.
+ *
+ *	The array is created dynamically with malloc and realloc, as we don't
+ *	know in advance how many PSK entries there will be in the file.
+ */
+static unsigned
+load_psk_params(const char *filename) {
+   FILE *data_file;		/* PSK parameters in colon separated format */
+   char psk_data[MAXLEN];	/* Line read from data file */
+   int n;			/* Number of fields read by sscanf() */
+   static int num_left=0;       /* Number of free entries left */
+   unsigned count=0;		/* Number of entries in the list */
+   psk_entry *pe;		/* Pointer to current PSK entry */
+   unsigned char *cp;
+   unsigned char *skeyid_data;	/* Data for SKEYID hash */
+   size_t skeyid_data_len;	/* Length of skeyid data */
+   unsigned char *hash_r_data;	/* Data for HASH_R hash */
+   size_t hash_r_data_len;	/* Length of hash_r */
+   char g_xr_hex[MAXLEN];	/* Individual PSK params as hex */
+   char g_xi_hex[MAXLEN];
+   char cky_r_hex[MAXLEN];
+   char cky_i_hex[MAXLEN];
+   char sai_b_hex[MAXLEN];
+   char idir_b_hex[MAXLEN];
+   char ni_b_hex[MAXLEN];
+   char nr_b_hex[MAXLEN];
+   char hash_r_hex[MAXLEN];
+   unsigned char *g_xr;		/* Individual PSK params as binary */
+   unsigned char *g_xi;
+   unsigned char *cky_r;
+   unsigned char *cky_i;
+   unsigned char *sai_b;
+   unsigned char *idir_b;
+   unsigned char *ni_b;
+   unsigned char *nr_b;
+   size_t g_xr_len;		/* Lengths of binary PSK params */
+   size_t g_xi_len;
+   size_t cky_r_len;
+   size_t cky_i_len;
+   size_t sai_b_len;
+   size_t idir_b_len;
+   size_t ni_b_len;
+   size_t nr_b_len;
+
+/*
+ *	Open PSK data file for reading.
+ */
+   if ((data_file = fopen(filename, "r")) == NULL)
+      err_sys("error opening data file %s", filename);
+/*
+ *	For each line in the data file, read the PSK data, convert to
+ *	binary, and store in the PSK list.  We ignore blank lines, and
+ *	any lines beginning with '#'.
+ */
+   while ((fgets(psk_data, MAXLEN, data_file)) != NULL) {
+      if (psk_data[0] == '#' || psk_data[0] == '\n' || psk_data[0] == '\r')
+         continue;	/* Skip comments and blank lines */
+      n=sscanf(psk_data,
+               "%[^:]:%[^:]:%[^:]:%[^:]:%[^:]:%[^:]:%[^:]:%[^:]:%[^:\r\n]",
+               g_xr_hex, g_xi_hex, cky_r_hex, cky_i_hex, sai_b_hex,
+               idir_b_hex, ni_b_hex, nr_b_hex, hash_r_hex);
+      if (n != 9) {
+         warn_msg("ERROR: Format error in PSK data file %s, line %u",
+                  filename, count+1);
+         err_msg("ERROR: Expected 9 colon-separated fields, found %d", n);
+      }
+/*
+ *	Create or grow the psk list array if required.
+ *	We grow the list by PSK_REALLOC_COUNT elements each time.
+ */
+      if (!num_left) {     /* No entries left, allocate some more */
+         if (psk_list)
+            psk_list=Realloc(psk_list, (count * sizeof(psk_entry)) +
+                             PSK_REALLOC_COUNT*sizeof(psk_entry));
+         else
+            psk_list=Malloc(PSK_REALLOC_COUNT*sizeof(psk_entry));
+         num_left = PSK_REALLOC_COUNT;
+      }
+
+      pe = psk_list + count;  /* Would array notation be better? */
+      count++;
+      num_left--;
+/*
+ *	Convert hex to binary representation, and construct SKEYID
+ *	and HASH_R data.
+ */
+      g_xr = hex2data(g_xr_hex, &g_xr_len);
+      g_xi = hex2data(g_xi_hex, &g_xi_len);
+      cky_r = hex2data(cky_r_hex, &cky_r_len);
+      cky_i = hex2data(cky_i_hex, &cky_i_len);
+      sai_b = hex2data(sai_b_hex, &sai_b_len);
+      idir_b = hex2data(idir_b_hex, &idir_b_len);
+      ni_b = hex2data(ni_b_hex, &ni_b_len);
+      nr_b = hex2data(nr_b_hex, &nr_b_len);
+
+/* skeyid_data = ni_b | nr_b */
+      skeyid_data_len = ni_b_len + nr_b_len;
+      skeyid_data = Malloc(skeyid_data_len);
+      cp = skeyid_data;
+      memcpy(cp, ni_b, ni_b_len);
+      cp += ni_b_len;
+      memcpy(cp, nr_b, nr_b_len);
+      free(ni_b);
+      free(nr_b);
+
+/* hash_r_data = g_xr | g_xi | cky_r | cky_i | sai_b | idir_b */
+      hash_r_data_len = g_xr_len + g_xi_len + cky_r_len + cky_i_len +
+                        sai_b_len + idir_b_len;
+      hash_r_data = Malloc(hash_r_data_len);
+      cp = hash_r_data;
+      memcpy(cp, g_xr, g_xr_len);
+      cp += g_xr_len;
+      memcpy(cp, g_xi, g_xi_len);
+      cp += g_xi_len;
+      memcpy(cp, cky_r, cky_r_len);
+      cp += cky_r_len;
+      memcpy(cp, cky_i, cky_i_len);
+      cp += cky_i_len;
+      memcpy(cp, sai_b, sai_b_len);
+      cp += sai_b_len;
+      memcpy(cp, idir_b, idir_b_len);
+      free(g_xr);
+      free(g_xi);
+      free(cky_r);
+      free(cky_i);
+      free(sai_b);
+      free(idir_b);
+/*
+ *	Store the PSK parameters in the current psk list entry.
+ */
+      pe->skeyid_data = skeyid_data;
+      pe->skeyid_data_len = skeyid_data_len;
+      pe->hash_r_data = hash_r_data;
+      pe->hash_r_data_len = hash_r_data_len;
+      pe->hash_r = hex2data(hash_r_hex, &pe->hash_r_len);
+      pe->hash_r_hex = Malloc(strlen(hash_r_hex) + 1);
+      strcpy(pe->hash_r_hex, hash_r_hex);
+/*
+ *	Determine hash type based on the length of the hash, and
+ *	store this in the current psk list entry.
+ */
+      if (pe->hash_r_len == MD5_HASH_LEN) {
+         pe->hash_type=HASH_TYPE_MD5;
+         pe->hash_name=make_message("MD5");
+      } else if (pe->hash_r_len == SHA1_HASH_LEN) {
+         pe->hash_type=HASH_TYPE_SHA1;
+         pe->hash_name=make_message("SHA1");
+      } else {
+         err_msg("Cannot determine hash type from %u byte HASH_R",
+                 pe->hash_r_len);
+      }
+   }	/* End While fgets() */
+/*
+ *	Close the data file, and return the number of PSK entries
+ *	read into the list.
+ */
+   fclose(data_file);
+   return count;
 }
 
 /*
@@ -481,7 +546,7 @@ main (int argc, char *argv[]) {
  *
  *	None (this function never returns).
  */
-void
+static void
 psk_crack_usage(int status) {
    fprintf(stderr, "Usage: psk-crack [options] <psk-parameters-file>\n");
    fprintf(stderr, "\n");
@@ -503,6 +568,7 @@ psk_crack_usage(int status) {
    fprintf(stderr, "\n--help or -h\t\tDisplay this usage message and exit.\n");
    fprintf(stderr, "\n--version or -V\t\tDisplay program version and exit.\n");
    fprintf(stderr, "\n--verbose or -v\t\tDisplay verbose progress messages.\n");
+   fprintf(stderr, "\t\t\tUse more than once for increased verbosity.\n");
    fprintf(stderr, "\n--dictionary=<f> or -d <f> Set dictionary file to <f>\n");
 #ifdef __CYGWIN__
    fprintf(stderr, "\t\t\tdefault=%s in psk-crack.exe dir.\n", DICT_FILE);

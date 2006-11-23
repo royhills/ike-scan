@@ -1,10 +1,20 @@
 $Id$
 
+2006-11-23 Roy Hills <Roy.Hills@nta-monitor.com>
+
+	* psk-crack.c: New function load_psk_params() to read the data from
+	  the psk parameters file into a list of structures.  This moves the
+	  psk file reading loop out of main(), and also allows more flexible
+	  selection of the psk cracking order as all the psks are in memory.
+
 2006-11-21 Roy Hills <Roy.Hills@nta-monitor.com>
 
 	* psk-crack.h: New header file for psk-crack.
 	  This separates the psk-crack headers, defines, structures and
 	  prototypes from ike-scan.
+
+	* ike-scan.h: Removed psk-crack specific stuff. Modified psk_crack
+	  structure to improve storage efficiency.
 
 2006-10-18 Roy Hills <Roy.Hills@nta-monitor.com>
 

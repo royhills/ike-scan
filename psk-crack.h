@@ -102,19 +102,34 @@ unsigned char *SHA1(const unsigned char *, size_t, unsigned char *);
 #define HASH_TYPE_SHA1 2
 #define MD5_HASH_LEN 16
 #define SHA1_HASH_LEN 20
+#define PSK_REALLOC_COUNT 10		/* Number of PSK entries to allocate */
 
 /* Structures */
 
+/* PSK parameter entry */
+typedef struct {
+   unsigned char *skeyid_data;	/* Data for SKEYID calculation */
+   unsigned char *hash_r_data;	/* Data for HASH_R calculation */
+   unsigned char *hash_r;	/* HASH_R received from server */
+   char *hash_r_hex;		/* Server HASH_R as hex for display */
+   char *hash_name;		/* Hash algo. name for display */
+   size_t skeyid_data_len;	/* Length of skeyid_data field */
+   size_t hash_r_data_len;	/* Length of hash_r_data field */
+   size_t hash_r_len;		/* Length of hash_r field */
+   int hash_type;		/* Hash algorithm used for hmac */
+} psk_entry;
+
+
 /* Functions */
 
+static unsigned load_psk_params(const char *);
 void err_sys(const char *, ...);
 void warn_sys(const char *, ...);
 void err_msg(const char *, ...);
 void warn_msg(const char *, ...);
 void info_syslog(const char *, ...);
 void err_print(int, int, const char *, va_list);
-void usage(int, int);
-void psk_crack_usage(int);
+static void psk_crack_usage(int);
 void timeval_diff(const struct timeval *, const struct timeval *,
                   struct timeval *);
 unsigned int hstr_i(const char *);
