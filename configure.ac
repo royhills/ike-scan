@@ -1,7 +1,7 @@
 dnl $Id$
 dnl Process this file with autoconf to produce a configure script.
 
-AC_INIT([ike-scan],[1.8.4],[ike-scan@nta-monitor.com])
+AC_INIT([ike-scan],[1.8.5],[ike-scan@nta-monitor.com])
 AC_PREREQ(2.59)
 AC_REVISION($Revision$)
 AC_CONFIG_SRCDIR([ike-scan.c])
@@ -22,6 +22,8 @@ AC_PROG_INSTALL
 AC_PROG_LN_S
 dnl Check endian-ness. MD5 and SHA1 hash functions need to know this.
 AC_C_BIGENDIAN
+dnl Check for inline support.  This is used in psk-crack.c
+AC_C_INLINE
 
 dnl Check for libraries.
 dnl Solaris 8 needs nsl and socket.  Linux and {Free,Open}BSD do not.

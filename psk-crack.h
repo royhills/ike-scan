@@ -123,6 +123,8 @@ typedef struct {
 /* Functions */
 
 static unsigned load_psk_params(const char *);
+static inline unsigned char *compute_hash(const psk_entry *, const char *, const char *);
+static FILE *open_dict_file(const char *);
 void err_sys(const char *, ...);
 void warn_sys(const char *, ...);
 void err_msg(const char *, ...);

@@ -7,6 +7,19 @@ $Id$
 	  psk file reading loop out of main(), and also allows more flexible
 	  selection of the psk cracking order as all the psks are in memory.
 
+	* psk-crack.c: New function compute_hash(), which does the real work
+	  of computing the hash given the PSK parameters and a candidate
+	  password.  This function is defined as "static inline" because it
+	  is called from a tight loop, and inlining significantly improves
+	  performance.
+
+	* psk-crack.c: New function open_dict_file(), which opens the
+	  dictionary file.  This function reduces the size of main() to make
+	  it more readable.
+
+	* configure.ac: Added AC_C_INLINE to check for compiler support for
+	  function inlining and define "inline" accordingly in config.h.
+
 2006-11-21 Roy Hills <Roy.Hills@nta-monitor.com>
 
 	* psk-crack.h: New header file for psk-crack.

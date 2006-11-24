@@ -47,10 +47,10 @@
 #include "psk-crack.h"
 static const char rcsid[] = "$Id$";	/* RCS ID for ident(1) */
 
-char *default_charset =
+static const char *default_charset =
    "0123456789abcdefghijklmnopqrstuvwxyz"; /* default bruteforce charset */
 
-psk_entry *psk_list;	/* List of PSK parameters */
+static psk_entry *psk_list;	/* List of PSK parameters */
 
 int
 main (int argc, char *argv[]) {
@@ -69,31 +69,22 @@ main (int argc, char *argv[]) {
    int options_index=0;
    int verbose=0;
    unsigned brute_len=0; /* Bruteforce len.  0=dictionary attack (default) */
-   char *charset = NULL;
+   const char *charset = NULL;
    char dict_file_name[MAXLINE];	/* Dictionary file name */
-   int nortel_contivity_flag = 0; /* Are we cracking a Nortel Contivity password? */
-   unsigned char *password_hash; /* SHA1 hash of password required for Nortel Contivity password cracking only */
-   unsigned char *psk; /* When cracking Nortel Contivity password, this is set to hmac_sha1(sha1(password), norteluser)*/
-
-   char norteluser[MAXLINE]; /* For cracking Nortel Contivity passwords only */
-   norteluser[0] = '\0';
-   FILE *dictionary_file=NULL;	/* Dictionary file, one word per line */
+   char *norteluser = NULL; /* For cracking Nortel Contivity passwords only */
+   FILE *dictionary_file=NULL;	/* Dictionary file */
    IKE_UINT64 iterations=0;
-   int found;
+   int found = 0;
    struct timeval start_time;	/* Program start time */
    struct timeval end_time;	/* Program end time */
    struct timeval elapsed_time; /* Elapsed time as timeval */
    double elapsed_seconds;	/* Elapsed time in seconds */
    int psk_idx;			/* Index into psk list */
-   unsigned psk_count;	/* Number of PSK entries in the list */
-
-   unsigned char *skeyid;
-   unsigned char *hash_r = NULL;	/* Initialised to avoid warning */
-
+   unsigned psk_count;		/* Number of PSK entries in the list */
+   unsigned char *hash_r;
    char line[MAXLINE];
 
    dict_file_name[0] = '\0';	/* Initialise to empty string */
-
 /*
  *      Process options and arguments.
  */
@@ -131,8 +122,7 @@ main (int argc, char *argv[]) {
             brute_len = 0;
             break;
          case 'u':      /* --norteluser */
-            strncpy(norteluser, optarg, MAXLINE);
-	    nortel_contivity_flag = 1;
+            norteluser = make_message("%s", optarg);
             break;
          default:       /* Unknown option */
             psk_crack_usage(EXIT_FAILURE);
@@ -167,36 +157,8 @@ main (int argc, char *argv[]) {
 /*
  *	Open dictionary file if required.
  */
-   if (!brute_len) {	/* If not bruteforcing */
-      char *fn;
-#ifdef __CYGWIN__
-      char fnbuf[MAXLINE];
-      int fnbuf_siz;
-      int i;
-#endif
-
-      if (dict_file_name[0] == '\0') {	/* If dictionary file not specified */
-#ifdef __CYGWIN__
-         if ((fnbuf_siz=GetModuleFileName(GetModuleHandle(0),
-              fnbuf, MAXLINE)) == 0) {
-            err_msg("ERROR: Call to GetModuleFileName failed");
-         }
-         for (i=fnbuf_siz-1; i>=0 && fnbuf[i] != '/' && fnbuf[i] != '\\'; i--)
-            ;
-         if (i >= 0) {
-            fnbuf[i] = '\0';
-         }
-         fn = make_message("%s\\%s", fnbuf, DICT_FILE);
-#else
-         fn = make_message("%s/%s", IKEDATADIR, DICT_FILE);
-#endif
-      } else {
-         fn = make_message("%s", dict_file_name);
-      }
-      if ((dictionary_file = fopen(fn, "r")) == NULL)
-         err_sys("error opening dictionary file %s", fn);
-      free(fn);
-   }
+   if (!brute_len)	/* If not bruteforcing */
+      dictionary_file = open_dict_file(dict_file_name);
 /*
  *	Get program start time for statistics displayed on completion.
  */
@@ -206,20 +168,10 @@ main (int argc, char *argv[]) {
       printf("Running in dictionary cracking mode\n");
    }
    Gettimeofday(&start_time);
-
-   for (psk_idx=0; psk_idx<psk_count; psk_idx++) {
-      found=0;
-/*
- *     Allocate memory for storing Nortel Contivity variables
- */
-      password_hash = Malloc(SHA1_HASH_LEN);
-      psk = Malloc(SHA1_HASH_LEN);
-
-      skeyid = Malloc(psk_list[psk_idx].hash_r_len);
-      hash_r = Malloc(psk_list[psk_idx].hash_r_len);
 /*
  *	Cracking loop.
  */
+   for (psk_idx=0; psk_idx<psk_count; psk_idx++) {
       if (brute_len) {	/* Brute force cracking */
          IKE_UINT64 max;
          unsigned base;
@@ -227,14 +179,14 @@ main (int argc, char *argv[]) {
          IKE_UINT64 loop;
          IKE_UINT64 val;
          unsigned digit;
-   
+
          base = strlen(charset);
          max = base;
          for (i=1; i<brute_len; i++)
             max *= base;	/* max = base^brute_len without using pow() */
          printf("Brute force with %u chars up to length %u will take up to "
                 IKE_UINT64_FORMAT " iterations\n", base, brute_len, max);
-   
+
          for (loop=0; loop<max; loop++) {
             char *line_p;
 
@@ -248,47 +200,10 @@ main (int argc, char *argv[]) {
             *line_p = '\0';
             if (verbose > 1)
                printf("Trying key \"%s\"\n", line);
-            if (psk_list[psk_idx].hash_type == HASH_TYPE_MD5) {
-              /* 
-               * Set skeyid_data
-               *
-               * This is based on the pre-shared key (which we're currently
-               * trying to guess).
-               *
-               * For "plain" aggressive mode exchanges:
-               *     psk = password
-               *
-               * For Nortel Contivity aggressive mode exchanges:
-               *     psk = hmac_sha1(sha1(password), username)
-               *
-               * For Mamros' Pre-Shared Key Extensions for ISAKMP/Oakley
-               * [http://www.potaroo.net/ietf/idref/draft-mamros-pskeyext/]
-               *     psk = hmac_sha1(password, username)
-               *
-               * Currently only "plain" and "Nortel Contivity" are implemented
-               */
-	       if (nortel_contivity_flag) {
-		  SHA1(line, strlen(line), password_hash);
-		  hmac_sha1(norteluser, strlen(norteluser), password_hash, SHA1_HASH_LEN, psk);
-		  hmac_md5(psk_list[psk_idx].skeyid_data, psk_list[psk_idx].skeyid_data_len, (unsigned char *) psk, SHA1_HASH_LEN, skeyid);
-	       } else {
-               	  hmac_md5(psk_list[psk_idx].skeyid_data, psk_list[psk_idx].skeyid_data_len, (unsigned char *) line, strlen(line), skeyid);
-	       }
-               hmac_md5(psk_list[psk_idx].hash_r_data, psk_list[psk_idx].hash_r_data_len, skeyid, psk_list[psk_idx].hash_r_len, hash_r);
-            } else if (psk_list[psk_idx].hash_type == HASH_TYPE_SHA1) {
-	       if (nortel_contivity_flag) {
-		  SHA1(line, strlen(line), password_hash);
-		  hmac_sha1(norteluser, strlen(norteluser), password_hash, SHA1_HASH_LEN, psk);
-		  hmac_sha1(psk_list[psk_idx].skeyid_data, psk_list[psk_idx].skeyid_data_len, (unsigned char *) psk, SHA1_HASH_LEN, skeyid);
-	       } else {
-               	  hmac_sha1(psk_list[psk_idx].skeyid_data, psk_list[psk_idx].skeyid_data_len, (unsigned char *) line, strlen(line), skeyid);
-	       }
-               hmac_sha1(psk_list[psk_idx].hash_r_data, psk_list[psk_idx].hash_r_data_len, skeyid, psk_list[psk_idx].hash_r_len, hash_r);
-            } else {
-               err_msg("Unknown hash type: %d\n", psk_list[psk_idx].hash_type);
-            }
+            hash_r = compute_hash(&psk_list[psk_idx], line, norteluser);
             iterations++;
-            if (!memcmp(hash_r, psk_list[psk_idx].hash_r, psk_list[psk_idx].hash_r_len)) {
+            if (!memcmp(hash_r, psk_list[psk_idx].hash_r,
+                psk_list[psk_idx].hash_r_len)) {
                found=1;
                break;
             }
@@ -303,34 +218,10 @@ main (int argc, char *argv[]) {
             *line_p = '\0';
             if (verbose > 1)
                printf("Trying key \"%s\"\n", line);
-            if (psk_list[psk_idx].hash_type == HASH_TYPE_MD5) {
-
-	       if (nortel_contivity_flag) {
-		  SHA1(line, strlen(line), password_hash);
-		  hmac_sha1(norteluser, strlen(norteluser), password_hash, SHA1_HASH_LEN, psk);
-		  hmac_md5(psk_list[psk_idx].skeyid_data, psk_list[psk_idx].skeyid_data_len, (unsigned char *) psk, SHA1_HASH_LEN, skeyid);
-	       } else {
-               	  hmac_md5(psk_list[psk_idx].skeyid_data, psk_list[psk_idx].skeyid_data_len, (unsigned char *) line, strlen(line), skeyid);
-	       }
-
-               hmac_md5(psk_list[psk_idx].hash_r_data, psk_list[psk_idx].hash_r_data_len, skeyid, psk_list[psk_idx].hash_r_len, hash_r);
-            } else if (psk_list[psk_idx].hash_type == HASH_TYPE_SHA1) {
-
-	       if (nortel_contivity_flag) {
-		  SHA1(line, strlen(line), password_hash);
-		  hmac_sha1(norteluser, strlen(norteluser), password_hash, SHA1_HASH_LEN, psk);
-		  hmac_sha1(psk_list[psk_idx].skeyid_data, psk_list[psk_idx].skeyid_data_len, (unsigned char *) psk, SHA1_HASH_LEN, skeyid);
-	       } else {
-               	  hmac_sha1(psk_list[psk_idx].skeyid_data, psk_list[psk_idx].skeyid_data_len, (unsigned char *) line, strlen(line), skeyid);
-	       }
-
-		hmac_sha1(psk_list[psk_idx].hash_r_data, psk_list[psk_idx].hash_r_data_len, skeyid, psk_list[psk_idx].hash_r_len, hash_r);
-
-            } else {
-               err_msg("Unknown hash type: %d\n", psk_list[psk_idx].hash_type);
-            }
+            hash_r = compute_hash(&psk_list[psk_idx], line, norteluser);
             iterations++;
-            if (!memcmp(hash_r, psk_list[psk_idx].hash_r, psk_list[psk_idx].hash_r_len)) {
+            if (!memcmp(hash_r, psk_list[psk_idx].hash_r,
+                        psk_list[psk_idx].hash_r_len)) {
                found=1;
                break;
             }
@@ -533,6 +424,124 @@ load_psk_params(const char *filename) {
  */
    fclose(data_file);
    return count;
+}
+
+/*
+ *	compute_hash	-- Compute the hash given a candidate password
+ *
+ *	Inputs:
+ *
+ *	psk_params	Pointer to PSK params structure
+ *	password	The candidate password
+ *	nortel_user	Username for Nortel contivity, otherwise NULL.
+ *
+ *	Returns:
+ *
+ *	Pointer to the computed hash.
+ *
+ *	This function calculates a hash given the PSK parameters and
+ *	a candidate password.
+ *
+ *	The standard process used to calculate the hash is detailed in
+ *	RFC 2409.  The hash used by Nortel Contivity systems use a different,
+ *	proprietary, method.
+ *
+ *	In all cases, the calculation of the hash is a two-stage process:
+ *
+ *	a) Calculate SKEYID using some of the PSK parameters and the password;
+ *	b) Calculate HASH_R using SKEYID and the other PSK parameters.
+ *
+ */
+static inline unsigned char *
+compute_hash (const psk_entry *psk_params, const char *password,
+              const char *nortel_user) {
+   size_t password_len;
+   unsigned char nortel_psk[SHA1_HASH_LEN];
+   unsigned char nortel_pwd_hash[SHA1_HASH_LEN];
+   unsigned char skeyid[SHA1_HASH_LEN];
+   static unsigned char hash_r[SHA1_HASH_LEN];
+
+   password_len = strlen(password);
+/*
+ *	Calculate SKEYID
+ */
+   if (nortel_user != NULL) {
+      SHA1(password, password_len, nortel_pwd_hash);
+      hmac_sha1(nortel_user, strlen(nortel_user), nortel_pwd_hash,
+                SHA1_HASH_LEN, nortel_psk);
+      if (psk_params->hash_type == HASH_TYPE_MD5) {
+         hmac_md5(psk_params->skeyid_data, psk_params->skeyid_data_len,
+                  nortel_psk, SHA1_HASH_LEN, skeyid);
+      } else {
+         hmac_sha1(psk_params->skeyid_data, psk_params->skeyid_data_len,
+                   nortel_psk, SHA1_HASH_LEN, skeyid);
+      }
+   } else {
+      if (psk_params->hash_type == HASH_TYPE_MD5) {
+         hmac_md5(psk_params->skeyid_data, psk_params->skeyid_data_len,
+                  (unsigned char *) password, password_len, skeyid);
+      } else {
+         hmac_sha1(psk_params->skeyid_data, psk_params->skeyid_data_len,
+                   (unsigned char *) password, password_len, skeyid);
+      }
+   }
+/*
+ *	Calculate HASH_R
+ */
+   if (psk_params->hash_type == HASH_TYPE_MD5) {
+      hmac_md5(psk_params->hash_r_data, psk_params->hash_r_data_len, skeyid,
+               psk_params->hash_r_len, hash_r);
+   } else {
+      hmac_sha1(psk_params->hash_r_data, psk_params->hash_r_data_len, skeyid,
+                psk_params->hash_r_len, hash_r);
+   }
+   return hash_r;
+}
+
+/*
+ *	open_dict_file	-- Open the dictionary file
+ *
+ *	Inputs:
+ *
+ *	dict_file_name	The dictionary file name, or NUL for default.
+ *
+ *	Returns:
+ *
+ *	The file descriptor of the dictionary file.
+ */
+static FILE *
+open_dict_file(const char *dict_file_name) {
+   char *fn;
+   FILE *fp;
+#ifdef __CYGWIN__
+   char fnbuf[MAXLINE];
+   int fnbuf_siz;
+   int i;
+#endif
+
+   if (dict_file_name[0] == '\0') {	/* Dictionary file not specified */
+#ifdef __CYGWIN__
+      if ((fnbuf_siz=GetModuleFileName(GetModuleHandle(0),
+           fnbuf, MAXLINE)) == 0) {
+         err_msg("ERROR: Call to GetModuleFileName failed");
+      }
+      for (i=fnbuf_siz-1; i>=0 && fnbuf[i] != '/' && fnbuf[i] != '\\'; i--)
+         ;
+      if (i >= 0) {
+         fnbuf[i] = '\0';
+      }
+      fn = make_message("%s\\%s", fnbuf, DICT_FILE);
+#else
+      fn = make_message("%s/%s", IKEDATADIR, DICT_FILE);
+#endif
+   } else {		/* Dictionary filename was specified */
+      fn = make_message("%s", dict_file_name);
+   }
+   if ((fp = fopen(fn, "r")) == NULL)
+      err_sys("error opening dictionary file %s", fn);
+   free(fn);
+
+   return fp;
 }
 
 /*
