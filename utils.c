@@ -892,7 +892,7 @@ void sig_alarm(int signo) {
  *	entries.
  */
 const char *
-id_to_name(int id, const id_name_map map[]) {
+id_to_name(unsigned id, const id_name_map map[]) {
    int found = 0;
    int i = 0;
 
@@ -954,7 +954,7 @@ int name_to_id(char *name, const id_name_map map[]) {
 
 /* Standard BSD internet checksum routine */
 uint16_t
-in_cksum(uint16_t *ptr, int nbytes) {
+in_cksum(uint16_t *ptr, size_t nbytes) {
 
    register uint32_t sum;
    uint16_t oddbyte;

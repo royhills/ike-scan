@@ -388,7 +388,7 @@ unsigned char* make_ke(size_t *, unsigned, size_t);
 unsigned char* make_nonce(size_t *, unsigned, size_t);
 unsigned char* make_id(size_t *, unsigned, unsigned, unsigned char *, size_t);
 unsigned char* make_cr(size_t *, unsigned, unsigned char *, size_t);
-unsigned char* make_udphdr(size_t *, int, int, unsigned);
+unsigned char* make_udphdr(size_t *, unsigned, unsigned, unsigned);
 int Gettimeofday(struct timeval *);
 void *Malloc(size_t);
 void *Realloc(void *, size_t);
@@ -424,9 +424,9 @@ unsigned char *hmac_md5(const unsigned char *, size_t,
                         const unsigned char *, size_t, unsigned char *);
 unsigned char *hmac_sha1(const unsigned char *, size_t,
                          const unsigned char *, size_t, unsigned char *);
-const char *id_to_name(int, const id_name_map[]);
+const char *id_to_name(unsigned, const id_name_map[]);
 int name_to_id(char *, const id_name_map[]);
-uint16_t in_cksum(uint16_t *, int);
+uint16_t in_cksum(uint16_t *, size_t);
 uint8_t random_byte(void);
 uint32_t random_ip(void);
 void init_genrand(unsigned long);

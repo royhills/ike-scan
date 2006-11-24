@@ -86,7 +86,6 @@ static const id_name_map notification_map[] = { /* From RFC 2408 3.14.1 */
    {-1, NULL}
 };
 
-extern int experimental_value;
 extern psk_crack psk_values;
 extern int mbz_value;
 extern const id_name_map payload_map[];
@@ -398,9 +397,6 @@ make_trans_simple(size_t *length, unsigned next, unsigned number,
 
    if (gss_id_flag)
       add_attr(0, NULL, 'V', OAKLEY_GSS_ID, gss_data_len, 0, gss_data);
-
-   if (experimental_value)	/* Nortel Contivity client */
-      add_attr(0, NULL, 'B', 65535, 0, experimental_value, NULL);
 
 /* Finalise attributes and fill in length value */
 
@@ -961,7 +957,7 @@ make_id(size_t *length, unsigned next, unsigned idtype, unsigned char *id_data,
  *      encapsulated within TCP.
  */
 unsigned char*
-make_udphdr(size_t *length, int sport, int dport, unsigned udplen) {
+make_udphdr(size_t *length, unsigned sport, unsigned dport, unsigned udplen) {
    unsigned char *payload;
    ike_udphdr *hdr;
 

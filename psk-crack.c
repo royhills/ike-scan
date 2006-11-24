@@ -466,9 +466,9 @@ compute_hash (const psk_entry *psk_params, const char *password,
  *	Calculate SKEYID
  */
    if (nortel_user != NULL) {
-      SHA1(password, password_len, nortel_pwd_hash);
-      hmac_sha1(nortel_user, strlen(nortel_user), nortel_pwd_hash,
-                SHA1_HASH_LEN, nortel_psk);
+      SHA1((const unsigned char *) password, password_len, nortel_pwd_hash);
+      hmac_sha1((const unsigned char *)nortel_user, strlen(nortel_user),
+                nortel_pwd_hash, SHA1_HASH_LEN, nortel_psk);
       if (psk_params->hash_type == HASH_TYPE_MD5) {
          hmac_md5(psk_params->skeyid_data, psk_params->skeyid_data_len,
                   nortel_psk, SHA1_HASH_LEN, skeyid);
@@ -479,10 +479,10 @@ compute_hash (const psk_entry *psk_params, const char *password,
    } else {
       if (psk_params->hash_type == HASH_TYPE_MD5) {
          hmac_md5(psk_params->skeyid_data, psk_params->skeyid_data_len,
-                  (unsigned char *) password, password_len, skeyid);
+                  (const unsigned char *) password, password_len, skeyid);
       } else {
          hmac_sha1(psk_params->skeyid_data, psk_params->skeyid_data_len,
-                   (unsigned char *) password, password_len, skeyid);
+                   (const unsigned char *) password, password_len, skeyid);
       }
    }
 /*
