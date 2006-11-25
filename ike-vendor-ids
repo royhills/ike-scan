@@ -130,6 +130,7 @@ Firewall-1 Unknown Vsn	^f4ed19e0c114eb516faaac0ee37daf2807b4381f
 # The last 2 bytes (4 hex chars) are major & minor version.
 # The current version, and the only one that has been observed, is 1.0.
 # Thanks to Hakan Olsson for clarifing this.
+Dead Peer Detection v1.0	^afcad71368a1f1c96b8696fc77570100
 Dead Peer Detection	^afcad71368a1f1c96b8696fc7757....
 
 # XAUTH
@@ -307,17 +308,44 @@ draft-ietf-ipsec-heartbeats-00	^8db7a41811221660
 # Unconfirmed, from StrongSwan vendor.c
 MacOS 10.x	^4d6163204f53582031302e78
 
-# StrongSwan
+# strongSwan
 # VID is MD5 hash of "strongSwan x.y.z" where x.y.z is version number
-# Obtained from StrongSwan vendor.c
-StrongSwan 2.2.0	^86f9f547c5d3ba6720dce9ccd17ac0c2
-StrongSwan 2.2.1	^8dfbb1ebec630f0efe557a7f3e13cd36
-StrongSwan 2.2.2	^8a6903daeb705b35d2eac3fb1a62551c
-StrongSwan 2.3.0	^bb14bc5527a2a8289eeb25149d5f661b
-StrongSwan 2.3.1	^6b75fd64516a6cb6441fedd0c6b4e2b1
-StrongSwan 2.3.2	^56546e1ff761fcb1cc7fb0f1fee978ea
-StrongSwan 2.4.0	^20f0af7152332de372e9394138e0253a
-StrongSwan 2.4.1	^486b3d5c7365a47a10df811660e5894e
+# Obtained from strongSwan 4.0.5 pluto/vendor.c
+strongSwan 4.0.5	^dd180d21e5ce655a768ba32211dd8ad9
+strongSwan 4.0.4	^1ef283f83549b5ff9608b6d634f84d75
+strongSwan 4.0.3	^b181b18e114fc209b3c6e26c3a80718e
+strongSwan 4.0.2	^77e8eea6f556a499de3ffe7f7f95661c
+strongSwan 4.0.1	^9dbbafcf1db0dd595ae065294003ad3e
+strongSwan 4.0.0	^2ce9c946a4c879bf11b50b76cc5692cb
+strongSwan 2.8.0	^32f0e9b9c06dfe8c9ad5599a636971a1
+strongSwan 2.7.3	^7f50cc4ebf04c2d9da73abfd69b77aa2
+strongSwan 2.7.2	^a194e2aaddd0bafb95253dd96dc733eb
+strongSwan 2.7.1	^8134878582121785ba65ea345d6ba724
+strongSwan 2.7.0	^07fa128e4754f9447b1dd46374eef360
+strongSwan 2.6.4	^b927f95219a0fe3600dba3c1182ae55f
+strongSwan 2.6.3	^b2860e7837f711bef3d0eeb106872ded
+strongSwan 2.6.2	^5b1cd6fe7d050eda6c93871c107db3d2
+strongSwan 2.6.1	^66afbc12bbfe6ce108b1f69f4bc917b7
+strongSwan 2.6.0	^3f3266499ffdbd85950e702298062844
+strongSwan 2.5.7	^1f4442296b83d7e33a8b45209ba0e590
+strongSwan 2.5.6	^3c5eba3d8564928e32ae43c3d9924dee
+strongSwan 2.5.5	^3f267ed621ada7ee6c7d8893ccb0b14b
+strongSwan 2.5.4	^7a6bf5b7df89642a75a78ef7d657c1c0
+strongSwan 2.5.3	^df5b1f0f1d5679d9f8512b16c55a6065
+strongSwan 2.5.2	^861ce5eb72164b190e9e629a31cf4901
+strongSwan 2.5.1	^9a4a4648f60f8eda7cfcbfe271ee5b7d
+strongSwan 2.5.0	^9eb3d907ed7ada4e3cbcacb917abc8e4
+strongSwan 2.4.4	^485a70361b4433b31dea1c6be0df243e
+strongSwan 2.4.3	^982b7a063a33c143a8eadc88249f6bcc
+strongSwan 2.4.2	^e7a3fd0c6d771a8f1b8a86a4169c9ea4
+strongSwan 2.4.1	^75b0653cb281eb26d31ede38c8e1e228
+strongSwan 2.4.0	^e829c88149bab3c0cee85da60e18ae9b
+strongSwan 2.3.2	^42a4834c92ab9a7777063afa254bcb69
+strongSwan 2.3.1	^f697c1afcc2ec8ddcdf99dc7af03a67f
+strongSwan 2.3.0	^b8f92b2fa2d3fe5fe158344bda1cc6ae
+strongSwan 2.2.2	^99dc7cc823376b3b33d04357896ae07b
+strongSwan 2.2.1	^d9118b1e9de5efced9cc9d883f2168ff
+strongSwan 2.2.0	^85b6cbec480d5c8cd9882c825ac2c244
 
 # ZyXEL ZyWALL router
 # Observed on several devices.  HTTP interface shows that they are XyWALL

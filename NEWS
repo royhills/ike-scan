@@ -3,6 +3,8 @@ $Id$
 This file gives a brief overview of the major changes between each ike-scan
 release.  For more details please read the ChangeLog file.
 
+ike-scan v1.8.5:
+
 ike-scan v1.8:
 
 * Added many new vendor ID and UDP backoff patterns.  There are now a total
@@ -20,7 +22,7 @@ ike-scan v1.8:
   an arbitary number of transform attributes to be specified in any order.
 
   This new method is specified by using an alternative syntax for the --trans
-  option: --trans=(attr=value, ...).  The old syntax of --trans=(a,b,c,d) is
+  option: --trans=(attr=value, ...).  The old syntax of --trans=a,b,c,d is
   still available.  Note that the brackets are special to some shells, and
   may need to be quoted.
 
@@ -32,8 +34,8 @@ ike-scan v1.8:
   o A decimal integer, e.g. 86400 - Add a 4-byte value.
   o A hex number, e.g. 0xff - Add a variable length value.
 
-  This allows arbitary length lifetime and lifesize attributes to be added
-  using the hex notation.
+  The hex notation allows arbitary length lifetime and lifesize attributes
+  to be added
 
 * Changed default packet-rate calculation from interval to bandwidth.  The
   default outgoing bandwidth is 56000 bits per second, and can be changed with

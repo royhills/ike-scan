@@ -1295,6 +1295,11 @@ process_attr(unsigned char **cp, size_t *len) {
       {6, "CAST"},
       {7, "AES"},		/* RFC 3602 */
       {8, "Camellia"},		/* draft-kato-ipsec-ciph-camellia-01.txt */
+      {65001, "Mars"},		/* Defined in strongSwan constants.h */
+      {65002, "RC6"},		/* Defined in strongSwan constants.h */
+      {65003, "ID_65003"},	/* Defined in strongSwan constants.h */
+      {65004, "Serpent"},	/* Defined in strongSwan constants.h */
+      {65005, "Twofish"},	/* Defined in strongSwan constants.h */
       {-1, NULL}
    };
    static const id_name_map hash_map[] = {	/* From RFC 2409 App. A */

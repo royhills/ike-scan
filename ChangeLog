@@ -1,5 +1,17 @@
 $Id$
 
+2006-11-25 Roy Hills <Roy.Hills@nta-monitor.com>
+
+	* ike-scan.c: Changed --ranssrc option to --sourceip, and allow it
+	  to take an IP address or the string "random".  When --sourceip is
+	  specified, we no longer attempt to read from the socket as reading
+	  UDP from a raw socket doesn't work on all OSes and we are unlikely
+	  to receive any return data if we've spoofed the source address
+	  anyway.
+
+	* ike-vendor-ids: Update strongSwan vendor IDs based on stronSwan
+	  4.0.5
+
 2006-11-23 Roy Hills <Roy.Hills@nta-monitor.com>
 
 	* psk-crack.c: New function load_psk_params() to read the data from

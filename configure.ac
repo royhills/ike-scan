@@ -14,7 +14,7 @@ AC_PROG_CC
  if test -n "$GCC"; then
       CFLAGS="${CFLAGS} -Wall "
 dnl Uncomment the line below for testing with stricter warnings.
-      CFLAGS="${CFLAGS} -pedantic -Wshadow -Wpointer-arith -Wcast-qual -Wcast-align -Wwrite-strings -Wconversion -Wstrict-prototypes -Wmissing-prototypes -Wmissing-declarations -Wnested-externs -Winline "
+dnl      CFLAGS="${CFLAGS} -pedantic -Wshadow -Wpointer-arith -Wcast-qual -Wcast-align -Wwrite-strings -Wconversion -Wstrict-prototypes -Wmissing-prototypes -Wmissing-declarations -Wnested-externs -Winline "
 dnl Uncomment the line below to check malloc/free with electric fence
 dnl      LIBS="-lefence ${LIBS}"
  fi

@@ -109,7 +109,9 @@ uint32_t lifetime_be;	/* Default lifetime in big endian format */
 uint32_t lifesize_be;	/* Default lifesize in big endian format */
 int write_pkt_to_file=0;	/* Write packet to file for debugging */
 int timestamp_flag=0;		/* Timestamp flag */
-int randsrc_flag=0;		/* Randominse source IP address flag */
+int randsrc_flag=0;		/* Randomise source IP address flag */
+int sourceip_flag=0;		/* Set source IP address flag */
+uint32_t src_ip_val;		/* Specified source IP */
 int shownum_flag=0;		/* Display packet number */
 
 int
@@ -171,7 +173,7 @@ main(int argc, char *argv[]) {
       {"writepkttofile", required_argument, 0, OPT_WRITEPKTTOFILE},
       {"randomseed", required_argument, 0, OPT_RANDOMSEED},
       {"timestamp", no_argument, 0, OPT_TIMESTAMP},
-      {"randsrc", no_argument, 0, OPT_RANDSRC},
+      {"sourceip", required_argument, 0, OPT_SOURCEIP},
       {"shownum", no_argument, 0, OPT_SHOWNUM},
       {"experimental", required_argument, 0, 'X'},
       {0, 0, 0, 0}
@@ -181,6 +183,7 @@ main(int argc, char *argv[]) {
  *
  * lower:	-----------------------x--
  * UPPER:	-------H-JK-----Q---U-W-Y-
+ * Digits:	0123456789
  */
    const char *short_options =
       "f:hs:d:r:t:i:b:w:vl:z:m:Ve:a:o::u:n:y:g:p:AG:I:qMRT::P::O:Nc:B:"
@@ -338,6 +341,7 @@ main(int argc, char *argv[]) {
          size_t interval_len;	/* --interval argument length */
          char bandwidth_str[MAXLINE];	/* --bandwidth argument */
          size_t bandwidth_len;	/* --bandwidth argument length */
+         struct in_addr src_ip_struct;
          case 'f':	/* --file */
             strncpy(filename, optarg, MAXLINE);
             filename_flag=1;
@@ -590,8 +594,15 @@ main(int argc, char *argv[]) {
          case OPT_TIMESTAMP: /* --timestamp */
             timestamp_flag = 1;
             break;
-         case OPT_RANDSRC: /* --randsrc */
-            randsrc_flag = 1;
+         case OPT_SOURCEIP: /* --sourceip */
+            sourceip_flag = 1;
+            if ((strcmp(optarg, "random")) == 0) {
+               randsrc_flag = 1;
+            } else {
+               if (!(inet_aton(optarg, &src_ip_struct)))
+                  err_msg("ERROR: %s is not a valid IP address", optarg);
+               src_ip_val=src_ip_struct.s_addr;
+            }
             break;
          case OPT_SHOWNUM: /* --shownum */
             shownum_flag = 1;
@@ -628,7 +639,7 @@ main(int argc, char *argv[]) {
          err_sys("ERROR: setsockopt() failed");
       if ((setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &on, sizeof(on))) < 0) 
          err_sys("ERROR: setsockopt() failed");
-   } else if (randsrc_flag) {	/* Raw IP socket */
+   } else if (sourceip_flag) {	/* Raw IP socket */
       const int on = 1;	/* for setsockopt() */
 
       if ((sockfd = socket(AF_INET, SOCK_RAW, IPPROTO_RAW)) < 0)
@@ -1677,9 +1688,9 @@ send_packet(int s, unsigned char *packet_out, size_t packet_out_len,
       packet_out_len += 40;
    }
 /*
- *	Spoof source address XXXX
+ *	Spoof source address
  */
-   if (randsrc_flag != 0) {
+   if (sourceip_flag != 0) {
       unsigned char *orig_packet_out = packet_out;
       size_t orig_packet_out_len = packet_out_len;
       struct iphdr *iph;
@@ -1688,8 +1699,12 @@ send_packet(int s, unsigned char *packet_out, size_t packet_out_len,
       uint32_t source_address_host;
       uint32_t source_address;
 
-      source_address_host = random_ip();
-      source_address = htonl(source_address_host);
+      if (randsrc_flag) {	/* Random source IP */
+         source_address_host = random_ip();
+         source_address = htonl(source_address_host);
+      } else {			/* Specified source IP */
+         source_address = src_ip_val;
+      }
       packet_out=Malloc(sizeof(struct iphdr) + sizeof(struct udphdr) +
                         packet_out_len);
       iph = (struct iphdr *) packet_out;
@@ -1787,11 +1802,15 @@ recvfrom_wto(int s, unsigned char *buf, size_t len, struct sockaddr *saddr,
 
    if (tmo < 0)
      tmo = 0;	/* Negative timeouts not allowed */
-   FD_ZERO(&readset);
-   FD_SET(s, &readset);
    to.tv_sec  = tmo/1000000;
    to.tv_usec = (tmo - 1000000*to.tv_sec);
-   n = select(s+1, &readset, NULL, NULL, &to);
+   if (sourceip_flag) {	/* Source IP spoofing using raw socket */
+      n = select(0, NULL, NULL, NULL, &to);
+   } else {		/* Normal UDP socket */
+      FD_ZERO(&readset);
+      FD_SET(s, &readset);
+      n = select(s+1, &readset, NULL, NULL, &to);
+   }
    if (n < 0) {
       if (errno == EINTR) {
          return -1;	/* Handle "Interrupted System call" as timeout */
@@ -3385,15 +3404,18 @@ usage(int status, int detailed) {
       fprintf(stderr, "\n--timestamp\t\tDisplay timestamps for received packets.\n");
       fprintf(stderr, "\t\t\tThis option causes a timestamp to be displayed for\n");
       fprintf(stderr, "\t\t\teach received packet.\n");
-      fprintf(stderr, "\n--randsrc\t\tRandomise source IP address for sent packets.\n");
-      fprintf(stderr, "\t\t\tThis option causes the IKE packets that are sent\n");
-      fprintf(stderr, "\t\t\tby ike-scan to have random source IP addresses.\n");
+      fprintf(stderr, "\n--sourceip=<s>\t\tSet source IP address for outgoing packets to <s>.\n");
+      fprintf(stderr, "\t\t\tThis option causes the outgoing IKE packets to have\n");
+      fprintf(stderr, "\t\t\tthe specified source IP address.\n");
+      fprintf(stderr, "\t\t\tThe address can either be an IP address in dotted\n");
+      fprintf(stderr, "\t\t\tquad format, or the string \"random\" which will use\n");
+      fprintf(stderr, "\t\t\ta different random source address for each packet that\n");
+      fprintf(stderr, "\t\t\tis sent.\n");
       fprintf(stderr, "\t\t\tIf this option is used, no packets will be received\n");
-      fprintf(stderr, "\t\t\tbecause they will be sent to the spoofed source\n");
-      fprintf(stderr, "\t\t\taddress instead.\n");
       fprintf(stderr, "\t\t\tThis option requires raw socket support, and you\n");
       fprintf(stderr, "\t\t\twill need superuser privileges to use this option,\n");
       fprintf(stderr, "\t\t\teven if you specify a high source port.\n");
+      fprintf(stderr, "\t\t\tThis option does not work on all operating systems.\n");
       fprintf(stderr, "\n--shownum\t\tDisplay the host number for received packets.\n");
    } else {
       fprintf(stderr, "use \"ike-scan --help\" for detailed information on the available options.\n");
