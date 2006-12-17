@@ -1,5 +1,15 @@
 $Id$
 
+2006-11-30 Roy Hills <Roy.Hills@nta-monitor.com>
+
+	* isakmp.c: Moved all the ID/Name maps into isakmp.c as global
+	  consts.  Other source files that need to reference them do so
+	  by declaring them as extern.
+
+	* utils.c: New functions name_or_number() and str_ccmp() which
+	  allow a string containing either a number or a name from the
+	  specified map to be used.
+
 2006-11-25 Roy Hills <Roy.Hills@nta-monitor.com>
 
 	* ike-scan.c: Changed --ranssrc option to --sourceip, and allow it

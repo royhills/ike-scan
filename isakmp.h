@@ -98,6 +98,10 @@
 #define ISAKMP_XCHG_AO         3	/* Authentication Only */
 #define ISAKMP_XCHG_AGGR       4	/* Aggressive */
 #define ISAKMP_XCHG_INFO       5	/* Informational */
+#define ISAKMP_XCHG_IKE_SA_INIT	34	/* IKE v2 */
+#define ISAKMP_XCHG_IKE_AUTH   35
+#define ISAKMP_XCHG_CREATE_CHILD_SA 36
+#define ISAKMP_XCHG_INFORMATIONAL 37
 
 #define SIT_IDENTITY_ONLY        0x01
 #define SIT_SECRECY              0x02
@@ -180,6 +184,8 @@ typedef const struct field_desc {
 
 /* ISAKMP Header: for all messages
  * layout from draft-ietf-ipsec-isakmp-09.txt section 3.1
+ * This structure is the same for both IKEv1 and IKEv2, although IKEv2
+ * calls the cookies "SPIs".
  *                      1                   2                   3
  *  0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
  * +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
@@ -213,6 +219,8 @@ struct isakmp_hdr
  * layout from draft-ietf-ipsec-isakmp-09.txt section 3.2
  * This describes the first 32-bit chunk of all payloads.
  * The previous next payload depends on the actual payload type.
+ * This is essentially the same for both IKEv1 and IKEv2, except that
+ * IKEv2 uses the top bit of the reserved field as "Critical".
  *                      1                   2                   3
  *  0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
  * +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+

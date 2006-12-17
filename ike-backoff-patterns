@@ -116,8 +116,9 @@ Firewall-1 4.1/NG/NGX	0, 2, 2, 2, 2, 2, 2, 4, 4, 4, 4, 4
 
 # Discovered by: Roy Hills, December 2002
 # Observed on: FreeS/WAN 1.9 on Debian Linux 2.2r7 (Potato) with 2.2.17 Kernel
-# Observed on: openSwan 4.0.5 on Debian Etch with 2.6.18 kernel
-Linux FreeS/WAN, strongSwan	0, 10, 20
+# Observed on: strongSwan 4.0.5 on Debian Etch with 2.6.18 kernel
+# Observed on: OpenSwan 2.2.0 on Debian Sarge with 2.6.16 kernel
+Linux FreeS/WAN, OpenSwan, strongSwan	0, 10, 20
 
 # Discovered by: Roy Hills, November 2002
 # Additional fuzz on 1st retry suggested by Florent Trupheme, April 2005

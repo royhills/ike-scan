@@ -5,6 +5,35 @@ release.  For more details please read the ChangeLog file.
 
 ike-scan v1.8.5:
 
+* New --sourceip option, which allows spoofing source IP address.  This only
+  works on systems that support raw sockets.
+
+* Allow matching backoff patterns which contain only one packet.  This is for
+  simplistic implementations that don't perform any backoff at all.  There are
+  very few of these systems, so this absense of a pattern is still useful for
+  fingerprinting.
+
+* Modified psk-crack, so it is able to crack passwords hased with the Nortel
+  Contivity proprietary algorithm as well as those using the standard algorithm.
+
+* Added --shownum option, which causes the number of each packet received to
+  be displayed before the packet details.
+
+* Added --timestamp option, which causes the time when the packet was received
+  to be displayed in %H:%M:%S.%u format before the packet details.
+
+* Added --randomseed option, which allows the PRNG seed to be specified.
+  This allows packets containing payloads with random data, such as Key
+  Exchange and Nonce to be repeatable.
+
+* Changed PRNG implementation from the standard rand() function to the
+  Mersenne Twister. This is both a better PRNG and is also reproducable across
+  different platforms.
+
+* Changed revision control system from CVS to SVN, with the result that the
+  individual source file version numbers as reported with --version or
+  ident(1) are now integers rather than x.y format.
+
 ike-scan v1.8:
 
 * Added many new vendor ID and UDP backoff patterns.  There are now a total

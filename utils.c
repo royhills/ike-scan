@@ -923,15 +923,18 @@ id_to_name(unsigned id, const id_name_map map[]) {
  *
  *	Returns:
  *
- *	A the id associated with the name if an association is 	found in the
+ *	The id associated with the name if an association is found in the
  *	map, otherwise -1.
  *
  *	This function uses a sequential search through the map to find the
  *	ID and associated name.  This is OK when the map is relatively small,
  *	but could be time consuming if the map contains a large number of
  *	entries.
+ *
+ *	The search is case-blind.
  */
-int name_to_id(char *name, const id_name_map map[]) {
+int
+name_to_id(const char *name, const id_name_map map[]) {
    int found = 0;
    int i = 0;
 
@@ -939,7 +942,7 @@ int name_to_id(char *name, const id_name_map map[]) {
       return -1;
 
    while (map[i].id != -1) {
-      if ((strncmp(name,map[i].name,MAXLINE)) == 0) {
+      if ((str_ccmp(name,map[i].name)) == 0) {
          found = 1;
          break;
       }
@@ -1048,6 +1051,62 @@ random_ip(void) {
    } while (!acceptable);
 
    return random_value;
+}
+
+/*
+ *	str_ccmp  -- Case-blind string comparison
+ *
+ *	Inputs:
+ *
+ *	s1 -- The first input string
+ *	s2 -- The second input string
+ *
+ *	Returns:
+ *
+ *	An integer indicating whether s1 is less than (-1), the same as (0),
+ *	or greater than (1) s2.
+ *
+ *	This function performs the same function, and takes the same arguments
+ *	as the common library function strcasecmp.  This function is used
+ *	instead because strcasecmp is not portable.
+ */
+int
+str_ccmp( const char *s1, const char *s2 ) {
+   int c1, c2;
+
+   for( ; ; s1++, s2++ ){
+      c1 = tolower( (unsigned char) *s1 );
+      c2 = tolower( (unsigned char) *s2 );
+
+      if( c1 > c2            )  return   1;
+      if( c1 < c2            )  return  -1;
+      if( c1 == 0 && c2 == 0 )  return   0;
+   }
+} 
+
+/*
+ *	name_or_number -- Calculate the numeric value of a string containing
+ *	                  either a name from a map, or a number.
+ *
+ *	Inputs:
+ *
+ *	string		The input string
+ *	map		The ID/name map
+ */
+unsigned
+name_or_number(const char *string, const id_name_map map[]) {
+   int result;
+   char *endptr;
+
+   result=strtoul(string, &endptr, 0);
+   if (endptr != string)  /* Successful conversion */
+      return result;
+
+   result=name_to_id(string, map);
+   if (result == -1)
+      err_msg("Invalid value: %s", string);
+
+   return result;
 }
 
 void utils_use_rcsid(void) {

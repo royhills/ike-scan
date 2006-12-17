@@ -182,6 +182,7 @@ unsigned char *SHA1(const unsigned char *, size_t, unsigned char *);
 #define DEFAULT_SITUATION SIT_IDENTITY_ONLY /* Default SA Situation */
 #define DEFAULT_PROTOCOL PROTO_ISAKMP	/* Default Proposal Protocol */
 #define DEFAULT_TRANS_ID KEY_IKE	/* Default Transform ID */
+#define DEFAULT_IKE_VERSION 1		/* Default IKE version */
 #define SYSLOG 1			/* Use syslog if defined */
 #define SYSLOG_FACILITY LOG_USER	/* Syslog facility to use */
 #define PATTERNS_FILE "ike-backoff-patterns" /* Backoff patterns filename */
@@ -319,6 +320,7 @@ typedef struct {	/* IKE Packet Parameters */
    unsigned hdr_msgid;	/* ISAKMP Header message id */
    unsigned hdr_next_payload;	/* Next payload in ISAKMP header */
    int advanced_trans_flag;
+   int ike_version;	/* IKE version */
 } ike_packet_params;
 
 /* Functions */
@@ -393,9 +395,9 @@ int Gettimeofday(struct timeval *);
 void *Malloc(size_t);
 void *Realloc(void *, size_t);
 unsigned long int Strtoul(const char *, int);
-void decode_trans_simple(char *, unsigned *, unsigned *, unsigned *,
+void decode_trans_simple(const char *, unsigned *, unsigned *, unsigned *,
                          unsigned *, unsigned *);
-unsigned char *decode_transform(char *, size_t *);
+unsigned char *decode_transform(const char *, size_t *);
 unsigned char *skip_payload(unsigned char *, size_t *, unsigned *);
 unsigned char *process_isakmp_hdr(unsigned char *, size_t *, unsigned *,
                                   unsigned *, char **);
@@ -425,10 +427,12 @@ unsigned char *hmac_md5(const unsigned char *, size_t,
 unsigned char *hmac_sha1(const unsigned char *, size_t,
                          const unsigned char *, size_t, unsigned char *);
 const char *id_to_name(unsigned, const id_name_map[]);
-int name_to_id(char *, const id_name_map[]);
+int name_to_id(const char *, const id_name_map[]);
 uint16_t in_cksum(uint16_t *, size_t);
 uint8_t random_byte(void);
 uint32_t random_ip(void);
+int str_ccmp(const char *, const char *);
+unsigned name_or_number(const char *, const id_name_map[]);
 void init_genrand(unsigned long);
 unsigned long genrand_int32(void);
 double genrand_real2(void);

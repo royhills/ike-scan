@@ -46,7 +46,7 @@
 
 static char rcsid[] = "$Id$";	/* RCS ID for ident(1) */
 
-static const id_name_map notification_map[] = { /* From RFC 2408 3.14.1 */
+const id_name_map notification_map[] = { /* From RFC 2408 3.14.1 */
    {0, "UNSPECIFIED"},
    {1, "INVALID-PAYLOAD-TYPE"},
    {2, "DOI-NOT-SUPPORTED"},
@@ -85,12 +85,147 @@ static const id_name_map notification_map[] = { /* From RFC 2408 3.14.1 */
    {24578, "INITIAL-CONTACT"},
    {-1, NULL}
 };
+const id_name_map attr_map[] = {	/* From RFC 2409 App. A and */
+   {1, "Enc"},			/* draft-ietf-ipsec-isakmp-gss-auth */
+   {2, "Hash"},
+   {3, "Auth"},
+   {4, "Group"},
+   {5, "GroupType"},
+   {6, "GroupPrime/IrreduciblePolynomial"},
+   {7, "GroupGeneratorOne"},
+   {8, "GroupGeneratorTwo"},
+   {9, "GroupCurve A"},
+   {10, "GroupCurve B"},
+   {11, "LifeType"},
+   {12, "LifeDuration"},
+   {13, "PRF"},
+   {14, "KeyLength"},
+   {15, "FieldSize"},
+   {16, "GroupOrder"},
+   {16384, "GSSIdentityName"},
+   {-1, NULL}
+};
+const id_name_map enc_map[] = {	/* From RFC 2409 App. A */
+   {1, "DES"},
+   {2, "IDEA"},
+   {3, "Blowfish"},
+   {4, "RC5"},
+   {5, "3DES"},
+   {6, "CAST"},
+   {7, "AES"},		/* RFC 3602 */
+   {8, "Camellia"},		/* draft-kato-ipsec-ciph-camellia-01.txt */
+   {65001, "Mars"},		/* Defined in strongSwan constants.h */
+   {65002, "RC6"},		/* Defined in strongSwan constants.h */
+   {65003, "ID_65003"},	/* Defined in strongSwan constants.h */
+   {65004, "Serpent"},	/* Defined in strongSwan constants.h */
+   {65005, "Twofish"},	/* Defined in strongSwan constants.h */
+   {-1, NULL}
+};
+const id_name_map hash_map[] = {	/* From RFC 2409 App. A */
+   {1, "MD5"},
+   {2, "SHA1"},
+   {3, "Tiger"},
+   {4, "SHA2-256"},
+   {5, "SHA2-384"},
+   {6, "SHA2-512"},
+   {-1, NULL}
+};
+const id_name_map auth_map[] = {	/* From RFC 2409 App. A */
+   {1, "PSK"},
+   {2, "DSS"},
+   {3, "RSA_Sig"},
+   {4, "RSA_Enc"},
+   {5, "RSA_RevEnc"},
+   {6, "ElGamel_Enc"},
+   {7, "ElGamel_RevEnc"},
+   {8, "ECDSA_Sig"},
+   {64221, "Hybrid"},
+   {65001, "XAUTH"},
+   {-1, NULL}
+};
+const id_name_map dh_map[] = {	/* From RFC 2409 App. A */
+   {1, "1:modp768"},				/* and RFC 3526 */
+   {2, "2:modp1024"},
+   {3, "3:ec2n155"},
+   {4, "4:ec2n185"},
+   {5, "5:modp1536"},
+   {6, "6:ec2n163"},
+   {7, "7:ec2n163"},
+   {8, "8:ec2n283"},
+   {9, "9:ec2n283"},
+   {10, "10:ec2n409"},
+   {11, "11:ec2n409"},
+   {12, "12:ec2n571"},
+   {13, "13:ec2n571"},
+   {14, "14:modp2048"},
+   {15, "15:modp3072"},
+   {16, "16:modp4096"},
+   {17, "17:modp6144"},
+   {18, "18:modp8192"},
+   {-1, NULL}
+};
+const id_name_map life_map[] = {	/* From RFC 2409 App. A */
+   {1, "Seconds"},
+   {2, "Kilobytes"},
+   {-1, NULL}
+};
+const id_name_map payload_map[] = {	/* Payload types from RFC 2408 3.1 */
+   {1, "SecurityAssociation"},
+   {2, "Proposal"},
+   {3, "Transform"},
+   {4, "KeyExchange"},
+   {5, "Identification"},
+   {6, "Certificate"},
+   {7, "CertificateRequest"},
+   {8, "Hash"},
+   {9, "Signature"},
+   {10, "Nonce"},
+   {11, "Notification"},
+   {12, "Delete"},
+   {13, "VendorID"},
+   {-1, NULL}
+};
+const id_name_map doi_map[] = {
+   {0, "ISAKMP"},
+   {1, "IPsec"},
+   {-1, NULL}
+};
+const id_name_map protocol_map[] = {
+   {1, "PROTO_ISAKMP"},
+   {2, "PROTO_IPSEC_AH"},
+   {3, "PROTO_IPSEC_ESP"},
+   {4, "PROTO_IPSEC_COMP"},
+   {-1, NULL}
+};
+const id_name_map id_map[] = {	/* From RFC 2407 4.6.2.1 */
+   {1, "ID_IPV4_ADDR"},
+   {2, "ID_FQDN"},
+   {3, "ID_USER_FQDN"},
+   {4, "ID_IPV4_ADDR_SUBNET"},
+   {5, "ID_IPV6_ADDR"},
+   {6, "ID_IPV6_ADDR_SUBNET"},
+   {7, "ID_IPV4_ADDR_RANGE"},
+   {8, "ID_IPV6_ADDR_RANGE"},
+   {9, "ID_DER_ASN1_DN"},
+   {10, "ID_DER_ASN1_GN"},
+   {11, "ID_KEY_ID"},
+};
+const id_name_map cert_map[] = {	/* From RFC 2408 Sec. 3.9 */
+   {1, "PKCS #7 wrapped X.509 certificate"},
+   {2, "PGP Certificate"},
+   {3, "DNS Signed Key"},
+   {4, "X.509 Certificate - Signature"},
+   {5, "X.509 Certificate - Key Exchange"},
+   {6, "Kerberos Tokens"},
+   {7, "Certificate Revocation List (CRL)"},
+   {8, "Authority Revocation List (ARL)"},
+   {9, "SPKI Certificate"},
+   {10, "X.509 Certificate - Attribute"},
+   {-1, NULL}
+};
 
 extern psk_crack psk_values;
 extern int mbz_value;
-extern const id_name_map payload_map[];
-extern const id_name_map doi_map[];
-extern const id_name_map protocol_map[];
 
 /*
  *	make_isakmp_hdr -- Construct an ISAKMP Header
@@ -1266,91 +1401,6 @@ process_attr(unsigned char **cp, size_t *len) {
    char *attr_value_str;
    size_t value_len;
    size_t size;
-   static const id_name_map attr_map[] = {	/* From RFC 2409 App. A and */
-      {1, "Enc"},			/* draft-ietf-ipsec-isakmp-gss-auth */
-      {2, "Hash"},
-      {3, "Auth"},
-      {4, "Group"},
-      {5, "GroupType"},
-      {6, "GroupPrime/IrreduciblePolynomial"},
-      {7, "GroupGeneratorOne"},
-      {8, "GroupGeneratorTwo"},
-      {9, "GroupCurve A"},
-      {10, "GroupCurve B"},
-      {11, "LifeType"},
-      {12, "LifeDuration"},
-      {13, "PRF"},
-      {14, "KeyLength"},
-      {15, "FieldSize"},
-      {16, "GroupOrder"},
-      {16384, "GSSIdentityName"},
-      {-1, NULL}
-   };
-   static const id_name_map enc_map[] = {	/* From RFC 2409 App. A */
-      {1, "DES"},
-      {2, "IDEA"},
-      {3, "Blowfish"},
-      {4, "RC5"},
-      {5, "3DES"},
-      {6, "CAST"},
-      {7, "AES"},		/* RFC 3602 */
-      {8, "Camellia"},		/* draft-kato-ipsec-ciph-camellia-01.txt */
-      {65001, "Mars"},		/* Defined in strongSwan constants.h */
-      {65002, "RC6"},		/* Defined in strongSwan constants.h */
-      {65003, "ID_65003"},	/* Defined in strongSwan constants.h */
-      {65004, "Serpent"},	/* Defined in strongSwan constants.h */
-      {65005, "Twofish"},	/* Defined in strongSwan constants.h */
-      {-1, NULL}
-   };
-   static const id_name_map hash_map[] = {	/* From RFC 2409 App. A */
-      {1, "MD5"},
-      {2, "SHA1"},
-      {3, "Tiger"},
-      {4, "SHA2-256"},
-      {5, "SHA2-384"},
-      {6, "SHA2-512"},
-      {-1, NULL}
-   };
-   static const id_name_map auth_map[] = {	/* From RFC 2409 App. A */
-      {1, "PSK"},
-      {2, "DSS"},
-      {3, "RSA_Sig"},
-      {4, "RSA_Enc"},
-      {5, "RSA_RevEnc"},
-      {6, "ElGamel_Enc"},
-      {7, "ElGamel_RevEnc"},
-      {8, "ECDSA_Sig"},
-      {64221, "Hybrid"},
-      {65001, "XAUTH"},
-      {-1, NULL}
-   };
-
-   static const id_name_map dh_map[] = {	/* From RFC 2409 App. A */
-      {1, "1:modp768"},				/* and RFC 3526 */
-      {2, "2:modp1024"},
-      {3, "3:ec2n155"},
-      {4, "4:ec2n185"},
-      {5, "5:modp1536"},
-      {6, "6:ec2n163"},
-      {7, "7:ec2n163"},
-      {8, "8:ec2n283"},
-      {9, "9:ec2n283"},
-      {10, "10:ec2n409"},
-      {11, "11:ec2n409"},
-      {12, "12:ec2n571"},
-      {13, "13:ec2n571"},
-      {14, "14:modp2048"},
-      {15, "15:modp3072"},
-      {16, "16:modp4096"},
-      {17, "17:modp6144"},
-      {18, "18:modp8192"},
-      {-1, NULL}
-   };
-   static const id_name_map life_map[] = {	/* From RFC 2409 App. A */
-      {1, "Seconds"},
-      {2, "Kilobytes"},
-      {-1, NULL}
-   };
 
    if (ntohs(attr_hdr->isaat_af_type) & 0x8000) {	/* Basic attribute */
       attr_type = 'B';
@@ -1618,19 +1668,6 @@ process_id(unsigned char *cp, size_t len) {
    char *msg2;
    unsigned char *id_data;
    size_t data_len;
-   static const id_name_map id_map[] = {	/* From RFC 2407 4.6.2.1 */
-      {1, "ID_IPV4_ADDR"},
-      {2, "ID_FQDN"},
-      {3, "ID_USER_FQDN"},
-      {4, "ID_IPV4_ADDR_SUBNET"},
-      {5, "ID_IPV6_ADDR"},
-      {6, "ID_IPV6_ADDR_SUBNET"},
-      {7, "ID_IPV4_ADDR_RANGE"},
-      {8, "ID_IPV6_ADDR_RANGE"},
-      {9, "ID_DER_ASN1_DN"},
-      {10, "ID_DER_ASN1_GN"},
-      {11, "ID_KEY_ID"},
-   };
 
    if (len < sizeof(struct isakmp_id) ||
         ntohs(hdr->isaid_length) < sizeof(struct isakmp_id))
@@ -1728,19 +1765,6 @@ process_cert(unsigned char *cp, size_t len, unsigned next) {
    unsigned char cert_type;
    unsigned char *cert_data;
    size_t data_len;
-   static const id_name_map cert_map[] = {	/* From RFC 2408 Sec. 3.9 */
-      {1, "PKCS #7 wrapped X.509 certificate"},
-      {2, "PGP Certificate"},
-      {3, "DNS Signed Key"},
-      {4, "X.509 Certificate - Signature"},
-      {5, "X.509 Certificate - Key Exchange"},
-      {6, "Kerberos Tokens"},
-      {7, "Certificate Revocation List (CRL)"},
-      {8, "Authority Revocation List (ARL)"},
-      {9, "SPKI Certificate"},
-      {10, "X.509 Certificate - Attribute"},
-      {-1, NULL}
-   };
 
    if (len < sizeof(struct isakmp_generic) + 1 ||
         ntohs(hdr->isag_length) < sizeof(struct isakmp_generic) + 1)

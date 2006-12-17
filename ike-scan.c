@@ -77,34 +77,6 @@ psk_crack psk_values = {		/* Pre-shared key values */
 };
 int no_dns_flag=0;			/* No DNS flag */
 int mbz_value=0;			/* Value for MBZ fields */
-const id_name_map payload_map[] = {	/* Payload types from RFC 2408 3.1 */
-   {1, "SecurityAssociation"},
-   {2, "Proposal"},
-   {3, "Transform"},
-   {4, "KeyExchange"},
-   {5, "Identification"},
-   {6, "Certificate"},
-   {7, "CertificateRequest"},
-   {8, "Hash"},
-   {9, "Signature"},
-   {10, "Nonce"},
-   {11, "Notification"},
-   {12, "Delete"},
-   {13, "VendorID"},
-   {-1, NULL}
-};
-const id_name_map doi_map[] = {
-   {0, "ISAKMP"},
-   {1, "IPsec"},
-   {-1, NULL}
-};
-const id_name_map protocol_map[] = {
-   {1, "PROTO_ISAKMP"},
-   {2, "PROTO_IPSEC_AH"},
-   {3, "PROTO_IPSEC_ESP"},
-   {4, "PROTO_IPSEC_COMP"},
-   {-1, NULL}
-};
 uint32_t lifetime_be;	/* Default lifetime in big endian format */
 uint32_t lifesize_be;	/* Default lifesize in big endian format */
 int write_pkt_to_file=0;	/* Write packet to file for debugging */
@@ -113,6 +85,19 @@ int randsrc_flag=0;		/* Randomise source IP address flag */
 int sourceip_flag=0;		/* Set source IP address flag */
 uint32_t src_ip_val;		/* Specified source IP */
 int shownum_flag=0;		/* Display packet number */
+
+extern const id_name_map notification_map[];
+extern const id_name_map attr_map[];
+extern const id_name_map enc_map[];
+extern const id_name_map hash_map[];
+extern const id_name_map auth_map[];
+extern const id_name_map dh_map[];
+extern const id_name_map life_map[];
+extern const id_name_map payload_map[];
+extern const id_name_map doi_map[];
+extern const id_name_map protocol_map[];
+extern const id_name_map id_map[];
+extern const id_name_map cert_map[];
 
 int
 main(int argc, char *argv[]) {
@@ -175,6 +160,7 @@ main(int argc, char *argv[]) {
       {"timestamp", no_argument, 0, OPT_TIMESTAMP},
       {"sourceip", required_argument, 0, OPT_SOURCEIP},
       {"shownum", no_argument, 0, OPT_SHOWNUM},
+      {"ikev2", no_argument, 0, '2'},
       {"experimental", required_argument, 0, 'X'},
       {0, 0, 0, 0}
    };
@@ -183,11 +169,11 @@ main(int argc, char *argv[]) {
  *
  * lower:	-----------------------x--
  * UPPER:	-------H-JK-----Q---U-W-Y-
- * Digits:	0123456789
+ * Digits:	01-3456789
  */
    const char *short_options =
       "f:hs:d:r:t:i:b:w:vl:z:m:Ve:a:o::u:n:y:g:p:AG:I:qMRT::P::O:Nc:B:"
-      "L:Z:E:C:D:S:j:k:F:X:";
+      "L:Z:E:C:D:S:j:k:F:2X:";
    int arg;
    char arg_str[MAXLINE];	/* Args as string for syslog */
    int options_index=0;
@@ -233,7 +219,8 @@ main(int argc, char *argv[]) {
       0,			/* ISAKMP Header Flags */
       0,			/* ISAKMP Header Message ID */
       0,			/* ISAKMP Header Next Payload */
-      0				/* advanced_trans_flag */
+      0,			/* advanced_trans_flag */
+      DEFAULT_IKE_VERSION	/* IKE Version */
    };
    unsigned pattern_fuzz = DEFAULT_PATTERN_FUZZ; /* Pattern matching fuzz in ms */
    unsigned tcp_connect_timeout = DEFAULT_TCP_CONNECT_TIMEOUT;
@@ -400,7 +387,7 @@ main(int argc, char *argv[]) {
             }
             break;
          case 'm':	/* --auth */
-            ike_params.auth_method=Strtoul(optarg, 10);
+            ike_params.auth_method=name_or_number(optarg, auth_map);
             break;
          case 'V':	/* --version */
             fprintf(stderr, "%s\n\n", PACKAGE_STRING);
@@ -606,6 +593,10 @@ main(int argc, char *argv[]) {
             break;
          case OPT_SHOWNUM: /* --shownum */
             shownum_flag = 1;
+            break;
+         case '2':	/* --ikev2 */
+            ike_params.ike_version = 2;
+            warn_msg("WARNING: IKEv2 is not supported yet.");
             break;
          case 'X':	/* --experimental */
             experimental_value = Strtoul(optarg, 0);
@@ -2890,52 +2881,60 @@ load_id_strings(char *filename) {
  *
  */
 void
-decode_trans_simple(char *str, unsigned *enc, unsigned *keylen, unsigned *hash,
-                    unsigned *auth, unsigned *group) {
+decode_trans_simple(const char *trans_str, unsigned *enc, unsigned *keylen,
+                    unsigned *hash, unsigned *auth, unsigned *group) {
    char *cp;
-   char *endp;
+   char *str;
+   char *tok;
    int pos;	/* 1=enc, 2=hash, 3=auth, 4=group */
-   unsigned val;
-   unsigned len;
 
-   cp = str;
+/*
+ *	Make a copy of the transform string, because strtok modifies it's
+ *	argument.
+ */
+   str = Malloc(strlen(trans_str)+1);
+   strcpy(str, trans_str);
+/*
+ *	Split the transform string into comma-separated tokens, and process
+ *	each of these tokens in turn.
+ */
    pos = 1;
-   len = 0;
-   while (*cp != '\0') {
-      val = strtoul(cp, &endp, 0);
-      if (endp == cp)  /* No digits converted */
-         err_msg("ERROR: \"%s\" is not a valid transform specification", str);
-      cp=endp;	/* Advance cp past converted value */
-      if (*cp == '/' && pos == 1) {	/* Keylength */
-         cp++;
-         len = strtoul(cp, &endp, 0);
-         if (endp == cp)  /* No digits converted */
-            err_msg("ERROR: \"%s\" is not a valid transform specification",
-                    str);
-         cp=endp;	/* Advance cp past converted value */
-      }
+   tok = strtok(str, ",");
+   while (tok != NULL) {
+/*
+ *	Assign value to the appropraite attribute.
+ */
       switch(pos) {
          case 1:
-            *enc=val;
-            *keylen=len;
+            cp = strchr(tok, '/');
+            if (cp != NULL) {
+               *keylen = Strtoul(cp+1, 0);
+               *cp = '\0';
+            } else {
+               *keylen = 0;
+            }
+            *enc=name_or_number(tok, enc_map);
             break;
          case 2:
-            *hash=val;
+            *hash=name_or_number(tok, hash_map);
             break;
          case 3:
-            *auth=val;
+            *auth=name_or_number(tok, auth_map);
             break;
          case 4:
-            *group=val;
+            *group=Strtoul(tok, 0);
             break;
          default:
             warn_msg("WARNING: Ignoring extra transform specifications past 4th");
             break;
       }
-      if (*cp == ',')
-         cp++;		/* Move on to next entry */
+/*
+ *	Get next token
+ */
       pos++;
+      tok = strtok(NULL, "(),");
    }
+   free(str);
 }
 
 /*
@@ -2950,7 +2949,7 @@ decode_trans_simple(char *str, unsigned *enc, unsigned *keylen, unsigned *hash,
  *
  */
 unsigned char *
-decode_transform(char *trans_str, size_t *attr_len) {
+decode_transform(const char *trans_str, size_t *attr_len) {
    char *str;
    char *tok;
    char *key_str;
@@ -3005,6 +3004,7 @@ decode_transform(char *trans_str, size_t *attr_len) {
 /*
  *	Finalise attributes.
  */
+   free(str);
    attr = add_attr(1, attr_len, '\0', 0, 0, 0, NULL);
    return attr;
 }
@@ -3023,30 +3023,6 @@ decode_transform(char *trans_str, size_t *attr_len) {
  */
 void
 usage(int status, int detailed) {
-
-   static const id_name_map auth_map[] = { /* Auth methods RFC 2409 App. A */
-      {1, "pre-shared key"},
-      {2, "DSS signatures"},
-      {3, "RSA signatures"},
-      {4, "Encryption with RSA"},
-      {5, "Revised encryption with RSA"},
-      {-1, NULL}
-   };
-   static const id_name_map id_type_map[] ={ /* ID Type names RFC 2407 4.6.2.1 */
-      {1, "ID_IPV4_ADDR"},
-      {2, "ID_FQDN"},
-      {3, "ID_USER_FQDN"},
-      {4, "ID_IPV4_ADDR_SUBNET"},
-      {5, "ID_IPV6_ADDR"},
-      {6, "ID_IPV6_ADDR_SUBNET"},
-      {7, "ID_IPV4_ADDR_RANGE"},
-      {8, "ID_IPV6_ADDR_RANGE"},
-      {9, "ID_DER_ASN1_DN"},
-      {10, "ID_DER_ASN1_GN"},
-      {11, "ID_KEY_ID"},
-      {-1, NULL}
-   };
-
    fprintf(stderr, "Usage: ike-scan [options] [hosts...]\n");
    fprintf(stderr, "\n");
    fprintf(stderr, "Target hosts must be specified on the command line unless the --file option is\n");
@@ -3240,7 +3216,7 @@ usage(int status, int detailed) {
       fprintf(stderr, "\t\t\tThis option is only applicable to Aggressive Mode.\n");
       fprintf(stderr, "\t\t\t<id> can be specified as a string, e.g. --id=test or as\n");
       fprintf(stderr, "\t\t\ta hex value with a leading \"0x\", e.g. --id=0xdeadbeef.\n");
-      fprintf(stderr, "\n--idtype=<n> or -y <n>\tUse identification type <n>.  Default %u (%s).\n", DEFAULT_IDTYPE, id_to_name(DEFAULT_IDTYPE, id_type_map));
+      fprintf(stderr, "\n--idtype=<n> or -y <n>\tUse identification type <n>.  Default %u (%s).\n", DEFAULT_IDTYPE, id_to_name(DEFAULT_IDTYPE, id_map));
       fprintf(stderr, "\t\t\tThis option is only applicable to Aggressive Mode.\n");
       fprintf(stderr, "\t\t\tSee RFC 2407 4.6.2 for details of Identification types.\n");
       fprintf(stderr, "\n--dhgroup=<n> or -g <n>\tUse Diffie Hellman Group <n>.  Default %u.\n", DEFAULT_DH_GROUP);
