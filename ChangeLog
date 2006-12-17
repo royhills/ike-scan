@@ -1,5 +1,12 @@
 $Id$
 
+2006-12-17 Roy Hills <Roy.Hills@nta-monitor.com>
+
+	* Added CRACK (128) to auth map.  This is defined in
+	  draft-harkins-ipsra-crack-00 "IKE Challenge/Response for
+	  Authenticated Cryptographic Keys", but I've not seen it used in
+	  practice.
+
 2006-11-30 Roy Hills <Roy.Hills@nta-monitor.com>
 
 	* isakmp.c: Moved all the ID/Name maps into isakmp.c as global

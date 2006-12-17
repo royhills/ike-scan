@@ -139,6 +139,7 @@ const id_name_map auth_map[] = {	/* From RFC 2409 App. A */
    {6, "ElGamel_Enc"},
    {7, "ElGamel_RevEnc"},
    {8, "ECDSA_Sig"},
+   {128, "CRACK"},	/* From draft-harkins-ipsra-crack-00 */
    {64221, "Hybrid"},
    {65001, "XAUTH"},
    {-1, NULL}

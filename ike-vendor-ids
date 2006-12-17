@@ -135,7 +135,7 @@ Dead Peer Detection	^afcad71368a1f1c96b8696fc7757....
 
 # XAUTH
 # This is a truncated MD5 hash of "draft-ietf-ipsra-isakmp-xauth-06.txt"
-# Why "ipsra" and not "ipsec" as in the draft name I wonder?
+# IPSRA = "IP Security Remote Access"
 # Also known as "draft-beaulieu-ike-xauth-02.txt"
 XAUTH	^09002689dfd6b712
 
