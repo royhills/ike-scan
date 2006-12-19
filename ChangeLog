@@ -1,5 +1,9 @@
 $Id$
 
+2006-12-18 Roy Hills <Roy.Hills@nta-monitor.com>
+
+	* Added experimental support for RFC 3947 NAT-Traversal.
+
 2006-12-17 Roy Hills <Roy.Hills@nta-monitor.com>
 
 	* Added CRACK (128) to auth map.  This is defined in

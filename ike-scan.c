@@ -1745,6 +1745,20 @@ send_packet(int s, unsigned char *packet_out, size_t packet_out_len,
       iph->daddr = he->addr.s_addr;
    }
 /*
+ *	NAT Traversal - experimental
+ */
+   if (experimental_value) {
+      unsigned char *orig_packet_out = packet_out;
+      unsigned char *cp;
+
+      packet_out=Malloc(packet_out_len+4);	/* 4 extra for non esp marker */
+      cp = packet_out;
+      memset(cp, '\0', 4);
+      cp += 4;
+      memcpy(cp, orig_packet_out, packet_out_len);
+      packet_out_len += 4;
+   }
+/*
  *	Send the packet.
  */
    if (verbose > 1)
@@ -1825,7 +1839,7 @@ recvfrom_wto(int s, unsigned char *buf, size_t len, struct sockaddr *saddr,
       }
    }
 /*
- *	Experimental Cisco TCP encapsulation.
+ *	Cisco TCP encapsulation.
  *	Remove encapsulated UDP header from TCP segment.
  */
    if (tcp_flag == TCP_PROTO_ENCAP && n > 8) {
@@ -1842,6 +1856,13 @@ recvfrom_wto(int s, unsigned char *buf, size_t len, struct sockaddr *saddr,
          memcpy(buf, tmpbuf, tmpbuf_len);
          free(tmpbuf);
       }
+   }
+/*
+ *	RFC 3947 NAT Traversal.
+ *	Remove Non ESP marker
+ */
+   if (experimental_value && n > 4) {
+      memmove(buf, buf+4, n-4);
    }
 
    return n;

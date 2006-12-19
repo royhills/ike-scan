@@ -184,6 +184,7 @@ const id_name_map payload_map[] = {	/* Payload types from RFC 2408 3.1 */
    {11, "Notification"},
    {12, "Delete"},
    {13, "VendorID"},
+   {20, "NAT-D"},		/* RFC 3947 NAT Discovery */
    {-1, NULL}
 };
 const id_name_map doi_map[] = {
