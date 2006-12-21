@@ -53,14 +53,11 @@ struct value {
    unsigned val;
 }
 
- From: Antoine Brodin <antoine.brodin@laposte.net>
- To: ike-scan@nta-monitor.com
- Subject: Suggestion about psk-crack
-
- It would be nice if psk-crack could read psk candidates from stdin
- instead of a dictionary file.  That way, you can feed ike-crack with an
- external program for example:
- "john --incremental --stdout | psk-crack options psk-parameters-file"
+It would be nice if psk-crack could read psk candidates from stdin
+instead of a dictionary file.  That way, you can feed ike-crack with an
+external program for example:
+"john --incremental --stdout | psk-crack options psk-parameters-file"
+suggestion from Antoine Brodin.
 
 To implement the above, we need to alter the cracking loop to make the
 candidate PSK the outer loop and the supplied hash parameters the inner one.
@@ -69,9 +66,6 @@ stdin.
 
 Add support for IKE v2, defined in rfc 4306 "Internet Key Exchange (IKEv2)
 Protocol"
-
-Improve specification of source IP address.  Allow either a specified address,
-or a random IP.
 
 Add support for IKE MitM attack, similar to FakeIKEd at
 http://www.roe.ch/FakeIKEd

@@ -5,6 +5,10 @@ release.  For more details please read the ChangeLog file.
 
 ike-scan v1.8.5:
 
+* New --nat-t option to enable RFC 3947 NAT Traversal.  This option adds the
+  Non-ESP marker to outbound packets and strips it from responses.  It also
+  changes the default UDP source and destination ports both to 4500.
+
 * New --sourceip option, which allows spoofing source IP address.  This only
   works on systems that support raw sockets.
 

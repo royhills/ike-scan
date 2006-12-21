@@ -85,6 +85,7 @@ int randsrc_flag=0;		/* Randomise source IP address flag */
 int sourceip_flag=0;		/* Set source IP address flag */
 uint32_t src_ip_val;		/* Specified source IP */
 int shownum_flag=0;		/* Display packet number */
+int nat_t_flag=0;		/* RFC 3947 NAT Traversal */
 
 extern const id_name_map notification_map[];
 extern const id_name_map attr_map[];
@@ -161,6 +162,7 @@ main(int argc, char *argv[]) {
       {"sourceip", required_argument, 0, OPT_SOURCEIP},
       {"shownum", no_argument, 0, OPT_SHOWNUM},
       {"ikev2", no_argument, 0, '2'},
+      {"nat-t", no_argument, 0, OPT_NAT_T},
       {"experimental", required_argument, 0, 'X'},
       {0, 0, 0, 0}
    };
@@ -597,6 +599,11 @@ main(int argc, char *argv[]) {
          case '2':	/* --ikev2 */
             ike_params.ike_version = 2;
             warn_msg("WARNING: IKEv2 is not supported yet.");
+            break;
+         case OPT_NAT_T:	/* --nat-t */
+            nat_t_flag = 1;
+            source_port = DEFAULT_NAT_T_SOURCE_PORT;
+            dest_port = DEFAULT_NAT_T_DEST_PORT;
             break;
          case 'X':	/* --experimental */
             experimental_value = Strtoul(optarg, 0);
@@ -1747,7 +1754,7 @@ send_packet(int s, unsigned char *packet_out, size_t packet_out_len,
 /*
  *	NAT Traversal - experimental
  */
-   if (experimental_value) {
+   if (nat_t_flag) {
       unsigned char *orig_packet_out = packet_out;
       unsigned char *cp;
 
@@ -1859,9 +1866,9 @@ recvfrom_wto(int s, unsigned char *buf, size_t len, struct sockaddr *saddr,
    }
 /*
  *	RFC 3947 NAT Traversal.
- *	Remove Non ESP marker
+ *	Remove Non ESP marker from NAT-T packet leaving IKE data.
  */
-   if (experimental_value && n > 4) {
+   if (nat_t_flag && n > 4) {
       memmove(buf, buf+4, n-4);
    }
 
@@ -3077,11 +3084,13 @@ usage(int status, int detailed) {
       fprintf(stderr, "\t\t\tNote that superuser privileges are normally required\n");
       fprintf(stderr, "\t\t\tto use non-zero source ports below 1024.  Also only\n");
       fprintf(stderr, "\t\t\tone process on a system may bind to a given source port\n");
-      fprintf(stderr, "\t\t\tat any one time.\n");
+      fprintf(stderr, "\t\t\tat any one time. Use of the --nat-t option changes\n");
+      fprintf(stderr, "\t\t\tthe default source port to %u\n", DEFAULT_NAT_T_SOURCE_PORT);
       fprintf(stderr, "\n--dport=<p> or -d <p>\tSet UDP destination port to <p>, default=%u.\n", DEFAULT_DEST_PORT);
       fprintf(stderr, "\t\t\tUDP port 500 is the assigned port number for ISAKMP\n");
       fprintf(stderr, "\t\t\tand this is the port used by most if not all IKE\n");
-      fprintf(stderr, "\t\t\timplementations.\n");
+      fprintf(stderr, "\t\t\timplementations. Use of the --nat-t option changes\n");
+      fprintf(stderr, "\t\t\tthe default destination port to %u\n", DEFAULT_NAT_T_DEST_PORT);
       fprintf(stderr, "\n--retry=<n> or -r <n>\tSet total number of attempts per host to <n>,\n");
       fprintf(stderr, "\t\t\tdefault=%d.\n", DEFAULT_RETRY);
       fprintf(stderr, "\n--timeout=<n> or -t <n>\tSet initial per host timeout to <n> ms, default=%d.\n", DEFAULT_TIMEOUT);
@@ -3414,6 +3423,19 @@ usage(int status, int detailed) {
       fprintf(stderr, "\t\t\teven if you specify a high source port.\n");
       fprintf(stderr, "\t\t\tThis option does not work on all operating systems.\n");
       fprintf(stderr, "\n--shownum\t\tDisplay the host number for received packets.\n");
+      fprintf(stderr, "\t\t\tThis displays the ordinal host number of the\n");
+      fprintf(stderr, "\t\t\tresponding host before the IP address. It can be useful\n");
+      fprintf(stderr, "\t\t\twhen sending many packets to the same target IP, to\n");
+      fprintf(stderr, "\t\t\tsee if any probes are being ignored.\n");
+      fprintf(stderr, "\n--nat-t\t\t\tUse RFC 3947 NAT-Traversal encapsulation.\n");
+      fprintf(stderr, "\t\t\tThis option adds the non-ESP marker to the beginning\n");
+      fprintf(stderr, "\t\t\tof outgoing packets and strips it from received\n");
+      fprintf(stderr, "\t\t\tpackets, as described in RFC 3947. It also changes the\n");
+      fprintf(stderr, "\t\t\tdefault source port to %u and the default destination\n", DEFAULT_NAT_T_SOURCE_PORT);
+      fprintf(stderr, "\t\t\tport to %u, which are the ports for NAT-T IKE.\n", DEFAULT_NAT_T_DEST_PORT);
+      fprintf(stderr, "\t\t\tThese port numbers can be changed with the --sport and\n");
+      fprintf(stderr, "\t\t\t--dport options, providing they are used after the\n");
+      fprintf(stderr, "\t\t\t--nat-t option.\n");
    } else {
       fprintf(stderr, "use \"ike-scan --help\" for detailed information on the available options.\n");
    }

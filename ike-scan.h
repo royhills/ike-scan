@@ -168,6 +168,8 @@ unsigned char *SHA1(const unsigned char *, size_t, unsigned char *);
 #define DEFAULT_BANDWIDTH 56000		/* Default bandwidth in bits/sec */
 #define DEFAULT_SOURCE_PORT 500		/* Default UDP source port */
 #define DEFAULT_DEST_PORT 500		/* Default UDP destination port */
+#define DEFAULT_NAT_T_SOURCE_PORT 4500	/* Default UDP src port with NAT-T */
+#define DEFAULT_NAT_T_DEST_PORT 4500	/* Default UDP dest port with NAT-T */
 #define DEFAULT_LIFETIME 28800		/* Default lifetime in seconds */
 #define DEFAULT_LIFESIZE 0		/* Default lifesize in KB */
 #define DEFAULT_AUTH_METHOD 1		/* Default authentication method */
@@ -203,6 +205,7 @@ unsigned char *SHA1(const unsigned char *, size_t, unsigned char *);
 #define OPT_TIMESTAMP 264
 #define OPT_SOURCEIP 265
 #define OPT_SHOWNUM 266
+#define OPT_NAT_T 267
 #undef DEBUG_TIMINGS			/* Define to 1 to debug timing code */
 
 /* Structures */
