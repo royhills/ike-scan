@@ -1,19 +1,25 @@
 $Id$
 
+2006-12-23 Roy Hills <Roy.Hills@nta-monitor.com>
+
+	* psk-crack.c, psk-crack.h: Moved nortel_user into psk_entry struct
+	  to permit cracking a mixture of Nortel and standard PSKs, although
+	  the command line options do not currently permit this.
+
 2006-12-21 Roy Hills <Roy.Hills@nta-monitor.com>
 
-	* Added --nat-t option to enable RFC 3947 NAT Traversal.
+	* ike-scan.c: Added --nat-t option to enable RFC 3947 NAT Traversal.
 	  This option adds the Non-ESP marker to outbound packets and
 	  strips the marker from responses.  It also changes the default
 	  source and destination UDP ports to 4500.
 
 2006-12-18 Roy Hills <Roy.Hills@nta-monitor.com>
 
-	* Added experimental support for RFC 3947 NAT-Traversal.
+	* ike-scan.c: Added experimental support for RFC 3947 NAT-Traversal.
 
 2006-12-17 Roy Hills <Roy.Hills@nta-monitor.com>
 
-	* Added CRACK (128) to auth map.  This is defined in
+	* isakmp.c: Added CRACK (128) to auth map.  This is defined in
 	  draft-harkins-ipsra-crack-00 "IKE Challenge/Response for
 	  Authenticated Cryptographic Keys", but I've not seen it used in
 	  practice.

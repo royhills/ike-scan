@@ -112,7 +112,8 @@ typedef struct {
    unsigned char *hash_r_data;	/* Data for HASH_R calculation */
    unsigned char *hash_r;	/* HASH_R received from server */
    char *hash_r_hex;		/* Server HASH_R as hex for display */
-   char *hash_name;		/* Hash algo. name for display */
+   const char *hash_name;	/* Hash algo. name for display */
+   const char *nortel_user;	/* User for nortel cracking, or NULL */
    size_t skeyid_data_len;	/* Length of skeyid_data field */
    size_t hash_r_data_len;	/* Length of hash_r_data field */
    size_t hash_r_len;		/* Length of hash_r field */
@@ -122,8 +123,8 @@ typedef struct {
 
 /* Functions */
 
-static unsigned load_psk_params(const char *);
-static inline unsigned char *compute_hash(const psk_entry *, const char *, const char *);
+static unsigned load_psk_params(const char *, const char *);
+static inline unsigned char *compute_hash(const psk_entry *, const char *);
 static FILE *open_dict_file(const char *);
 void err_sys(const char *, ...);
 void warn_sys(const char *, ...);

@@ -71,7 +71,7 @@ main (int argc, char *argv[]) {
    unsigned brute_len=0; /* Bruteforce len.  0=dictionary attack (default) */
    const char *charset = NULL;
    char dict_file_name[MAXLINE];	/* Dictionary file name */
-   char *norteluser = NULL; /* For cracking Nortel Contivity passwords only */
+   char *nortel_user = NULL; /* For cracking Nortel Contivity passwords only */
    FILE *dictionary_file=NULL;	/* Dictionary file */
    IKE_UINT64 iterations=0;
    int found = 0;
@@ -122,7 +122,7 @@ main (int argc, char *argv[]) {
             brute_len = 0;
             break;
          case 'u':      /* --norteluser */
-            norteluser = make_message("%s", optarg);
+            nortel_user = make_message("%s", optarg);
             break;
          default:       /* Unknown option */
             psk_crack_usage(EXIT_FAILURE);
@@ -149,7 +149,7 @@ main (int argc, char *argv[]) {
 /*
  *	Load the PSK entries from the data file.
  */
-   psk_count = load_psk_params(argv[optind]);
+   psk_count = load_psk_params(argv[optind], nortel_user);
    if (verbose)
       printf("Loaded %u PSK entries from %s\n", psk_count, argv[optind]);
    if (psk_count < 1)
@@ -200,7 +200,7 @@ main (int argc, char *argv[]) {
             *line_p = '\0';
             if (verbose > 1)
                printf("Trying key \"%s\"\n", line);
-            hash_r = compute_hash(&psk_list[psk_idx], line, norteluser);
+            hash_r = compute_hash(&psk_list[psk_idx], line);
             iterations++;
             if (!memcmp(hash_r, psk_list[psk_idx].hash_r,
                 psk_list[psk_idx].hash_r_len)) {
@@ -218,7 +218,7 @@ main (int argc, char *argv[]) {
             *line_p = '\0';
             if (verbose > 1)
                printf("Trying key \"%s\"\n", line);
-            hash_r = compute_hash(&psk_list[psk_idx], line, norteluser);
+            hash_r = compute_hash(&psk_list[psk_idx], line);
             iterations++;
             if (!memcmp(hash_r, psk_list[psk_idx].hash_r,
                         psk_list[psk_idx].hash_r_len)) {
@@ -260,6 +260,7 @@ main (int argc, char *argv[]) {
  *	Inputs:
  *
  *	filename	The name of the data file
+ *	nortel_user	The username for Nortel PSK cracking, or NULL
  *
  *	Returns:
  *
@@ -272,7 +273,7 @@ main (int argc, char *argv[]) {
  *	know in advance how many PSK entries there will be in the file.
  */
 static unsigned
-load_psk_params(const char *filename) {
+load_psk_params(const char *filename, const char *nortel_user) {
    FILE *data_file;		/* PSK parameters in colon separated format */
    char psk_data[MAXLEN];	/* Line read from data file */
    int n;			/* Number of fields read by sscanf() */
@@ -403,6 +404,7 @@ load_psk_params(const char *filename) {
       pe->hash_r = hex2data(hash_r_hex, &pe->hash_r_len);
       pe->hash_r_hex = Malloc(strlen(hash_r_hex) + 1);
       strcpy(pe->hash_r_hex, hash_r_hex);
+      pe->nortel_user = nortel_user;
 /*
  *	Determine hash type based on the length of the hash, and
  *	store this in the current psk list entry.
@@ -433,7 +435,6 @@ load_psk_params(const char *filename) {
  *
  *	psk_params	Pointer to PSK params structure
  *	password	The candidate password
- *	nortel_user	Username for Nortel contivity, otherwise NULL.
  *
  *	Returns:
  *
@@ -453,8 +454,7 @@ load_psk_params(const char *filename) {
  *
  */
 static inline unsigned char *
-compute_hash (const psk_entry *psk_params, const char *password,
-              const char *nortel_user) {
+compute_hash (const psk_entry *psk_params, const char *password) {
    size_t password_len;
    unsigned char nortel_psk[SHA1_HASH_LEN];
    unsigned char nortel_pwd_hash[SHA1_HASH_LEN];
@@ -465,22 +465,23 @@ compute_hash (const psk_entry *psk_params, const char *password,
 /*
  *	Calculate SKEYID
  */
-   if (nortel_user != NULL) {
+   if (psk_params->nortel_user != NULL) {	/* Nortel SKEYID */
       SHA1((const unsigned char *) password, password_len, nortel_pwd_hash);
-      hmac_sha1((const unsigned char *)nortel_user, strlen(nortel_user),
-                nortel_pwd_hash, SHA1_HASH_LEN, nortel_psk);
+      hmac_sha1((const unsigned char *)psk_params->nortel_user,
+                strlen(psk_params->nortel_user), nortel_pwd_hash,
+                SHA1_HASH_LEN, nortel_psk);
       if (psk_params->hash_type == HASH_TYPE_MD5) {
          hmac_md5(psk_params->skeyid_data, psk_params->skeyid_data_len,
                   nortel_psk, SHA1_HASH_LEN, skeyid);
-      } else {
+      } else {	/* SHA1 */
          hmac_sha1(psk_params->skeyid_data, psk_params->skeyid_data_len,
                    nortel_psk, SHA1_HASH_LEN, skeyid);
       }
-   } else {
+   } else {	/* Standard RFC 2409 SKEYID */
       if (psk_params->hash_type == HASH_TYPE_MD5) {
          hmac_md5(psk_params->skeyid_data, psk_params->skeyid_data_len,
                   (const unsigned char *) password, password_len, skeyid);
-      } else {
+      } else {	/* SHA1 */
          hmac_sha1(psk_params->skeyid_data, psk_params->skeyid_data_len,
                    (const unsigned char *) password, password_len, skeyid);
       }
@@ -491,7 +492,7 @@ compute_hash (const psk_entry *psk_params, const char *password,
    if (psk_params->hash_type == HASH_TYPE_MD5) {
       hmac_md5(psk_params->hash_r_data, psk_params->hash_r_data_len, skeyid,
                psk_params->hash_r_len, hash_r);
-   } else {
+   } else {	/* SHA1 */
       hmac_sha1(psk_params->hash_r_data, psk_params->hash_r_data_len, skeyid,
                 psk_params->hash_r_len, hash_r);
    }
@@ -564,6 +565,11 @@ psk_crack_usage(int status) {
    fprintf(stderr, "(-P) option.  This file can contain one or more entries.  For multiple entries,\n");
    fprintf(stderr, "each one must be on a separate line.\n");
    fprintf(stderr, "\n");
+   fprintf(stderr, "Two SKEYID computation methods are supported: the standard method for pre-\n");
+   fprintf(stderr, "shared keys as described in RFC 2409, and the proprietary method used by\n");
+   fprintf(stderr, "Nortel Contivity / VPN Router systems.  The standard method is used by default,\n");
+   fprintf(stderr, "and the Nortel method can be selected with the --norteluser option.\n");
+   fprintf(stderr, "\n");
    fprintf(stderr, "The program can crack either MD5 or SHA1-based hashes.  The type of hash is\n");
    fprintf(stderr, "automatically determined from the length of the hash (16 bytes for MD5 or\n");
    fprintf(stderr, "20 bytes for SHA1).  Each entry in the <psk-parameters-file> is handled\n");
@@ -584,14 +590,20 @@ psk_crack_usage(int status) {
 #else
    fprintf(stderr, "\t\t\tdefault=%s/%s.\n", IKEDATADIR, DICT_FILE);
 #endif
-   fprintf(stderr, "\n--norteluser=<u> or -u <u> Specify the username for Nortel Contivity cracking.\n");
+   fprintf(stderr, "\n--norteluser=<u> or -u <u> Specify username for Nortel Contivity PSK cracking.\n");
    fprintf(stderr, "\t\t\tThis option is required when cracking pre-shared keys\n");
    fprintf(stderr, "\t\t\ton Nortel Contivity / VPN Router systems.  These\n");
    fprintf(stderr, "\t\t\tsystems use a proprietary method to calculate the hash\n");
-   fprintf(stderr, "\t\t\tthat includes the username.\n");
+   fprintf(stderr, "\t\t\tthat includes a hash of the username.\n");
    fprintf(stderr, "\t\t\tThis option is only needed when cracking Nortel format\n");
    fprintf(stderr, "\t\t\thashes, and should not be used for standard format\n");
    fprintf(stderr, "\t\t\thashes.\n");
+   fprintf(stderr, "\t\t\tWhen this option is used, all the PSK entries in the\n");
+   fprintf(stderr, "\t\t\tpsk parameters file are assumed to be in Nortel format\n");
+   fprintf(stderr, "\t\t\tusing the supplied username. There is currently no way\n");
+   fprintf(stderr, "\t\t\tto crack a mixture of Nortel and standard format PSK\n");
+   fprintf(stderr, "\t\t\tentries, or Nortel entries with different usernames in\n");
+   fprintf(stderr, "\t\t\ta single psk-crack run.\n");
    fprintf(stderr, "\n--bruteforce=<n> or -B <n> Select bruteforce cracking up to <n> characters.\n");
    fprintf(stderr, "\n--charset=<s> or -c <s>\tSet bruteforce character set to <s>\n");
    fprintf(stderr, "\t\t\tDefault is \"%s\"\n", default_charset);
