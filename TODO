@@ -50,6 +50,10 @@ struct value {
    unsigned val;
 }
 
+Add support for multiple psk-crack processes using MPI for inter-process
+communication.  This should enable psk-crack to run much faster on multi-
+core CPUs.
+
 Add support for IKE v2, defined in rfc 4306 "Internet Key Exchange (IKEv2)
 Protocol"
 

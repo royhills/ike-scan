@@ -5,6 +5,11 @@ release.  For more details please read the ChangeLog file.
 
 ike-scan v1.8.5:
 
+* psk-crack allows the dictionary to be read from stdin with the
+  --dictionary=- option.  This allows another program to generate
+  candidate passwords, e.g.
+  john --incremental --stdout | psk-crack --dictionary=- psk-file
+
 * New --nat-t option to enable RFC 3947 NAT Traversal.  This option adds the
   Non-ESP marker to outbound packets and strips it from responses.  It also
   changes the default UDP source and destination ports both to 4500.

@@ -25,6 +25,8 @@ $Id$
 	* hash_functions.h: New header file containing "inline static"
 	  functions for MD5, SHA1, hmac_md5 and hmac_sha1.
 
+	* configure.ac: Incremented version to 1.8.6.
+
 2006-12-21 Roy Hills <Roy.Hills@nta-monitor.com>
 
 	* ike-scan.c: Added --nat-t option to enable RFC 3947 NAT Traversal.
