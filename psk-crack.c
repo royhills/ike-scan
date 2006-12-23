@@ -45,6 +45,8 @@
  *
  */
 #include "psk-crack.h"
+#include "hash_functions.h"
+
 static const char rcsid[] = "$Id$";	/* RCS ID for ident(1) */
 
 static const char *default_charset =
@@ -74,13 +76,13 @@ main (int argc, char *argv[]) {
    char *nortel_user = NULL; /* For cracking Nortel Contivity passwords only */
    FILE *dictionary_file=NULL;	/* Dictionary file */
    IKE_UINT64 iterations=0;
-   int found = 0;
    struct timeval start_time;	/* Program start time */
    struct timeval end_time;	/* Program end time */
    struct timeval elapsed_time; /* Elapsed time as timeval */
    double elapsed_seconds;	/* Elapsed time in seconds */
    int psk_idx;			/* Index into psk list */
    unsigned psk_count;		/* Number of PSK entries in the list */
+   unsigned psk_uncracked;	/* Number of uncracked PSK entries */
    unsigned char *hash_r;
    char line[MAXLINE];
 
@@ -171,69 +173,83 @@ main (int argc, char *argv[]) {
 /*
  *	Cracking loop.
  */
+   psk_uncracked = psk_count;
+   if (brute_len) {	/* Brute force cracking */
+      IKE_UINT64 max;
+      unsigned base;
+      unsigned i;
+      IKE_UINT64 loop;
+      IKE_UINT64 val;
+      unsigned digit;
+
+      base = strlen(charset);
+      max = base;
+      for (i=1; i<brute_len; i++)
+         max *= base;	/* max = base^brute_len without using pow() */
+      printf("Brute force with %u chars up to length %u will take up to "
+             IKE_UINT64_FORMAT " iterations\n", base, brute_len, max);
+
+      for (loop=0; psk_uncracked && loop<max; loop++) {
+         char *line_p;
+
+         val = loop;
+         line_p = line;
+         do {
+            digit = val % base;
+            val /= base;
+            *line_p++ = charset[digit];
+         } while (val);
+         *line_p = '\0';
+         if (verbose > 1)
+            printf("Trying key \"%s\"\n", line);
+         iterations++;
+         for (psk_idx=0; psk_idx<psk_count; psk_idx++) {
+            if (psk_list[psk_idx].live) {
+               hash_r = compute_hash(&psk_list[psk_idx], line);
+               if (!memcmp(hash_r, psk_list[psk_idx].hash_r,
+                   psk_list[psk_idx].hash_r_len)) {
+                  printf("key \"%s\" matches %s hash %s\n", line,
+                         psk_list[psk_idx].hash_name,
+                         psk_list[psk_idx].hash_r_hex);
+                  psk_uncracked--;
+                  psk_list[psk_idx].live=0;
+               }
+            }
+         }
+      }
+   } else {	/* Dictionary cracking */
+      while (psk_uncracked && fgets(line, MAXLINE, dictionary_file)) {
+         char *line_p;
+         for (line_p = line; !isspace((unsigned char)*line_p) &&
+              *line_p != '\0'; line_p++)
+            ;
+         *line_p = '\0';
+         if (verbose > 1)
+            printf("Trying key \"%s\"\n", line);
+         iterations++;
+         for (psk_idx=0; psk_idx<psk_count; psk_idx++) {
+            if (psk_list[psk_idx].live) {
+               hash_r = compute_hash(&psk_list[psk_idx], line);
+               if (!memcmp(hash_r, psk_list[psk_idx].hash_r,
+                           psk_list[psk_idx].hash_r_len)) {
+                  printf("key \"%s\" matches %s hash %s\n", line,
+                         psk_list[psk_idx].hash_name,
+                         psk_list[psk_idx].hash_r_hex);
+                  psk_uncracked--;
+                  psk_list[psk_idx].live=0;
+               }
+            }
+         }
+      }
+   }
+/*
+ *	Display any hashes that we've not cracked.
+ */
    for (psk_idx=0; psk_idx<psk_count; psk_idx++) {
-      if (brute_len) {	/* Brute force cracking */
-         IKE_UINT64 max;
-         unsigned base;
-         unsigned i;
-         IKE_UINT64 loop;
-         IKE_UINT64 val;
-         unsigned digit;
-
-         base = strlen(charset);
-         max = base;
-         for (i=1; i<brute_len; i++)
-            max *= base;	/* max = base^brute_len without using pow() */
-         printf("Brute force with %u chars up to length %u will take up to "
-                IKE_UINT64_FORMAT " iterations\n", base, brute_len, max);
-
-         for (loop=0; loop<max; loop++) {
-            char *line_p;
-
-            val = loop;
-            line_p = line;
-            do {
-               digit = val % base;
-               val /= base;
-               *line_p++ = charset[digit];
-            } while (val);
-            *line_p = '\0';
-            if (verbose > 1)
-               printf("Trying key \"%s\"\n", line);
-            hash_r = compute_hash(&psk_list[psk_idx], line);
-            iterations++;
-            if (!memcmp(hash_r, psk_list[psk_idx].hash_r,
-                psk_list[psk_idx].hash_r_len)) {
-               found=1;
-               break;
-            }
-         }
-      } else {	/* Dictionary cracking */
-         rewind(dictionary_file);
-         while (fgets(line, MAXLINE, dictionary_file)) {
-            char *line_p;
-            for (line_p = line; !isspace((unsigned char)*line_p) &&
-                 *line_p != '\0'; line_p++)
-               ;
-            *line_p = '\0';
-            if (verbose > 1)
-               printf("Trying key \"%s\"\n", line);
-            hash_r = compute_hash(&psk_list[psk_idx], line);
-            iterations++;
-            if (!memcmp(hash_r, psk_list[psk_idx].hash_r,
-                        psk_list[psk_idx].hash_r_len)) {
-               found=1;
-               break;
-            }
-         }
-      }
-      if (found) {
-         printf("key \"%s\" matches %s hash %s\n", line,
-                psk_list[psk_idx].hash_name, psk_list[psk_idx].hash_r_hex);
-      } else {
-         printf("no match found for %s hash %s\n", psk_list[psk_idx].hash_name,
+      if (psk_list[psk_idx].live)
+         printf("no match found for %s hash %s\n",
+                psk_list[psk_idx].hash_name,
                 psk_list[psk_idx].hash_r_hex);
-      }
    }
 /*
  *      Get program end time and calculate elapsed time.
@@ -310,7 +326,6 @@ load_psk_params(const char *filename, const char *nortel_user) {
    size_t idir_b_len;
    size_t ni_b_len;
    size_t nr_b_len;
-
 /*
  *	Open PSK data file for reading.
  */
@@ -419,6 +434,7 @@ load_psk_params(const char *filename, const char *nortel_user) {
          err_msg("Cannot determine hash type from %u byte HASH_R",
                  pe->hash_r_len);
       }
+      pe->live = 1;
    }	/* End While fgets() */
 /*
  *	Close the data file, and return the number of PSK entries
@@ -455,17 +471,24 @@ load_psk_params(const char *filename, const char *nortel_user) {
  */
 static inline unsigned char *
 compute_hash (const psk_entry *psk_params, const char *password) {
-   size_t password_len;
-   unsigned char nortel_psk[SHA1_HASH_LEN];
-   unsigned char nortel_pwd_hash[SHA1_HASH_LEN];
+   size_t password_len = strlen(password);
    unsigned char skeyid[SHA1_HASH_LEN];
    static unsigned char hash_r[SHA1_HASH_LEN];
-
-   password_len = strlen(password);
 /*
  *	Calculate SKEYID
  */
-   if (psk_params->nortel_user != NULL) {	/* Nortel SKEYID */
+   if (psk_params->nortel_user == NULL) {   /* RFC 2409 SKEYID calculation */
+      if (psk_params->hash_type == HASH_TYPE_MD5) {
+         hmac_md5(psk_params->skeyid_data, psk_params->skeyid_data_len,
+                  (const unsigned char *) password, password_len, skeyid);
+      } else {	/* SHA1 */
+         hmac_sha1(psk_params->skeyid_data, psk_params->skeyid_data_len,
+                   (const unsigned char *) password, password_len, skeyid);
+      }
+   } else {	/* Nortel proprietary SKEYID calculation */
+      unsigned char nortel_psk[SHA1_HASH_LEN];
+      unsigned char nortel_pwd_hash[SHA1_HASH_LEN];
+
       SHA1((const unsigned char *) password, password_len, nortel_pwd_hash);
       hmac_sha1((const unsigned char *)psk_params->nortel_user,
                 strlen(psk_params->nortel_user), nortel_pwd_hash,
@@ -476,14 +499,6 @@ compute_hash (const psk_entry *psk_params, const char *password) {
       } else {	/* SHA1 */
          hmac_sha1(psk_params->skeyid_data, psk_params->skeyid_data_len,
                    nortel_psk, SHA1_HASH_LEN, skeyid);
-      }
-   } else {	/* Standard RFC 2409 SKEYID */
-      if (psk_params->hash_type == HASH_TYPE_MD5) {
-         hmac_md5(psk_params->skeyid_data, psk_params->skeyid_data_len,
-                  (const unsigned char *) password, password_len, skeyid);
-      } else {	/* SHA1 */
-         hmac_sha1(psk_params->skeyid_data, psk_params->skeyid_data_len,
-                   (const unsigned char *) password, password_len, skeyid);
       }
    }
 /*
@@ -504,7 +519,7 @@ compute_hash (const psk_entry *psk_params, const char *password) {
  *
  *	Inputs:
  *
- *	dict_file_name	The dictionary file name, or NUL for default.
+ *	dict_file_name	The dictionary file name, or NULL for default.
  *
  *	Returns:
  *
@@ -538,8 +553,14 @@ open_dict_file(const char *dict_file_name) {
    } else {		/* Dictionary filename was specified */
       fn = make_message("%s", dict_file_name);
    }
-   if ((fp = fopen(fn, "r")) == NULL)
-      err_sys("error opening dictionary file %s", fn);
+
+   if ((strcmp(fn, "-")) == 0) {       /* Filename "-" means stdin */
+      fp = stdin;
+   } else {
+      if ((fp = fopen(fn, "r")) == NULL) {
+         err_sys("error opening dictionary file %s", fn);
+      }
+   }
    free(fn);
 
    return fp;
@@ -590,6 +611,7 @@ psk_crack_usage(int status) {
 #else
    fprintf(stderr, "\t\t\tdefault=%s/%s.\n", IKEDATADIR, DICT_FILE);
 #endif
+   fprintf(stderr, "\t\t\tUse \"-\" for standard input.\n");
    fprintf(stderr, "\n--norteluser=<u> or -u <u> Specify username for Nortel Contivity PSK cracking.\n");
    fprintf(stderr, "\t\t\tThis option is required when cracking pre-shared keys\n");
    fprintf(stderr, "\t\t\ton Nortel Contivity / VPN Router systems.  These\n");

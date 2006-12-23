@@ -6,6 +6,25 @@ $Id$
 	  to permit cracking a mixture of Nortel and standard PSKs, although
 	  the command line options do not currently permit this.
 
+	* psk-crack.c: Changed cracking loop order, so that the candidate
+	  password selection (either the next work from the dictionary, or
+	  the next brute-force string) is the outher loop, and the PSK entry
+	  selection the inner one.  This avoids having to rewind the
+	  dictionary file, which permits the use of stdin for the
+	  dictionary.
+
+	  This also cured an as-yet unfound bug, which caused false positive
+	  matches against the last candidate password when cracking multiple
+	  PSK entries.
+
+	* psk-crack.c: Added support for using stdin for the dictionary file
+	  with "--dictionary=-".  This allows us to use other programs to
+	  generate the candidate passwords, e.g:
+	  john --incremental --stdout | psk-crack --dictionary=- psk-file
+
+	* hash_functions.h: New header file containing "inline static"
+	  functions for MD5, SHA1, hmac_md5 and hmac_sha1.
+
 2006-12-21 Roy Hills <Roy.Hills@nta-monitor.com>
 
 	* ike-scan.c: Added --nat-t option to enable RFC 3947 NAT Traversal.

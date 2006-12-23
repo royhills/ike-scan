@@ -57,6 +57,7 @@
  */
 
 #include "ike-scan.h"
+#include "hash_functions.h"
 #define NUM_HMAC_TESTS 1
 #define HMAC_SPEED_ITERATIONS 100000
 #define HASH_SPEED_ITERATIONS 500000

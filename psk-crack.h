@@ -89,8 +89,6 @@
 #else
 #include "md5.h"
 #include "sha1.h"
-unsigned char *MD5(const unsigned char *, size_t, unsigned char *);
-unsigned char *SHA1(const unsigned char *, size_t, unsigned char *);
 #endif
 
 /* Defines */
@@ -118,6 +116,7 @@ typedef struct {
    size_t hash_r_data_len;	/* Length of hash_r_data field */
    size_t hash_r_len;		/* Length of hash_r field */
    int hash_type;		/* Hash algorithm used for hmac */
+   int live;			/* Are we still cracking this entry? */
 } psk_entry;
 
 
@@ -147,10 +146,6 @@ char *make_message(const char *, ...);
 char *numstr(unsigned);
 char *printable(const unsigned char*, size_t);
 char *hexstring(const unsigned char*, size_t);
-unsigned char *hmac_md5(const unsigned char *, size_t,
-                        const unsigned char *, size_t, unsigned char *);
-unsigned char *hmac_sha1(const unsigned char *, size_t,
-                         const unsigned char *, size_t, unsigned char *);
 /* The following functions are just to prevent rcsid being optimised away */
 void error_use_rcsid(void);
 void wrappers_use_rcsid(void);

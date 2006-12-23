@@ -57,6 +57,7 @@
  */
 
 #include "ike-scan.h"
+#include "hash_functions.h"
 
 static const char rcsid[] = "$Id$";   /* RCS ID for ident(1) */
 

@@ -1,8 +1,5 @@
 $Id$
 
-Write a user guide.  The README is getting too long now: a separate document
-with proper formatting is required.  I plan to use a wiki for this.
-
 Write custom packet creation code.  This would allow an arbitrary IKE packet
 to be created and sent.  The generation rules would be some sort of
 specification file as command-line arguments are not flexible enough for this
@@ -52,17 +49,6 @@ struct value {
    int flag;
    unsigned val;
 }
-
-It would be nice if psk-crack could read psk candidates from stdin
-instead of a dictionary file.  That way, you can feed ike-crack with an
-external program for example:
-"john --incremental --stdout | psk-crack options psk-parameters-file"
-suggestion from Antoine Brodin.
-
-To implement the above, we need to alter the cracking loop to make the
-candidate PSK the outer loop and the supplied hash parameters the inner one.
-This will avoid the need to rewind the input file, which is not possible with
-stdin.
 
 Add support for IKE v2, defined in rfc 4306 "Internet Key Exchange (IKEv2)
 Protocol"

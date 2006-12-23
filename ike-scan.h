@@ -148,8 +148,6 @@
 #else
 #include "md5.h"
 #include "sha1.h"
-unsigned char *MD5(const unsigned char *, size_t, unsigned char *);
-unsigned char *SHA1(const unsigned char *, size_t, unsigned char *);
 #endif
 
 #include "isakmp.h"
@@ -425,10 +423,6 @@ char *printable(const unsigned char*, size_t);
 char *hexstring(const unsigned char*, size_t);
 void print_times(void);
 void sig_alarm(int);
-unsigned char *hmac_md5(const unsigned char *, size_t,
-                        const unsigned char *, size_t, unsigned char *);
-unsigned char *hmac_sha1(const unsigned char *, size_t,
-                         const unsigned char *, size_t, unsigned char *);
 const char *id_to_name(unsigned, const id_name_map[]);
 int name_to_id(const char *, const id_name_map[]);
 uint16_t in_cksum(uint16_t *, size_t);
