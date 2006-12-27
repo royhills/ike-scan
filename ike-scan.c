@@ -164,6 +164,7 @@ main(int argc, char *argv[]) {
       {"shownum", no_argument, 0, OPT_SHOWNUM},
       {"ikev2", no_argument, 0, '2'},
       {"nat-t", no_argument, 0, OPT_NAT_T},
+      {"rcookie", required_argument, 0, OPT_RCOOKIE},
       {"experimental", required_argument, 0, 'X'},
       {0, 0, 0, 0}
    };
@@ -223,7 +224,9 @@ main(int argc, char *argv[]) {
       0,			/* ISAKMP Header Message ID */
       0,			/* ISAKMP Header Next Payload */
       0,			/* advanced_trans_flag */
-      DEFAULT_IKE_VERSION	/* IKE Version */
+      DEFAULT_IKE_VERSION,	/* IKE Version */
+      NULL,			/* rcookie data */
+      0				/* rcookie data length */
    };
    unsigned pattern_fuzz = DEFAULT_PATTERN_FUZZ; /* Pattern matching fuzz in ms */
    unsigned tcp_connect_timeout = DEFAULT_TCP_CONNECT_TIMEOUT;
@@ -599,12 +602,23 @@ main(int argc, char *argv[]) {
             break;
          case '2':	/* --ikev2 */
             ike_params.ike_version = 2;
-            warn_msg("WARNING: IKEv2 is not supported yet.");
+            ike_params.header_version = 0x20;	/* v2.0 */
+            ike_params.hdr_flags=0x08;	/* Set Initiator bit */
+            ike_params.exchange_type = ISAKMP_XCHG_IKE_SA_INIT;
+            warn_msg("WARNING: IKEv2 is not fully supported yet.");
             break;
          case OPT_NAT_T:	/* --nat-t */
             nat_t_flag = 1;
             source_port = DEFAULT_NAT_T_SOURCE_PORT;
             dest_port = DEFAULT_NAT_T_DEST_PORT;
+            break;
+         case OPT_RCOOKIE:	/* --rcookie */
+            if (strlen(optarg) % 2)	/* Length is odd */
+               err_msg("ERROR: Length of --rcookie argument must be even (multiple of 2).");
+            ike_params.rcookie_data=hex2data(optarg,
+                                             &(ike_params.rcookie_data_len));
+            if (ike_params.rcookie_data_len > 8)
+               ike_params.rcookie_data_len = 8;
             break;
          case 'X':	/* --experimental */
             experimental_value = Strtoul(optarg, 0);
@@ -794,33 +808,32 @@ main(int argc, char *argv[]) {
       err_msg("ERROR: You can only specify one target host with the --cookie option.");
    if (tcp_flag && num_hosts > 1)
       err_msg("ERROR: You can only specify one target host with the --tcp option.");
-
    if (*patfile != '\0' && !showbackoff_flag)
-      warn_msg("WARNING: Specifying a backoff pattern file with --patterns or -p does not\n         have any effect unless you also specify --showbackoff or -o\n");
-
+      warn_msg("WARNING: Specifying a backoff pattern file with --patterns or -p does not\n"
+               "         have any effect unless you also specify --showbackoff or -o\n");
    if (ike_params.id_data && ike_params.exchange_type != ISAKMP_XCHG_AGGR)
-      warn_msg("WARNING: Specifying an identification payload with --id or -n does not have\n         any effect unless you also specify aggressive mode with --aggressive\n         or -A\n");
-
+      warn_msg("WARNING: Specifying an identification payload with --id or -n does not have\n"
+               "         any effect unless you also specify aggressive mode with --aggressive\n"
+               "         or -A\n");
    if (ike_params.idtype != DEFAULT_IDTYPE &&
        ike_params.exchange_type != ISAKMP_XCHG_AGGR)
-      warn_msg("WARNING: Specifying an idtype payload with --idtype or -y does not have any\n         effect unless you also specify aggressive mode with --aggressive or -A\n");
-
+      warn_msg("WARNING: Specifying an idtype payload with --idtype or -y does not have any\n"
+               "         effect unless you also specify aggressive mode with --aggressive or -A\n");
    if (ike_params.nonce_data_len != DEFAULT_NONCE_LEN &&
        ike_params.exchange_type != ISAKMP_XCHG_AGGR)
-      warn_msg("WARNING: Specifying the nonce payload length with --noncelen or -c does not\n         have any effect unless you also specify aggressive mode with\n         --aggressive or -A\n");
-
+      warn_msg("WARNING: Specifying the nonce payload length with --noncelen or -c does not\n"
+               "         have any effect unless you also specify aggressive mode with\n"
+               "         --aggressive or -A\n");
    if (ike_params.dhgroup != DEFAULT_DH_GROUP &&
        ike_params.exchange_type != ISAKMP_XCHG_AGGR)
-      warn_msg("WARNING: Specifying the DH Group with --dhgroup or -g does not have any effect\n         unless you also specify aggressive mode with --aggressive or -A\n");
-
+      warn_msg("WARNING: Specifying the DH Group with --dhgroup or -g does not have any effect\n"
+               "         unless you also specify aggressive mode with --aggressive or -A\n");
    if (psk_crack_flag && ike_params.exchange_type != ISAKMP_XCHG_AGGR) {
       warn_msg("WARNING: The --pskcrack (-P) option is only relevant for aggressive mode.\n");
       psk_crack_flag=0;
    }
-
    if (psk_crack_flag && num_hosts > 1)
       err_msg("ERROR: You can only specify one target host with the --pskcrack (-P) option.");
-
    if (interval && bandwidth != DEFAULT_BANDWIDTH)
       err_msg("ERROR: You cannot specify both --bandwidth and --interval.");
 /*
@@ -2091,7 +2104,10 @@ initialise_ike_packet(size_t *packet_out_len, ike_packet_params *params) {
                 prop, prop_len);
    *packet_out_len += sa_len;
    free(prop);
-   next_payload = ISAKMP_NEXT_SA;
+   if (params->ike_version == 1)
+      next_payload = ISAKMP_NEXT_SA;
+   else
+      next_payload = ISAKMP_NEXT_V2_SA;
 /*
  *	ISAKMP Header
  */
@@ -2114,7 +2130,8 @@ initialise_ike_packet(size_t *packet_out_len, ike_packet_params *params) {
    }
    hdr = make_isakmp_hdr(params->exchange_type, next_payload,
                          header_len, params->header_version,
-                         params->hdr_flags, params->hdr_msgid);
+                         params->hdr_flags, params->hdr_msgid,
+                         params->rcookie_data, params->rcookie_data_len);
 /*
  *	Allocate packet and copy payloads into packet.
  */
@@ -3437,6 +3454,9 @@ usage(int status, int detailed) {
       fprintf(stderr, "\t\t\tThese port numbers can be changed with the --sport and\n");
       fprintf(stderr, "\t\t\t--dport options, providing they are used after the\n");
       fprintf(stderr, "\t\t\t--nat-t option.\n");
+      fprintf(stderr, "\n--rcookie=<n>\t\tSet the ISAKMP responder cookie to <n>.\n");
+      fprintf(stderr, "\t\t\tThis sets the responder cookie to the specified hex\n");
+      fprintf(stderr, "\t\t\tvalue.  By default, the responder cookie is set to zero.\n");
    } else {
       fprintf(stderr, "use \"ike-scan --help\" for detailed information on the available options.\n");
    }

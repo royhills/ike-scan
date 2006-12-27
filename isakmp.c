@@ -240,6 +240,8 @@ extern int mbz_value;
  *	header_version	Version number to put in the header
  *	hdr_flags	Flags to put in the header
  *	hdr_msgid	Message ID to put in the header
+ *	rcookie_data	Responder cookie data, or NULL for default
+ *	rcookie_data_len Length of responder cookie data (<=8)
  *
  *	Returns:
  *
@@ -251,7 +253,8 @@ extern int mbz_value;
  */
 unsigned char*
 make_isakmp_hdr(unsigned xchg, unsigned next, unsigned length,
-                int header_version, int hdr_flags, unsigned hdr_msgid) {
+                int header_version, int hdr_flags, unsigned hdr_msgid,
+                unsigned char *rcookie_data, size_t rcookie_data_len) {
    unsigned char *payload;
    struct isakmp_hdr* hdr;
 
@@ -263,6 +266,9 @@ make_isakmp_hdr(unsigned xchg, unsigned next, unsigned length,
    hdr->isa_icookie[1] = 0xdeadbeef;
    hdr->isa_rcookie[0] = 0;		/* Set responder cookie to 0 */
    hdr->isa_rcookie[1] = 0;
+   if (rcookie_data) {
+      memcpy(hdr->isa_rcookie, rcookie_data, rcookie_data_len);
+   }
    hdr->isa_np = next;			/* Next Payload Type */
    hdr->isa_version = header_version;	/* v1.0 by default */
    hdr->isa_xchg = xchg;		/* Exchange type */
@@ -274,14 +280,14 @@ make_isakmp_hdr(unsigned xchg, unsigned next, unsigned length,
 }
 
 /*
- *	make_sa -- Construct a SA payload
+ *	make_sa -- Construct an SA payload
  *
  *	Inputs:
  *
- *	outlen	(output) length of SA payload
- *	next    Next Payload Type
- *	length	SA payload length
- *	doi	Domain of interpretation
+ *	outlen		(output) length of SA payload
+ *	next    	Next Payload Type
+ *	length		SA payload length
+ *	doi		Domain of interpretation
  *	situation	Situation
  *	proposals	Pointer to list of proposals
  *	proposal_len	length of proposal list

@@ -204,6 +204,7 @@
 #define OPT_SOURCEIP 265
 #define OPT_SHOWNUM 266
 #define OPT_NAT_T 267
+#define OPT_RCOOKIE 268
 #undef DEBUG_TIMINGS			/* Define to 1 to debug timing code */
 
 /* Structures */
@@ -322,6 +323,8 @@ typedef struct {	/* IKE Packet Parameters */
    unsigned hdr_next_payload;	/* Next payload in ISAKMP header */
    int advanced_trans_flag;
    int ike_version;	/* IKE version */
+   unsigned char *rcookie_data;	/* Responder cookie */
+   size_t rcookie_data_len;
 } ike_packet_params;
 
 /* Functions */
@@ -366,7 +369,7 @@ unsigned char* hex2data(const char *, size_t *);
 unsigned char* hex_or_str(const char *, size_t *);
 unsigned char* hex_or_num(const char *, size_t *);
 unsigned char* make_isakmp_hdr(unsigned, unsigned, unsigned, int, int,
-                               unsigned);
+                               unsigned, unsigned char*, size_t);
 unsigned char* make_sa(size_t *, unsigned, unsigned, unsigned, unsigned char *,
                        size_t);
 unsigned char* make_prop(size_t *, unsigned, unsigned, unsigned, unsigned,

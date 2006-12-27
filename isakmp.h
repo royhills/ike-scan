@@ -41,6 +41,7 @@
  * Date:	31 July 2001
  *
  * Definitions for ISAKMP packet.  Adapted from FreeS/WAN "pluto/packet.h"
+ * with additional definitions for IKEv2 from RFC 4306.
  *
  * Many of the types used come from <sys/types.h> which needs to be
  * included before this include file.
@@ -91,6 +92,22 @@
 #define ISAKMP_NEXT_N          11	/* Notification */
 #define ISAKMP_NEXT_D          12	/* Delete */
 #define ISAKMP_NEXT_VID        13	/* Vendor ID */
+#define ISAKMP_NEXT_V2_SA      33	/* IKE v2 Security Association */
+#define ISAKMP_NEXT_V2_KE      34	/* IKE v2 Key Exchange */
+#define ISAKMP_NEXT_V2_IDI     35	/* IKE v2 Identification - Initiator */
+#define ISAKMP_NEXT_V2_IDR     36	/* IKE v2 Identification - Responder */
+#define ISAKMP_NEXT_V2_CERT    37	/* IKE v2 Certificate */
+#define ISAKMP_NEXT_V2_CERTREQ 38	/* IKE v2 Certificate Request */
+#define ISAKMP_NEXT_V2_AUTH    39	/* IKE v2 Authentication */
+#define ISAKMP_NEXT_V2_NONCE   40	/* IKE v2 Nonce */
+#define ISAKMP_NEXT_V2_NOTIFY  41	/* IKE v2 Notify */
+#define ISAKMP_NEXT_V2_DELETE  42	/* IKE v2 Delete */
+#define ISAKMP_NEXT_V2_VID     43	/* IKE v2 Vendor ID */
+#define ISAKMP_NEXT_V2_TSI     44	/* IKE v2 Traffic Selector - Initiator */
+#define ISAKMP_NEXT_V2_TSR     45	/* IKE v2 Traffic Selector - Responder */
+#define ISAKMP_NEXT_V2_E       46	/* IKE v2 Encrypted */
+#define ISAKMP_NEXT_V2_CP      47	/* IKE v2 Configuration */
+#define ISAKMP_NEXT_V2_EAP     48	/* IKE v2 Extensible Authentication */
 
 #define ISAKMP_XCHG_NONE       0
 #define ISAKMP_XCHG_BASE       1
@@ -221,6 +238,7 @@ struct isakmp_hdr
  * The previous next payload depends on the actual payload type.
  * This is essentially the same for both IKEv1 and IKEv2, except that
  * IKEv2 uses the top bit of the reserved field as "Critical".
+ *
  *                      1                   2                   3
  *  0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
  * +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
