@@ -85,6 +85,39 @@ const id_name_map notification_map[] = { /* From RFC 2408 3.14.1 */
    {24578, "INITIAL-CONTACT"},
    {-1, NULL}
 };
+const id_name_map notification_map2[] = { /* From RFC 4306 3.10.1 */
+   {0, "RESERVED"},
+   {1, "UNSUPPORTED_CRITICAL_PAYLOAD"},
+   {4, "INVALID_IKE_SPI"},
+   {5, "INVALID_MAJOR_VERSION"},
+   {7, "INVALID_SYNTAX"},
+   {9, "INVALID_MESSAGE_ID"},
+   {11, "INVALID_SPI"},
+   {14, "NO_PROPOSAL_CHOSEN"},
+   {17, "INVALID_KE_PAYLOAD"},
+   {24, "AUTHENTICATION_FAILED"},
+   {34, "SINGLE_PAIR_REQUIRED"},
+   {35, "NO_ADDITIONAL_SAS"},
+   {36, "INTERNAL_ADDRESS_FAILURE"},
+   {37, "FAILED_CP_REQUIRED"},
+   {38, "TS_UNACCEPTABLE"},
+   {39, "INVALID_SELECTORS"},
+   {9101, "Checkpoint-Firewall-1"},
+   {9110, "Checkpoint-Firewall-1"},
+   {16384, "INITIAL_CONTACT"},
+   {16385, "SET_WINDOW_SIZE"},
+   {16386, "ADDITIONAL_TS_POSSIBLE"},
+   {16387, "IPCOMP_SUPPORTED"},
+   {16388, "NAT_DETECTION_SOURCE_IP"},
+   {16389, "NAT_DETECTION_DESTINATION_IP"},
+   {16390, "COOKIE"},
+   {16391, "USE_TRANSPORT_MODE"},
+   {16392, "HTTP_CERT_LOOKUP_SUPPORTED"},
+   {16393, "REKEY_SA"},
+   {16394, "ESP_TFC_PADDING_NOT_SUPPORTED"},
+   {16395, "NON_FIRST_FRAGMENTS_ALSO"},
+   {-1, NULL}
+};
 const id_name_map attr_map[] = {	/* From RFC 2409 App. A and */
    {1, "Enc"},			/* draft-ietf-ipsec-isakmp-gss-auth */
    {2, "Hash"},
@@ -105,6 +138,14 @@ const id_name_map attr_map[] = {	/* From RFC 2409 App. A and */
    {16384, "GSSIdentityName"},
    {-1, NULL}
 };
+const id_name_map trans_type_map[] = {	/* From RFC 4306 3.3.2 */
+   {1, "Encr"},
+   {2, "Prf"},
+   {3, "Integ"},
+   {4, "DH_Group"},
+   {5, "ESN"},
+   {-1, NULL}
+};
 const id_name_map enc_map[] = {	/* From RFC 2409 App. A */
    {1, "DES"},
    {2, "IDEA"},
@@ -113,12 +154,27 @@ const id_name_map enc_map[] = {	/* From RFC 2409 App. A */
    {5, "3DES"},
    {6, "CAST"},
    {7, "AES"},		/* RFC 3602 */
-   {8, "Camellia"},		/* draft-kato-ipsec-ciph-camellia-01.txt */
-   {65001, "Mars"},		/* Defined in strongSwan constants.h */
-   {65002, "RC6"},		/* Defined in strongSwan constants.h */
+   {8, "Camellia"},	/* draft-kato-ipsec-ciph-camellia-01.txt */
+   {65001, "Mars"},	/* Defined in strongSwan constants.h */
+   {65002, "RC6"},	/* Defined in strongSwan constants.h */
    {65003, "ID_65003"},	/* Defined in strongSwan constants.h */
    {65004, "Serpent"},	/* Defined in strongSwan constants.h */
    {65005, "Twofish"},	/* Defined in strongSwan constants.h */
+   {-1, NULL}
+};
+const id_name_map encr_map[] = {	/* From RFC 4306 3.3.2 */
+   {1, "DES_IV64"},
+   {2, "DES"},
+   {3, "3DES"},
+   {4, "RC5"},
+   {5, "IDEA"},
+   {6, "CAST"},
+   {7, "Blowfish"},
+   {8, "3IDEA"},
+   {9, "DES_IV32"},
+   {11, "NULL"},
+   {12, "AES_CBC"},
+   {13, "AES_CTR"},
    {-1, NULL}
 };
 const id_name_map hash_map[] = {	/* From RFC 2409 App. A */
@@ -128,6 +184,13 @@ const id_name_map hash_map[] = {	/* From RFC 2409 App. A */
    {4, "SHA2-256"},
    {5, "SHA2-384"},
    {6, "SHA2-512"},
+   {-1, NULL}
+};
+const id_name_map prf_map[] = {		/* From RFC 4306 3.3.2 */
+   {1, "HMAC_MD5"},
+   {2, "HMAC_SHA1"},
+   {3, "HMAC_TIGER"},
+   {4, "AES128_XCBC"},
    {-1, NULL}
 };
 const id_name_map auth_map[] = {	/* From RFC 2409 App. A */
@@ -144,8 +207,16 @@ const id_name_map auth_map[] = {	/* From RFC 2409 App. A */
    {65001, "XAUTH"},
    {-1, NULL}
 };
+const id_name_map integ_map[] = {	/* From RFC 4306 3.3.2 */
+   {1, "HMAC_MD5_96"},
+   {2, "HMAC_SHA1_96"},
+   {3, "DES_MAC"},
+   {4, "KPDK_MD5"},
+   {5, "AES_XCBC_96"},
+   {-1, NULL}
+};
 const id_name_map dh_map[] = {	/* From RFC 2409 App. A */
-   {1, "1:modp768"},				/* and RFC 3526 */
+   {1, "1:modp768"},			/* and RFC 3526 */
    {2, "2:modp1024"},
    {3, "3:ec2n155"},
    {4, "4:ec2n185"},
@@ -171,7 +242,7 @@ const id_name_map life_map[] = {	/* From RFC 2409 App. A */
    {-1, NULL}
 };
 const id_name_map payload_map[] = {	/* Payload types from RFC 2408 3.1 */
-   {1, "SecurityAssociation"},
+   {1, "SecurityAssociation"},		/* and RFC 4306 3.2 */
    {2, "Proposal"},
    {3, "Transform"},
    {4, "KeyExchange"},
@@ -185,6 +256,22 @@ const id_name_map payload_map[] = {	/* Payload types from RFC 2408 3.1 */
    {12, "Delete"},
    {13, "VendorID"},
    {20, "NAT-D"},		/* RFC 3947 NAT Discovery */
+   {33, "SecurityAssociation"},
+   {34, "KeyExchange"},
+   {35, "IDI"},
+   {36, "IDR"},
+   {37, "Certificate"},
+   {38, "CertificateRequest"},
+   {39, "AUTH"},
+   {40, "Nonce"},
+   {41, "Notification"},
+   {42, "Delete"},
+   {43, "VendorID"},
+   {44, "TSI"},
+   {45, "TSR"},
+   {46, "Encrypted"},
+   {47, "Configuration"},
+   {48, "EAP"},
    {-1, NULL}
 };
 const id_name_map doi_map[] = {
@@ -286,7 +373,6 @@ make_isakmp_hdr(unsigned xchg, unsigned next, unsigned length,
  *
  *	outlen		(output) length of SA payload
  *	next    	Next Payload Type
- *	length		SA payload length
  *	doi		Domain of interpretation
  *	situation	Situation
  *	proposals	Pointer to list of proposals
@@ -320,6 +406,48 @@ make_sa(size_t *outlen, unsigned next, unsigned doi, unsigned situation,
 
    memcpy(cp, hdr, sizeof(struct isakmp_sa));
    cp += sizeof(struct isakmp_sa);
+   memcpy(cp, proposals, proposal_len);
+
+   *outlen = len;
+   return payload;
+}
+
+/*
+ *	make_sa2 -- Construct an IKEv2 SA payload
+ *
+ *	Inputs:
+ *
+ *	outlen		(output) length of SA payload
+ *	next    	Next Payload Type
+ *	proposals	Pointer to list of proposals
+ *	proposal_len	length of proposal list
+ *
+ *	Returns:
+ *
+ *	Pointer to the SA payload.
+ *
+ *	This constructs an IKEv2 SA payload.
+ */
+unsigned char*
+make_sa2(size_t *outlen, unsigned next,
+         unsigned char *proposals, size_t proposal_len) {
+   unsigned char *payload;
+   struct isakmp_sa2* hdr;
+   unsigned char *cp;
+   size_t len;
+
+   hdr = Malloc(sizeof(struct isakmp_sa2));
+   memset(hdr, mbz_value, sizeof(struct isakmp_sa2));
+
+   hdr->isasa2_np = next;		/* Next Payload Type */
+
+   len = sizeof(struct isakmp_sa2) + proposal_len;
+   hdr->isasa2_length = htons(len);		/* SA Payload length */
+   payload = Malloc(len);
+   cp = payload;
+
+   memcpy(cp, hdr, sizeof(struct isakmp_sa2));
+   cp += sizeof(struct isakmp_sa2);
    memcpy(cp, proposals, proposal_len);
 
    *outlen = len;
@@ -757,6 +885,124 @@ add_transform(int finished, size_t *length, unsigned trans_id,
 }
 
 /*
+ *	make_transform2 -- Construct a single IKEv2 transform payload
+ *
+ *	Inputs:
+ *
+ *	length		(output) length of entire transform payload.
+ *	next		Next Payload Type (3 = More transforms; 0=No more transforms)
+ *	trans_type	Transform type
+ *	trans_id	Transform ID
+ *	attr		Pointer to list of attributes, or NULL for no attributes
+ *	attr_len 	Attribute length in bytes. Zero if no attributes.
+ *
+ *	Returns:
+ *
+ *	Pointer to transform payload.
+ *
+ *	This constructs a single IKEv2 transform payload.
+ *	Most of the values are defined in RFC 4306 Section 3.3.
+ */
+unsigned char*
+make_transform2(size_t *length, unsigned next, unsigned trans_type,
+                unsigned trans_id, unsigned char *attr, size_t attr_len) {
+
+   struct isakmp_transform2* hdr;	/* Transform header */
+   unsigned char *payload;
+   unsigned char *cp;
+   size_t len;				/* Payload Length */
+
+/* Allocate and initialise the transform header */
+
+   hdr = Malloc(sizeof(struct isakmp_transform2));
+   memset(hdr, mbz_value, sizeof(struct isakmp_transform2));
+
+   hdr->isat2_np = next;		/* Next payload type */
+   hdr->isat2_transtype = trans_type;	/* Transform Type */
+   hdr->isat2_transid = htons(trans_id);	/* Transform ID */
+
+   len = attr_len + sizeof(struct isakmp_transform2);
+   hdr->isat2_length = htons(len);	/* Transform length */
+   *length = len;
+
+/* Allocate memory for payload and copy structures to payload */
+
+   payload = Malloc(len);
+
+   cp = payload;
+   memcpy(cp, hdr, sizeof(struct isakmp_transform2));
+   free(hdr);
+   cp += sizeof(struct isakmp_transform2);
+   memcpy(cp, attr, attr_len);
+
+   return payload;
+}
+
+/*
+ *	add_transform2 -- Add a transform payload to set of transforms.
+ *
+ *	Inputs:
+ *
+ *	finished	0 if adding a new transform; 1 if finalising.
+ *	length	(output) length of entire transform payload.
+ *	trans_type	Transform type
+ *	trans_id	Transform ID
+ *	attr		Pointer to list of attributes
+ *	attr_len	Length of attribute list
+ *
+ *	Returns:
+ *
+ *	Pointer to new set of transform payloads.
+ *
+ *	This function can either be called with finished = 0, in which case
+ *	attr and attr_len must be specified, and the function will return NULL,
+ *	OR it can be called with finished = 1 in which case attr and attr_len
+ *	are ignored and the function will return a pointer to the finished
+ *	payload and will set *length to the length of this payload.
+ */
+unsigned char*
+add_transform2(int finished, size_t *length, unsigned trans_type,
+               unsigned trans_id, unsigned char *attr, size_t attr_len) {
+
+   static int first_transform = 1;
+   static unsigned char *trans_start=NULL;	/* Start of set of transforms */
+   static size_t cur_offset;			/* Start of current transform */
+   static size_t end_offset;			/* End of transforms */
+   unsigned char *trans;			/* Transform payload */
+   size_t len;					/* Transform length */
+/*
+ * Construct a transform if we are not finalising.
+ * Set next to ISAKMP_NEXT_T (more transforms) 
+ */
+   if (!finished) {
+      trans = make_transform2(&len, ISAKMP_NEXT_T, trans_type, trans_id, attr,
+                              attr_len);
+      if (first_transform) {
+         cur_offset = 0;
+         end_offset = len;
+         trans_start = Malloc(end_offset);
+         memcpy(trans_start, trans, len);
+         first_transform = 0;
+      } else {
+         cur_offset = end_offset;
+         end_offset += len;
+         trans_start = Realloc(trans_start, end_offset);
+         memcpy(trans_start+cur_offset, trans, len);
+      }
+      free(trans);
+      return NULL;
+   } else {
+      struct isakmp_transform2* hdr =
+         (struct isakmp_transform2*) (trans_start+cur_offset);	/* Overlay */
+
+      first_transform = 1;
+      hdr->isat2_np = ISAKMP_NEXT_NONE;		/* No more transforms */
+      *length = end_offset;
+      return trans_start;
+   }
+}
+
+/*
  *	make_attr -- Construct a transform attribute
  *
  *	Inputs:
@@ -1006,6 +1252,51 @@ make_ke(size_t *length, unsigned next, size_t kx_data_len) {
 }
 
 /*
+ *	make_ke2	-- Make an IKEv2 Key Exchange payload
+ *
+ *	Inputs:
+ *
+ *      length		(output) length of key exchange payload.
+ *      next		Next Payload Type
+ *	dh_group	Diffie Hellman group number
+ *      kx_data_len	Key exchange data length
+ *
+ *	Returns:
+ *
+ *	Pointer to key exchange payload.
+ *
+ *	A real implementation would fill in the key exchange payload with the
+ *	Diffie Hellman public value.  However, we just use random data.
+ */
+unsigned char*
+make_ke2(size_t *length, unsigned next, unsigned dh_group, size_t kx_data_len) {
+   unsigned char *payload;
+   struct isakmp_kx2* hdr;
+   unsigned char *kx_data;
+   unsigned i;
+
+   if (kx_data_len % 4)
+      err_msg("Key exchange data length %d is not a multiple of 4",
+              kx_data_len);
+
+   payload = Malloc(sizeof(struct isakmp_kx2)+kx_data_len);
+   hdr = (struct isakmp_kx2*) payload;	/* Overlay kx struct on payload */
+   memset(hdr, mbz_value, sizeof(struct isakmp_kx2));
+
+   kx_data = payload + sizeof(struct isakmp_kx2);
+   for (i=0; i<kx_data_len; i++)
+      *(kx_data++) = (unsigned char) random_byte();
+
+   hdr->isakx2_np = next;		/* Next payload type */
+   hdr->isakx2_length = htons(sizeof(struct isakmp_kx2)+kx_data_len);
+   hdr->isakx2_dhgroup = htons(dh_group);
+
+   *length = sizeof(struct isakmp_kx2) + kx_data_len;
+
+   return payload;
+}
+
+/*
  *	make_nonce	-- Make a Nonce payload
  *
  *	Inputs:
@@ -1242,10 +1533,16 @@ process_isakmp_hdr(unsigned char *cp, size_t *len, unsigned *next,
    free(msg2);
    if (hdr->isa_version != 0x10) {	/* Version not 1.0 */
       msg2 = msg;
-      msg = make_message("%s, version=0x%.2x", msg2, hdr->isa_version);
+      if (hdr->isa_version == 0x20) {
+         msg = make_message("%s, IKEv2", msg2);
+      } else {
+         msg = make_message("%s, version=0x%.2x", msg2,
+                            hdr->isa_version);
+      }
       free(msg2);
    }
-   if (hdr->isa_flags != 0) {	/* Flags not 0 */
+   if ((hdr->isa_version==0x10 && hdr->isa_flags != 0) ||
+       (hdr->isa_version==0x20 && hdr->isa_flags != 0x20)) {
       msg2 = msg;
       msg = make_message("%s, flags=0x%.2x", msg2, hdr->isa_flags);
       free(msg2);
@@ -1384,6 +1681,116 @@ process_sa(unsigned char *cp, size_t len, unsigned type, int quiet,
 }
 
 /*
+ *	process_sa2 -- Process an IKEv2 SA Payload
+ *
+ *	Inputs:
+ *
+ *	cp	Pointer to start of SA payload
+ *	len	Packet length remaining
+ *	type	Exchange type.
+ *	quiet	Only print the basic info if nonzero
+ *	multiline	Split decodes across lines if nonzero
+ *	hdr_descr	ISAKMP Header description string
+ *
+ *	Returns:
+ *
+ *	Pointer to SA description string.
+ *
+ *	The description string pointer returned points to malloc'ed storage
+ *	which should be free'ed by the caller when it's no longer needed.
+ */
+char *
+process_sa2(unsigned char *cp, size_t len, unsigned type, int quiet,
+            int multiline, char *hdr_descr) {
+   struct isakmp_sa2 *sa_hdr = (struct isakmp_sa2 *) cp;
+   struct isakmp_proposal *prop_hdr =
+      (struct isakmp_proposal *) (cp + sizeof(struct isakmp_sa2));
+   char *msg;
+   char *msg2;
+   char *msg3;
+   unsigned char *trans_ptr;
+   size_t safelen;	/* Shorter of actual and claimed length */
+
+   safelen = (ntohs(sa_hdr->isasa2_length)<len)?ntohs(sa_hdr->isasa2_length):len;
+/*
+ *	Return with a "too short to decode" message if either the remaining
+ *	packet length or the claimed payload length is less than the combined
+ *	size of the SA, Proposal, and transform headers.
+ */
+   if (safelen < sizeof(struct isakmp_sa2) + sizeof(struct isakmp_proposal) +
+       sizeof(struct isakmp_transform2))
+      return make_message("IKEv2 Handshake returned (packet too short to decode)");
+/*
+ *	Build the first part of the message based on the exchange type.
+ */
+   if (type == ISAKMP_XCHG_IKE_SA_INIT) {
+      msg = make_message("IKEv2 SA_INIT Handshake returned");
+   } else {
+      msg = make_message("UNKNOWN Mode Handshake returned (%u)", type);
+   }
+/*
+ *	If quiet is not in effect, add the ISAKMP header details to the message.
+ */
+   if (!quiet) {
+      msg2 = msg;
+      msg = make_message("%s%s%s", msg2, multiline?"\n\t":" ", hdr_descr);
+      free(msg2);
+   }
+/*
+ *	We should have exactly one proposal in the server's response.
+ *	If there is not exactly one proposal, then add this fact to the
+ *	message.  This normally means that we've received our own output.
+ */
+   if (prop_hdr->isap_np != ISAKMP_NEXT_NONE) {
+      msg2 = msg;
+      msg = make_message("%s (multiple proposals)", msg2);
+      free(msg2);
+   }
+/*
+ *	If quiet is not in effect, and we have exactly one proposal, add the
+ *	proposal details to the message.
+ */
+   if (!quiet && prop_hdr->isap_np == ISAKMP_NEXT_NONE) {
+      int firstloop=1;
+
+      msg2 = msg;
+      msg = make_message("%s%sSA=(", msg2, multiline?"\n\t":" ");
+      free(msg2);
+      if (prop_hdr->isap_spisize != 0) {	/* Non-Zero SPI */
+         msg2 = msg;
+         msg3 = hexstring(cp + sizeof(struct isakmp_sa2) +
+                          sizeof(struct isakmp_proposal),
+                          prop_hdr->isap_spisize);
+         msg = make_message("%sSPI=%s ", msg2, msg3);
+         free(msg2);
+         free(msg3);
+      }
+      trans_ptr = cp + sizeof(struct isakmp_sa2) +
+                  sizeof(struct isakmp_proposal) + prop_hdr->isap_spisize;
+      safelen -= sizeof(struct isakmp_sa2) +
+                 sizeof(struct isakmp_proposal) + prop_hdr->isap_spisize;
+
+      while (safelen) {
+         msg2 = msg;
+         msg3 = process_transform2(&trans_ptr, &safelen);
+         if (firstloop) {	/* Don't need leading space for 1st attr */
+            msg = make_message("%s%s", msg2, msg3);
+            firstloop=0;
+         } else {
+            msg = make_message("%s %s", msg2, msg3);
+         }
+         free(msg2);
+         free(msg3);
+      }
+      msg2 = msg;
+      msg = make_message("%s)", msg2);
+      free(msg2);
+   }
+
+   return msg;
+}
+
+/*
  *	process_attr -- Process transform attribute
  *
  *	Inputs:
@@ -1470,6 +1877,86 @@ process_attr(unsigned char **cp, size_t *len) {
 }
 
 /*
+ *	process_transform2 -- Process IKEv2 transforms
+ *
+ *	Inputs:
+ *
+ *	cp	Pointer to start of transform
+ *	len	Packet length remaining
+ *
+ *	Returns:
+ *
+ *	Pointer to transform description string.
+ *
+ *	The description string pointer returned points to malloc'ed storage
+ *	which should be free'ed by the caller when it's no longer needed.
+ */
+char *
+process_transform2(unsigned char **cp, size_t *len) {
+   char *msg;
+   struct isakmp_transform2 *trans_hdr = (struct isakmp_transform2 *) *cp;
+   unsigned trans_type;
+   unsigned trans_id;
+   char *trans_type_str;
+   char *trans_id_str;
+   size_t size;
+
+   trans_type = trans_hdr->isat2_transtype;
+   trans_id = ntohs(trans_hdr->isat2_transid);
+
+   trans_type_str = make_message("%s", id_to_name(trans_type, trans_type_map));
+
+   switch (trans_type) {
+   case 1:		/* Encryption Algorithm */
+      trans_id_str = make_message("%s", id_to_name(trans_id, encr_map));
+      break;
+   case 2:		/* Pseudo-random Function */
+      trans_id_str = make_message("%s", id_to_name(trans_id, prf_map));
+      break;
+   case 3:		/* Integrity Algorithm */
+      trans_id_str = make_message("%s", id_to_name(trans_id, integ_map));
+      break;
+   case 4:		/* Diffie-Hellman Group */
+      trans_id_str = make_message("%s", id_to_name(trans_id, dh_map));
+      break;
+   default:
+      trans_id_str = make_message("%u", trans_id);
+      break;
+   }
+
+   size=ntohs(trans_hdr->isat2_length);
+   if (size > sizeof(struct isakmp_transform2)) {	/* Attributes present */
+      unsigned char *attr_ptr = (*cp) + sizeof(struct isakmp_transform2);
+      struct isakmp_attribute *attr_hdr = (struct isakmp_attribute *) attr_ptr;
+      unsigned attr_class=0;
+      unsigned attr_value=0;
+
+      if (ntohs(attr_hdr->isaat_af_type) & 0x8000) {	/* Basic attribute */
+         attr_class = ntohs (attr_hdr->isaat_af_type) & 0x7fff;
+         attr_value = ntohs (attr_hdr->isaat_lv);
+      } else {					/* Variable attribute */
+         warn_msg("WARNING: Ignoring IKEv2 variable length transform attribute");
+      }
+      msg = make_message("%s=%s,%s=%u", trans_type_str, trans_id_str,
+                         id_to_name(attr_class, attr_map), attr_value);
+   } else {	/* No attributes */
+      msg = make_message("%s=%s", trans_type_str, trans_id_str);
+   }
+
+   free(trans_type_str);
+   free(trans_id_str);
+
+   if (size >= *len) {
+      *len=0;
+   } else {
+      *len -= size;
+      (*cp) += size;
+   }
+
+   return msg;
+}
+
+/*
  *	process_vid -- Process Vendor ID Payload
  *
  *	Inputs:
@@ -1527,9 +2014,9 @@ process_vid(unsigned char *cp, size_t len, vid_pattern_list *vidlist) {
  *
  *	Inputs:
  *
- *	cp	Pointer to start of notify payload
- *	len	Packet length remaining
- *	quiet	Only print the basic info if nonzero
+ *	cp		Pointer to start of notify payload
+ *	len		Packet length remaining
+ *	quiet		Only print the basic info if nonzero
  *	multiline	Split decodes across lines if nonzero
  *	hdr_descr	ISAKMP Header description string
  *
@@ -1572,6 +2059,69 @@ process_notify(unsigned char *cp, size_t len, int quiet, int multiline,
    } else {			/* All other Message Types */
       msg=make_message("Notify message %u (%s)", msg_type,
                        id_to_name(msg_type, notification_map));
+   }
+/*
+ *	If quiet is not in effect, add the ISAKMP header details to the message.
+ */
+   if (!quiet) {
+      msg2 = msg;
+      msg = make_message("%s%s%s", msg2, multiline?"\n\t":" ", hdr_descr);
+      free(msg2);
+   }
+
+   return msg;
+}
+
+/*
+ *	process_notify2 -- Process IKEv2 notify Payload
+ *
+ *	Inputs:
+ *
+ *	cp		Pointer to start of notify payload
+ *	len		Packet length remaining
+ *	quiet		Only print the basic info if nonzero
+ *	multiline	Split decodes across lines if nonzero
+ *	hdr_descr	ISAKMP Header description string
+ *
+ *	Returns:
+ *
+ *	Pointer to notify description string.
+ *
+ *	This function is only used for notification messages that are part
+ *	of an informational exchange.  Notification messages that are part
+ *	of another exchange type are handled with process_notification()
+ *	instead.  This is an ugly hack.
+ *
+ *	The description string pointer returned points to malloc'ed storage
+ *	which should be free'ed by the caller when it's no longer needed.
+ */
+char *
+process_notify2(unsigned char *cp, size_t len, int quiet, int multiline,
+                char *hdr_descr) {
+   struct isakmp_notification2 *hdr = (struct isakmp_notification2 *) cp;
+   char *msg;
+   char *msg2;
+   unsigned msg_type;
+   size_t msg_len;
+   unsigned char *msg_data;
+   char *notify_msg;
+
+   if (len < sizeof(struct isakmp_notification2) ||
+        ntohs(hdr->isan2_length) < sizeof(struct isakmp_notification2))
+      return make_message("Notify message (packet too short to decode)");
+
+   msg_type = ntohs(hdr->isan2_type);
+   msg_len = ntohs(hdr->isan2_length) - sizeof(struct isakmp_notification2);
+   msg_data = cp + sizeof(struct isakmp_notification2);
+
+   if (msg_type == 9101 || msg_type == 9110) {	/* Firewall-1 message types */
+      notify_msg = printable(msg_data, msg_len);
+      msg=make_message("Notify message %u (Firewall-1) Message=\"%s\"",
+                       msg_type, notify_msg);
+      free(notify_msg);
+   } else {			/* All other Message Types */
+      msg=make_message("Notify message %u (%s)", msg_type,
+                       id_to_name(msg_type, notification_map2));
    }
 /*
  *	If quiet is not in effect, add the ISAKMP header details to the message.

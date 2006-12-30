@@ -372,6 +372,7 @@ unsigned char* make_isakmp_hdr(unsigned, unsigned, unsigned, int, int,
                                unsigned, unsigned char*, size_t);
 unsigned char* make_sa(size_t *, unsigned, unsigned, unsigned, unsigned char *,
                        size_t);
+unsigned char* make_sa2(size_t *, unsigned, unsigned char *, size_t);
 unsigned char* make_prop(size_t *, unsigned, unsigned, unsigned, unsigned,
                          unsigned, unsigned char *, size_t);
 unsigned char* add_prop(int, size_t *, unsigned, unsigned,
@@ -391,6 +392,7 @@ unsigned char* add_attr(int, size_t *, int, unsigned, size_t, unsigned,
 unsigned char* make_vid(size_t *, unsigned, unsigned char *, size_t);
 unsigned char* add_vid(int, size_t *, unsigned char *, size_t, unsigned);
 unsigned char* make_ke(size_t *, unsigned, size_t);
+unsigned char* make_ke2(size_t *, unsigned, unsigned, size_t);
 unsigned char* make_nonce(size_t *, unsigned, size_t);
 unsigned char* make_id(size_t *, unsigned, unsigned, unsigned char *, size_t);
 unsigned char* make_cr(size_t *, unsigned, unsigned char *, size_t);
@@ -406,9 +408,12 @@ unsigned char *skip_payload(unsigned char *, size_t *, unsigned *);
 unsigned char *process_isakmp_hdr(unsigned char *, size_t *, unsigned *,
                                   unsigned *, char **);
 char *process_sa(unsigned char *, size_t, unsigned, int, int, char *);
+char *process_sa2(unsigned char *, size_t, unsigned, int, int, char *);
 char *process_attr(unsigned char **, size_t *);
+char *process_transform2(unsigned char **, size_t *);
 char *process_vid(unsigned char *, size_t, vid_pattern_list *);
 char *process_notify(unsigned char *, size_t, int, int, char *);
+char *process_notify2(unsigned char *, size_t, int, int, char *);
 char *process_id(unsigned char *, size_t);
 char *process_cert(unsigned char *, size_t, unsigned);
 char *process_delete(unsigned char *, size_t);
@@ -416,6 +421,10 @@ char *process_notification(unsigned char *, size_t);
 unsigned char *make_transform(size_t *, unsigned, unsigned, unsigned,
                               unsigned char *, size_t);
 unsigned char* add_transform(int, size_t *, unsigned, unsigned char *, size_t);
+unsigned char* make_transform2(size_t *, unsigned, unsigned, unsigned,
+                               unsigned char *, size_t);
+unsigned char* add_transform2(int, size_t *, unsigned, unsigned,
+                              unsigned char *, size_t);
 unsigned char *add_isakmp_payload(unsigned char *, size_t, unsigned char **);
 void print_payload(unsigned char *cp, unsigned payload, int);
 void add_psk_crack_payload(unsigned char *cp, unsigned, int);

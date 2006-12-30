@@ -54,8 +54,9 @@ Add support for multiple psk-crack processes using MPI for inter-process
 communication.  This should enable psk-crack to run much faster on multi-
 core CPUs.
 
-Add support for IKE v2, defined in rfc 4306 "Internet Key Exchange (IKEv2)
-Protocol"
-
 Add support for IKE MitM attack, similar to FakeIKEd at
 http://www.roe.ch/FakeIKEd
+
+Support custom transforms for IKEv2.
+
+Display notification of NAT-T encapsulation.

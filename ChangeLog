@@ -1,5 +1,12 @@
 $Id$
 
+2006-12-30 Roy Hills <Roy.Hills@nta-monitor.com>
+
+	* ike-scan.c, isakmp.c: Added support for IKEv2 with new --ikev2
+          option.
+
+	* configure.ac: Incremented version to 1.8.7.
+
 2006-12-27 Roy Hills <Roy.Hills@nta-monitor.com>
 
 	* ike-scan.c, isakmp.c: New option --rcookie to set the responder

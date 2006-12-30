@@ -605,7 +605,6 @@ main(int argc, char *argv[]) {
             ike_params.header_version = 0x20;	/* v2.0 */
             ike_params.hdr_flags=0x08;	/* Set Initiator bit */
             ike_params.exchange_type = ISAKMP_XCHG_IKE_SA_INIT;
-            warn_msg("WARNING: IKEv2 is not fully supported yet.");
             break;
          case OPT_NAT_T:	/* --nat-t */
             nat_t_flag = 1;
@@ -825,9 +824,11 @@ main(int argc, char *argv[]) {
                "         have any effect unless you also specify aggressive mode with\n"
                "         --aggressive or -A\n");
    if (ike_params.dhgroup != DEFAULT_DH_GROUP &&
-       ike_params.exchange_type != ISAKMP_XCHG_AGGR)
+       ike_params.exchange_type != ISAKMP_XCHG_AGGR &&
+       ike_params.ike_version == 1)
       warn_msg("WARNING: Specifying the DH Group with --dhgroup or -g does not have any effect\n"
-               "         unless you also specify aggressive mode with --aggressive or -A\n");
+               "         unless you also specify aggressive mode with --aggressive or -A, or\n"
+               "         IKEv2 with --ikev2 or -2\n");
    if (psk_crack_flag && ike_params.exchange_type != ISAKMP_XCHG_AGGR) {
       warn_msg("WARNING: The --pskcrack (-P) option is only relevant for aggressive mode.\n");
       psk_crack_flag=0;
@@ -1533,10 +1534,20 @@ display_packet(int n, unsigned char *packet_in, host_entry *he,
          cp = process_sa(pkt_ptr, bytes_left, type, quiet, multiline,
                          hdr_descr);
          break;
+      case ISAKMP_NEXT_V2_SA:	/* IKEv2 SA */
+         (*sa_responders)++;
+         cp = process_sa2(pkt_ptr, bytes_left, type, quiet, multiline,
+                          hdr_descr);
+         break;
       case ISAKMP_NEXT_N:	/* Notify */
          (*notify_responders)++;
          cp = process_notify(pkt_ptr, bytes_left, quiet, multiline,
                              hdr_descr);
+         break;
+      case ISAKMP_NEXT_V2_N:	/* IKEv2 Notify */
+         (*notify_responders)++;
+         cp = process_notify2(pkt_ptr, bytes_left, quiet, multiline,
+                              hdr_descr);
          break;
       default:			/* Something else */
          cp=make_message("Unexpected IKE payload returned: %s",
@@ -2002,10 +2013,51 @@ initialise_ike_packet(size_t *packet_out_len, ike_packet_params *params) {
       *packet_out_len += ke_len;
       next_payload = ISAKMP_NEXT_KE;
    }
+
+/* IKEv2 Key Exchange and Nonce Payloads */
+
+   if (params->ike_version == 2) {
+      nonce = make_nonce(&nonce_len, next_payload, params->nonce_data_len);
+      *packet_out_len += nonce_len;
+      next_payload = ISAKMP_NEXT_V2_NONCE;
+      switch (params->dhgroup) {
+         case 1:
+            kx_data_len = 96;	/* Group 1 - 768 bits */
+            break;
+         case 2:
+            kx_data_len = 128;	/* Group 2 - 1024 bits */
+            break;
+         case 5:
+            kx_data_len = 192;	/* Group 5 - 1536 bits */
+            break;
+         case 14:
+            kx_data_len = 256;	/* Group 14 - 2048 bits */
+            break;
+         case 15:
+            kx_data_len = 384;	/* Group 15 - 3072 bits */
+            break;
+         case 16:
+            kx_data_len = 512;	/* Group 16 - 4096 bits */
+            break;
+         case 17:
+            kx_data_len = 768;	/* Group 17 - 6144 bits */
+            break;
+         case 18:
+            kx_data_len = 1024;	/* Group 18 - 8192 bits */
+            break;
+         default:
+            err_msg("ERROR: Bad Diffie Hellman group: %u, should be 1,2,5,14,15,16,17 or 18",
+                    params->dhgroup);
+            break;	/* NOTREACHED */
+      }
+      ke = make_ke2(&ke_len, next_payload, params->dhgroup, kx_data_len);
+      *packet_out_len += ke_len;
+      next_payload = ISAKMP_NEXT_V2_KE;
+   }
 /*
  *	Transform payloads
  */
-   if (!params->trans_flag) {	/* Use standard transform set if none specified */
+   if (!params->trans_flag && params->ike_version==1) {	/* Std IKEv1 trans */
       if (params->exchange_type != ISAKMP_XCHG_AGGR) {	/* Main Mode */
          add_trans_simple(0, NULL, OAKLEY_3DES_CBC, 0, OAKLEY_SHA,
                    params->auth_method, 2, params->lifetime_data,
@@ -2081,14 +2133,39 @@ initialise_ike_packet(size_t *packet_out_len, ike_packet_params *params) {
       }
       if (params->gss_data)
          free(params->gss_data);
-   } else {	/* Custom transforms */
+   } else if (params->ike_version==1) {	/* IKEv1 Custom transforms */
       no_trans = params->trans_flag;
    }
-   if (params->advanced_trans_flag) {
+   if (params->advanced_trans_flag && params->ike_version==1) {
       transforms = add_transform(1, &trans_len, 0, NULL, 0);
-   } else {
+   } else if (params->ike_version==1) {
       transforms = add_trans_simple(1, &trans_len, 0, 0, 0, 0, 0, NULL, 0,
                                     NULL, 0, 0, NULL, 0, 0);
+   }
+ 
+   if (params->ike_version != 1) {	/* IKEv2 Transforms */
+      unsigned char *attr;
+      size_t attr_len;
+
+      add_attr(0, NULL, 'B', OAKLEY_KEY_LENGTH, 0, 256, NULL);
+      attr = add_attr(1, &attr_len, '\0', 0, 0, 0, NULL);
+      add_transform2(0, NULL, IKEV2_TYPE_ENCR, IKEV2_ENCR_AES_CBC, attr, attr_len);
+      free(attr);
+      add_attr(0, NULL, 'B', OAKLEY_KEY_LENGTH, 0, 128, NULL);
+      attr = add_attr(1, &attr_len, '\0', 0, 0, 0, NULL);
+      add_transform2(0, NULL, IKEV2_TYPE_ENCR, IKEV2_ENCR_AES_CBC, attr, attr_len);
+      free(attr);
+      add_transform2(0, NULL, IKEV2_TYPE_ENCR, IKEV2_ENCR_3DES, NULL, 0);
+      add_transform2(0, NULL, IKEV2_TYPE_ENCR, IKEV2_ENCR_DES, NULL, 0);
+      add_transform2(0, NULL, IKEV2_TYPE_PRF, IKEV2_PRF_HMAC_SHA1, NULL, 0);
+      add_transform2(0, NULL, IKEV2_TYPE_PRF, IKEV2_PRF_HMAC_MD5, NULL, 0);
+      add_transform2(0, NULL, IKEV2_TYPE_INTEG, IKEV2_AUTH_HMAC_SHA1_96, NULL, 0);
+      add_transform2(0, NULL, IKEV2_TYPE_INTEG, IKEV2_AUTH_HMAC_MD5_96, NULL, 0);
+      add_transform2(0, NULL, IKEV2_TYPE_DH, 2, NULL, 0);
+      add_transform2(0, NULL, IKEV2_TYPE_DH, 5, NULL, 0);
+      add_transform2(0, NULL, IKEV2_TYPE_DH, 14, NULL, 0);
+      transforms = add_transform2(1, &trans_len, 0, 0, NULL, 0);
+      no_trans=11;
    }
 /*
  *	Proposal payload
@@ -2100,14 +2177,16 @@ initialise_ike_packet(size_t *packet_out_len, ike_packet_params *params) {
 /*
  *	SA payload
  */
-   sa = make_sa(&sa_len, next_payload, params->doi, params->situation,
-                prop, prop_len);
+   if (params->ike_version == 1) {	/* IKEv1 SA */
+      sa = make_sa(&sa_len, next_payload, params->doi, params->situation,
+                   prop, prop_len);
+      next_payload = ISAKMP_NEXT_SA;
+   } else {				/* IKEv2 SA */
+      sa = make_sa2(&sa_len, next_payload, prop, prop_len);
+      next_payload = ISAKMP_NEXT_V2_SA;
+   }
    *packet_out_len += sa_len;
    free(prop);
-   if (params->ike_version == 1)
-      next_payload = ISAKMP_NEXT_SA;
-   else
-      next_payload = ISAKMP_NEXT_V2_SA;
 /*
  *	ISAKMP Header
  */
@@ -2155,6 +2234,14 @@ initialise_ike_packet(size_t *packet_out_len, ike_packet_params *params) {
       memcpy(cp, id, id_len);
       free(id);
       cp += id_len;
+   }
+   if (params->ike_version == 2) {
+      memcpy(cp, ke, ke_len);
+      free(ke);
+      cp += ke_len;
+      memcpy(cp, nonce, nonce_len);
+      free(nonce);
+      cp += nonce_len;
    }
    if (params->vendor_id_flag) {
       memcpy(cp, vid, vid_len);
@@ -3457,6 +3544,10 @@ usage(int status, int detailed) {
       fprintf(stderr, "\n--rcookie=<n>\t\tSet the ISAKMP responder cookie to <n>.\n");
       fprintf(stderr, "\t\t\tThis sets the responder cookie to the specified hex\n");
       fprintf(stderr, "\t\t\tvalue.  By default, the responder cookie is set to zero.\n");
+      fprintf(stderr, "\n--ikev2 or -2\t\tUse IKE version 2\n");
+      fprintf(stderr, "\t\t\tThis causes the outgoing packets to use IKEv2 format\n");
+      fprintf(stderr, "\t\t\tas defined in RFC 4306 instead of the default IKEv1\n");
+      fprintf(stderr, "\t\t\tformat.\n");
    } else {
       fprintf(stderr, "use \"ike-scan --help\" for detailed information on the available options.\n");
    }

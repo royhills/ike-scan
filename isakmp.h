@@ -100,11 +100,11 @@
 #define ISAKMP_NEXT_V2_CERTREQ 38	/* IKE v2 Certificate Request */
 #define ISAKMP_NEXT_V2_AUTH    39	/* IKE v2 Authentication */
 #define ISAKMP_NEXT_V2_NONCE   40	/* IKE v2 Nonce */
-#define ISAKMP_NEXT_V2_NOTIFY  41	/* IKE v2 Notify */
-#define ISAKMP_NEXT_V2_DELETE  42	/* IKE v2 Delete */
+#define ISAKMP_NEXT_V2_N       41	/* IKE v2 Notify */
+#define ISAKMP_NEXT_V2_D       42	/* IKE v2 Delete */
 #define ISAKMP_NEXT_V2_VID     43	/* IKE v2 Vendor ID */
-#define ISAKMP_NEXT_V2_TSI     44	/* IKE v2 Traffic Selector - Initiator */
-#define ISAKMP_NEXT_V2_TSR     45	/* IKE v2 Traffic Selector - Responder */
+#define ISAKMP_NEXT_V2_TSI     44	/* IKE v2 Traffic Selector - Init. */
+#define ISAKMP_NEXT_V2_TSR     45	/* IKE v2 Traffic Selector - Resp. */
 #define ISAKMP_NEXT_V2_E       46	/* IKE v2 Encrypted */
 #define ISAKMP_NEXT_V2_CP      47	/* IKE v2 Configuration */
 #define ISAKMP_NEXT_V2_EAP     48	/* IKE v2 Extensible Authentication */
@@ -158,6 +158,40 @@
 #define OAKLEY_SHA2_256        4
 #define OAKLEY_SHA2_384        5
 #define OAKLEY_SHA2_512        6
+
+/* IKEv2 transform types */
+#define IKEV2_TYPE_ENCR		1
+#define IKEV2_TYPE_PRF		2
+#define IKEV2_TYPE_INTEG	3
+#define IKEV2_TYPE_DH		4
+#define IKEV2_TYPE_ESN		5
+
+/* IKEv2 transform IDs for IKEV2_TYPE_ENCR */
+#define IKEV2_ENCR_DES_IV64	1
+#define IKEV2_ENCR_DES		2
+#define IKEV2_ENCR_3DES		3
+#define IKEV2_ENCR_RC5		4
+#define IKEV2_ENCR_IDEA		5
+#define IKEV2_ENCR_CAST		6
+#define IKEV2_ENCR_BLOWFISH	7
+#define IKEV2_ENCR_3IDEA	8
+#define IKEV2_ENCR_DES_IV32	9
+#define IKEV2_ENCR_NULL		11
+#define IKEV2_ENCR_AES_CBC	12
+#define IKEV2_ENCR_AES_CTR	13
+
+/* IKEv2 transform IDs for IKEV2_TYPE_PRF */
+#define IKEV2_PRF_HMAC_MD5	1
+#define IKEV2_PRF_HMAC_SHA1	2
+#define IKEV2_PRF_HMAC_TIGER	3
+#define IKEV2_PRF_AES128_XCBC	4
+
+/* IKEv2 transform IDs for IKEV2_TYPE_INTEG */
+#define IKEV2_AUTH_HMAC_MD5_96	1
+#define IKEV2_AUTH_HMAC_SHA1_96	2
+#define IKEV2_AUTH_DES_MAC	3
+#define IKEV2_AUTH_KPDK_MD5	4
+#define IKEV2_AUTH_AES_XCBC_96	5
 
 /*
  * Define packet structures
@@ -256,6 +290,8 @@ struct isakmp_generic
  * layout from draft-ietf-ipsec-isakmp-09.txt section 3.3
  * This is not a payload type.
  * In TLV format, this is followed by a value field.
+ * This structure has the same format for IKEv1 and IKEv2
+ *
  *                      1                   2                   3
  *  0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
  * +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
@@ -291,16 +327,42 @@ struct isakmp_attribute
 struct isakmp_sa
 {
     uint8_t  isasa_np;			/* Next payload */
-    uint8_t  isasa_reserved;
+    uint8_t  isasa_reserved;		/* MBZ */
     uint16_t isasa_length;		/* Payload length */
-    uint32_t isasa_doi;		/* DOI */
+    uint32_t isasa_doi;			/* DOI */
     uint32_t isasa_situation;		/* Situation - 32 bits for IPsec DOI */
+};
+
+/* IKEv2 Security Association Payload
+ * layout from RFC 4306 section 3.3
+ * A variable length proposal payload follows
+ * Previous next payload: ISAKMP_NEXT_V2_SA
+ * Note that this is just the generic header followed by a proposal
+ * sub-payload.
+ *
+ *                      1                   2                   3
+ *  0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+ * +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+ * ! Next Payload  !   RESERVED    !         Payload Length        !
+ * +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+ * !              Domain of Interpretation  (DOI)                  !
+ * +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+ * |                          <Proposals>                          |
+ * +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+ */
+struct isakmp_sa2
+{
+    uint8_t  isasa2_np;			/* Next payload */
+    uint8_t  isasa2_reserved;		/* MBZ */
+    uint16_t isasa2_length;		/* Payload length */
 };
 
 /* ISAKMP Proposal Payload
  * layout from draft-ietf-ipsec-isakmp-09.txt section 3.5
  * A variable length SPI follows.
  * Previous next payload: ISAKMP_NEXT_P
+ * This structure is the same for both IKEv1 and IKEv2.
+ *
  *                      1                   2                   3
  *  0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
  * +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
@@ -313,12 +375,12 @@ struct isakmp_sa
  */
 struct isakmp_proposal
 {
-    uint8_t    isap_np;
-    uint8_t    isap_reserved;
-    uint16_t   isap_length;
-    uint8_t    isap_proposal;
-    uint8_t    isap_protoid;
-    uint8_t    isap_spisize;
+    uint8_t    isap_np;			/* Next payload */
+    uint8_t    isap_reserved;		/* MBZ */
+    uint16_t   isap_length;		/* Payload length */
+    uint8_t    isap_proposal;		/* Proposal Number */
+    uint8_t    isap_protoid;		/* Protocol ID */
+    uint8_t    isap_spisize;		/* SPI Size */
     uint8_t    isap_notrans;		/* Number of transforms */
 };
 
@@ -348,11 +410,73 @@ struct isakmp_transform
     uint16_t   isat_reserved2;
 };
 
+/* ISAKMP Transform Payload
+ * layout from RFC 4306 section 3.3
+ * Variable length Attributes follow.
+ *
+ *                      1                   2                   3
+ *  0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+ * +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+ * ! Next Payload  !   RESERVED    !         Payload Length        !
+ * +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+ * !Transform Type !   RESERVED2   !         Transform ID          !
+ * +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+ * !                                                               !
+ * ~                          Attributes                           ~
+ * !                                                               !
+ * +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+ */
+struct isakmp_transform2
+{
+    uint8_t    isat2_np;		/* Next payload */
+    uint8_t    isat2_reserved;		/* MBZ */
+    uint16_t   isat2_length;		/* Payload length */
+    uint8_t    isat2_transtype;		/* Transform Type */
+    uint8_t    isat2_reserved2;		/* MBZ */
+    uint16_t   isat2_transid;		/* Transform ID */
+};
+
+/* ISAKMP Key Exchange Payload
+ *
+ *                      1                   2                   3
+ *  0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+ * +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+ * ! Next Payload  !   RESERVED    !         Payload Length        !
+ * +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+ * !                                                               !
+ * ~                      Key Exchange Data                        ~
+ * !                                                               !
+ * +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+ */
 struct isakmp_kx
 {
     uint8_t    isakx_np;
     uint8_t    isakx_reserved;
     uint16_t   isakx_length;
+};
+
+/* IKEv2 Key Exchange Payload
+ * From RFC 4360 Section 3.4
+ *
+ *                      1                   2                   3
+ *  0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+ * +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+ * ! Next Payload  !   RESERVED    !         Payload Length        !
+ * +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+ * !          DH Group             !             Reserved          !
+ * +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+ * !                                                               !
+ * ~                      Key Exchange Data                        ~
+ * !                                                               !
+ * +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+ */
+struct isakmp_kx2
+{
+    uint8_t    isakx2_np;
+    uint8_t    isakx2_reserved;
+    uint16_t   isakx2_length;
+    uint16_t   isakx2_dhgroup;
+    uint16_t   isakx2_reserved2;
 };
 
 struct isakmp_nonce
@@ -424,6 +548,37 @@ struct isakmp_notification
 };
 
 extern struct_desc isakmp_notification_desc;
+
+/* IKEv2 Notification Payload
+ * layout from RFC 4306 section 3.10
+ * This is followed by a variable length SPI
+ * and then possibly by variable length Notification Data.
+ * Previous next payload: ISAKMP_NEXT_N
+ *                      1                   2                   3
+ *  0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+ * +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+ * ! Next Payload  !   RESERVED    !         Payload Length        !
+ * +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+ * !  Protocol-ID  !   SPI Size    !      Notify Message Type      !
+ * +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+ * !                                                               !
+ * ~                Security Parameter Index (SPI)                 ~
+ * !                                                               !
+ * +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+ * !                                                               !
+ * ~                       Notification Data                       ~
+ * !                                                               !
+ * +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+ */
+struct isakmp_notification2
+{
+    uint8_t    isan2_np;
+    uint8_t    isan2_reserved;
+    uint16_t   isan2_length;
+    uint8_t    isan2_protoid;
+    uint8_t    isan2_spisize;
+    uint16_t   isan2_type;
+};
 
 /* ISAKMP Delete Payload
  * layout from draft-ietf-ipsec-isakmp-09.txt section 3.15
