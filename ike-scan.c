@@ -341,7 +341,7 @@ main(int argc, char *argv[]) {
             break;
          case 'h':	/* --help */
             usage(EXIT_SUCCESS, 1);
-            break;
+            break;	/* NOTREACHED */
          case 's':	/* --sport */
             source_port=Strtoul(optarg, 10);
             break;
@@ -410,7 +410,7 @@ main(int argc, char *argv[]) {
             utils_use_rcsid();
             wrappers_use_rcsid();
             exit(EXIT_SUCCESS);
-            break;
+            break;	/* NOTREACHED */
          case 'e':	/* --vendor */
             if (strlen(optarg) % 2)	/* Length is odd */
                err_msg("ERROR: Length of --vendor argument must be even (multiple of 2).");
@@ -819,10 +819,11 @@ main(int argc, char *argv[]) {
       warn_msg("WARNING: Specifying an idtype payload with --idtype or -y does not have any\n"
                "         effect unless you also specify aggressive mode with --aggressive or -A\n");
    if (ike_params.nonce_data_len != DEFAULT_NONCE_LEN &&
-       ike_params.exchange_type != ISAKMP_XCHG_AGGR)
+       ike_params.exchange_type != ISAKMP_XCHG_AGGR &&
+       ike_params.ike_version == 1)
       warn_msg("WARNING: Specifying the nonce payload length with --noncelen or -c does not\n"
                "         have any effect unless you also specify aggressive mode with\n"
-               "         --aggressive or -A\n");
+               "         --aggressive or -A, or IKEv2 with --ikev2 or -2\n");
    if (ike_params.dhgroup != DEFAULT_DH_GROUP &&
        ike_params.exchange_type != ISAKMP_XCHG_AGGR &&
        ike_params.ike_version == 1)
@@ -837,6 +838,8 @@ main(int argc, char *argv[]) {
       err_msg("ERROR: You can only specify one target host with the --pskcrack (-P) option.");
    if (interval && bandwidth != DEFAULT_BANDWIDTH)
       err_msg("ERROR: You cannot specify both --bandwidth and --interval.");
+   if (ike_params.trans_flag != 0 && ike_params.ike_version == 2)
+      warn_msg("WARNING: IKEv2 does not support custom proposals.");
 /*
  *      Create and initialise array of pointers to host entries.
  */
@@ -2003,7 +2006,8 @@ initialise_ike_packet(size_t *packet_out_len, ike_packet_params *params) {
             kx_data_len = 1024;	/* Group 18 - 8192 bits */
             break;
          default:
-            err_msg("ERROR: Bad Diffie Hellman group: %u, should be 1,2,5,14,15,16,17 or 18",
+            err_msg("ERROR: Bad Diffie Hellman group: %u, "
+                    "should be 1,2,5,14,15,16,17 or 18",
                     params->dhgroup);
             break;	/* NOTREACHED */
       }
@@ -2046,7 +2050,8 @@ initialise_ike_packet(size_t *packet_out_len, ike_packet_params *params) {
             kx_data_len = 1024;	/* Group 18 - 8192 bits */
             break;
          default:
-            err_msg("ERROR: Bad Diffie Hellman group: %u, should be 1,2,5,14,15,16,17 or 18",
+            err_msg("ERROR: Bad Diffie Hellman group: %u, "
+                    "should be 1,2,5,14,15,16,17 or 18",
                     params->dhgroup);
             break;	/* NOTREACHED */
       }
@@ -3271,6 +3276,7 @@ usage(int status, int detailed) {
       fprintf(stderr, "\t\t\tCheckpoint hybrid mode is 64221.\n");
       fprintf(stderr, "\t\t\tGSS (Windows \"Kerberos\") is 65001.\n");
       fprintf(stderr, "\t\t\tXAUTH uses 65001 to 65010.\n");
+      fprintf(stderr, "\t\t\tThis is not applicable to IKEv2.\n");
       fprintf(stderr, "\n--version or -V\t\tDisplay program version and exit.\n");
       fprintf(stderr, "\n--vendor=<v> or -e <v>\tSet vendor id string to hex value <v>.\n");
       fprintf(stderr, "\t\t\tYou can use this option more than once to send\n");
@@ -3304,6 +3310,7 @@ usage(int status, int detailed) {
       fprintf(stderr, "\t\t\tEnc=3DES-CBC, Hash=SHA1, Auth=shared key, DH Group=2\n");
       fprintf(stderr, "\t\t\tand --trans=7/256,1,1,5 specifies\n");
       fprintf(stderr, "\t\t\tEnc=AES-256, Hash=MD5, Auth=shared key, DH Group=5\n");
+      fprintf(stderr, "\t\t\tThis option is not yet supported for IKEv2.\n");
       fprintf(stderr, "\n--showbackoff[=<n>] or -o[<n>]\tDisplay the backoff fingerprint table.\n");
       fprintf(stderr, "\t\t\tDisplay the backoff table to fingerprint the IKE\n");
       fprintf(stderr, "\t\t\timplementation on the remote hosts.\n");
@@ -3355,9 +3362,9 @@ usage(int status, int detailed) {
       fprintf(stderr, "\t\t\tThis option is only applicable to Aggressive Mode.\n");
       fprintf(stderr, "\t\t\tSee RFC 2407 4.6.2 for details of Identification types.\n");
       fprintf(stderr, "\n--dhgroup=<n> or -g <n>\tUse Diffie Hellman Group <n>.  Default %u.\n", DEFAULT_DH_GROUP);
-      fprintf(stderr, "\t\t\tThis option is only applicable to Aggressive Mode where\n");
-      fprintf(stderr, "\t\t\tit is used to determine the size of the key exchange\n");
-      fprintf(stderr, "\t\t\tpayload.\n");
+      fprintf(stderr, "\t\t\tThis option is only applicable to Aggressive Mode and\n");
+      fprintf(stderr, "\t\t\tIKEv2.  For both of these, it is used to determine the\n");
+      fprintf(stderr, "\t\t\tsize of the key exchange payload.\n");
       fprintf(stderr, "\t\t\tIf you use Aggressive Mode with custom transforms, then\n");
       fprintf(stderr, "\t\t\tyou will normally need to use the --dhgroup option\n");
       fprintf(stderr, "\t\t\tunless you are using the default DH group.\n");
@@ -3405,10 +3412,10 @@ usage(int status, int detailed) {
       fprintf(stderr, "\t\t\tspecified as IP addresses.\n");
       fprintf(stderr, "\n--noncelen=<n> or -c <n> Set the nonce length to <n> bytes. Default=%u\n", DEFAULT_NONCE_LEN);
       fprintf(stderr, "\t\t\tThis option controls the length of the nonce payload\n");
-      fprintf(stderr, "\t\t\tthat is sent in an aggressive mode request. Normally,\n");
-      fprintf(stderr, "\t\t\tthere is no need to use this option unless you want to\n");
-      fprintf(stderr, "\t\t\treduce the nonce size to speed up pre-shared key\n");
-      fprintf(stderr, "\t\t\tcracking, or if you want to see how a particular\n");
+      fprintf(stderr, "\t\t\tthat is sent in an aggressive mode or IKEv2 request.\n");
+      fprintf(stderr, "\t\t\tNormally there is no need to use this option unless you\n");
+      fprintf(stderr, "\t\t\twant to reduce the nonce size to speed up pre-shared\n");
+      fprintf(stderr, "\t\t\tkey cracking, or if you want to see how a particular\n");
       fprintf(stderr, "\t\t\tserver handles different length nonce payloads.\n");
       fprintf(stderr, "\t\t\tRFC 2409 states that the length of nonce payload\n");
       fprintf(stderr, "\t\t\tmust be between 8 and 256 bytes, but ike-scan does\n");
@@ -3547,7 +3554,12 @@ usage(int status, int detailed) {
       fprintf(stderr, "\n--ikev2 or -2\t\tUse IKE version 2\n");
       fprintf(stderr, "\t\t\tThis causes the outgoing packets to use IKEv2 format\n");
       fprintf(stderr, "\t\t\tas defined in RFC 4306 instead of the default IKEv1\n");
-      fprintf(stderr, "\t\t\tformat.\n");
+      fprintf(stderr, "\t\t\tformat. Any packets returned are automatically decoded\n");
+      fprintf(stderr, "\t\t\tas IKE or IKEv2 depending on their payloads irrespective\n");
+      fprintf(stderr, "\t\t\tof this option.\n");
+      fprintf(stderr, "\t\t\tThe --ikev2 option is currently experimental. It has not.\n");
+      fprintf(stderr, "\t\t\tbeen extensively tested, and it only supports sending the\n");
+      fprintf(stderr, "\t\t\tdefault proposal.\n");
    } else {
       fprintf(stderr, "use \"ike-scan --help\" for detailed information on the available options.\n");
    }

@@ -442,9 +442,15 @@ uint8_t random_byte(void);
 uint32_t random_ip(void);
 int str_ccmp(const char *, const char *);
 unsigned name_or_number(const char *, const id_name_map[]);
+/* MT19937 prototypes */
 void init_genrand(unsigned long);
+void init_by_array(unsigned long[], int);
 unsigned long genrand_int32(void);
+long genrand_int31(void);
+double genrand_real1(void);
 double genrand_real2(void);
+double genrand_real3(void);
+double genrand_res53(void);
 /* The following functions are just to prevent rcsid being optimised away */
 void error_use_rcsid(void);
 void isakmp_use_rcsid(void);

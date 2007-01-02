@@ -1,0 +1,153 @@
+#!/bin/sh
+# $Id$
+#
+# check-psk-crack-4 -- Shell script to test psk-crack for uncrackable hashes
+#                      and other uncommon cases.
+#
+# Author: Roy Hills
+# Date: 01 January 2007
+#
+# This shell script checks that psk-crack works for hashes that cannot be
+# cracked, and various other things that are not tested with the other
+# testing scripts.
+#
+# The specific areas tested by this script are:
+#
+# 1.  MD5 and SHA1 hashes which cannot be cracked in dictionary or brute
+#     force mode;
+# 2.  Multiple PSK entries in one cracking run;
+# 3.  Running psk-crack with "--verbose" and "--verbose --verbose"; and
+# 4.  MD5 and SHA1 PSKs > 64 characters long.
+#
+TMPFILE=/tmp/ike-scan-test.$$.tmp
+PSK=/tmp/psk-file.$$.tmp
+LONGMD5PSK=/tmp/long-md5-psk-file.$$.tmp
+LONGSHA1PSK=/tmp/long-sha1-psk-file.$$.tmp
+DICTFILE=/tmp/ike-dict-file.$$.tmp
+LONGDICTFILE=/tmp/ike-long-dict-file.$$.tmp
+
+# Create PSK parameter files with known pre-shared keys.
+# These parameters were generated using ike-scan 1.8.4 and Juniper NetScreen
+# running ScreenOS 5.4.0r1.0.  In both cases, the pre-shared key is "garibaldi"
+echo "40bda5c13180d1d6f217e4849175941c9742b8e19ddef0fae080ad24ad43a8740585ed1848e51ca0218af9bddee9d2e9bf7ff04a7b5231ab08ce80627ae4e0bb573bb753a5bc2050dd924463d63aebd22264c94d0b010de41d416002d8b5b7597701ccfe40e58fa5a8108b3d0df806a6668aa51b2c9a31fe9ae16e3aa5cde5bf:e82e900bda96002a53ac57490f0257e8c77d42d91bc821f3fe52d71647186fa39d7de1249858340d7377eb76b516e67d86823ce3dee78318970505f5a89fb10262d755e973fdb7f95e2468e19960d33d1fe3261d0835c64e8907ea06c8bfb2c7c25cf6817b68c445100a09aab67e43f783e1f1305bd6a1611407e775bd0a8851:0c870b3b3eb9a4f9:a173f9069547144d:00000001000000010000002c01010001000000240101000080010005800200018003000180040002800b0001000c000400007080:011101f43e0369fb:213d31bff42969c49beed5d8c83c253c9fe8dc02:8f4c430dde34e99e2f2e7ed6e02b6fa25c5c2c7a:4e50b26bf55db6b1fb7d2e676f637e4e" > $PSK
+echo "c3093ac76fb500a202d14924d3390d1f54c926cfb71c52bcbce9b96e48b831df087c5b4a7d481c9cc8495b420451e77c9332478ad842e26d2257a5bbaf65a05d42e4718e3ae363d54f6ee613e54a94b4297130c874908ca1d960b63d3e86623a68d02f1a6a014889d24db3c2bbaf16cab61e421b4832578b0814d3f45268f801:b848bdc2cc7658f97537d9a4cedbc5194ad87f9c3e82fbf337335e36667718cddb463af25627284dd5bf08cc804e272e6a213d6f2b80e9cf602e2371a1407bf2611abcaffec7ae8071ba01b893445dc7f3205bf2ecd11cd3aa80f9722f8cef755cd10ab890ff721e9fa4b1ec365a41787f70ed0852b8f3697ef3645ab10734ed:4d35826fc8efff9d:7414261f5dacb338:00000001000000010000002c01010001000000240101000080010005800200028003000180040002800b0001000c000400007080:011101f43e0369fb:0da2be36c9c55e6254c693b4ab5efbc5cc0d06a3:e0835265eb1aab741becaddc8b91a3fb8603db83:a4a152b38379d2d3992bf60c78e3a5ddb40745e5" >> $PSK
+#
+# Create MD5 and SHA1 PSK parameter files with the 65-character PSK:
+# "12345678901234567890123456789012345678901234567890123456789012345"
+# Cracking this requires an HMAC calculation with a 65-character key
+# that tests a rarely used part of the HMAC code, which sets the
+# key to MD5(key) if key length > 64.  Details in RFC 2104.
+# These parameters were generated using ike-scan 1.8.4 and Juniper NetScreen
+# running ScreenOS 5.4.0r1.0.
+echo "11c1fe3625f121b6d3a78c83b1e95d8ddd0dcd995219506b05641825ba98623fe5332e8fceb293cb7444ec5be93c78689e6bd59746445ce498c6d34f3440201020de158af7d7a4df60493c2a5a8f0f588827ad39e8f332064c597a82b70dbb7a93f0dbeda1f55bcf84088500f272db6b0a612d16138099ad9c751d9e77d484d7:8588a18ca324180948e403f727df0525c88c229728bfc837c6f2232163566379426a916d7001de706d517335ad88c2a97f20cd86b546c52a2434ffbc3858c3a469fb3bec78e0dc6eb088fe7cf4df1e8760843edd1b5381c852a57ba97be1c1567c5ccbbb94bc646735bd7c63a671af9165ecf03d44f09a0f291c9342eeb1450b:783c309391a03bc3:52816a0877553fd4:00000001000000010000002c01010001000000240101000080010005800200018003000180040002800b0001000c000400007080:011101f43e0369fb:2211642a52407f9b7130a4571cb9c6e7e750bf57:12fbeb37130dfe0d093530870658fbc9096c2053:d4ee32d6fc95517eb672c199ed510bbb" > $LONGMD5PSK
+echo "bbfc1a122b52cce778cb769ecf40ed4cc3f75903ba0d3041aaa628451b60aa0dea9eae4d36a09502bbb5e832a54c5e1133753a90a6c81a5ab0b0cea8b981861fcc6fde21905d8b68b286d0542dc4234b6c5bae0c02a64c4287f3608bf4fee4a07e71f3d32e417c886b5a5ebd67fee8ed6aeefbee94835e15aed7847faf9bd696:a5d1d0b72d7b08c253cf1e4bc1575639ba6dcaa179829bab11cb3dddaddf3875bbf94428e0bd16357532a2b4a73e59477ee5f372010a843235adea5bc05fd9dd0ffd13f0a398efb48c6bc5d3173fd08d04c7a21ff2dbb94673ef919ba7d83c8ea1bf540897f53c62d7b8cdb8d70d6e7390aee143bcf87807d4ba5f296177ceb2:3e9e80bbae9c264d:2d4732ef8a14c854:00000001000000010000002c01010001000000240101000080010005800200028003000180040002800b0001000c000400007080:011101f43e0369fb:caffb48754efbfc3b734fc285c5c594e81cce20f:8318cfebfdc7807beda72178b42ee114e89b4db3:b662b1ca0ba31a9b90133901edb2b684fe20c67e" > $LONGSHA1PSK
+#
+# Create dictionary file that doesn't contain the known PSK.
+echo "notthisone"  > $DICTFILE
+echo "NotThisOne" >> $DICTFILE
+echo "WontMatch"  >> $DICTFILE
+echo "testing"    >> $DICTFILE
+echo "qwerty"     >> $DICTFILE
+#
+# Create dictionary file for 65-character PSK
+echo "notthisone"  > $LONGDICTFILE
+echo "12345678901234567890123456789012345678901234567890123456789012345"  >> $LONGDICTFILE
+#
+echo "Checking psk-crack bruteforce with uncrackable MD5 and SHA1 hashes ..."
+$srcdir/psk-crack --verbose --bruteforce=6 --charset=abc123 $PSK >$TMPFILE
+if test $? -ne 0; then
+   rm -f $TMPFILE
+   rm -f $DICTFILE
+   rm -f $PSK
+   echo "FAILED"
+   exit 1
+fi
+grep '^no match found for MD5 hash ' $TMPFILE >/dev/null
+if test $? -ne 0; then
+   rm -f $TMPFILE
+   rm -f $DICTFILE
+   rm -f $PSK
+   echo "FAILED"
+   exit 1
+fi
+grep '^no match found for SHA1 hash ' $TMPFILE >/dev/null
+if test $? -ne 0; then
+   rm -f $TMPFILE
+   rm -f $DICTFILE
+   rm -f $PSK
+   echo "FAILED"
+   exit 1
+fi
+echo "ok"
+#
+echo "Checking psk-crack dictionary with uncrackable MD5 and SHA1 hashes ..."
+$srcdir/psk-crack --verbose --dictionary=$DICTFILE $PSK >$TMPFILE
+if test $? -ne 0; then
+   rm -f $TMPFILE
+   rm -f $DICTFILE
+   rm -f $PSK
+   echo "FAILED"
+   exit 1
+fi
+grep '^no match found for MD5 hash ' $TMPFILE >/dev/null
+if test $? -ne 0; then
+   rm -f $TMPFILE
+   rm -f $DICTFILE
+   rm -f $PSK
+   echo "FAILED"
+   exit 1
+fi
+grep '^no match found for SHA1 hash ' $TMPFILE >/dev/null
+if test $? -ne 0; then
+   rm -f $TMPFILE
+   rm -f $DICTFILE
+   rm -f $PSK
+   echo "FAILED"
+   exit 1
+fi
+echo "ok"
+#
+echo "Checking psk-crack dictionary with 65-character MD5 PSK ..."
+$srcdir/psk-crack --verbose --verbose --dictionary=$LONGDICTFILE $LONGMD5PSK >$TMPFILE
+if test $? -ne 0; then
+   rm -f $TMPFILE
+   rm -f $LONGDICTFILE
+   rm -f $LONGMD5PSK
+   echo "FAILED"
+   exit 1
+fi
+grep '^key "12345678901234567890123456789012345678901234567890123456789012345" matches MD5 hash' $TMPFILE >/dev/null
+if test $? -ne 0; then
+   rm -f $TMPFILE
+   rm -f $LONGDICTFILE
+   rm -f $LONGMD5PSK
+   echo "FAILED"
+   exit 1
+fi
+echo "ok"
+#
+echo "Checking psk-crack dictionary with 65-character SHA1 PSK ..."
+$srcdir/psk-crack --verbose --verbose --dictionary=$LONGDICTFILE $LONGSHA1PSK >$TMPFILE
+if test $? -ne 0; then
+   rm -f $TMPFILE
+   rm -f $LONGDICTFILE
+   rm -f $LONGSHA1PSK
+   echo "FAILED"
+   exit 1
+fi
+grep '^key "12345678901234567890123456789012345678901234567890123456789012345" matches SHA1 hash' $TMPFILE >/dev/null
+if test $? -ne 0; then
+   rm -f $TMPFILE
+   rm -f $LONGDICTFILE
+   rm -f $LONGSHA1PSK
+   echo "FAILED"
+   exit 1
+fi
+echo "ok"
+#
+rm -f $TMPFILE
+rm -f $DICTFILE
+rm -f $LONGDICTFILE
+rm -f $PSK
+rm -f $LONGMD5PSK
+rm -f $LONGSHA1PSK

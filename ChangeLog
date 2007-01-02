@@ -1,5 +1,21 @@
 $Id$
 
+2007-01-02 Roy Hills <Roy.Hills@nta-monitor.com>
+
+	* check-psk-crack-4: New checking script to improve coverage of
+	  psk-crack.c and hash_functions.h.  Test coverage for these
+	  source files is now:
+
+	  96.88% of 64 lines executed in file hash_functions.h
+	  95.28% of 318 lines executed in file psk-crack.c
+
+	* check-packet: Added new tests to improve coverage of
+	  ike-scan.c and isakmp.c.  Test coverage for these files is
+	  now:
+
+	  65.91% of 1936 lines executed in file ike-scan.c
+	  40.98% of 964 lines executed in file isakmp.c
+
 2006-12-30 Roy Hills <Roy.Hills@nta-monitor.com>
 
 	* ike-scan.c, isakmp.c: Added support for IKEv2 with new --ikev2

@@ -94,7 +94,7 @@ main (int argc, char *argv[]) {
       switch (arg) {
          case 'h':      /* --help */
             psk_crack_usage(EXIT_SUCCESS);
-            break;
+            break;	/* NOTREACHED */
          case 'v':      /* --verbose */
             verbose++;
             break;
@@ -112,7 +112,7 @@ main (int argc, char *argv[]) {
             utils_use_rcsid();
             wrappers_use_rcsid();
             exit(EXIT_SUCCESS);
-            break;
+            break;	/* NOTREACHED */
          case 'B':      /* --bruteforce */
             brute_len=Strtoul(optarg, 10);
             break;
@@ -128,7 +128,7 @@ main (int argc, char *argv[]) {
             break;
          default:       /* Unknown option */
             psk_crack_usage(EXIT_FAILURE);
-            break;
+            break;	/* NOTREACHED */
       }
    } /* End While */
 

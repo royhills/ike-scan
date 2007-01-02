@@ -103,11 +103,11 @@ main(void) {
  *	"HMAC: Keyed-Hashing for Message Authentication"
  */
    static const struct hmac_md5_test_struct {
-      unsigned char key[16];
+      const unsigned char key[16];
       int key_len;
-      unsigned char data[64];
+      const unsigned char data[64];
       int data_len;
-      char *digest;
+      const char *digest;
    } hmac_md5_tests[NUM_HMAC_TESTS] = {
       {"Jefe",
        4,
@@ -121,11 +121,11 @@ main(void) {
  *	"Test Cases for HMAC-MD5 and HMAC-SHA-1"
  */
    static const struct hmac_sha1_test_struct {
-      unsigned char key[20];
+      const unsigned char key[20];
       int key_len;
-      unsigned char data[64];
+      const unsigned char data[64];
       int data_len;
-      char *digest;
+      const char *digest;
    } hmac_sha1_tests[NUM_HMAC_TESTS] = {
       {"Jefe",
        4,
@@ -233,14 +233,14 @@ main(void) {
  *	The ID used was "test", and the valid pre-shared key is "abc123".
  *      The expected hash_r is "f995ec2968f695aeb1d4e4b437f49d26".
  */
-      char *g_xr_hex = "9c1e0e07828af45086a4eb559ad8dafb7d655bab38656609426653565ef7e332bed7212cf24a05048032240256a169a68ee304ca500abe073d150bc50239350446ab568132aebcf34acd25ce23b30d0de9f8e7a89c22ce0dec2dabf0409bc25f0988d5d956916dce220c630d2a1fda846667fdecb20b2dc2d5c5b8273a07095c";
-      char *g_xi_hex = "6f8c74c15bb4dd09b7af8d1c23e7b381a38dddcd4c5afb3b1335ff766f0267df8fdca0ea907ef4482d8164506817d10ba4aed8f108d32c1b082b91772df956bcd5f7a765759bada21c11f28429c48fcd7267be7b3aea96421528b9432110fff607a65b7c41091e5d1a10e143d4701147d7cfc211ba5853cf800d12a11d129724";
-      char *cky_r_hex = "6d08132c8abb6931";
-      char *cky_i_hex = "eac82ea45cbe59e6";
-      char *sai_b_hex = "00000001000000010000002c01010001000000240101000080010001800200018003000180040002800b0001000c000400007080";
-      char *idir_b_hex = "01000000ac100202";
-      char *ni_b_hex = "64745a975dbcd95c2abf7d2eeeb93ac4633a03f1";
-      char *nr_b_hex = "502c0b3872518fa1e7ff8f5a28a3d797f65e2cb1";
+      const char *g_xr_hex = "9c1e0e07828af45086a4eb559ad8dafb7d655bab38656609426653565ef7e332bed7212cf24a05048032240256a169a68ee304ca500abe073d150bc50239350446ab568132aebcf34acd25ce23b30d0de9f8e7a89c22ce0dec2dabf0409bc25f0988d5d956916dce220c630d2a1fda846667fdecb20b2dc2d5c5b8273a07095c";
+      const char *g_xi_hex = "6f8c74c15bb4dd09b7af8d1c23e7b381a38dddcd4c5afb3b1335ff766f0267df8fdca0ea907ef4482d8164506817d10ba4aed8f108d32c1b082b91772df956bcd5f7a765759bada21c11f28429c48fcd7267be7b3aea96421528b9432110fff607a65b7c41091e5d1a10e143d4701147d7cfc211ba5853cf800d12a11d129724";
+      const char *cky_r_hex = "6d08132c8abb6931";
+      const char *cky_i_hex = "eac82ea45cbe59e6";
+      const char *sai_b_hex = "00000001000000010000002c01010001000000240101000080010001800200018003000180040002800b0001000c000400007080";
+      const char *idir_b_hex = "01000000ac100202";
+      const char *ni_b_hex = "64745a975dbcd95c2abf7d2eeeb93ac4633a03f1";
+      const char *nr_b_hex = "502c0b3872518fa1e7ff8f5a28a3d797f65e2cb1";
 
       unsigned char *g_xr;
       unsigned char *g_xi;
@@ -271,7 +271,7 @@ main(void) {
 
       unsigned char *cp;
 
-      unsigned char *psk = (unsigned char *) "abc123";	/* correct key */
+      const unsigned char *psk = (const unsigned char *) "abc123";	/* correct key */
       size_t psk_len = 6;
 
       struct timeval start_time;
@@ -334,14 +334,14 @@ main(void) {
  *	The ID used was "test", and the valid pre-shared key is "abc123".
  *      The expected hash_r is "543ea42889c07b17390cc6f0440246c0148422df".
  */
-      char *g_xr_hex = "6c5559243259d5293df34a766561b8ffa78a9f8ee03d8a05916aadeeba9997864e0cd712f2a08104366c5e48f391ee7ce7b0ac08c59b8001c888c9f0343fd7d7d2d1da8e672c4ff05a7dd3c4eb6adc09bec712128ed951f7fcde2c31431643eb04d5ffc0be68e17aa80168e9635cb6f4c80af8ea1432c2b095b25f3d79ac4e55";
-      char *g_xi_hex = "857209de96faf07bad57ff1aba648a2c61a6802e4db3ab54c5593fa8abd9b1304bbb0fe2b5ff5d63565c7d10c1073d22adbd51fb70fc4f35568ede01678f32b24a41940040f263964ee0a70fe8e43295a18390117fdf46d56d24d7d4b40987fe4a1bfe8a0d61205c42c76b2aab9dbf4c20505da02fa4759dc84c717c55f87b9f";
-      char *cky_r_hex = "963c61ef1778b6c5";
-      char *cky_i_hex = "efa6639971a91c08";
-      char *sai_b_hex = "00000001000000010000002c01010001000000240101000080010001800200028003000180040002800b0001000c000400007080";
-      char *idir_b_hex = "01000000ac100202";
-      char *ni_b_hex = "6d62656f72fd1c53cda7337d0612aeebe3529a09";
-      char *nr_b_hex = "8e83c48eb087b8276b4bb2976ea23bf426abde8f";
+      const char *g_xr_hex = "6c5559243259d5293df34a766561b8ffa78a9f8ee03d8a05916aadeeba9997864e0cd712f2a08104366c5e48f391ee7ce7b0ac08c59b8001c888c9f0343fd7d7d2d1da8e672c4ff05a7dd3c4eb6adc09bec712128ed951f7fcde2c31431643eb04d5ffc0be68e17aa80168e9635cb6f4c80af8ea1432c2b095b25f3d79ac4e55";
+      const char *g_xi_hex = "857209de96faf07bad57ff1aba648a2c61a6802e4db3ab54c5593fa8abd9b1304bbb0fe2b5ff5d63565c7d10c1073d22adbd51fb70fc4f35568ede01678f32b24a41940040f263964ee0a70fe8e43295a18390117fdf46d56d24d7d4b40987fe4a1bfe8a0d61205c42c76b2aab9dbf4c20505da02fa4759dc84c717c55f87b9f";
+      const char *cky_r_hex = "963c61ef1778b6c5";
+      const char *cky_i_hex = "efa6639971a91c08";
+      const char *sai_b_hex = "00000001000000010000002c01010001000000240101000080010001800200028003000180040002800b0001000c000400007080";
+      const char *idir_b_hex = "01000000ac100202";
+      const char *ni_b_hex = "6d62656f72fd1c53cda7337d0612aeebe3529a09";
+      const char *nr_b_hex = "8e83c48eb087b8276b4bb2976ea23bf426abde8f";
 
       unsigned char *g_xr;
       unsigned char *g_xi;
@@ -372,7 +372,7 @@ main(void) {
 
       unsigned char *cp;
 
-      unsigned char *psk = (unsigned char *) "abc123";	/* correct key */
+      const unsigned char *psk = (const unsigned char *) "abc123";	/* correct key */
       size_t psk_len = 6;
 
       struct timeval start_time;

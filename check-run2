@@ -18,7 +18,7 @@ if test $? -ne 0; then
    echo "FAILED"
    exit 1
 fi
-grep '^Ending ike-scan.*0 returned handshake; 0 returned notify$' $TMPFILE >/dev/null
+grep '^Ending ike-scan.* 0 returned handshake; 0 returned notify$' $TMPFILE >/dev/null
 if test $? -ne 0; then
    rm -f $TMPFILE
    echo "FAILED"
