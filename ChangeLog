@@ -9,12 +9,19 @@ $Id$
 	  96.88% of 64 lines executed in file hash_functions.h
 	  95.28% of 318 lines executed in file psk-crack.c
 
-	* check-packet: Added new tests to improve coverage of
+	* check-packet, check-decode: Added new tests to improve coverage of
 	  ike-scan.c and isakmp.c.  Test coverage for these files is
 	  now:
 
-	  65.91% of 1936 lines executed in file ike-scan.c
-	  40.98% of 964 lines executed in file isakmp.c
+	  71.18% of 1957 lines executed in file ike-scan.c
+	  69.61% of 964 lines executed in file isakmp.c
+
+	* ike-scan.c, ike-scan.h: Added new --readpktfromfile option.
+	  This option reads the packet from the specified file rather
+	  than from the network.  It is intended for debugging and
+	  testing purposes, to allow the IKE packet decoding to be
+	  easily checked.  This option is not documented, because it is
+	  designed purely for testing.
 
 2006-12-30 Roy Hills <Roy.Hills@nta-monitor.com>
 

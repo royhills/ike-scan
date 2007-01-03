@@ -1,0 +1,137 @@
+#!/bin/sh
+# $Id$
+#
+# check-decode -- Shell script to test ike-scan packet decoding
+#
+# Author: Roy Hills
+# Date: 02 January 2007
+#
+# This script checks that ike-scan decodes and displays IKE packets correctly
+# It uses the undocumented ike-scan option --readpktfromfile to read the
+# packet from a file rather than from the network.
+#
+# The packet data files contain example responses from various VPN servers.
+# In each case the initiator cookie is set to "deadbeefdeadbeef", so we
+# specify this to ike-scan to ensure that the packet will be matched and
+# displayed.
+#
+IKESCANOUTPUT=/tmp/ike-scan-output.$$.tmp
+EXAMPLEOUTPUT=/tmp/example-output.$$.tmp
+#
+SAMPLE01="$srcdir/pkt-main-mode-response.dat"
+SAMPLE02="$srcdir/pkt-aggr-mode-response.dat"
+SAMPLE03="$srcdir/pkt-notify-response.dat"
+SAMPLE04="$srcdir/pkt-v2-sainit-response.dat"
+#
+echo "Checking ike-scan main mode decode using $SAMPLE01 ..."
+cat >$EXAMPLEOUTPUT <<_EOF_
+127.0.0.1	(0.0.0.0) Main Mode Handshake returned
+	HDR=(CKY-R=636fa075dcf8ba90)
+	SA=(Enc=3DES Hash=SHA1 Auth=RSA_Sig Group=2:modp1024 LifeType=Seconds LifeDuration(4)=0x00007080)
+	VID=f4ed19e0c114eb516faaac0ee37daf2807b4381f000000010000138d459becd70000000018000000 (Firewall-1 NGX)
+
+_EOF_
+IKEARGS="-s 0 -r 1 -N -M -I $srcdir/ike-vendor-ids --cookie=deadbeefdeadbeef"
+$srcdir/ike-scan $IKEARGS --readpktfromfile=$SAMPLE01 127.0.0.1 | grep -v '^Starting ike-scan ' | grep -v '^Ending ike-scan ' >$IKESCANOUTPUT 2>&1
+if test $? -ne 0; then
+   rm -f $IKESCANOUTPUT
+   rm -f $EXAMPLEOUTPUT
+   echo "FAILED"
+   exit 1
+fi
+cmp -s $IKESCANOUTPUT $EXAMPLEOUTPUT
+if test $? -ne 0; then
+   rm -f $IKESCANOUTPUT
+   rm -f $EXAMPLEOUTPUT
+   echo "FAILED"
+   exit 1
+fi
+echo "ok"
+rm -f $IKESCANOUTPUT
+rm -f $EXAMPLEOUTPUT
+#
+echo "Checking ike-scan aggressive mode decode using $SAMPLE02 ..."
+cat >$EXAMPLEOUTPUT <<_EOF_
+127.0.0.1	(0.0.0.0) Aggressive Mode Handshake returned
+	HDR=(CKY-R=61a878367079dd35)
+	SA=(Enc=3DES Hash=SHA1 Group=2:modp1024 Auth=PSK LifeType=Seconds LifeDuration=28800)
+	VID=166f932d55eb64d8e4df4fd37e2313f0d0fd84510000000000000000 (Netscreen-15)
+	VID=afcad71368a1f1c96b8696fc77570100 (Dead Peer Detection v1.0)
+	VID=4865617274426561745f4e6f74696679386b0100 (Heartbeat Notify)
+	KeyExchange(128 bytes)
+	Nonce(20 bytes)
+	ID(Type=ID_IPV4_ADDR, Value=62.3.105.251)
+	Hash(20 bytes)
+
+_EOF_
+IKEARGS="-s 0 -r 1 -N -M -I $srcdir/ike-vendor-ids --cookie=deadbeefdeadbeef"
+$srcdir/ike-scan $IKEARGS --readpktfromfile=$SAMPLE02 127.0.0.1 | grep -v '^Starting ike-scan ' | grep -v '^Ending ike-scan ' >$IKESCANOUTPUT 2>&1
+if test $? -ne 0; then
+   rm -f $IKESCANOUTPUT
+   rm -f $EXAMPLEOUTPUT
+   echo "FAILED"
+   exit 1
+fi
+cmp -s $IKESCANOUTPUT $EXAMPLEOUTPUT
+if test $? -ne 0; then
+   rm -f $IKESCANOUTPUT
+   rm -f $EXAMPLEOUTPUT
+   echo "FAILED"
+   exit 1
+fi
+echo "ok"
+rm -f $IKESCANOUTPUT
+rm -f $EXAMPLEOUTPUT
+#
+echo "Checking ike-scan notify message decode using $SAMPLE03 ..."
+cat >$EXAMPLEOUTPUT <<_EOF_
+127.0.0.1	(0.0.0.0) Notify message 14 (NO-PROPOSAL-CHOSEN)
+	HDR=(CKY-R=0000000000000000, msgid=41a8534e)
+
+_EOF_
+IKEARGS="-s 0 -r 1 -N -M -I $srcdir/ike-vendor-ids --cookie=deadbeefdeadbeef"
+$srcdir/ike-scan $IKEARGS --readpktfromfile=$SAMPLE03 127.0.0.1 | grep -v '^Starting ike-scan ' | grep -v '^Ending ike-scan ' >$IKESCANOUTPUT 2>&1
+if test $? -ne 0; then
+   rm -f $IKESCANOUTPUT
+   rm -f $EXAMPLEOUTPUT
+   echo "FAILED"
+   exit 1
+fi
+cmp -s $IKESCANOUTPUT $EXAMPLEOUTPUT
+if test $? -ne 0; then
+   rm -f $IKESCANOUTPUT
+   rm -f $EXAMPLEOUTPUT
+   echo "FAILED"
+   exit 1
+fi
+echo "ok"
+rm -f $IKESCANOUTPUT
+rm -f $EXAMPLEOUTPUT
+#
+echo "Checking ike-scan IKEv2 SA_INIT decode using $SAMPLE04 ..."
+cat >$EXAMPLEOUTPUT <<_EOF_
+127.0.0.1	(0.0.0.0) IKEv2 SA_INIT Handshake returned
+	HDR=(CKY-R=224bb31e5cd6a0db, IKEv2)
+	SA=(Encr=AES_CBC,KeyLength=128 Integ=HMAC_SHA1_96 Prf=HMAC_SHA1 DH_Group=14:modp2048)
+	KeyExchange(132 bytes)
+	Nonce(16 bytes)
+
+_EOF_
+IKEARGS="-s 0 -r 1 -N -M -I $srcdir/ike-vendor-ids --cookie=deadbeefdeadbeef"
+$srcdir/ike-scan $IKEARGS --readpktfromfile=$SAMPLE04 127.0.0.1 | grep -v '^Starting ike-scan ' | grep -v '^Ending ike-scan ' >$IKESCANOUTPUT 2>&1
+if test $? -ne 0; then
+   rm -f $IKESCANOUTPUT
+   rm -f $EXAMPLEOUTPUT
+   echo "FAILED"
+   exit 1
+fi
+cmp -s $IKESCANOUTPUT $EXAMPLEOUTPUT
+if test $? -ne 0; then
+   rm -f $IKESCANOUTPUT
+   rm -f $EXAMPLEOUTPUT
+   echo "FAILED"
+   exit 1
+fi
+echo "ok"
+rm -f $IKESCANOUTPUT
+rm -f $EXAMPLEOUTPUT
