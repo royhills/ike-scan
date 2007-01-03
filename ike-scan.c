@@ -58,7 +58,6 @@
 
 #include "ike-scan.h"
 #include "hash_functions.h"
-#define WRITE_RAW_PACKET 1
 
 static const char rcsid[] = "$Id$";   /* RCS ID for ident(1) */
 
@@ -1892,18 +1891,6 @@ recvfrom_wto(int s, unsigned char *buf, size_t len, struct sockaddr *saddr,
             err_sys("ERROR: recvfrom");
          }
       }
-#ifdef WRITE_RAW_PACKET
-      {
-         int myfd;
-         int nbytes;
-         myfd = creat("raw-ike-packet-file.dat", 0666);
-         nbytes = write(myfd, buf, n);
-         if (nbytes != n) {
-            err_msg("ERROR: write() failed");
-         }
-         close(myfd);
-      }
-#endif
    } else {	/* Read from file */
       if ((n = read(read_pkt_from_file, buf, len)) < 0) {
          err_sys("ERROR: read");
