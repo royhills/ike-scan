@@ -81,6 +81,7 @@ int mbz_value=0;			/* Value for MBZ fields */
 uint32_t lifetime_be;	/* Default lifetime in big endian format */
 uint32_t lifesize_be;	/* Default lifesize in big endian format */
 int write_pkt_to_file=0;	/* Write packet to file for debugging */
+int read_pkt_from_file=0;	/* Read packet from file for debugging */
 int timestamp_flag=0;		/* Timestamp flag */
 int randsrc_flag=0;		/* Randomise source IP address flag */
 int sourceip_flag=0;		/* Set source IP address flag */
@@ -165,6 +166,7 @@ main(int argc, char *argv[]) {
       {"ikev2", no_argument, 0, '2'},
       {"nat-t", no_argument, 0, OPT_NAT_T},
       {"rcookie", required_argument, 0, OPT_RCOOKIE},
+      {"readpktfromfile", required_argument, 0, OPT_READPKTFROMFILE},
       {"experimental", required_argument, 0, 'X'},
       {0, 0, 0, 0}
    };
@@ -185,6 +187,7 @@ main(int argc, char *argv[]) {
    int filename_flag=0;
    char pkt_filename[MAXLINE];	/* for --writepkttofile option */
    int pkt_filename_flag=0;
+   int pkt_read_filename_flag=0;
    int random_flag=0;		/* Should we randomise the list? */
    int sockfd;			/* UDP socket file descriptor */
    unsigned source_port = DEFAULT_SOURCE_PORT;	/* UDP source port */
@@ -619,6 +622,10 @@ main(int argc, char *argv[]) {
             if (ike_params.rcookie_data_len > 8)
                ike_params.rcookie_data_len = 8;
             break;
+         case OPT_READPKTFROMFILE: /* --readpktfromfile */
+            strncpy(pkt_filename, optarg, MAXLINE);
+            pkt_read_filename_flag=1;
+            break;
          case 'X':	/* --experimental */
             experimental_value = Strtoul(optarg, 0);
             break;
@@ -797,6 +804,14 @@ main(int argc, char *argv[]) {
    if (pkt_filename_flag) {
       write_pkt_to_file = open(pkt_filename, O_WRONLY|O_CREAT, 0666);
       if (write_pkt_to_file == -1)
+         err_sys("open %s", pkt_filename);
+   }
+/*
+ *	If --readpktfromfile was specified, open the specified input file.
+ */
+   if (pkt_read_filename_flag) {
+      read_pkt_from_file = open(pkt_filename, O_RDONLY);
+      if (read_pkt_from_file == -1)
          err_sys("open %s", pkt_filename);
    }
 /*
@@ -1054,6 +1069,8 @@ main(int argc, char *argv[]) {
    close(sockfd);
    if (write_pkt_to_file)
       close(write_pkt_to_file);
+   if (read_pkt_from_file);
+      close(read_pkt_from_file);
 /*
  *	Display the backoff times if --showbackoff option was specified
  *	and we have at least one system returning a handshake.
@@ -1857,21 +1874,28 @@ recvfrom_wto(int s, unsigned char *buf, size_t len, struct sockaddr *saddr,
       } else {
          err_sys("ERROR: select");
       }
-   } else if (n == 0) {
-      return -1;	/* Timeout */
+   } else if (n == 0 && read_pkt_from_file == 0) {
+      return -1;	/* Timeout reading from network */
    }
-   saddr_len = sizeof(struct sockaddr);
-   if ((n = recvfrom(s, buf, len, 0, saddr, &saddr_len)) < 0) {
-      if (errno == ECONNREFUSED || errno == ECONNRESET) {
+   if (read_pkt_from_file == 0) {
+      saddr_len = sizeof(struct sockaddr);
+      if ((n = recvfrom(s, buf, len, 0, saddr, &saddr_len)) < 0) {
+         if (errno == ECONNREFUSED || errno == ECONNRESET) {
 /*
  *	Treat connection refused and connection reset as timeout.
  *	It would be nice to remove the associated host, but we can't because
  *	we cannot tell which host the connection refused relates to.
  */
-         return -1;
-      } else {
-         err_sys("ERROR: recvfrom");
+            return -1;
+         } else {
+            err_sys("ERROR: recvfrom");
+         }
       }
+   } else {	/* Read from file */
+      if ((n = read(read_pkt_from_file, buf, len)) < 0) {
+         err_sys("ERROR: read");
+      }
+      memset(saddr, '\0', sizeof(struct sockaddr_in));
    }
 /*
  *	Cisco TCP encapsulation.

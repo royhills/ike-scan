@@ -205,6 +205,7 @@
 #define OPT_SHOWNUM 266
 #define OPT_NAT_T 267
 #define OPT_RCOOKIE 268
+#define OPT_READPKTFROMFILE 269
 #undef DEBUG_TIMINGS			/* Define to 1 to debug timing code */
 
 /* Structures */
