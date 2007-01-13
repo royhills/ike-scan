@@ -1,5 +1,21 @@
 $Id$
 
+2007-01-13 Roy Hills <Roy.Hills@nta-monitor.com>
+
+	* check-decode: New tests for pkt-main-natt-response,
+	  pkt-aggr-cert-response, pkt-v2-notify-response and
+	  pkt-checkpoint-notify.
+
+	* check-packet: New test for pkt-single-trans.
+
+	* ike-scan.c: Added conditional code to write received IKE packet to
+	  a file.  This is used to create data files for use with check-decode,
+	  and is not intended for production use.
+
+	* psk-crack.h: Include <sys/time.h> and <time.h>.
+
+	* ike-scan.c: Added O_TRUNC option to writepkttofile open() call.
+
 2007-01-02 Roy Hills <Roy.Hills@nta-monitor.com>
 
 	* check-psk-crack-4: New checking script to improve coverage of

@@ -60,3 +60,7 @@ http://www.roe.ch/FakeIKEd
 Support custom transforms for IKEv2.
 
 Display notification of NAT-T encapsulation.
+
+Fix alignment problem in display_packet() when payload has an odd size,
+resulting in the next payload starting at an odd address.  This causes
+bus error on SPARC.

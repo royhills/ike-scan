@@ -802,7 +802,7 @@ main(int argc, char *argv[]) {
  *	If --writepkttofile was specified, open the specified output file.
  */
    if (pkt_filename_flag) {
-      write_pkt_to_file = open(pkt_filename, O_WRONLY|O_CREAT, 0666);
+      write_pkt_to_file = open(pkt_filename, O_WRONLY|O_CREAT|O_TRUNC, 0666);
       if (write_pkt_to_file == -1)
          err_sys("open %s", pkt_filename);
    }
@@ -1797,7 +1797,7 @@ send_packet(int s, unsigned char *packet_out, size_t packet_out_len,
       iph->daddr = he->addr.s_addr;
    }
 /*
- *	NAT Traversal - experimental
+ *	NAT Traversal
  */
    if (nat_t_flag) {
       unsigned char *orig_packet_out = packet_out;
@@ -1891,6 +1891,18 @@ recvfrom_wto(int s, unsigned char *buf, size_t len, struct sockaddr *saddr,
             err_sys("ERROR: recvfrom");
          }
       }
+#ifdef WRITE_RECEIVED_IKE_PACKET
+      {
+         int myfd;
+         int nbytes;
+         myfd = creat(WRITE_RECEIVED_IKE_PACKET, 0666);
+         nbytes = write(myfd, buf, n);
+         if (nbytes != n) {
+            err_msg("ERROR: write() failed");
+         }
+         close(myfd);
+      }
+#endif
    } else {	/* Read from file */
       if ((n = read(read_pkt_from_file, buf, len)) < 0) {
          err_sys("ERROR: read");

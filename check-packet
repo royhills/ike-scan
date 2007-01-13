@@ -21,6 +21,7 @@ SAMPLE02="$srcdir/pkt-custom-proposal.dat"
 SAMPLE03="$srcdir/pkt-aggressive.dat"
 SAMPLE04="$srcdir/pkt-malformed.dat"
 SAMPLE05="$srcdir/pkt-ikev2.dat"
+SAMPLE06="$srcdir/pkt-single-trans.dat"
 #
 echo "Checking ike-scan default packet against $SAMPLE01 ..."
 IKEARGS="--sport=0 --retry=1 --nodns --cookie=deadbeefdeadbeef --file=- --timeout=100 --interval=50 --quiet --timestamp --shownum --backoff=2.0"
@@ -100,7 +101,24 @@ if test $? -ne 0; then
 fi
 cmp -s $TMPFILE $SAMPLE05
 if test $? -ne 0; then
-#   rm -f $TMPFILE
+   rm -f $TMPFILE
+   echo "FAILED"
+   exit 1
+fi
+echo "ok"
+rm -f $TMPFILE
+#
+echo "Checking ike-scan single trans packet against $SAMPLE06 ..."
+IKEARGS="--sport=0 --retry=1 --nodns --cookie=deadbeefdeadbeef --lifetime=none --lifesize=none --trans=5,2,3,2"
+$srcdir/ike-scan $IKEARGS --writepkttofile=$TMPFILE 127.0.0.1 >/dev/null 2>&1
+if test $? -ne 0; then
+   rm -f $TMPFILE
+   echo "FAILED"
+   exit 1
+fi
+cmp -s $TMPFILE $SAMPLE06
+if test $? -ne 0; then
+   rm -f $TMPFILE
    echo "FAILED"
    exit 1
 fi

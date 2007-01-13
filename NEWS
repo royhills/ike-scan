@@ -47,10 +47,10 @@ ike-scan v1.8.6:
 
 * Changed revision control system from CVS to SVN, with the result that the
   individual source file version numbers as reported with --version or
-  ident(1) are now integers rather than 1.x format.
+  ident(1) are now integers like 9876 rather than 1.x format.
 
-* Improved "make check" tests.  We now check the aggressive mode packet
-  format, and Nortel PSK cracking.
+* Improved "make check" tests to check new features and increase code
+  coverage.
 
 ike-scan v1.8:
 
