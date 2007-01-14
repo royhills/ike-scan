@@ -1,5 +1,5 @@
 /*
- * The IKE Scanner (ike-scan) is Copyright (C) 2003-2005 Roy Hills,
+ * The IKE Scanner (ike-scan) is Copyright (C) 2003-2007 Roy Hills,
  * NTA Monitor Ltd.
  *
  * This program is free software; you can redistribute it and/or
@@ -400,7 +400,7 @@ main(int argc, char *argv[]) {
             break;
          case 'V':	/* --version */
             fprintf(stderr, "%s\n\n", PACKAGE_STRING);
-            fprintf(stderr, "Copyright (C) 2003-2005 Roy Hills, NTA Monitor Ltd.\n");
+            fprintf(stderr, "Copyright (C) 2003-2007 Roy Hills, NTA Monitor Ltd.\n");
             fprintf(stderr, "ike-scan comes with NO WARRANTY to the extent permitted by law.\n");
             fprintf(stderr, "You may redistribute copies of ike-scan under the terms of the GNU\n");
             fprintf(stderr, "General Public License.\n");
@@ -1531,6 +1531,7 @@ display_packet(int n, unsigned char *packet_in, host_entry *he,
  *	Process ISAKMP header.
  *	If this returns zero length left, indicating some sort of problem, then
  *	we report a short or malformed packet and return.
+ *	If the processing is successful, pkt_ptr points to the next payload.
  */
    bytes_left = n;	/* Set remaining length to total packet len */
    if (psk_crack_flag)
@@ -1545,6 +1546,8 @@ display_packet(int n, unsigned char *packet_in, host_entry *he,
    }
 /*
  *	Determine the overall type of the packet from the first payload type.
+ *	We assume that pkt_ptr is suitably aligned because the ISAKMP header
+ *	has a fixed length that is divisible by 4.
  */
    switch (next) {
       case ISAKMP_NEXT_SA:	/* SA */
@@ -1584,58 +1587,43 @@ display_packet(int n, unsigned char *packet_in, host_entry *he,
  *	Process any other interesting payloads if quiet is not in effect.
  */
    if (!quiet) {
+      unsigned char *payload_ptr;
+
       while (bytes_left) {
-         if (next == ISAKMP_NEXT_VID) {
-            msg2=msg;
-            cp = process_vid(pkt_ptr, bytes_left, vidlist);
-            msg=make_message("%s%s%s", msg2, multiline?"\n\t":" ", cp);
-            free(msg2);	/* Free old message */
-            free(cp);	/* Free VID payload message */
-         } else if (next == ISAKMP_NEXT_ID ) {
-            if (psk_crack_flag)
-               add_psk_crack_payload(pkt_ptr, next, 'R');
-            msg2=msg;
-            cp = process_id(pkt_ptr, bytes_left);
-            msg=make_message("%s%s%s", msg2, multiline?"\n\t":" ", cp);
-            free(msg2);	/* Free old message */
-            free(cp);	/* Free ID payload message */
-         } else if (next == ISAKMP_NEXT_CERT || next == ISAKMP_NEXT_CR) {
-            msg2=msg;
-            cp = process_cert(pkt_ptr, bytes_left, next);
-            msg=make_message("%s%s%s", msg2, multiline?"\n\t":" ", cp);
-            free(msg2);	/* Free old message */
-            free(cp);	/* Free Cert payload message */
-         } else if (next == ISAKMP_NEXT_D) {
-            msg2=msg;
-            cp = process_delete(pkt_ptr, bytes_left);
-            msg=make_message("%s%s%s", msg2, multiline?"\n\t":" ", cp);
-            free(msg2);	/* Free old message */
-            free(cp);	/* Free payload message */
-         } else if (next == ISAKMP_NEXT_N) {
-            msg2=msg;
-            cp = process_notification(pkt_ptr, bytes_left);
-            msg=make_message("%s%s%s", msg2, multiline?"\n\t":" ", cp);
-            free(msg2);	/* Free old message */
-            free(cp);	/* Free payload message */
-         } else {
-            if (psk_crack_flag)
-               add_psk_crack_payload(pkt_ptr, next, 'R');
-            msg2=msg;
-            if (bytes_left >= sizeof(struct isakmp_generic)) {
-                struct isakmp_generic *hdr = (struct isakmp_generic *) pkt_ptr;
-                cp=make_message("%s(%u bytes)", id_to_name(next, payload_map),
-                                ntohs(hdr->isag_length) -
-                                sizeof(struct isakmp_generic));
-            } else {
-                cp=make_message("%s)", id_to_name(next, payload_map));
-            }
-            msg=make_message("%s%s%s", msg2, multiline?"\n\t":" ", cp);
-            free(msg2);	/* Free old message */
-            free(cp);	/* Free generic payload message */
-         }
+         payload_ptr = clone_payload(pkt_ptr, bytes_left);
+         msg2=msg;
+         switch (next) {
+            case ISAKMP_NEXT_VID:	/* Vendor ID */
+               cp = process_vid(payload_ptr, bytes_left, vidlist);
+               break;
+            case ISAKMP_NEXT_ID:	/* ID */
+               if (psk_crack_flag)
+                  add_psk_crack_payload(payload_ptr, next, 'R');
+               cp = process_id(payload_ptr, bytes_left);
+               break;
+            case ISAKMP_NEXT_CERT:	/* Certificate */
+            case ISAKMP_NEXT_CR:	/* Certificate Request */
+               cp = process_cert(payload_ptr, bytes_left, next);
+               break;
+            case ISAKMP_NEXT_D:		/* Delete */
+               cp = process_delete(payload_ptr, bytes_left);
+               break;
+            case ISAKMP_NEXT_N:		/* Notification */
+               cp = process_notification(payload_ptr, bytes_left);
+               break;
+            default:			/* Something else */
+               if (psk_crack_flag)
+                  add_psk_crack_payload(payload_ptr, next, 'R');
+               cp = process_generic(payload_ptr, bytes_left, next);
+               break;
+         } /* End Switch */
+         free(payload_ptr);
+         msg=make_message("%s%s%s", msg2, multiline?"\n\t":" ", cp);
+         free(msg2);	/* Free old message */
+         free(cp);	/* Free payload message */
          pkt_ptr = skip_payload(pkt_ptr, &bytes_left, &next);
-      }
-   }
+      } /* End While */
+   } /* End if (!quiet) */
 /*
  *	Print the message.
  */

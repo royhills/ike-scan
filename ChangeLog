@@ -1,5 +1,10 @@
 $Id$
 
+2007-01-14 Roy Hills <Roy.Hills@nta-monitor.com>
+
+	* ike-scan.c: Refactored display_packet() to ensure that payload
+	  is correctly aligned.
+
 2007-01-13 Roy Hills <Roy.Hills@nta-monitor.com>
 
 	* check-decode: New tests for pkt-main-natt-response,

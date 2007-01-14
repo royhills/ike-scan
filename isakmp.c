@@ -1,5 +1,5 @@
 /*
- * The IKE Scanner (ike-scan) is Copyright (C) 2003-2005 Roy Hills,
+ * The IKE Scanner (ike-scan) is Copyright (C) 2003-2007 Roy Hills,
  * NTA Monitor Ltd.
  *
  * This program is free software; you can redistribute it and/or
@@ -1458,21 +1458,36 @@ make_cr(size_t *length, unsigned next, unsigned char *cr_data,
  */
 unsigned char *
 skip_payload(unsigned char *cp, size_t *len, unsigned *next) {
-   struct isakmp_generic *hdr = (struct isakmp_generic *) cp;
+   struct isakmp_generic hdr;
+
 /*
- *	Signal no more payloads by setting length to zero if:
+ *	Signal no more payloads by setting length to zero, next
+ *	payload to none and returning NULL if the packet length is
+ *	less that the ISAKMP generic header size.
+ */
+   if (*len < sizeof(struct isakmp_generic)) {
+      *len=0;
+      *next=ISAKMP_NEXT_NONE;
+      return NULL;
+   }
+/*
+ *	Fill in the generic header from the packet.  We must do this
+ *	by copying rather than overlaying because we cannot be sure
+ *	that "cp" is suitably aligned.
+ */
+   memcpy(&hdr, cp, sizeof(hdr));
+/*
+ *	Signal no more payloads if:
  *
- *	The packet length is less than the ISAKMP generic header size; or
  *	The payload length is greater than the packet length; or
  *	The payload length is less than the size of the generic header; or
  *	There is no next payload.
  *
  *	Also set *next to none and return null.
  */
-   if (*len < sizeof(struct isakmp_generic) ||
-       ntohs(hdr->isag_length) >= *len ||
-       ntohs(hdr->isag_length) < sizeof(struct isakmp_generic) ||
-       hdr->isag_np == ISAKMP_NEXT_NONE) {
+   if (ntohs(hdr.isag_length) >= *len ||
+       ntohs(hdr.isag_length) < sizeof(struct isakmp_generic) ||
+       hdr.isag_np == ISAKMP_NEXT_NONE) {
       *len=0;
       *next=ISAKMP_NEXT_NONE;
       return NULL;
@@ -1481,9 +1496,9 @@ skip_payload(unsigned char *cp, size_t *len, unsigned *next) {
  *	There is another payload after this one, so adjust length and
  *	return pointer to next payload.
  */
-   *len = *len - ntohs(hdr->isag_length);
-   *next = hdr->isag_np;
-   return cp + ntohs(hdr->isag_length);
+   *len = *len - ntohs(hdr.isag_length);
+   *next = hdr.isag_np;
+   return cp + ntohs(hdr.isag_length);
 }
 
 /*
@@ -2380,6 +2395,40 @@ process_delete(unsigned char *cp, size_t len) {
 }
 
 /*
+ *	process_generic -- Process Generic ISAKMP Payload
+ *
+ *	Inputs:
+ *
+ *	cp	Pointer to start of Delete payload
+ *	len	Packet length remaining
+ *
+ *	Returns:
+ *
+ *	Pointer to payload description string.
+ *
+ *	The description string pointer returned points to malloc'ed storage
+ *	which should be free'ed by the caller when it's no longer needed.
+ */
+char *
+process_generic(unsigned char *cp, size_t len, unsigned next) {
+   struct isakmp_generic *hdr = (struct isakmp_generic *) cp;
+   char *msg;
+
+   if (len < sizeof(struct isakmp_generic) ||
+        ntohs(hdr->isag_length) < sizeof(struct isakmp_generic)) {
+      msg = make_message("%s (packet too short to decode)",
+                          id_to_name(next, payload_map));
+      return msg;
+   }
+
+   msg=make_message("%s(%u bytes)", id_to_name(next, payload_map),
+                    ntohs(hdr->isag_length) -
+                    sizeof(struct isakmp_generic));
+
+   return msg;
+}
+
+/*
  *	add_isakmp_payload -- Add an ISAKMP payload to the current packet
  *
  *	Inputs:
@@ -2625,6 +2674,59 @@ print_psk_crack_values(const char *psk_crack_file) {
    hexdata=hexstring(psk_values.hash_r, psk_values.hash_r_len);
    fprintf(fp, "%s\n", hexdata);
    free(hexdata);
+}
+
+/*
+ *	clone_payload -- Clone the ISAKMP payload
+ *
+ *	Inputs:
+ *
+ *	pkt_ptr		Pointer to the payload to clone
+ *	bytes_left	Number of bytes remaining in the packet
+ *
+ *	Returns:
+ *
+ *	Pointer to the cloned payload or NULL if no payload.
+ *
+ *	This function clones the ISAKMP payload starting at pkt_ptr, with
+ *	a maximum size of bytes_left.  It copies the payload to a newly
+ *	allocated memory block to ensure that it is suitably aligned for
+ *	those CPUs that have alignment restrictions.
+ *
+ *	The return value points to Malloc'ed memory, which should be
+ *	free'ed when it is no longer required.
+ */
+unsigned char *
+clone_payload(const unsigned char *pkt_ptr, size_t bytes_left) {
+   struct isakmp_generic hdr;
+   unsigned char *clone_ptr;
+   size_t payload_len;
+/*
+ *	Ensure that there is sufficient data to fill the generic
+ *	header.
+ */
+   if (bytes_left < sizeof(struct isakmp_generic)) {
+      return NULL;
+   }
+/*
+ *	Fill in the generic header from the packet.  We must do this
+ *	by copying rather than overlaying because we cannot be sure
+ *	that "pkt_ptr" is suitably aligned.
+ */
+   memcpy(&hdr, pkt_ptr, sizeof(hdr));
+/*
+ *	Determine the length of the payload.
+ */
+   payload_len = ntohs(hdr.isag_length);
+   if (payload_len > bytes_left)
+      payload_len = bytes_left;
+/*
+ *	Allocate memory and copy payload.
+ */
+   clone_ptr = Malloc(payload_len);
+   memcpy(clone_ptr, pkt_ptr, payload_len);
+
+   return clone_ptr;
 }
 
 void

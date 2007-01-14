@@ -1,5 +1,5 @@
 /*
- * The IKE Scanner (ike-scan) is Copyright (C) 2003-2005 Roy Hills,
+ * The IKE Scanner (ike-scan) is Copyright (C) 2003-2007 Roy Hills,
  * NTA Monitor Ltd.
  *
  * This program is free software; you can redistribute it and/or
@@ -420,6 +420,7 @@ char *process_id(unsigned char *, size_t);
 char *process_cert(unsigned char *, size_t, unsigned);
 char *process_delete(unsigned char *, size_t);
 char *process_notification(unsigned char *, size_t);
+char *process_generic(unsigned char *, size_t, unsigned);
 unsigned char *make_transform(size_t *, unsigned, unsigned, unsigned,
                               unsigned char *, size_t);
 unsigned char* add_transform(int, size_t *, unsigned, unsigned char *, size_t);
@@ -431,6 +432,7 @@ unsigned char *add_isakmp_payload(unsigned char *, size_t, unsigned char **);
 void print_payload(unsigned char *cp, unsigned payload, int);
 void add_psk_crack_payload(unsigned char *cp, unsigned, int);
 void print_psk_crack_values(const char *);
+unsigned char *clone_payload(const unsigned char *, size_t);
 char *make_message(const char *, ...);
 char *numstr(unsigned);
 char *printable(const unsigned char*, size_t);
