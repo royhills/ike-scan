@@ -1,5 +1,5 @@
 .\" $Id$
-.TH IKE-SCAN 1 "November 24, 2005"
+.TH IKE-SCAN 1 "January 14, 2007"
 .\" Please adjust this date whenever revising the manpage.
 .SH NAME
 ike-scan \- Discover and fingerprint IKE hosts (IPsec VPN servers)
@@ -65,13 +65,15 @@ UDP source port 500 and will not talk to other ports.
 Note that superuser privileges are normally required
 to use non-zero source ports below 1024.  Also only
 one process on a system may bind to a given source port
-at any one time.
+at any one time. Use of the --nat-t option changes
+the default source port to 4500
 .TP
 .B --dport=<p> or -d <p>
 Set UDP destination port to <p>, default=500.
 UDP port 500 is the assigned port number for ISAKMP
 and this is the port used by most if not all IKE
-implementations.
+implementations. Use of the --nat-t option changes
+the default destination port to 4500
 .TP
 .B --retry=<n> or -r <n>
 Set total number of attempts per host to <n>,
@@ -87,16 +89,18 @@ factor which is set with --backoff.
 Set desired outbound bandwidth to <n>, default=56000
 The value is in bits per second by default.  If you
 append "K" to the value, then the units are kilobits
-per second; and if you append "M" to the value, the
-units are megabits per second.
+per second; and if you append "M" to the value,
+the units are megabits per second.
 The "K" and "M" suffixes represent the decimal, not
 binary, multiples.  So 64K is 64000, not 65536.
 .TP
 .B --interval=<n> or -i <n>
 Set minimum packet interval to <n> ms.
 The packet interval will be no smaller than this number.
-The interval specified is in milliseconds by default,
-or in microseconds if "u" is appended to the value.
+The interval specified is in milliseconds by default.
+if "u" is appended to the value, then the interval
+is in microseconds, and if "s" is appended, the
+interval is in seconds.
 If you want to use up to a given bandwidth, then it is
 easier to use the --bandwidth option instead.
 You cannot specify both --interval and --bandwidth
@@ -162,11 +166,12 @@ payloads with different lifesizes.  Each --trans option
 will use the previously specified lifesize value.
 .TP
 .B --auth=<n> or -m <n>
-Set auth. method to <n>, default=1 (pre-shared key).
+Set auth. method to <n>, default=1 (PSK).
 RFC defined values are 1 to 5.  See RFC 2409 Appendix A.
 Checkpoint hybrid mode is 64221.
 GSS (Windows "Kerberos") is 65001.
 XAUTH uses 65001 to 65010.
+This is not applicable to IKEv2.
 .TP
 .B --version or -V
 Display program version and exit.
@@ -191,19 +196,22 @@ the value to assign to that attribute.  You can specify
 an arbitary number of attribute/value pairs.
 See RFC 2409 Appendix A for details of the attributes
 and values.
+Note that brackets are special to some shells, so you
+may need to quote them, e.g. --trans="(1=1,2=2,3=3,4=4)".
 For example, --trans=(1=1,2=2,3=1,4=2) specifies
-Enc=3DES-CBC, Hash=SHA1, Auth=shared key, DH Group=2
+Enc=3DES-CBC, Hash=SHA1, Auth=shared key, DH Group=2;
 and --trans=(1=7,14=128,2=1,3=3,4=5) specifies
-Enc=AES/128, Hash=MD5, Auth=RSA sig, DH Group=5
+Enc=AES/128, Hash=MD5, Auth=RSA sig, DH Group=5.
 For the old method, the transform <t> is specified as
 enc[/len],hash,auth,group.
 Where enc is the encryption algorithm,
 len is the key length for variable length ciphers,
 hash is the hash algorithm, and group is the DH Group.
 For example, --trans=5,2,1,2 specifies
-Enc=3DES-CBC, Hash=SHA1, Auth=shared key, DH Group=2
+Enc=3DES-CBC, Hash=SHA1, Auth=shared key, DH Group=2;
 and --trans=7/256,1,1,5 specifies
-Enc=AES-256, Hash=MD5, Auth=shared key, DH Group=5
+Enc=AES-256, Hash=MD5, Auth=shared key, DH Group=5.
+This option is not yet supported for IKEv2.
 .TP
 .B --showbackoff[=<n>] or -o[<n>]
 Display the backoff fingerprint table.
@@ -226,11 +234,11 @@ Any per-pattern-entry fuzz specifications in the
 patterns file will override the value set here.
 .TP
 .B --patterns=<f> or -p <f>
-Use IKE patterns file <f>,
+Use IKE backoff patterns file <f>,
 default=/usr/local/share/ike-scan/ike-backoff-patterns.
 This specifies the name of the file containing
 IKE backoff patterns.  This file is only used when
-.B --showbackoff is specified.
+--showbackoff is specified.
 .TP
 .B --vidpatterns=<f> or -I <f>
 Use Vendor ID patterns file <f>,
@@ -261,9 +269,9 @@ See RFC 2407 4.6.2 for details of Identification types.
 .TP
 .B --dhgroup=<n> or -g <n>
 Use Diffie Hellman Group <n>.  Default 2.
-This option is only applicable to Aggressive Mode where
-it is used to determine the size of the key exchange
-payload.
+This option is only applicable to Aggressive Mode and
+IKEv2.  For both of these, it is used to determine the
+size of the key exchange payload.
 If you use Aggressive Mode with custom transforms, then
 you will normally need to use the --dhgroup option
 unless you are using the default DH group.
@@ -325,10 +333,10 @@ specified as IP addresses.
 .B --noncelen=<n> or -c <n>
 Set the nonce length to <n> bytes. Default=20
 This option controls the length of the nonce payload
-that is sent in an aggressive mode request. Normally,
-there is no need to use this option unless you want to
-reduce the nonce size to speed up pre-shared key
-cracking, or if you want to see how a particular
+that is sent in an aggressive mode or IKEv2 request.
+Normally there is no need to use this option unless you
+want to reduce the nonce size to speed up pre-shared
+key cracking, or if you want to see how a particular
 server handles different length nonce payloads.
 RFC 2409 states that the length of nonce payload
 must be between 8 and 256 bytes, but ike-scan does
@@ -431,6 +439,7 @@ This should be zero for IKE Phase-1.
 .TP
 .B --cookie=<n>
 Set the ISAKMP initiator cookie to <n>
+The cookie value should be specified in hex.
 By default, the cookies are automatically generated
 and have unique values.  If you specify this option,
 then you can only specify a single target, because
@@ -452,6 +461,68 @@ The exchange types are defined in RFC 2408 sec 3.1.
 Set the next payload in the ISAKMP header to <n>
 Normally, the next payload is automatically set to the
 correct value.
+.TP
+.B --randomseed=<n>
+Use <n> to seed the pseudo random number generator.
+This option seeds the PRNG with the specified number,
+which can be useful if you want to ensure that the
+packet data is exactly repeatable when it includes
+payloads with random data such as key exchange or nonce.
+By default, the PRNG is seeded with an unpredictable
+value.
+.TP
+.B --timestamp
+Display timestamps for received packets.
+This option causes a timestamp to be displayed for
+each received packet.
+.TP
+.B --sourceip=<s>
+Set source IP address for outgoing packets to <s>.
+This option causes the outgoing IKE packets to have
+the specified source IP address.
+The address can either be an IP address in dotted
+quad format, or the string "random" which will use
+a different random source address for each packet that
+is sent.
+If this option is used, no packets will be received
+This option requires raw socket support, and you
+will need superuser privileges to use this option,
+even if you specify a high source port.
+This option does not work on all operating systems.
+.TP
+.B --shownum
+Display the host number for received packets.
+This displays the ordinal host number of the
+responding host before the IP address. It can be useful
+when sending many packets to the same target IP, to
+see if any probes are being ignored.
+.TP
+.B --nat-t
+Use RFC 3947 NAT-Traversal encapsulation.
+This option adds the non-ESP marker to the beginning
+of outgoing packets and strips it from received
+packets, as described in RFC 3947. It also changes the
+default source port to 4500 and the default destination
+port to 4500, which are the ports for NAT-T IKE.
+These port numbers can be changed with the --sport and
+--dport options, providing they are used after the
+--nat-t option.
+.TP
+.B --rcookie=<n>
+Set the ISAKMP responder cookie to <n>.
+This sets the responder cookie to the specified hex
+value.  By default, the responder cookie is set to zero.
+.TP
+.B --ikev2 or -2
+Use IKE version 2
+This causes the outgoing packets to use IKEv2 format
+as defined in RFC 4306 instead of the default IKEv1
+format. Any packets returned are automatically decoded
+as IKE or IKEv2 depending on their payloads irrespective
+of this option.
+The --ikev2 option is currently experimental. It has not
+been extensively tested, and it only supports sending the
+default proposal.
 .SH FILES
 .TP
 .I /usr/local/share/ike-scan/ike-backoff-patterns

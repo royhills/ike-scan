@@ -3332,20 +3332,21 @@ usage(int status, int detailed) {
       fprintf(stderr, "\t\t\tSee RFC 2409 Appendix A for details of the attributes\n");
       fprintf(stderr, "\t\t\tand values.\n");
       fprintf(stderr, "\t\t\tNote that brackets are special to some shells, so you\n");
-      fprintf(stderr, "\t\t\tmay need to quote them, e.g. --trans=\"(1=1,2=2,3=3,4=4)\"\n");
-      fprintf(stderr, "\t\t\tFor example, --trans=(1=1,2=2,3=1,4=2) specifies\n");
-      fprintf(stderr, "\t\t\tEnc=3DES-CBC, Hash=SHA1, Auth=shared key, DH Group=2\n");
+      fprintf(stderr, "\t\t\tmay need to quote them, e.g.\n");
+      fprintf(stderr, "\t\t\t--trans=\"(1=1,2=2,3=3,4=4)\". For example,\n");
+      fprintf(stderr, "\t\t\t--trans=(1=1,2=2,3=1,4=2) specifies\n");
+      fprintf(stderr, "\t\t\tEnc=3DES-CBC, Hash=SHA1, Auth=shared key, DH Group=2;\n");
       fprintf(stderr, "\t\t\tand --trans=(1=7,14=128,2=1,3=3,4=5) specifies\n");
-      fprintf(stderr, "\t\t\tEnc=AES/128, Hash=MD5, Auth=RSA sig, DH Group=5\n");
+      fprintf(stderr, "\t\t\tEnc=AES/128, Hash=MD5, Auth=RSA sig, DH Group=5.\n");
       fprintf(stderr, "\t\t\tFor the old method, the transform <t> is specified as\n");
       fprintf(stderr, "\t\t\tenc[/len],hash,auth,group.\n");
       fprintf(stderr, "\t\t\tWhere enc is the encryption algorithm,\n");
       fprintf(stderr, "\t\t\tlen is the key length for variable length ciphers,\n");
       fprintf(stderr, "\t\t\thash is the hash algorithm, and group is the DH Group.\n");
       fprintf(stderr, "\t\t\tFor example, --trans=5,2,1,2 specifies\n");
-      fprintf(stderr, "\t\t\tEnc=3DES-CBC, Hash=SHA1, Auth=shared key, DH Group=2\n");
+      fprintf(stderr, "\t\t\tEnc=3DES-CBC, Hash=SHA1, Auth=shared key, DH Group=2;\n");
       fprintf(stderr, "\t\t\tand --trans=7/256,1,1,5 specifies\n");
-      fprintf(stderr, "\t\t\tEnc=AES-256, Hash=MD5, Auth=shared key, DH Group=5\n");
+      fprintf(stderr, "\t\t\tEnc=AES-256, Hash=MD5, Auth=shared key, DH Group=5.\n");
       fprintf(stderr, "\t\t\tThis option is not yet supported for IKEv2.\n");
       fprintf(stderr, "\n--showbackoff[=<n>] or -o[<n>]\tDisplay the backoff fingerprint table.\n");
       fprintf(stderr, "\t\t\tDisplay the backoff table to fingerprint the IKE\n");
@@ -3364,10 +3365,10 @@ usage(int status, int detailed) {
       fprintf(stderr, "\t\t\tAny per-pattern-entry fuzz specifications in the\n");
       fprintf(stderr, "\t\t\tpatterns file will override the value set here.\n");
    #ifdef __CYGWIN__
-      fprintf(stderr, "\n--patterns=<f> or -p <f> Use IKE patterns file <f>,\n");
+      fprintf(stderr, "\n--patterns=<f> or -p <f> Use IKE backoff patterns file <f>,\n");
       fprintf(stderr, "\t\t\tdefault=%s in ike-scan.exe dir.\n", PATTERNS_FILE);
    #else
-      fprintf(stderr, "\n--patterns=<f> or -p <f> Use IKE patterns file <f>,\n");
+      fprintf(stderr, "\n--patterns=<f> or -p <f> Use IKE backoff patterns file <f>,\n");
       fprintf(stderr, "\t\t\tdefault=%s/%s.\n", IKEDATADIR, PATTERNS_FILE);
    #endif
       fprintf(stderr, "\t\t\tThis specifies the name of the file containing\n");
@@ -3593,9 +3594,9 @@ usage(int status, int detailed) {
       fprintf(stderr, "\t\t\tformat. Any packets returned are automatically decoded\n");
       fprintf(stderr, "\t\t\tas IKE or IKEv2 depending on their payloads irrespective\n");
       fprintf(stderr, "\t\t\tof this option.\n");
-      fprintf(stderr, "\t\t\tThe --ikev2 option is currently experimental. It has not.\n");
-      fprintf(stderr, "\t\t\tbeen extensively tested, and it only supports sending the\n");
-      fprintf(stderr, "\t\t\tdefault proposal.\n");
+      fprintf(stderr, "\t\t\tThe --ikev2 option is currently experimental. It has not\n");
+      fprintf(stderr, "\t\t\tbeen extensively tested, and it only supports sending\n");
+      fprintf(stderr, "\t\t\tthe default proposal.\n");
    } else {
       fprintf(stderr, "use \"ike-scan --help\" for detailed information on the available options.\n");
    }
