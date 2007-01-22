@@ -5,8 +5,13 @@ release.  For more details please read the ChangeLog file.
 
 ike-scan v1.8.6:
 
-* IKEv2 support: new --ikev2 option sends IKE version 2 format packets, and
-  version 2 packets that are received are correctly decoded.
+* ike-scan wiki at http://www.nta-monitor.com/wiki/
+  This will contain ike-scan documentation and associated IPsec information.
+
+* IKEv2 support with --ikev2 option that sends IKE version 2 format packets,
+  and version 2 packets that are received are correctly decoded.  The IKEv2
+  support is currently experimental as it has only been tested against one
+  implementation (strongSwan), and it only supports the default proposal.
 
 * New --rcookie option allows the responder cookie to be set to the specified
   value in outgoing packets.  The default is zero.
@@ -28,8 +33,8 @@ ike-scan v1.8.6:
   very few of these systems, so this absense of a pattern is still useful for
   fingerprinting.
 
-* Modified psk-crack, so it is able to crack passwords hased with the Nortel
-  Contivity proprietary algorithm as well as those using the standard algorithm.
+* psk-crack is able to crack passwords hased with the Nortel Contivity
+  proprietary algorithm as well as those using the standard algorithm.
 
 * New --shownum option, which causes the number of each packet received to
   be displayed before the packet details.

@@ -260,3 +260,10 @@ Linksys Etherfast	0
 # Discovered by Roy Hills, November 2005
 # Observed on: IBM RS/6000 runninx AIX 5.3
 IBM AIX	0, 16, 32
+
+# Discovered by Roy Hills, January 2007
+# Observed on: Solaris 9/SPARC running on Ultra-5
+#
+# Sun's IPsec was introduced in Solaris 8, but this was manual keying only;
+# IKE keying was not introduced until Solaris 9.
+Sun Solaris	0, 0.5, 1, 2, 4, 8

@@ -326,6 +326,7 @@ load_psk_params(const char *filename, const char *nortel_user) {
    size_t idir_b_len;
    size_t ni_b_len;
    size_t nr_b_len;
+   size_t hash_r_hex_len;
 /*
  *	Open PSK data file for reading.
  */
@@ -417,8 +418,9 @@ load_psk_params(const char *filename, const char *nortel_user) {
       pe->hash_r_data = hash_r_data;
       pe->hash_r_data_len = hash_r_data_len;
       pe->hash_r = hex2data(hash_r_hex, &pe->hash_r_len);
-      pe->hash_r_hex = Malloc(strlen(hash_r_hex) + 1);
-      strcpy(pe->hash_r_hex, hash_r_hex);
+      hash_r_hex_len = strlen(hash_r_hex) + 1;	/* includes terminating null */
+      pe->hash_r_hex = Malloc(hash_r_hex_len);
+      strncpy(pe->hash_r_hex, hash_r_hex, hash_r_hex_len);
       pe->nortel_user = nortel_user;
 /*
  *	Determine hash type based on the length of the hash, and
