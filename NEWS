@@ -3,7 +3,7 @@ $Id$
 This file gives a brief overview of the major changes between each ike-scan
 release.  For more details please read the ChangeLog file.
 
-ike-scan v1.8.6:
+ike-scan v1.9:
 
 * ike-scan wiki at http://www.nta-monitor.com/wiki/
   This will contain ike-scan documentation and associated IPsec information.
