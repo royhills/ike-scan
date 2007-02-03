@@ -59,8 +59,7 @@ http://www.roe.ch/FakeIKEd
 
 Support custom transforms for IKEv2.
 
-Display notification of NAT-T encapsulation.
+Display notification of NAT-T encapsulation. Currently there is no indication if a received packet is in NAT-T format with Non-ESP marker, or if it is the standard IKE format.
 
-Fix alignment problem in display_packet() when payload has an odd size,
-resulting in the next payload starting at an odd address.  This causes
-bus error on SPARC.
+Integrate psk-crack patch from
+http://src.telindus.com/articles/pskcrack_patch.html

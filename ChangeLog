@@ -1,5 +1,11 @@
 $Id$
 
+2007-01-26 Roy Hills <Roy.Hills@nta-monitor.com>
+
+	* Released v1.9  Tarball size: 1412689, Zip size: 2260655.
+	  tarball md5sum: bed63c7d2f54c482525a735be7b5e720
+	  Zip md5sum: 5a224a60235189ba1b8882c98e09489c
+
 2007-01-14 Roy Hills <Roy.Hills@nta-monitor.com>
 
 	* ike-scan.c: Refactored display_packet() to ensure that payload
