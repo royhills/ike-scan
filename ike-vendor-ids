@@ -311,6 +311,8 @@ MacOS 10.x	^4d6163204f53582031302e78
 # strongSwan
 # VID is MD5 hash of "strongSwan x.y.z" where x.y.z is version number
 # Obtained from strongSwan 4.0.5 pluto/vendor.c
+strongSwan 4.0.7	^ab0746221cc8fd0d5238f73a9b3da557
+strongSwan 4.0.6	^4c90136946577b51919d8d9a6b8e4a9f
 strongSwan 4.0.5	^dd180d21e5ce655a768ba32211dd8ad9
 strongSwan 4.0.4	^1ef283f83549b5ff9608b6d634f84d75
 strongSwan 4.0.3	^b181b18e114fc209b3c6e26c3a80718e
