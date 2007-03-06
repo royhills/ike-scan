@@ -1,5 +1,12 @@
 $Id$
 
+2007-03-06 Roy Hills <Roy.Hills@nta-monitor.com>
+
+	* configure.ac: Incremented version number to 1.9.1.
+
+	* ike-vendor-ids, ike-backoff-patterns: various minor changes and
+	  additions.
+
 2007-01-26 Roy Hills <Roy.Hills@nta-monitor.com>
 
 	* Released v1.9  Tarball size: 1412689, Zip size: 2260655.

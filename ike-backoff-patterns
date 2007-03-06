@@ -63,6 +63,10 @@
 # ike-scan -v -v -v -o <any-target>
 # To dump the backoff pattern table.
 #
+# There are examples and analysis of the backoff patterns returned by various
+# implementations on the ike-scan wiki at
+# http://www.nta-monitor.com/wiki/index.php/Ike-scan_Documentation
+#
 # You are encouraged to send comments, improvements or suggestions to
 # me at ike-scan@nta-monitor.com.
 # In particular, I would like you to submit any new patterns that you
@@ -132,9 +136,10 @@ Nortel Contivity	0, 16/600, 16, 16
 # Observed on: Cisco 2503 running IP-PLUS-IPsec56 IOS 12.1(27a)
 # Observed on: Cisco 2503 running IP-PLUS-IPsec56 IOS 12.2(29)
 # Observed on: Cisco 2621 running IP/FW/IDS Plus IPsec 3DES Basic 12.3(17a)
+# Observed on: racoon 0.6.6 running on Debian Etch
 # Note that the Gnat box has a much larger variance than the watchguard, but
 # they are both essentially the same pattern.
-Cisco IOS 12.1, 12.2 or 12.3 / Watchguard Firebox / Gnat Box	0, 10/1000, 10/1000, 10/1000, 10/1000, 10/1000
+Cisco IOS 12.1, 12.2 or 12.3 / Watchguard Firebox / Gnat Box / racoon	0, 10/1000, 10/1000, 10/1000, 10/1000, 10/1000
 
 # Discovered by: Roy Hills, December 2002
 # Observed on: Windows 2000 Server SP1
@@ -263,6 +268,7 @@ IBM AIX	0, 16, 32
 
 # Discovered by Roy Hills, January 2007
 # Observed on: Solaris 9/SPARC running on Ultra-5
+# Observed on: Solaris 10/Intel running on VMware
 #
 # Sun's IPsec was introduced in Solaris 8, but this was manual keying only;
 # IKE keying was not introduced until Solaris 9.

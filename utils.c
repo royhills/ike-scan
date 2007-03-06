@@ -249,7 +249,9 @@ hex_or_str(const char *string, size_t *data_len) {
  *	0x<hex-data>	Input is in hex format
  *	decimal number	Input is in numeric format
  *
- *	For numeric input, the binary data will be a 32-bit value in
+ *	For hex input format, the binary data will have the length required
+ *	to hold the specified value. For numeric input, the binary data will
+ *	be a 32-bit value.  In either case, the binary data will be in
  *	big endian format.
  *
  *	The returned pointer points to malloc'ed storage which should be

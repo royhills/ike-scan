@@ -56,6 +56,10 @@
 # ike-scan -v -v -v <any-target>
 # Which will dump the VendorID pattern table.
 #
+# There are examples and analysis of vendor ids returned by various
+# implementations on the ike-scan wiki at
+# http://www.nta-monitor.com/wiki/index.php/Ike-scan_Documentation
+#
 # You are encouraged to send comments, improvements or suggestions to
 # me at ike-scan@nta-monitor.com.
 #
@@ -249,6 +253,7 @@ draft-ietf-ipsec-nat-t-ike-07	^439b59f8ba676c4c7737ae22eab8f582
 draft-ietf-ipsec-nat-t-ike-08	^8f8d83826d246b6fc7a8a6a428c11de8
 draft-ietf-ipsec-nat-t-ike-09	^42ea5b6f898d9773a575df26e7dd19e1
 Testing NAT-T RFC	^c40fee00d5d39ddb1fc762e09b7cfea7
+RFC XXXX	^810fa565f8ab14369105d706fbd57279
 RFC 3947 NAT-T	^4a131c81070358455c5728f20e95452f
 
 # A GSS-API Authentication Method for IKE - draft-ietf-ipsec-isakmp-gss-auth
