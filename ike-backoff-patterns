@@ -263,8 +263,18 @@ Netgear ADSL Firewall Router	0, 10, 20
 Linksys Etherfast	0
 
 # Discovered by Roy Hills, November 2005
-# Observed on: IBM RS/6000 runninx AIX 5.3
+# Observed on: IBM RS/6000 running AIX 5L 5.3
+# The AIX backoff is unusual because it goes on for a long time (about 19
+# minutes) and it has a hiccup at one point where it sends two packets with
+# the same backoff. With the standard ike-scan backoff timeout, you will only
+# see the first three packets.  Longer timeouts let you see more packets.
+# I have added multiple patterns to allow matching with any backoff timeout
+# above 32 seconds.
 IBM AIX	0, 16, 32
+IBM AIX	0, 16, 32, 64
+IBM AIX	0, 16, 32, 64, 128, 128
+IBM AIX	0, 16, 32, 64, 128, 128, 256
+IBM AIX	0, 16, 32, 64, 128, 128, 256, 512
 
 # Discovered by Roy Hills, January 2007
 # Observed on: Solaris 9/SPARC running on Ultra-5
