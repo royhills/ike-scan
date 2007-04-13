@@ -265,6 +265,16 @@ else
    AC_LIBSOURCE(sha1.h)
 fi
 
+dnl Check for strlcat and strlcpy.  If we don't have them, use the replacement
+dnl functions from OpenBSD.  Most modern C libraries have these functions,
+dnl but some such as as glibc don't.
+AC_CHECK_FUNC([strlcat],
+              [AC_DEFINE(HAVE_STRLCAT, 1, [Define to 1 if the C library includes the strlcat function])],
+              [AC_LIBOBJ(strlcat)])
+AC_CHECK_FUNC([strlcpy],
+              [AC_DEFINE(HAVE_STRLCPY, 1, [Define to 1 if the C library includes the strlcpy function])],
+              [AC_LIBOBJ(strlcpy)])
+
 dnl	XXXX
 dnl	Include "ip.h" and "udp.h" for raw packet support
 dnl	This should be changed to only include raw packet support if the host
