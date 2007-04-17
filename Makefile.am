@@ -13,6 +13,7 @@ ike_scan_LDADD = $(LIBOBJS)
 psk_crack_SOURCES = psk-crack.c psk-crack.h error.c wrappers.c utils.c mt19937ar.c hash_functions.h
 psk_crack_LDADD = $(LIBOBJS)
 check_sizes_SOURCES = check-sizes.c error.c ike-scan.h
+check_sizes_LDADD = $(LIBOBJS)
 check_hash_SOURCES = check-hash.c error.c utils.c wrappers.c ike-scan.h mt19937ar.c hash_functions.h
 check_hash_LDADD = $(LIBOBJS)
 TESTS = $(check_PROGRAMS) $(dist_check_SCRIPTS)

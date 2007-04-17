@@ -181,7 +181,6 @@ main(int argc, char *argv[]) {
       "f:hs:d:r:t:i:b:w:vl:z:m:Ve:a:o::u:n:y:g:p:AG:I:qMRT::P::O:Nc:B:"
       "L:Z:E:C:D:S:j:k:F:2X:";
    int arg;
-   char arg_str[MAXLINE];	/* Args as string for syslog */
    int options_index=0;
    char filename[MAXLINE];
    int filename_flag=0;
@@ -252,7 +251,6 @@ main(int argc, char *argv[]) {
    struct timeval last_packet_time; /* Time last packet was sent */
    struct timeval elapsed_time;	/* Elapsed time as timeval */
    double elapsed_seconds;	/* Elapsed time in seconds */
-   int arg_str_space;		/* Used to avoid buffer overruns when copying */
    char patfile[MAXLINE];	/* IKE Backoff pattern file name */
    char vidfile[MAXLINE];	/* IKE Vendor ID pattern file name */
    char idfile[MAXLINE];	/* Aggressive Mode ID list */
@@ -279,25 +277,22 @@ main(int argc, char *argv[]) {
    unsigned int random_seed=0;
 /*
  *	Open syslog channel and log arguments if required.
- *	We must be careful here to avoid overflowing the arg_str buffer
- *	which could result in a buffer overflow vulnerability.
  */
 #ifdef SYSLOG
-   openlog("ike-scan", LOG_PID, SYSLOG_FACILITY);
-   arg_str[0] = '\0';
-   arg_str_space = MAXLINE;	/* Amount of space left in the arg_str buffer */
-   for (arg=0; arg<argc; arg++) {
-      arg_str_space -= strlen(argv[arg]);
-      if (arg_str_space > 0) {
-         strncat(arg_str, argv[arg], (size_t) arg_str_space);
-         if (arg < (argc-1)) {
-            if (--arg_str_space > 0) {
-               strcat(arg_str, " ");
-            }
+   {
+      int arg_no;
+      char arg_str[MAXLINE];	/* Args as string for syslog */
+
+      openlog("ike-scan", LOG_PID, SYSLOG_FACILITY);
+      arg_str[0] = '\0';
+      for (arg_no=0; arg_no<argc; arg_no++) {
+         strlcat(arg_str, argv[arg_no], sizeof(arg_str));
+         if (arg_no < (argc-1)) {
+            strlcat(arg_str, " ", sizeof(arg_str));
          }
       }
-   }
    info_syslog("Starting: %s", arg_str);
+   }
 #endif
 /*
  *      Get program start time for statistics displayed on completion.
@@ -339,7 +334,7 @@ main(int argc, char *argv[]) {
          size_t bandwidth_len;	/* --bandwidth argument length */
          struct in_addr src_ip_struct;
          case 'f':	/* --file */
-            strncpy(filename, optarg, MAXLINE);
+            strlcpy(filename, optarg, sizeof(filename));
             filename_flag=1;
             break;
          case 'h':	/* --help */
@@ -358,7 +353,7 @@ main(int argc, char *argv[]) {
             timeout=Strtoul(optarg, 10);
             break;
          case 'i':	/* --interval */
-            strncpy(interval_str, optarg, MAXLINE);
+            strlcpy(interval_str, optarg, sizeof(interval_str));
             interval_len=strlen(interval_str);
             if (interval_str[interval_len-1] == 'u') {
                interval=Strtoul(interval_str, 10);
@@ -423,7 +418,7 @@ main(int argc, char *argv[]) {
             free(vid_data);
             break;
          case 'a':	/* --trans */
-            strncpy(trans_str, optarg, MAXLINE);
+            strlcpy(trans_str, optarg, sizeof(trans_str));
             ike_params.trans_flag++;
             if (trans_str[0] == '(') {	/* Advanced transform specification */
                unsigned char *attr=NULL;
@@ -469,7 +464,7 @@ main(int argc, char *argv[]) {
             ike_params.dhgroup = Strtoul(optarg, 10);
             break;
          case 'p':	/* --patterns */
-            strncpy(patfile, optarg, MAXLINE);
+            strlcpy(patfile, optarg, sizeof(patfile));
             break;
          case 'A':	/* --aggressive */
             ike_params.exchange_type = ISAKMP_XCHG_AGGR;
@@ -482,7 +477,7 @@ main(int argc, char *argv[]) {
             ike_params.gss_data=hex2data(optarg, &(ike_params.gss_data_len));
             break;
          case 'I':	/* --vidpatterns */
-            strncpy(vidfile, optarg, MAXLINE);
+            strlcpy(vidfile, optarg, sizeof(vidfile));
             break;
          case 'q':	/* --quiet */
             quiet=1;
@@ -505,7 +500,7 @@ main(int argc, char *argv[]) {
             if (optarg == NULL || *optarg == '\0') {
                psk_crack_file[0] = '\0'; /* use stdout */
             } else {
-               strncpy(psk_crack_file, optarg, MAXLINE);
+               strlcpy(psk_crack_file, optarg, sizeof(psk_crack_file));
             }
             break;
          case 'O':	/* --tcptimeout */
@@ -518,7 +513,7 @@ main(int argc, char *argv[]) {
             ike_params.nonce_data_len = Strtoul(optarg, 10);
             break;
          case 'B':	/* --bandwidth */
-            strncpy(bandwidth_str, optarg, MAXLINE);
+            strlcpy(bandwidth_str, optarg, sizeof(bandwidth_str));
             bandwidth_len=strlen(bandwidth_str);
             if (bandwidth_str[bandwidth_len-1] == 'M') {
                bandwidth=1000000 * Strtoul(bandwidth_str, 10);
@@ -556,7 +551,7 @@ main(int argc, char *argv[]) {
             ike_params.trans_id = Strtoul(optarg, 0);
             break;
          case 'F':	/* --idfile */
-            strncpy(idfile, optarg, MAXLINE);
+            strlcpy(idfile, optarg, sizeof(idfile));
             break;
          case OPT_SPISIZE:	/* --spisize */
             ike_params.spi_size=Strtoul(optarg, 0);
@@ -581,7 +576,7 @@ main(int argc, char *argv[]) {
             ike_params.hdr_next_payload=Strtoul(optarg, 0);
             break;
          case OPT_WRITEPKTTOFILE: /* --writepkttofile */
-            strncpy(pkt_filename, optarg, MAXLINE);
+            strlcpy(pkt_filename, optarg, sizeof(pkt_filename));
             pkt_filename_flag=1;
             break;
          case OPT_RANDOMSEED: /* --randomseed */
@@ -623,7 +618,7 @@ main(int argc, char *argv[]) {
                ike_params.rcookie_data_len = 8;
             break;
          case OPT_READPKTFROMFILE: /* --readpktfromfile */
-            strncpy(pkt_filename, optarg, MAXLINE);
+            strlcpy(pkt_filename, optarg, sizeof(pkt_filename));
             pkt_read_filename_flag=1;
             break;
          case 'X':	/* --experimental */

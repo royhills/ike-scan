@@ -183,7 +183,7 @@
 #define DEFAULT_PROTOCOL PROTO_ISAKMP	/* Default Proposal Protocol */
 #define DEFAULT_TRANS_ID KEY_IKE	/* Default Transform ID */
 #define DEFAULT_IKE_VERSION 1		/* Default IKE version */
-#define SYSLOG 1			/* Use syslog if defined */
+#undef SYSLOG				/* Use syslog if defined */
 #define SYSLOG_FACILITY LOG_USER	/* Syslog facility to use */
 #define PATTERNS_FILE "ike-backoff-patterns" /* Backoff patterns filename */
 #define VID_FILE "ike-vendor-ids"	/* Vendor ID patterns filename */
@@ -330,6 +330,13 @@ typedef struct {	/* IKE Packet Parameters */
 } ike_packet_params;
 
 /* Functions */
+
+#ifndef HAVE_STRLCAT
+size_t strlcat(char *dst, const char *src, size_t siz);
+#endif
+#ifndef HAVE_STRLCPY
+size_t strlcpy(char *dst, const char *src, size_t siz);
+#endif
 
 void err_sys(const char *, ...);
 void warn_sys(const char *, ...);

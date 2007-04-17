@@ -120,7 +120,7 @@ main (int argc, char *argv[]) {
             charset=make_message("%s", optarg);
             break;
          case 'd':      /* --dictionary */
-            strncpy(dict_file_name, optarg, MAXLINE);
+            strlcpy(dict_file_name, optarg, sizeof(dict_file_name));
             brute_len = 0;
             break;
          case 'u':      /* --norteluser */
@@ -420,7 +420,7 @@ load_psk_params(const char *filename, const char *nortel_user) {
       pe->hash_r = hex2data(hash_r_hex, &pe->hash_r_len);
       hash_r_hex_len = strlen(hash_r_hex) + 1;	/* includes terminating null */
       pe->hash_r_hex = Malloc(hash_r_hex_len);
-      strncpy(pe->hash_r_hex, hash_r_hex, hash_r_hex_len);
+      strlcpy(pe->hash_r_hex, hash_r_hex, hash_r_hex_len);
       pe->nortel_user = nortel_user;
 /*
  *	Determine hash type based on the length of the hash, and

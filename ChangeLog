@@ -1,5 +1,14 @@
 $Id$
 
+2007-04-13 Roy Hills <Roy.Hills@nta-monitor.com>
+
+        * configure.ac: Added checks for strlcat and strlcpy, with
+          replacement functions using the OpenBSD implementations if they are
+          not present.
+
+        * strlcat.c, strlcpy.c: New source files from the OpenBSD source at
+          http://www.openbsd.org/cgi-bin/cvsweb/src/lib/libc/string
+
 2007-03-06 Roy Hills <Roy.Hills@nta-monitor.com>
 
 	* configure.ac: Incremented version number to 1.9.1.
