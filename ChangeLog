@@ -1,5 +1,11 @@
 $Id$
 
+2007-04-17 Roy Hills <Roy.Hills@nta-monitor.com>
+
+	* ike-scan.h: Undefined SYSLOG, as we don't use this any more, and I
+	  doubt that anyone else needs it.  The syslog functionality may be
+	  removed in a future release.
+
 2007-04-13 Roy Hills <Roy.Hills@nta-monitor.com>
 
         * configure.ac: Added checks for strlcat and strlcpy, with

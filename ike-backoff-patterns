@@ -136,10 +136,11 @@ Nortel Contivity	0, 16/600, 16, 16
 # Observed on: Cisco 2503 running IP-PLUS-IPsec56 IOS 12.1(27a)
 # Observed on: Cisco 2503 running IP-PLUS-IPsec56 IOS 12.2(29)
 # Observed on: Cisco 2621 running IP/FW/IDS Plus IPsec 3DES Basic 12.3(17a)
+# Observed on: Cisco 1721 running Advanced Security 12.4(13a)
 # Observed on: racoon 0.6.6 running on Debian Etch
 # Note that the Gnat box has a much larger variance than the watchguard, but
 # they are both essentially the same pattern.
-Cisco IOS 12.1, 12.2 or 12.3 / Watchguard Firebox / Gnat Box / racoon	0, 10/1000, 10/1000, 10/1000, 10/1000, 10/1000
+Cisco IOS 12.1, 12.2, 12.3 or 12.4 / Watchguard Firebox / Gnat Box / racoon	0, 10/1000, 10/1000, 10/1000, 10/1000, 10/1000
 
 # Discovered by: Roy Hills, December 2002
 # Observed on: Windows 2000 Server SP1
