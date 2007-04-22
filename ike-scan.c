@@ -524,8 +524,7 @@ main(int argc, char *argv[]) {
             }
             break;
          case 'L':	/* --headerlen */
-            ike_params.header_length = Malloc(strlen(optarg) + 1);
-            strcpy(ike_params.header_length, optarg);
+            ike_params.header_length = dupstr(optarg);
             break;
          case 'Z':	/* --mbz */
             mbz_value = Strtoul(optarg, 0);
@@ -1167,8 +1166,7 @@ add_host_pattern(const char *pattern, unsigned timeout, unsigned *num_hosts,
 /*
  *	Make a copy of pattern because we don't want to modify our argument.
  */
-   patcopy=Malloc(strlen(pattern)+1);
-   strcpy(patcopy, pattern);
+   patcopy = dupstr(pattern);
 
    if (!(regexec(&ipslash_pat, patcopy, 0, NULL, 0))) { /* IPnet/bits */
 /*
@@ -2649,7 +2647,6 @@ load_backoff_patterns(const char *patfile, unsigned pattern_fuzz) {
  */
 void
 add_pattern(char *line, unsigned pattern_fuzz) {
-   char *cp;
    char name[MAXLINE];
    char pat[MAXLINE];
    pattern_list *pe;	/* Pattern entry */
@@ -2701,10 +2698,16 @@ add_pattern(char *line, unsigned pattern_fuzz) {
       err_msg("ERROR: backoff pattern match regexec failed: %s", errbuf);
    }
    name_len = pmatch[1].rm_eo - pmatch[1].rm_so;
+   if (name_len >= sizeof(name)) {
+      name_len = sizeof(name) - 1;
+   }
    pat_len = pmatch[2].rm_eo - pmatch[2].rm_so;
-   strncpy(name, line+pmatch[1].rm_so, name_len);
+   if (pat_len >= sizeof(pat)) {
+      pat_len = sizeof(pat) - 1;
+   }
+   memcpy(name, line+pmatch[1].rm_so, name_len);
    name[name_len] = '\0';
-   strncpy(pat, line+pmatch[2].rm_so, pat_len);
+   memcpy(pat, line+pmatch[2].rm_so, pat_len);
    pat[pat_len] = '\0';
 /*
  *	Allocate new pattern list entry and add to tail of patlist.
@@ -2721,11 +2724,9 @@ add_pattern(char *line, unsigned pattern_fuzz) {
       p->next = pe;
    }
 /*
- *	Copy name into malloc'ed storage and set pl->name to point to this.
+ *	Copy name into malloc'ed storage and set pe->name to point to this.
  */
-   cp = Malloc(strlen(name)+1);
-   strcpy(cp, name);
-   pe->name = cp;
+   pe->name = dupstr(name);
 /*
  *	Process and store the backoff pattern.
  */
@@ -2868,7 +2869,6 @@ load_vid_patterns(const char *vidfile) {
  */
 void
 add_vid_pattern(char *line) {
-   char *cp;
    regex_t *rep;	/* Compiled regex */
    char name[MAXLINE];
    char pat[MAXLINE];
@@ -2909,10 +2909,16 @@ add_vid_pattern(char *line) {
       err_msg("ERROR: vendor id pattern match regexec failed: %s", errbuf);
    }
    name_len = pmatch[1].rm_eo - pmatch[1].rm_so;
+   if (name_len >= sizeof(name)) {
+      name_len = sizeof(name) - 1;
+   }
    pat_len = pmatch[2].rm_eo - pmatch[2].rm_so;
-   strncpy(name, line+pmatch[1].rm_so, name_len);
+   if (pat_len >= sizeof(pat)) {
+      pat_len = sizeof(pat) - 1;
+   }
+   memcpy(name, line+pmatch[1].rm_so, name_len);
    name[name_len] = '\0';
-   strncpy(pat, line+pmatch[2].rm_so, pat_len);
+   memcpy(pat, line+pmatch[2].rm_so, pat_len);
    pat[pat_len] = '\0';
 /*
  *      Process and store the Vendor ID pattern.
@@ -2951,15 +2957,11 @@ add_vid_pattern(char *line) {
 /*
  *	Store text regex.
  */
-      cp = Malloc(strlen(pat)+1);
-      strcpy(cp, pat);
-      pe->pattern = cp;
+      pe->pattern = dupstr(pat);
 /*
  *	Store pattern name.
  */
-      cp = Malloc(strlen(name)+1);
-      strcpy(cp, name);
-      pe->name = cp;
+      pe->name = dupstr(name);
    }
 }
 
@@ -3032,7 +3034,7 @@ load_id_strings(char *filename) {
  *	keylen	Output cipher key length
  *	hash	Output hash algorithm
  *	auth	Output authentication method
- *	group	Output DG Group
+ *	group	Output DH Group
  *
  *	Returns: None
  *
@@ -3049,8 +3051,7 @@ decode_trans_simple(const char *trans_str, unsigned *enc, unsigned *keylen,
  *	Make a copy of the transform string, because strtok modifies it's
  *	argument.
  */
-   str = Malloc(strlen(trans_str)+1);
-   strcpy(str, trans_str);
+   str = dupstr(trans_str);
 /*
  *	Split the transform string into comma-separated tokens, and process
  *	each of these tokens in turn.
@@ -3121,8 +3122,7 @@ decode_transform(const char *trans_str, size_t *attr_len) {
  *	Make a copy of the transform string, because strtok modifies it's
  *	argument.
  */
-   str = Malloc(strlen(trans_str)+1);
-   strcpy(str, trans_str);
+   str = dupstr(trans_str);
 /*
  *	Split the transform string into key=value tokens, and process each
  *	of these tokens.

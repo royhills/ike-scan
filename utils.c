@@ -810,6 +810,34 @@ name_or_number(const char *string, const id_name_map map[]) {
    return result;
 }
 
+/*
+ *	dupstr -- duplicate a string
+ *
+ *	Inputs:
+ *
+ *	str	The string to duplcate
+ *
+ *	Returns:
+ *
+ *	A pointer to the duplicate string.
+ *
+ *	This is a replacement for the common but non-standard "strdup"
+ *	function.
+ *
+ *	The returned pointer points to Malloc'ed memory, which must be
+ *	free'ed by the caller.
+ */
+char *
+dupstr(const char *str) {
+   char *cp;
+   size_t len;
+
+   len = strlen(str) + 1;	/* Allow space for terminating NULL */
+   cp = Malloc(len);
+   strlcpy(cp, str, len);
+   return cp;
+}
+
 void utils_use_rcsid(void) {
    fprintf(stderr, "%s\n", rcsid);	/* Use rcsid to stop compiler optimising away */
 }

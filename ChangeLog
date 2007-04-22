@@ -1,5 +1,14 @@
 $Id$
 
+2007-04-22 Roy Hills <Roy.Hills@nta-monitor.com>
+
+	* utils.c: New function "dupstr", which is a local implementation
+	  of the common but non-standard library function "strdup".
+
+	* ike-scan.c: Replace calls to malloc/strcpy with calls to the
+	  new dupstr function.  This makes the code tidier and also reduces
+	  the number of calls to the potentially dangerour strcpy function.
+
 2007-04-17 Roy Hills <Roy.Hills@nta-monitor.com>
 
 	* ike-scan.h: Undefined SYSLOG, as we don't use this any more, and I

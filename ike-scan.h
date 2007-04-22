@@ -453,6 +453,7 @@ uint8_t random_byte(void);
 uint32_t random_ip(void);
 int str_ccmp(const char *, const char *);
 unsigned name_or_number(const char *, const id_name_map[]);
+char *dupstr(const char *);
 /* MT19937 prototypes */
 void init_genrand(unsigned long);
 void init_by_array(unsigned long[], int);
