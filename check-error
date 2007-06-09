@@ -1,0 +1,165 @@
+#!/bin/sh
+# $Id$
+#
+# check-error -- Shell script to test ike-scan response to errors
+#
+# Author: Roy Hills
+# Date: 8 June 2007
+#
+# This script checks various ike-scan errors.
+#
+TMPFILE=/tmp/ike-scan-test.$$.tmp
+#
+echo "Checking ike-scan --vendor odd hex data ..."
+IKEARGS="--sport=0 --retry=1 --nodns --vendor=deadbee"
+$srcdir/ike-scan $IKEARGS 127.0.0.1 >$TMPFILE 2>&1
+if test $? -eq 0; then
+   rm -f $TMPFILE
+   echo "FAILED"
+   exit 1
+fi
+grep '^ERROR: Length of --vendor argument must be even (multiple of 2)' $TMPFILE >/dev/null
+if test $? -ne 0; then
+   rm -f $TMPFILE
+   echo "FAILED"
+   exit 1
+fi
+echo "ok"
+rm -f $TMPFILE
+#
+echo "Checking ike-scan --gssid odd hex data ..."
+IKEARGS="--sport=0 --retry=1 --nodns --gssid=deadbee"
+$srcdir/ike-scan $IKEARGS 127.0.0.1 >$TMPFILE 2>&1
+if test $? -eq 0; then
+   rm -f $TMPFILE
+   echo "FAILED"
+   exit 1
+fi
+grep '^ERROR: Length of --gssid argument must be even (multiple of 2)' $TMPFILE >/dev/null
+if test $? -ne 0; then
+   rm -f $TMPFILE
+   echo "FAILED"
+   exit 1
+fi
+echo "ok"
+rm -f $TMPFILE
+#
+echo "Checking ike-scan --certreq odd hex data ..."
+IKEARGS="--sport=0 --retry=1 --nodns --certreq=deadbee"
+$srcdir/ike-scan $IKEARGS 127.0.0.1 >$TMPFILE 2>&1
+if test $? -eq 0; then
+   rm -f $TMPFILE
+   echo "FAILED"
+   exit 1
+fi
+grep '^ERROR: Length of --certreq argument must be even (multiple of 2)' $TMPFILE >/dev/null
+if test $? -ne 0; then
+   rm -f $TMPFILE
+   echo "FAILED"
+   exit 1
+fi
+echo "ok"
+rm -f $TMPFILE
+#
+echo "Checking ike-scan --cookie odd hex data ..."
+IKEARGS="--sport=0 --retry=1 --nodns --cookie=deadbee"
+$srcdir/ike-scan $IKEARGS 127.0.0.1 >$TMPFILE 2>&1
+if test $? -eq 0; then
+   rm -f $TMPFILE
+   echo "FAILED"
+   exit 1
+fi
+grep '^ERROR: Length of --cookie argument must be even (multiple of 2)' $TMPFILE >/dev/null
+if test $? -ne 0; then
+   rm -f $TMPFILE
+   echo "FAILED"
+   exit 1
+fi
+echo "ok"
+rm -f $TMPFILE
+#
+echo "Checking ike-scan --rcookie odd hex data ..."
+IKEARGS="--sport=0 --retry=1 --nodns --rcookie=deadbee"
+$srcdir/ike-scan $IKEARGS 127.0.0.1 >$TMPFILE 2>&1
+if test $? -eq 0; then
+   rm -f $TMPFILE
+   echo "FAILED"
+   exit 1
+fi
+grep '^ERROR: Length of --rcookie argument must be even (multiple of 2)' $TMPFILE >/dev/null
+if test $? -ne 0; then
+   rm -f $TMPFILE
+   echo "FAILED"
+   exit 1
+fi
+echo "ok"
+rm -f $TMPFILE
+#
+echo "Checking ike-scan invalid option ..."
+IKEARGS="--sport=0 --retry=1 --nodns --invalidoption"
+$srcdir/ike-scan $IKEARGS 127.0.0.1 >$TMPFILE 2>&1
+if test $? -eq 0; then
+   rm -f $TMPFILE
+   echo "FAILED"
+   exit 1
+fi
+grep 'ike-scan: unrecognized option ' $TMPFILE >/dev/null
+if test $? -ne 0; then
+   rm -f $TMPFILE
+   echo "FAILED"
+   exit 1
+fi
+echo "ok"
+rm -f $TMPFILE
+#
+echo "Checking ike-scan invalid --sourceip value ..."
+IKEARGS="--sport=0 --retry=1 --nodns --sourceip=invalidipaddress"
+$srcdir/ike-scan $IKEARGS 127.0.0.1 >$TMPFILE 2>&1
+if test $? -eq 0; then
+   rm -f $TMPFILE
+   echo "FAILED"
+   exit 1
+fi
+grep '^ERROR: invalidipaddress is not a valid IP address' $TMPFILE >/dev/null
+if test $? -ne 0; then
+   rm -f $TMPFILE
+   echo "FAILED"
+   exit 1
+fi
+echo "ok"
+rm -f $TMPFILE
+#
+echo "Checking ike-scan invalid target address ..."
+IKEARGS="--sport=0 --retry=1 --nodns"
+$srcdir/ike-scan $IKEARGS invalidipaddress >$TMPFILE 2>&1
+if test $? -eq 0; then
+   rm -f $TMPFILE
+   echo "FAILED"
+   exit 1
+fi
+grep '^ERROR: No hosts to process' $TMPFILE >/dev/null
+if test $? -ne 0; then
+   rm -f $TMPFILE
+   echo "FAILED"
+   exit 1
+fi
+echo "ok"
+rm -f $TMPFILE
+#
+echo "Checking ike-scan non-existant target filename  ..."
+IKEARGS="--sport=0 --retry=1 --nodns"
+$srcdir/ike-scan $IKEARGS --file=ike-scan-no-such-file >$TMPFILE 2>&1
+if test $? -eq 0; then
+   rm -f $TMPFILE
+   echo "FAILED"
+   exit 1
+fi
+grep '^ERROR: fopen: No such file or directory' $TMPFILE >/dev/null
+if test $? -ne 0; then
+   rm -f $TMPFILE
+   echo "FAILED"
+   exit 1
+fi
+echo "ok"
+rm -f $TMPFILE
+

@@ -338,8 +338,7 @@ main(int argc, char *argv[]) {
             filename_flag=1;
             break;
          case 'h':	/* --help */
-            usage(EXIT_SUCCESS, 1);
-            break;	/* NOTREACHED */
+            usage(EXIT_SUCCESS, 1);	/* Doesn't return */
          case 's':	/* --sport */
             source_port=Strtoul(optarg, 10);
             break;
@@ -407,8 +406,7 @@ main(int argc, char *argv[]) {
             error_use_rcsid();
             utils_use_rcsid();
             wrappers_use_rcsid();
-            exit(EXIT_SUCCESS);
-            break;	/* NOTREACHED */
+            exit(EXIT_SUCCESS);	/* Doesn't return */
          case 'e':	/* --vendor */
             if (strlen(optarg) % 2)	/* Length is odd */
                err_msg("ERROR: Length of --vendor argument must be even (multiple of 2).");
@@ -624,8 +622,7 @@ main(int argc, char *argv[]) {
             experimental_value = Strtoul(optarg, 0);
             break;
          default:	/* Unknown option */
-            usage(EXIT_FAILURE, 0);
-            break;
+            usage(EXIT_FAILURE, 0);	/* Doesn't return */
       }
    }
 /*
@@ -2025,8 +2022,7 @@ initialise_ike_packet(size_t *packet_out_len, ike_packet_params *params) {
          default:
             err_msg("ERROR: Bad Diffie Hellman group: %u, "
                     "should be 1,2,5,14,15,16,17 or 18",
-                    params->dhgroup);
-            break;	/* NOTREACHED */
+                    params->dhgroup);	/* Doesn't return */
       }
       ke = make_ke(&ke_len, next_payload, kx_data_len);
       if (psk_crack_flag)
@@ -2069,8 +2065,7 @@ initialise_ike_packet(size_t *packet_out_len, ike_packet_params *params) {
          default:
             err_msg("ERROR: Bad Diffie Hellman group: %u, "
                     "should be 1,2,5,14,15,16,17 or 18",
-                    params->dhgroup);
-            break;	/* NOTREACHED */
+                    params->dhgroup);	/* Doesn't return */
       }
       ke = make_ke2(&ke_len, next_payload, params->dhgroup, kx_data_len);
       *packet_out_len += ke_len;

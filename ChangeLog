@@ -1,5 +1,10 @@
 $Id$
 
+2007-06-09 Roy Hills <Roy.Hills@nta-monitor.com>
+
+	* check-error: new checking script to test response to error
+          conditions.
+
 2007-04-22 Roy Hills <Roy.Hills@nta-monitor.com>
 
 	* utils.c: New function "dupstr", which is a local implementation

@@ -63,3 +63,9 @@ Display notification of NAT-T encapsulation. Currently there is no indication if
 
 Integrate psk-crack patch from
 http://src.telindus.com/articles/pskcrack_patch.html
+
+Investigate strongswan ./configure --enable-cisco-quirks
+Does this enable the Cisco Vendor ID?
+
+Ensure that Strtoul() only permits fully-convertable strings, to avoid the
+problem mentioned by ML with 1=7/128 in an advanced transform specification.
