@@ -69,3 +69,6 @@ Does this enable the Cisco Vendor ID?
 
 Ensure that Strtoul() only permits fully-convertable strings, to avoid the
 problem mentioned by ML with 1=7/128 in an advanced transform specification.
+
+Add Adam Bozanich's DH key patch linked from:
+http://labs.musecurity.com/2007/09/18/widespread-dh-implementation-weakness/
