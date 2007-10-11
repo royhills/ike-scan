@@ -332,6 +332,13 @@ strongSwan 4.0.3	^b181b18e114fc209b3c6e26c3a80718e
 strongSwan 4.0.2	^77e8eea6f556a499de3ffe7f7f95661c
 strongSwan 4.0.1	^9dbbafcf1db0dd595ae065294003ad3e
 strongSwan 4.0.0	^2ce9c946a4c879bf11b50b76cc5692cb
+strongSwan 2.8.7	^3a0d4e7ca4e492ed4dfe476d1ac6018b
+strongSwan 2.8.6	^fe3f49706e26a9fb36a87bfce9ea36ce
+strongSwan 2.8.5	^4c7efa31b39e510432a317570d97bbb9
+strongSwan 2.8.4	^76c72bfd398424dd001b86d0012fe061
+strongSwan 2.8.3	^fb4641ad0eeb2a34491d15f4eff51063
+strongSwan 2.8.2	^299932277b7dfe382ce23465333a7d23
+strongSwan 2.8.1	^e37f2d5ba89a62cd202ee27dac06c8a8
 strongSwan 2.8.0	^32f0e9b9c06dfe8c9ad5599a636971a1
 strongSwan 2.7.3	^7f50cc4ebf04c2d9da73abfd69b77aa2
 strongSwan 2.7.2	^a194e2aaddd0bafb95253dd96dc733eb
