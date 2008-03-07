@@ -1,5 +1,13 @@
 $Id$
 
+2008-03-07 Roy Hills <Roy.Hills@nta-monitor.com>
+
+	* isakmp.c: Added additional XAUTH authentication methods to auth_map.
+
+	* ike-backoff-patterns: Added Cisco PIX 7.0
+
+	* ike-vendor-ids: Added Windows 2008 server
+
 2007-06-09 Roy Hills <Roy.Hills@nta-monitor.com>
 
 	* check-error: new checking script to test response to error

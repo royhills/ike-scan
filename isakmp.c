@@ -204,7 +204,11 @@ const id_name_map auth_map[] = {	/* From RFC 2409 App. A */
    {8, "ECDSA_Sig"},
    {128, "CRACK"},	/* From draft-harkins-ipsra-crack-00 */
    {64221, "Hybrid"},
-   {65001, "XAUTH"},
+   {65001, "XAUTH_PSK"},
+   {65003, "XAUTH_DSS"},
+   {65005, "XAUTH_RSA"},
+   {65007, "XAUTH_RSA_Enc"},
+   {65009, "XAUTH_RSA_RevEnc"},
    {-1, NULL}
 };
 const id_name_map integ_map[] = {	/* From RFC 4306 3.3.2 */

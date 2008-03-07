@@ -72,12 +72,12 @@
 # 2	Windows 2000
 # 3	Windows XP SP1
 # 4	Windows 2003 and Windows XP SP2
-# 5	Windows Vista (tested against Beta 2 build 5384)
+# 5	Windows Vista (tested against Beta 2 build 5384) and 2008 server
 #
 Windows-2000	^1e2b516905991c7d7c96fcbfb587e46100000002
 Windows-XP-SP1	^1e2b516905991c7d7c96fcbfb587e46100000003
 Windows-2003-or-XP-SP2	^1e2b516905991c7d7c96fcbfb587e46100000004
-Windows-Vista	^1e2b516905991c7d7c96fcbfb587e46100000005
+Windows-Vista-or-2008	^1e2b516905991c7d7c96fcbfb587e46100000005
 
 # Checkpoint Firewall-1/VPN-1
 #
