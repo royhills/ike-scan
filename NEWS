@@ -3,6 +3,21 @@ $Id$
 This file gives a brief overview of the major changes between each ike-scan
 release.  For more details please read the ChangeLog file.
 
+ike-scan v1.9.1:
+
+* The function that converts strings to numbers is now stricter, and no longer
+  permits any invalid characters.  This improves error reporting in some invalid
+  cases that previously gave no error, e.g. using "1=7/256" in an advanced
+  transform specification.
+
+* New backoff patterns for Cisco PIX 7.0
+
+* New vendor ids for Windows 2008 server
+
+* ike-scan now uses the OpenBSD strlcat and strlcpy functions instead of
+  the standard strcat, strncat, strcpy and strncpy functions.  This reduces
+  the chance of buffer overflow bugs.
+
 ike-scan v1.9:
 
 * ike-scan wiki at http://www.nta-monitor.com/wiki/

@@ -1,5 +1,22 @@
 $Id$
 
+2008-09-01 Roy Hills <Roy.Hills@nta-monitor.com>
+
+	* ike-scan.c: Improved the description of the --trans option in
+	  the help output.
+
+	* wrappers.c: Modified Strtoul so it only permits fully convertable
+	  strings.  This avoids the problem mentioned by ML with 1=7/128
+	  in an advanced transform specification.
+
+	* ike-scan.c: Corrected those calls to Strtoul that assumed the old
+	  behaviour, where a string could be terminated by any non convertable
+	  character.
+
+	* check-packet, pkt-custom-proposal.dat: Corrected the advanced
+	  transform specification, and added an additional transform using
+	  variable length attributes.
+
 2008-03-07 Roy Hills <Roy.Hills@nta-monitor.com>
 
 	* isakmp.c: Added additional XAUTH authentication methods to auth_map.
@@ -20,7 +37,7 @@ $Id$
 
 	* ike-scan.c: Replace calls to malloc/strcpy with calls to the
 	  new dupstr function.  This makes the code tidier and also reduces
-	  the number of calls to the potentially dangerour strcpy function.
+	  the number of calls to the potentially dangerous strcpy function.
 
 2007-04-17 Roy Hills <Roy.Hills@nta-monitor.com>
 

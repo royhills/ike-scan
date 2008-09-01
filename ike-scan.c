@@ -355,8 +355,10 @@ main(int argc, char *argv[]) {
             strlcpy(interval_str, optarg, sizeof(interval_str));
             interval_len=strlen(interval_str);
             if (interval_str[interval_len-1] == 'u') {
+               interval_str[interval_len-1] = '\0';
                interval=Strtoul(interval_str, 10);
             } else if (interval_str[interval_len-1] == 's') {
+               interval_str[interval_len-1] = '\0';
                interval=1000000 * Strtoul(interval_str, 10);
             } else {
                interval=1000 * Strtoul(interval_str, 10);
@@ -514,8 +516,10 @@ main(int argc, char *argv[]) {
             strlcpy(bandwidth_str, optarg, sizeof(bandwidth_str));
             bandwidth_len=strlen(bandwidth_str);
             if (bandwidth_str[bandwidth_len-1] == 'M') {
+               bandwidth_str[bandwidth_len-1] = '\0';
                bandwidth=1000000 * Strtoul(bandwidth_str, 10);
             } else if (bandwidth_str[bandwidth_len-1] == 'K') {
+               bandwidth_str[bandwidth_len-1] = '\0';
                bandwidth=1000 * Strtoul(bandwidth_str, 10);
             } else {
                bandwidth=Strtoul(bandwidth_str, 10);
@@ -3305,7 +3309,10 @@ usage(int status, int detailed) {
       fprintf(stderr, "\t\t\tFor the new method, the transform <t> is specified as\n");
       fprintf(stderr, "\t\t\t(attr=value, attr=value, ...)\n");
       fprintf(stderr, "\t\t\tWhere \"attr\" is the attribute number, and \"value\" is\n");
-      fprintf(stderr, "\t\t\tthe value to assign to that attribute.  You can specify\n");
+      fprintf(stderr, "\t\t\tthe value to assign to that attribute.\n");
+      fprintf(stderr, "\t\t\tFor a basic attribute, specify the value as a decimal\n");
+      fprintf(stderr, "\t\t\tnumber; for a variable length attribute, specify the\n");
+      fprintf(stderr, "\t\t\tvalue as a hex number prefixed with 0x. You can specify\n");
       fprintf(stderr, "\t\t\tan arbitary number of attribute/value pairs.\n");
       fprintf(stderr, "\t\t\tSee RFC 2409 Appendix A for details of the attributes\n");
       fprintf(stderr, "\t\t\tand values.\n");
@@ -3313,9 +3320,12 @@ usage(int status, int detailed) {
       fprintf(stderr, "\t\t\tmay need to quote them, e.g.\n");
       fprintf(stderr, "\t\t\t--trans=\"(1=1,2=2,3=3,4=4)\". For example,\n");
       fprintf(stderr, "\t\t\t--trans=(1=1,2=2,3=1,4=2) specifies\n");
-      fprintf(stderr, "\t\t\tEnc=3DES-CBC, Hash=SHA1, Auth=shared key, DH Group=2;\n");
-      fprintf(stderr, "\t\t\tand --trans=(1=7,14=128,2=1,3=3,4=5) specifies\n");
-      fprintf(stderr, "\t\t\tEnc=AES/128, Hash=MD5, Auth=RSA sig, DH Group=5.\n");
+      fprintf(stderr, "\t\t\tEnc=DES-CBC, Hash=SHA1, Auth=shared key, DH Group=2;\n");
+      fprintf(stderr, "\t\t\t--trans=(1=7,14=128,2=1,3=3,4=5) specifies\n");
+      fprintf(stderr, "\t\t\tEnc=AES/128, Hash=MD5, Auth=RSA sig, DH Group=5 and\n");
+      fprintf(stderr, "\t\t\t--trans=(1=5,2=1,3=1,4=1,11=1,12=0x00007080) specifies\n");
+      fprintf(stderr, "\t\t\tEnc=3DES-CBC, Hash=MD5, Auth=shared key, DH Group=1,\n");
+      fprintf(stderr, "\t\t\tLifetime=28800 seconds as a 4-byte variable attribute.\n");
       fprintf(stderr, "\t\t\tFor the old method, the transform <t> is specified as\n");
       fprintf(stderr, "\t\t\tenc[/len],hash,auth,group.\n");
       fprintf(stderr, "\t\t\tWhere enc is the encryption algorithm,\n");

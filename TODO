@@ -64,8 +64,5 @@ Display notification of NAT-T encapsulation. Currently there is no indication if
 Integrate psk-crack patch from
 http://src.telindus.com/articles/pskcrack_patch.html
 
-Ensure that Strtoul() only permits fully-convertable strings, to avoid the
-problem mentioned by ML with 1=7/128 in an advanced transform specification.
-
 Add Adam Bozanich's DH key patch linked from:
 http://labs.musecurity.com/2007/09/18/widespread-dh-implementation-weakness/
