@@ -1,7 +1,7 @@
 dnl $Id$
 dnl Process this file with autoconf to produce a configure script.
 
-AC_INIT([ike-scan],[1.9.1],[ike-scan@nta-monitor.com])
+AC_INIT([ike-scan],[1.9.2],[ike-scan@nta-monitor.com])
 AC_PREREQ(2.59)
 AC_REVISION($Revision$)
 AC_CONFIG_SRCDIR([ike-scan.c])
@@ -11,13 +11,16 @@ AM_CONFIG_HEADER([config.h])
 
 dnl Check for programs.
 AC_PROG_CC
- if test -n "$GCC"; then
-      CFLAGS="${CFLAGS} -Wall "
+if test -n "$GCC"; then
+   CFLAGS="$CFLAGS -Wall"
+   GCC_STACK_PROTECT_CC
+   GCC_FORTIFY_SOURCE
+   GCC_FORMAT_SECURITY
 dnl Uncomment the line below for testing with stricter warnings.
-dnl      CFLAGS="${CFLAGS} -pedantic -Wshadow -Wpointer-arith -Wcast-qual -Wcast-align -Wwrite-strings -Wconversion -Wstrict-prototypes -Wmissing-prototypes -Wmissing-declarations -Wnested-externs -Winline "
+dnl CFLAGS="$CFLAGS -pedantic -Wshadow -Wpointer-arith -Wcast-qual -Wcast-align -Wwrite-strings -Wconversion -Wstrict-prototypes -Wmissing-prototypes -Wmissing-declarations -Wnested-externs -Winline "
 dnl Uncomment the line below to check malloc/free with electric fence
-dnl      LIBS="-lefence ${LIBS}"
- fi
+dnl LIBS="-lefence $LIBS"
+fi
 AC_PROG_INSTALL
 AC_PROG_LN_S
 dnl Check endian-ness. MD5 and SHA1 hash functions need to know this.

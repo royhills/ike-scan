@@ -269,3 +269,43 @@ AC_DEFUN([GCC_STACK_PROTECT_CXX],[
     fi
   fi
 ])
+
+AC_DEFUN([GCC_FORTIFY_SOURCE],[
+   if test "x$CC" != "X"; then
+      AC_MSG_CHECKING([whether ${CC} accepts -D_FORTIFY_SOURCE])
+      AC_TRY_COMPILE([#include <features.h>], [
+         #if !(__GNUC_PREREQ (4, 1) \
+            || (defined __GNUC_RH_RELEASE__ && __GNUC_PREREQ (4, 0)) \
+            || (defined __GNUC_RH_RELEASE__ && __GNUC_PREREQ (3, 4) \
+               && __GNUC_MINOR__ == 4 \
+               && (__GNUC_PATCHLEVEL__ > 2 \
+                  || (__GNUC_PATCHLEVEL__ == 2 && __GNUC_RH_RELEASE__ >= 8))))
+         #error No FORTIFY_SOURCE support
+         #endif
+      ], [
+         AC_MSG_RESULT(yes)
+         CFLAGS="$CFLAGS -D_FORTIFY_SOURCE=2"
+      ], [
+         AC_MSG_RESULT(no)
+      ])
+   fi
+])
+
+AC_DEFUN([GCC_FORMAT_SECURITY],[
+   if test "x$CC" != "X"; then
+      AC_MSG_CHECKING([whether ${CC} accepts -Wformat-security])
+      wfs_old_cflags="$CFLAGS"
+      CFLAGS="$CFLAGS -Wall -Werror -Wformat -Wformat-security"
+      AC_TRY_COMPILE([#include <stdio.h>], [
+         char *fmt=NULL;
+         printf(fmt);
+         return 0;
+      ], [
+         AC_MSG_RESULT(no)
+         CFLAGS="$wfs_old_cflags"
+      ], [
+         AC_MSG_RESULT(yes)
+         CFLAGS="$wfs_old_cflags -Wformat -Wformat-security"
+      ])
+   fi
+])
