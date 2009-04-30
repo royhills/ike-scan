@@ -66,3 +66,12 @@ http://src.telindus.com/articles/pskcrack_patch.html
 
 Add Adam Bozanich's DH key patch linked from:
 http://labs.musecurity.com/2007/09/18/widespread-dh-implementation-weakness/
+
+Support the EC Diffie-Hellman groups for the --dhgroup option.
+
+Add the vendor ID details from
+http://msdn.microsoft.com/en-us/library/cc206875.aspx
+
+Consider adding RSA_Sig as an auth method for the default transform set.
+This would result in 16 transforms with all combinations of:
+DES/3DES, MD5/SHA1, PSK/RSA, DH 1/DH 2
