@@ -2,12 +2,12 @@ dnl $Id$
 dnl Process this file with autoconf to produce a configure script.
 
 AC_INIT([ike-scan],[1.9.2],[ike-scan@nta-monitor.com])
-AC_PREREQ(2.59)
+AC_PREREQ(2.61)
 AC_REVISION($Revision$)
 AC_CONFIG_SRCDIR([ike-scan.c])
 AM_INIT_AUTOMAKE(1.9)
 
-AM_CONFIG_HEADER([config.h])
+AC_CONFIG_HEADERS([config.h])
 
 dnl Check for programs.
 AC_PROG_CC
@@ -141,7 +141,7 @@ AC_CHECK_FUNC(inet_aton, , [ AC_LIBOBJ(inet_aton) ])
 dnl Do we want to disable the initial gethostbyname() call?
 dnl The default is for it to be enabled.
 AC_ARG_ENABLE(lookup,
-   AC_HELP_STRING([--enable-lookup],[Legacy option, present for compatibility]),
+   AS_HELP_STRING([--enable-lookup],[Legacy option, present for compatibility]),
    AC_MSG_NOTICE([The --enable-lookup option is depreciated])
 )
 
@@ -160,8 +160,7 @@ dnl
 have_openssl="no"
 AC_MSG_CHECKING([if OpenSSL libraries are required])
 AC_ARG_WITH(openssl,
-   AC_HELP_STRING([--with-openssl],
-                  [Use the OpenSSL MD5 and SHA1 hash functions]),
+   AS_HELP_STRING([--with-openssl],[Use the OpenSSL MD5 and SHA1 hash functions]),
    [
       if test "x$withval" != "xno" ; then
          AC_MSG_RESULT(yes)
