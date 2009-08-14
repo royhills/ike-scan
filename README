@@ -19,7 +19,6 @@ TABLE OF CONTENTS
       4.3.  Cookie Generation and Remote Host Identification
       4.4.  IKE Packet Details
       4.5.  Backoff Fingerprinting
-      4.6.  Syslog
    5.  PROGRAM OUTPUT
    6.  EXAMPLES
    7.  SUPPORTED PLATFORMS
@@ -833,37 +832,6 @@ implementation.  This Vendor ID fingerprinting method was first proposed by
 Brett Eldridge <beldridg@pobox.com>.  ike-scan will display any vendor ID
 payloads that it receives, and will attempt to match these against known
 Vendor ID patterns.
-
-4.6. Syslog
-
-The program can log brief details to a syslog server if SYSLOG is defined
-in ike-scan.h when the program is compiled.  You can also define the
-syslog facility to use.
-
-By default, syslog is enabled and the facility is set to "user".  The
-lines in ike-scan.h that define this behaviour are:
-
-#define SYSLOG 1                        /* Use syslog if defined */
-#define SYSLOG_FACILITY LOG_USER        /* Syslog facility to use */
-
-The messages are logged with the priority LOG_INFO.
-
-If syslog is defined, each run of ike-scan will log two syslog messages:
-one when ike-scan starts showing the arguments it was invoked with, and one
-when it ends showing the number of hosts scanned and the number of transform
-and notify responses received.
-
-The maximum length of the syslog messages is limited by the MAXLINE definition
-in "ike-scan.h".  At present, this is 255 which will cause runs with very large
-numbers of IP addresses specified on the command line to be incompletely
-reported.  If you are scanning large numbers of IP addresses, you should
-really be reading them from a file or stdin rather than specifying them on the
-command line.
-
-An example of syslog output for a single ike-scan run is:
-
-Jan 17 17:12:05 helium ike-scan[3157]: Starting: ike-scan 172.16.2.2
-Jan 17 17:12:05 helium ike-scan[3157]: Ending: 1 hosts scanned. 0 returned transform; 1 returned notify
 
 5.  PROGRAM OUTPUT
 

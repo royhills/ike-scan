@@ -1,5 +1,11 @@
 $Id$
 
+2009-08-14 Roy Hills <Roy.Hills@nta-monitor.com>
+
+	* ike-scan.c, ike-scan.h, psk-crack.h, configure.ac, error.c: Removed
+	  syslog functionality as this is not used and has been #ifdef'ed out
+	  for some time.
+
 2009-05-06 Roy Hills <Roy.Hills@nta-monitor.com>
 
 	* configure.ac: Upgraded for autoconf 2.61

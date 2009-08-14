@@ -396,6 +396,8 @@ Linux FreeS/WAN 2.05	^4f457271785f4c7e496f4d54
 Linux FreeS/WAN 2.06	^4f457e4c466e5d427c5c6b52
 Openswan 2.2.0	^4f4548724b6e5e68557c604f
 Openswan 2.3.0	^4f4572696f5c77557f746249
+# General pattern, must come after specific FreeS/WAN and OpenSwan patterns.
+FreeS/WAN or OpenSWAN	^4f45[[:xdigit:]]{20}$
 
 # OpenPGP
 # VID starts with ASCII "OpenPGP".  This is generally followed by some extra

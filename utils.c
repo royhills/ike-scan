@@ -39,9 +39,6 @@
  * Date: 5 April 2004
  *
  * This file contains various utility functions used by ike-scan.
- *
- * These functions were originally in ike-scan.c, but were moved to utils.c
- * because ike-scan.c was getting rather large.
  */
 
 #include "ike-scan.h"
@@ -207,7 +204,7 @@ hex2data(const char *string, size_t *data_len) {
  *
  *	The returned pointer points to malloc'ed storage which should be
  *	free'ed by the caller when it's no longer needed.  If the length of
- *	the inputs string is not even, the function will return NULL and
+ *	the input string is not even, the function will return NULL and
  *	set data_len to 0.
  */
 unsigned char *
@@ -256,7 +253,7 @@ hex_or_str(const char *string, size_t *data_len) {
  *
  *	The returned pointer points to malloc'ed storage which should be
  *	free'ed by the caller when it's no longer needed.  If the length of
- *	the inputs string is not even, the function will return NULL and
+ *	the input string is not even, the function will return NULL and
  *	set data_len to 0.
  */
 unsigned char *
@@ -501,7 +498,7 @@ hexstring(const unsigned char *data, size_t size) {
    cp = data;
    r = result;
    for (i=0; i<size; i++) {
-      sprintf(r, "%.2x", *cp++);
+      snprintf(r, 3, "%.2x", *cp++);
       r += 2;
    }
    *r = '\0';

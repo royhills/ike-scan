@@ -39,7 +39,6 @@
  *
  * Author:	Roy Hills
  * Date:	1 December 2001
- *
  */
 
 #include "ike-scan.h"
@@ -56,7 +55,7 @@ err_sys(const char *fmt,...) {
    va_list ap;
 
    va_start(ap, fmt);
-   err_print(1, 0, fmt, ap);
+   err_print(1, fmt, ap);
    va_end(ap);
    exit(EXIT_FAILURE);
 }
@@ -69,7 +68,7 @@ warn_sys(const char *fmt,...) {
    va_list ap;
 
    va_start(ap, fmt);
-   err_print(1, 0, fmt, ap);
+   err_print(1, fmt, ap);
    va_end(ap);
 }
 
@@ -81,7 +80,7 @@ err_msg(const char *fmt,...) {
    va_list ap;
 
    va_start(ap, fmt);
-   err_print(0, 0, fmt, ap);
+   err_print(0, fmt, ap);
    va_end(ap);
    exit(EXIT_FAILURE);
 }
@@ -94,19 +93,7 @@ warn_msg(const char *fmt,...) {
    va_list ap;
 
    va_start(ap, fmt);
-   err_print(0, 0, fmt, ap);
-   va_end(ap);
-}
-
-/*
- *	Function to handle informational syslog messages
- */
-void
-info_syslog(const char *fmt,...) {
-   va_list ap;
-
-   va_start(ap, fmt);
-   err_print(0, LOG_INFO, fmt, ap);
+   err_print(0, fmt, ap);
    va_end(ap);
 }
 
@@ -115,7 +102,7 @@ info_syslog(const char *fmt,...) {
  *	functions.
  */
 void
-err_print (int errnoflag, int level, const char *fmt, va_list ap) {
+err_print (int errnoflag, const char *fmt, va_list ap) {
    int errno_save;
    size_t n;
    char buf[MAXLINE];
@@ -128,16 +115,12 @@ err_print (int errnoflag, int level, const char *fmt, va_list ap) {
      snprintf(buf+n, MAXLINE-n, ": %s", strerror(errno_save));
    strlcat(buf, "\n", sizeof(buf));
 
-   if (level != 0) {
-      syslog(level, "%s", buf);
-   } else {
-      fflush(stdout);	/* In case stdout and stderr are the same */
-      fputs(buf, stderr);
-      fflush(stderr);
-   }
+   fflush(stdout);	/* In case stdout and stderr are the same */
+   fputs(buf, stderr);
+   fflush(stderr);
 }
 
 void
 error_use_rcsid(void) {
-   fprintf(stderr, "%s\n", rcsid);       /* Use rcsid to stop compiler optimising away */
+   fprintf(stderr, "%s\n", rcsid);	/* Use rcsid to stop compiler optimising away */
 }

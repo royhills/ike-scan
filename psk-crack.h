@@ -147,7 +147,6 @@ void err_sys(const char *, ...);
 void warn_sys(const char *, ...);
 void err_msg(const char *, ...);
 void warn_msg(const char *, ...);
-void info_syslog(const char *, ...);
 void err_print(int, int, const char *, va_list);
 static void psk_crack_usage(int);
 void timeval_diff(const struct timeval *, const struct timeval *,

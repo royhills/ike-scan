@@ -276,25 +276,6 @@ main(int argc, char *argv[]) {
    char **idstrings=NULL;
    unsigned int random_seed=0;
 /*
- *	Open syslog channel and log arguments if required.
- */
-#ifdef SYSLOG
-   {
-      int arg_no;
-      char arg_str[MAXLINE];	/* Args as string for syslog */
-
-      openlog("ike-scan", LOG_PID, SYSLOG_FACILITY);
-      arg_str[0] = '\0';
-      for (arg_no=0; arg_no<argc; arg_no++) {
-         strlcat(arg_str, argv[arg_no], sizeof(arg_str));
-         if (arg_no < (argc-1)) {
-            strlcat(arg_str, " ", sizeof(arg_str));
-         }
-      }
-   info_syslog("Starting: %s", arg_str);
-   }
-#endif
-/*
  *      Get program start time for statistics displayed on completion.
  */
    Gettimeofday(&start_time);
@@ -1088,11 +1069,6 @@ main(int argc, char *argv[]) {
    elapsed_seconds = (elapsed_time.tv_sec*1000 +
                       elapsed_time.tv_usec/1000.0) / 1000.0;
 
-#ifdef SYSLOG
-   info_syslog("Ending: %u hosts scanned in %.3f seconds (%.2f hosts/sec). %u returned handshake; %u returned notify",
-               num_hosts, elapsed_seconds, num_hosts/elapsed_seconds,
-               sa_responders, notify_responders);
-#endif
    printf("Ending %s: %u hosts scanned in %.3f seconds (%.2f hosts/sec).  %u returned handshake; %u returned notify\n",
           PACKAGE_STRING, num_hosts, elapsed_seconds,
           num_hosts/elapsed_seconds,sa_responders, notify_responders);
@@ -1811,9 +1787,9 @@ send_packet(int s, unsigned char *packet_out, size_t packet_out_len,
                nsent, packet_out_len);
    }
 /*
- *	Cisco TCP encapsulation.
+ *	Free locally allocated memory if required
  */
-   if (tcp_flag == TCP_PROTO_ENCAP) {
+   if (tcp_flag == TCP_PROTO_ENCAP || sourceip_flag != 0 || nat_t_flag) {
       free(packet_out);
    }
 }

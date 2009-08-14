@@ -84,10 +84,6 @@
 #include <netdb.h>
 #endif
 
-#ifdef HAVE_SYSLOG_H
-#include <syslog.h>
-#endif
-
 #ifdef HAVE_GETOPT_H
 #include <getopt.h>
 #else
@@ -183,8 +179,6 @@
 #define DEFAULT_PROTOCOL PROTO_ISAKMP	/* Default Proposal Protocol */
 #define DEFAULT_TRANS_ID KEY_IKE	/* Default Transform ID */
 #define DEFAULT_IKE_VERSION 1		/* Default IKE version */
-#undef SYSLOG				/* Use syslog if defined */
-#define SYSLOG_FACILITY LOG_USER	/* Syslog facility to use */
 #define PATTERNS_FILE "ike-backoff-patterns" /* Backoff patterns filename */
 #define VID_FILE "ike-vendor-ids"	/* Vendor ID patterns filename */
 #define REALLOC_COUNT	1000		/* Entries to realloc at once */
@@ -342,8 +336,7 @@ void err_sys(const char *, ...);
 void warn_sys(const char *, ...);
 void err_msg(const char *, ...);
 void warn_msg(const char *, ...);
-void info_syslog(const char *, ...);
-void err_print(int, int, const char *, va_list);
+void err_print(int, const char *, va_list);
 void usage(int, int);
 void add_host_pattern(const char *, unsigned, unsigned *, unsigned char *,
                       size_t);
