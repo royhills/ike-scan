@@ -1,7 +1,7 @@
 dnl $Id$
 dnl Process this file with autoconf to produce a configure script.
 
-AC_INIT([ike-scan],[1.9.2],[ike-scan@nta-monitor.com])
+AC_INIT([ike-scan],[1.9.3],[ike-scan@nta-monitor.com])
 AC_PREREQ(2.61)
 AC_REVISION($Revision$)
 AC_CONFIG_SRCDIR([ike-scan.c])
@@ -12,12 +12,12 @@ AC_CONFIG_HEADERS([config.h])
 dnl Check for programs.
 AC_PROG_CC
 if test -n "$GCC"; then
-   CFLAGS="$CFLAGS -Wall"
+   CFLAGS="$CFLAGS -Wall -Wshadow -Wwrite-strings"
    GCC_STACK_PROTECT_CC
    GCC_FORTIFY_SOURCE
    GCC_FORMAT_SECURITY
 dnl Uncomment the line below for testing with stricter warnings.
-dnl CFLAGS="$CFLAGS -pedantic -Wshadow -Wpointer-arith -Wcast-qual -Wcast-align -Wwrite-strings -Wconversion -Wstrict-prototypes -Wmissing-prototypes -Wmissing-declarations -Wnested-externs -Winline "
+dnl CFLAGS="$CFLAGS -pedantic -Wpointer-arith -Wcast-qual -Wcast-align -Wconversion -Wstrict-prototypes -Wmissing-prototypes -Wmissing-declarations -Wnested-externs -Winline "
 dnl Uncomment the line below to check malloc/free with electric fence
 dnl LIBS="-lefence $LIBS"
 fi

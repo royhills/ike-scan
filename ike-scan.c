@@ -1,5 +1,5 @@
 /*
- * The IKE Scanner (ike-scan) is Copyright (C) 2003-2007 Roy Hills,
+ * The IKE Scanner (ike-scan) is Copyright (C) 2003-2009 Roy Hills,
  * NTA Monitor Ltd.
  *
  * This program is free software; you can redistribute it and/or
@@ -309,10 +309,6 @@ main(int argc, char *argv[]) {
          unsigned trans_auth;	/* Custom transform auth */
          unsigned trans_group;	/* Custom transform DH group */
          char trans_str[MAXLINE];	/* Custom transform string */
-         char interval_str[MAXLINE];	/* --interval argument */
-         size_t interval_len;	/* --interval argument length */
-         char bandwidth_str[MAXLINE];	/* --bandwidth argument */
-         size_t bandwidth_len;	/* --bandwidth argument length */
          struct in_addr src_ip_struct;
          case 'f':	/* --file */
             strlcpy(filename, optarg, sizeof(filename));
@@ -333,17 +329,7 @@ main(int argc, char *argv[]) {
             timeout=Strtoul(optarg, 10);
             break;
          case 'i':	/* --interval */
-            strlcpy(interval_str, optarg, sizeof(interval_str));
-            interval_len=strlen(interval_str);
-            if (interval_str[interval_len-1] == 'u') {
-               interval_str[interval_len-1] = '\0';
-               interval=Strtoul(interval_str, 10);
-            } else if (interval_str[interval_len-1] == 's') {
-               interval_str[interval_len-1] = '\0';
-               interval=1000000 * Strtoul(interval_str, 10);
-            } else {
-               interval=1000 * Strtoul(interval_str, 10);
-            }
+            interval=str_to_interval(optarg);
             break;
          case 'b':	/* --backoff */
             backoff_factor=atof(optarg);
@@ -377,7 +363,7 @@ main(int argc, char *argv[]) {
             break;
          case 'V':	/* --version */
             fprintf(stderr, "%s\n\n", PACKAGE_STRING);
-            fprintf(stderr, "Copyright (C) 2003-2007 Roy Hills, NTA Monitor Ltd.\n");
+            fprintf(stderr, "Copyright (C) 2003-2009 Roy Hills, NTA Monitor Ltd.\n");
             fprintf(stderr, "ike-scan comes with NO WARRANTY to the extent permitted by law.\n");
             fprintf(stderr, "You may redistribute copies of ike-scan under the terms of the GNU\n");
             fprintf(stderr, "General Public License.\n");
@@ -494,17 +480,7 @@ main(int argc, char *argv[]) {
             ike_params.nonce_data_len = Strtoul(optarg, 10);
             break;
          case 'B':	/* --bandwidth */
-            strlcpy(bandwidth_str, optarg, sizeof(bandwidth_str));
-            bandwidth_len=strlen(bandwidth_str);
-            if (bandwidth_str[bandwidth_len-1] == 'M') {
-               bandwidth_str[bandwidth_len-1] = '\0';
-               bandwidth=1000000 * Strtoul(bandwidth_str, 10);
-            } else if (bandwidth_str[bandwidth_len-1] == 'K') {
-               bandwidth_str[bandwidth_len-1] = '\0';
-               bandwidth=1000 * Strtoul(bandwidth_str, 10);
-            } else {
-               bandwidth=Strtoul(bandwidth_str, 10);
-            }
+            bandwidth=str_to_bandwidth(optarg);
             break;
          case 'L':	/* --headerlen */
             ike_params.header_length = dupstr(optarg);

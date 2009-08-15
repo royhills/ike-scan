@@ -1,5 +1,21 @@
 $Id$
 
+2009-08-15 Roy Hills <Roy.Hills@nta-monitor.com>
+
+	* ike-scan.c, utils.c: Improve handling of --bandwidth and
+	  --interval options: Allow either upper or lowercase
+	  multiplier letters and give an error if an unknown multiplier
+	  character is used.  Previously an unknown multiplier character
+	  or one with the wrong case was silently ignored and treated as
+	  no multiplier at all.
+
+	* wrappers.c: Change Strtoul so it gives an error if the
+	  underlying strtoul function finishes at an unconvertable
+	  character other than NULL or whitespace.
+
+	* configure.ac: Added extra warnings "-Wshadow -Wwrite-strings"
+	  for gcc.
+
 2009-08-14 Roy Hills <Roy.Hills@nta-monitor.com>
 
 	* ike-scan.c, ike-scan.h, psk-crack.h, configure.ac, error.c: Removed

@@ -1,5 +1,5 @@
 /*
- * The IKE Scanner (ike-scan) is Copyright (C) 2003-2007 Roy Hills,
+ * The IKE Scanner (ike-scan) is Copyright (C) 2003-2009 Roy Hills,
  * NTA Monitor Ltd.
  *
  * This program is free software; you can redistribute it and/or
@@ -403,6 +403,7 @@ int Gettimeofday(struct timeval *);
 void *Malloc(size_t);
 void *Realloc(void *, size_t);
 unsigned long int Strtoul(const char *, int);
+long int Strtol(const char *, int);
 void decode_trans_simple(const char *, unsigned *, unsigned *, unsigned *,
                          unsigned *, unsigned *);
 unsigned char *decode_transform(const char *, size_t *);
@@ -446,6 +447,8 @@ uint8_t random_byte(void);
 uint32_t random_ip(void);
 int str_ccmp(const char *, const char *);
 unsigned name_or_number(const char *, const id_name_map[]);
+unsigned str_to_bandwidth(const char *);
+unsigned str_to_interval(const char *);
 char *dupstr(const char *);
 /* MT19937 prototypes */
 void init_genrand(unsigned long);

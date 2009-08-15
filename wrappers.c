@@ -1,5 +1,5 @@
 /*
- * The IKE Scanner (ike-scan) is Copyright (C) 2003-2007 Roy Hills,
+ * The IKE Scanner (ike-scan) is Copyright (C) 2003-2009 Roy Hills,
  * NTA Monitor Ltd.
  *
  * This program is free software; you can redistribute it and/or
@@ -96,6 +96,19 @@ unsigned long int Strtoul(const char *nptr, int base) {
    unsigned long int result;
 
    result=strtoul(nptr, &endptr, base);
+   if (endptr == nptr)	/* No digits converted */
+      err_msg("ERROR: \"%s\" is not a valid numeric value", nptr);
+   if (*endptr != '\0' && !isspace((unsigned char)*endptr))
+      err_msg("ERROR: \"%s\" is not a valid numeric value", nptr);
+
+   return result;
+}
+
+long int Strtol(const char *nptr, int base) {
+   char *endptr;
+   long int result;
+
+   result=strtol(nptr, &endptr, base);
    if (endptr == nptr)	/* No digits converted */
       err_msg("ERROR: \"%s\" is not a valid numeric value", nptr);
    if (*endptr != '\0' && !isspace((unsigned char)*endptr))

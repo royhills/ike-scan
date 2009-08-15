@@ -1,5 +1,5 @@
 /*
- * The IKE Scanner (ike-scan) is Copyright (C) 2003-2007 Roy Hills,
+ * The IKE Scanner (ike-scan) is Copyright (C) 2003-2009 Roy Hills,
  * NTA Monitor Ltd.
  *
  * This program is free software; you can redistribute it and/or
@@ -805,6 +805,94 @@ name_or_number(const char *string, const id_name_map map[]) {
       err_msg("Invalid value: %s", string);
 
    return result;
+}
+
+/*
+ *	str_to_bandwidth -- Convert a bandwidth string to unsigned integer
+ *
+ *	Inputs:
+ *
+ *	bandwidth_string	The bandwidth string to convert
+ *
+ *	Returns:
+ *
+ *	The bandwidth in bits per second as an unsigned integer
+ */
+unsigned
+str_to_bandwidth(const char *bandwidth_string) {
+   char *bandwidth_str;
+   size_t bandwidth_len;
+   unsigned value;
+   int multiplier=1;
+   int end_char;
+
+   bandwidth_str=dupstr(bandwidth_string);	/* Writable copy */
+   bandwidth_len=strlen(bandwidth_str);
+   end_char = bandwidth_str[bandwidth_len-1];
+   if (!isdigit(end_char)) {	/* End character is not a digit */
+      bandwidth_str[bandwidth_len-1] = '\0';	/* Remove last character */
+      switch (end_char) {
+         case 'M':
+         case 'm':
+            multiplier = 1000000;
+            break;
+         case 'K':
+         case 'k':
+            multiplier = 1000;
+            break;
+         default:
+            err_msg("ERROR: Unknown bandwidth multiplier character: \"%c\"",
+                    end_char);
+            break;
+      }
+   }
+   value=Strtoul(bandwidth_str, 10);
+   free(bandwidth_str);
+   return multiplier * value;
+}
+
+/*
+ *	str_to_interval -- Convert an interval string to unsigned integer
+ *
+ *	Inputs:
+ *
+ *	interval_string		The interval string to convert
+ *
+ *	Returns:
+ *
+ *	The interval in microsecons as an unsigned integer
+ */
+unsigned
+str_to_interval(const char *interval_string) {
+   char *interval_str;
+   size_t interval_len;
+   unsigned value;
+   int multiplier=1000;
+   int end_char;
+
+   interval_str=dupstr(interval_string);	/* Writable copy */
+   interval_len=strlen(interval_str);
+   end_char = interval_str[interval_len-1];
+   if (!isdigit(end_char)) {	/* End character is not a digit */
+      interval_str[interval_len-1] = '\0';	/* Remove last character */
+      switch (end_char) {
+         case 'U':
+         case 'u':
+            multiplier = 1;
+            break;
+         case 'S':
+         case 's':
+            multiplier = 1000000;
+            break;
+         default:
+            err_msg("ERROR: Unknown interval multiplier character: \"%c\"",
+                    end_char);
+            break;
+      }
+   }
+   value=Strtoul(interval_str, 10);
+   free(interval_str);
+   return multiplier * value;
 }
 
 /*
