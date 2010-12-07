@@ -102,7 +102,7 @@ timeval_diff(const struct timeval *a, const struct timeval *b,
 int
 times_close_enough(struct timeval *t1, struct timeval *t2, unsigned fuzz) {
 struct timeval diff;
-int diff_ms;
+unsigned diff_ms;
 
    timeval_diff(t1, t2, &diff);	/* diff = t1 - t2 */
    diff_ms = abs(1000*diff.tv_sec + diff.tv_usec/1000);
@@ -310,7 +310,7 @@ make_message(const char *fmt, ...) {
       n = vsnprintf (p, size, fmt, ap);
       va_end(ap);
       /* If that worked, return the string. */
-      if (n > -1 && n < size)
+      if (n > -1 && n < (int) size)
          return p;
       /* Else try again with more space. */
       if (n > -1)    /* glibc 2.1 */

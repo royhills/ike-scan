@@ -16,7 +16,8 @@ if test -n "$GCC"; then
    GCC_STACK_PROTECT_CC
    GCC_FORTIFY_SOURCE
    GCC_FORMAT_SECURITY
-dnl Uncomment the line below for testing with stricter warnings.
+dnl Uncomment the lines below for testing with stricter warnings.
+dnl GCC_WEXTRA
 dnl CFLAGS="$CFLAGS -pedantic -Wpointer-arith -Wcast-qual -Wcast-align -Wconversion -Wstrict-prototypes -Wmissing-prototypes -Wmissing-declarations -Wnested-externs -Winline "
 dnl Uncomment the line below to check malloc/free with electric fence
 dnl LIBS="-lefence $LIBS"

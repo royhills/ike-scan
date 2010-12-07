@@ -75,3 +75,5 @@ http://msdn.microsoft.com/en-us/library/cc206875.aspx
 Consider adding RSA_Sig as an auth method for the default transform set.
 This would result in 16 transforms with all combinations of:
 DES/3DES, MD5/SHA1, PSK/RSA, DH 1/DH 2
+
+Replace MT19937 PRNG with SFMT19937.

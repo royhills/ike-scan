@@ -269,7 +269,7 @@ main(int argc, char *argv[]) {
    unsigned live_count;		/* Number of entries awaiting reply */
    int quiet=0;			/* Only print the basic info if nonzero */
    int multiline=0;		/* Split decodes across lines if nonzero */
-   int hostno;
+   unsigned hostno;
    unsigned bandwidth=DEFAULT_BANDWIDTH; /* Bandwidth in bits per sec */
    unsigned char *cookie_data=NULL;
    size_t cookie_data_len;
@@ -1021,7 +1021,7 @@ main(int argc, char *argv[]) {
    close(sockfd);
    if (write_pkt_to_file)
       close(write_pkt_to_file);
-   if (read_pkt_from_file);
+   if (read_pkt_from_file)
       close(read_pkt_from_file);
 /*
  *	Display the backoff times if --showbackoff option was specified
@@ -2246,7 +2246,7 @@ initialise_ike_packet(size_t *packet_out_len, ike_packet_params *params) {
 void
 dump_list(unsigned num_hosts) {
    char *cp;
-   int i;
+   unsigned i;
 
    printf("Host List:\n\n");
    printf("Entry\tIP Address\tCookie\n");
@@ -2367,7 +2367,7 @@ dump_vid(void) {
 void
 dump_times(unsigned num_hosts) {
    time_list *te;
-   int i;
+   unsigned i;
    int time_no;
    struct timeval prev_time;
    struct timeval diff;

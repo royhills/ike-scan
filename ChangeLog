@@ -1,5 +1,13 @@
 $Id$
 
+2010-12-07 Roy Hills <Roy.Hills@nta-monitor.com>
+
+	* acinclude.m4: Added GCC_WEXTRA macro to determine if the C compiler
+	  supports the -Wextra switch to enable extra warnings.
+
+	* ike-scan.c, isakmp.c, utils.c, psk-crack.c: Addressed some of the
+	  unsigned/signed comparisons flagged up with -Wextra.
+
 2009-08-15 Roy Hills <Roy.Hills@nta-monitor.com>
 
 	* ike-scan.c, utils.c: Improve handling of --bandwidth and

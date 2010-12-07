@@ -592,7 +592,7 @@ make_prop(size_t *outlen, unsigned next, unsigned number, unsigned notrans,
 /* If the SPI size is non-zero, add a random SPI of the specified length */
 
    if (spi_size > 0) {
-      int i;
+      unsigned i;
 
       for (i=0; i<spi_size; i++)
          *(cp++) = (unsigned char) random_byte();

@@ -80,7 +80,7 @@ main (int argc, char *argv[]) {
    struct timeval end_time;	/* Program end time */
    struct timeval elapsed_time; /* Elapsed time as timeval */
    double elapsed_seconds;	/* Elapsed time in seconds */
-   int psk_idx;			/* Index into psk list */
+   unsigned psk_idx;		/* Index into psk list */
    unsigned psk_count;		/* Number of PSK entries in the list */
    unsigned psk_uncracked;	/* Number of uncracked PSK entries */
    unsigned char *hash_r;
