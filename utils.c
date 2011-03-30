@@ -567,7 +567,7 @@ print_times(void) {
  *	It doesn't perform any processing; it merely returns to
  *	interrupt the current system call.
  */
-void sig_alarm(int signo) {
+void sig_alarm(int signo ATTRIBUTE_UNUSED) {
    return;      /* just interrupt the current system call */
 }
 
@@ -598,7 +598,7 @@ id_to_name(unsigned id, const id_name_map map[]) {
       return NULL;
 
    while (map[i].id != -1) {
-      if (id == map[i].id) {
+      if (id == (unsigned)map[i].id) {
          found = 1;
          break;
       }

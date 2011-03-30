@@ -892,7 +892,7 @@ main(int argc, char *argv[]) {
  */
       timeval_diff(&now, &last_packet_time, &diff);
       loop_timediff = (IKE_UINT64)1000000*diff.tv_sec + diff.tv_usec;
-      if (loop_timediff >= req_interval) {
+      if (loop_timediff >= (unsigned)req_interval) {
 /*
  *	If the last packet to this host was sent more than the current
  *	timeout for this host us ago, then we can potentially send a packet
@@ -1006,7 +1006,7 @@ main(int argc, char *argv[]) {
  *	The received cookie doesn't match any entry in the list.
  *	Issue a message to that effect if verbose is on and ignore the packet.
  */
-            if (verbose && n >= sizeof(hdr_in)) {
+            if (verbose && (unsigned)n >= sizeof(hdr_in)) {
                char *cp;
                memcpy(&hdr_in, packet_in, sizeof(hdr_in));
                cp = hexstring((unsigned char *)hdr_in.isa_icookie,
@@ -1370,7 +1370,7 @@ find_host_by_cookie(host_entry **he, unsigned char *packet_in, int n,
  *	Check that the received packet is at least as big as the ISAKMP
  *	header.  Return NULL if not.
  */
-   if (n < sizeof(hdr_in))
+   if ((unsigned)n < sizeof(hdr_in))
       return NULL;
 /*
  *	Copy packet into ISAKMP header structure.
@@ -1758,7 +1758,7 @@ send_packet(int s, unsigned char *packet_out, size_t packet_out_len,
    }
    if (nsent < 0) {
       err_sys("ERROR: sendto");
-   } else if (nsent != packet_out_len) {
+   } else if ((unsigned)nsent != packet_out_len) {
       warn_msg("WARNING: sendto: only %d bytes sent, but %u requested",
                nsent, packet_out_len);
    }

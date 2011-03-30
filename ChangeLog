@@ -1,5 +1,20 @@
 $Id$
 
+2011-03-30 Roy Hills <Roy.Hills@nta-monitor.com>
+
+	* acinclude.m4: Removed #include <features.h> from GCC_FORTIFY_SOURCE
+	  macro, as this header is not portable.
+
+	* configure.ac: Added GCC_WEXTRA macro if we are compiling with GCC
+	  to enable extra warnings, and define ATTRIBUTE_UNUSED to the
+	  appropriate pragma depending on whether we are using GCC or not.
+
+	* utils.c: Added ATTRIBUTE_UNUSED to sig_alarm parameter to avoid
+	  unused parameter warning.
+
+	* ike-scan.c: Add some casts to unsigned to avoid "comparison between
+	  signed and unsigned" warnings.
+
 2010-12-07 Roy Hills <Roy.Hills@nta-monitor.com>
 
 	* acinclude.m4: Added GCC_WEXTRA macro to determine if the C compiler
