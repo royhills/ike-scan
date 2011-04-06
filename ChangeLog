@@ -1,5 +1,20 @@
 $Id$
 
+2011-04-04 Roy Hills <Roy.Hills@nta-monitor.com>
+
+	* configure.ac: Remove version number from AM_INIT_AUTOMAKE macro,
+	  as this usage is obsolete now.
+
+	* ike-scan.c, ike-scan.h: Modify add_host_pattern() and add_host() so
+	  we always use the more efficient inet_aton() rather than
+	  get_host_address() for IPnet/bits, IPnet:mask and IPstart-IPend
+	  patterns.
+
+	* ike-scan.c: Add support for IPnet:netmask format in
+          add_host_pattern().
+
+	* ike-scan.c: Change all uses of sprintf() to snprintf().
+
 2011-03-30 Roy Hills <Roy.Hills@nta-monitor.com>
 
 	* acinclude.m4: Removed #include <features.h> from GCC_FORTIFY_SOURCE

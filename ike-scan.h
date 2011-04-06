@@ -341,7 +341,7 @@ void usage(int, int);
 void add_host_pattern(const char *, unsigned, unsigned *, unsigned char *,
                       size_t);
 void add_host(const char *, unsigned, unsigned *, unsigned char *,
-              size_t);
+              size_t, int);
 void send_packet(int, unsigned char *, size_t, host_entry *, unsigned, unsigned,
                  struct timeval *);
 int recvfrom_wto(int, unsigned char *, size_t, struct sockaddr *, int);

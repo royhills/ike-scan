@@ -1068,15 +1068,17 @@ main(int argc, char *argv[]) {
  *	This adds one or more new hosts to the list.  The pattern argument
  *	can either be a single host or IP address, in which case one host
  *	will be added to the list, or it can specify a number of hosts with
- *	the IPnet/bits or IPstart-IPend formats.
+ *	the IPnet/bits, IPnet:mask or IPstart-IPend formats.
  *
- *	The timeout and num_hosts arguments are passed unchanged to add_host().
+ *	The timeout, num_hosts, cookie_data and cookie_data_len arguments
+ *	are passed unchanged to add_host().
  */
 void
 add_host_pattern(const char *pattern, unsigned timeout, unsigned *num_hosts,
                  unsigned char *cookie_data, size_t cookie_data_len) {
    char *patcopy;
    struct in_addr in_val;
+   struct in_addr mask_val;
    unsigned numbits;
    char *cp;
    uint32_t ipnet_val;
@@ -1085,13 +1087,17 @@ add_host_pattern(const char *pattern, unsigned timeout, unsigned *num_hosts,
    unsigned long hoststart;
    unsigned long hostend;
    unsigned i;
+   uint32_t x;
    static int first_call=1;
    static regex_t iprange_pat;
    static regex_t ipslash_pat;
-   static const char *iprange_pat_str = 
+   static regex_t ipmask_pat;
+   static const char *iprange_pat_str =
       "[0-9]+\\.[0-9]+\\.[0-9]+\\.[0-9]+-[0-9]+\\.[0-9]+\\.[0-9]+\\.[0-9]+";
-   static const char *ipslash_pat_str = 
+   static const char *ipslash_pat_str =
       "[0-9]+\\.[0-9]+\\.[0-9]+\\.[0-9]+/[0-9]+";
+   static const char *ipmask_pat_str =
+      "[0-9]+\\.[0-9]+\\.[0-9]+\\.[0-9]+:[0-9]+\\.[0-9]+\\.[0-9]+\\.[0-9]+";
 /*
  *	Compile regex patterns if this is the first time we've been called.
  */
@@ -1115,6 +1121,14 @@ add_host_pattern(const char *pattern, unsigned timeout, unsigned *num_hosts,
          err_msg("ERROR: cannot compile regex pattern \"%s\": %s",
                  ipslash_pat_str, errbuf);
       }
+      if ((result=regcomp(&ipmask_pat, ipmask_pat_str,
+                          REG_EXTENDED|REG_NOSUB))) {
+         char errbuf[MAXLINE];
+         size_t errlen;
+         errlen=regerror(result, &ipmask_pat, errbuf, MAXLINE);
+         err_msg("ERROR: cannot compile regex pattern \"%s\": %s",
+                 ipmask_pat_str, errbuf);
+      }
    }
 /*
  *	Make a copy of pattern because we don't want to modify our argument.
@@ -1123,7 +1137,7 @@ add_host_pattern(const char *pattern, unsigned timeout, unsigned *num_hosts,
 
    if (!(regexec(&ipslash_pat, patcopy, 0, NULL, 0))) { /* IPnet/bits */
 /*
- *	Get IPnet and bits as integers.  Perform basic error checking.
+ *	Get IPnet and bits as integers. Perform basic error checking.
  */
       cp=strchr(patcopy, '/');
       *(cp++)='\0';	/* patcopy points to IPnet, cp points to bits */
@@ -1142,13 +1156,13 @@ add_host_pattern(const char *pattern, unsigned timeout, unsigned *num_hosts,
          mask += 1 << i;
       mask = mask << (32-i);
 /*
- *	Mask off the network.  Warn if the host bits were non-zero.
+ *	Mask off the network. Warn if the host bits were non-zero.
  */
       network=ipnet_val & mask;
       if (network != ipnet_val)
          warn_msg("WARNING: host part of %s is non-zero", pattern);
 /*
- *	Determine maximum and minimum host values.  We include the host
+ *	Determine maximum and minimum host values. We include the host
  *	and broadcast.
  */
       hoststart=0;
@@ -1167,8 +1181,58 @@ add_host_pattern(const char *pattern, unsigned timeout, unsigned *num_hosts,
          b2 = (hostip & 0x00ff0000) >> 16;
          b3 = (hostip & 0x0000ff00) >> 8;
          b4 = (hostip & 0x000000ff);
-         sprintf(ipstr, "%d.%d.%d.%d", b1,b2,b3,b4);
-         add_host(ipstr, timeout, num_hosts, cookie_data, cookie_data_len);
+         snprintf(ipstr, sizeof(ipstr), "%d.%d.%d.%d", b1,b2,b3,b4);
+         add_host(ipstr, timeout, num_hosts, cookie_data, cookie_data_len, 1);
+      }
+   } else if (!(regexec(&ipmask_pat, patcopy, 0, NULL, 0))) { /* IPnet:netmask */
+/*
+ *	Get IPnet and bits as integers. Perform basic error checking.
+ */
+      cp=strchr(patcopy, ':');
+      *(cp++)='\0';	/* patcopy points to IPnet, cp points to netmask */
+      if (!(inet_aton(patcopy, &in_val)))
+         err_msg("ERROR: %s is not a valid IP address", patcopy);
+      ipnet_val=ntohl(in_val.s_addr);	/* We need host byte order */
+      if (!(inet_aton(cp, &mask_val)))
+         err_msg("ERROR: %s is not a valid netmask", patcopy);
+      mask=ntohl(mask_val.s_addr);	/* We need host byte order */
+/*
+ *	Calculate the number of bits in the network.
+ */
+      x = mask;
+      for (numbits=0; x != 0; x>>=1) {
+         if (x & 0x01) {
+            numbits++;
+         }
+      }
+/*
+ *	Mask off the network. Warn if the host bits were non-zero.
+ */
+      network=ipnet_val & mask;
+      if (network != ipnet_val)
+         warn_msg("WARNING: host part of %s is non-zero", pattern);
+/*
+ *	Determine maximum and minimum host values. We include the host
+ *	and broadcast.
+ */
+      hoststart=0;
+      hostend=(1<<(32-numbits))-1;
+/*
+ *	Calculate all host addresses in the range and feed to add_host()
+ *	in dotted-quad format.
+ */
+      for (i=hoststart; i<=hostend; i++) {
+         uint32_t hostip;
+         int b1, b2, b3, b4;
+         char ipstr[16];
+
+         hostip = network+i;
+         b1 = (hostip & 0xff000000) >> 24;
+         b2 = (hostip & 0x00ff0000) >> 16;
+         b3 = (hostip & 0x0000ff00) >> 8;
+         b4 = (hostip & 0x000000ff);
+         snprintf(ipstr, sizeof(ipstr), "%d.%d.%d.%d", b1,b2,b3,b4);
+         add_host(ipstr, timeout, num_hosts, cookie_data, cookie_data_len, 1);
       }
    } else if (!(regexec(&iprange_pat, patcopy, 0, NULL, 0))) { /* IPstart-IPend */
 /*
@@ -1194,11 +1258,12 @@ add_host_pattern(const char *pattern, unsigned timeout, unsigned *num_hosts,
          b2 = (i & 0x00ff0000) >> 16;
          b3 = (i & 0x0000ff00) >> 8;
          b4 = (i & 0x000000ff);
-         sprintf(ipstr, "%d.%d.%d.%d", b1,b2,b3,b4);
-         add_host(ipstr, timeout, num_hosts, cookie_data, cookie_data_len);
+         snprintf(ipstr, sizeof(ipstr), "%d.%d.%d.%d", b1,b2,b3,b4);
+         add_host(ipstr, timeout, num_hosts, cookie_data, cookie_data_len, 1);
       }
-   } else {				/* Single host or IP address */
-      add_host(patcopy, timeout, num_hosts, cookie_data, cookie_data_len);
+   } else {	/* Single host or IP address */
+      add_host(patcopy, timeout, num_hosts, cookie_data, cookie_data_len,
+               no_dns_flag);
    }
    free(patcopy);
 }
@@ -1218,7 +1283,8 @@ add_host_pattern(const char *pattern, unsigned timeout, unsigned *num_hosts,
  */
 void
 add_host(const char *name, unsigned timeout, unsigned *num_hosts,
-         unsigned char *cookie_data, size_t cookie_data_len) {
+         unsigned char *cookie_data, size_t cookie_data_len,
+         int numeric_only) {
    struct hostent *hp = NULL;
    host_entry *he;
    struct in_addr inp;
@@ -1226,7 +1292,7 @@ add_host(const char *name, unsigned timeout, unsigned *num_hosts,
    struct timeval now;
    static int num_left=0;       /* Number of free entries left */
 
-   if (no_dns_flag) {
+   if (numeric_only) {
       if (!(inet_aton(name, &inp))) {
          warn_msg("WARNING: inet_aton failed for \"%s\" - target ignored",
                   name);
@@ -1280,7 +1346,7 @@ add_host(const char *name, unsigned timeout, unsigned *num_hosts,
  * As long is the widest type, and the values should always be positive, it's
  * safe to cast to unsigned long.
  */
-      sprintf(str, "%lu %lu %u %s", (unsigned long) now.tv_sec,
+      snprintf(str, sizeof(str), "%lu %lu %u %s", (unsigned long) now.tv_sec,
               (unsigned long) now.tv_usec, *num_hosts, inet_ntoa(he->addr));
       memcpy(he->icookie, MD5((unsigned char *)str, strlen(str), NULL),
              sizeof(he->icookie));
@@ -3136,10 +3202,12 @@ usage(int status, int detailed) {
    fprintf(stderr, "Target hosts must be specified on the command line unless the --file option is\n");
    fprintf(stderr, "given, in which case the targets are read from the specified file instead.\n");
    fprintf(stderr, "\n");
-   fprintf(stderr, "The target hosts can be specified as IP addresses or hostnames.  You can also\n");
-   fprintf(stderr, "specify IPnetwork/bits (e.g. 192.168.1.0/24) to specify all hosts in the given\n");
-   fprintf(stderr, "network (network and broadcast addresses included), and IPstart-IPend\n");
-   fprintf(stderr, "(e.g. 192.168.1.3-192.168.1.27) to specify all hosts in the inclusive range.\n");
+   fprintf(stderr, "The target hosts can be specified as IP addresses or hostnames. You can also\n");
+   fprintf(stderr, "specify the target as IPnetwork/bits (e.g. 192.168.1.0/24) to specify all hosts\n");
+   fprintf(stderr, "in the given network (network and broadcast addresses included), or\n");
+   fprintf(stderr, "IPstart-IPend (e.g. 192.168.1.3-192.168.1.27) to specify all hosts in the\n");
+   fprintf(stderr, "inclusive range, or IPnetwork:NetMask (e.g. 192.168.1.0:255.255.255.0) to\n");
+   fprintf(stderr, "specify all hosts in the given network and mask.\n");
    fprintf(stderr, "\n");
    fprintf(stderr, "These different options for specifying target hosts may be used both on the\n");
    fprintf(stderr, "command line, and also in the file specified with the --file option.\n");
