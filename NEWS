@@ -3,7 +3,17 @@ $Id$
 This file gives a brief overview of the major changes between each ike-scan
 release.  For more details please read the ChangeLog file.
 
-ike-scan v1.9.1:
+ike-scan v1.9.3:
+
+* Added support for IPnet:netmask format for target networks.
+
+* Improved handling of multiplier suffix for --bandwidth and --interval
+  options: allow either upper or lowercase letters, and give an error for
+  unknown multiplier letters.
+
+* Enabled compiler security options -fstack-protect, -D_FORTIFY_SOURCE=2 and
+  -Wformat-security if they are supported by the compiler. Also enabled extra
+  warnings -Wwrite-strings and -Wextra.
 
 * The function that converts strings to numbers is now stricter, and no longer
   permits any invalid characters.  This improves error reporting in some invalid

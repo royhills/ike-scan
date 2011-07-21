@@ -2,6 +2,8 @@ $Id$
 
 2011-04-04 Roy Hills <Roy.Hills@nta-monitor.com>
 
+	* configure.ac: incremented version number to 1.9.3
+
 	* configure.ac: Remove version number from AM_INIT_AUTOMAKE macro,
 	  as this usage is obsolete now.
 
