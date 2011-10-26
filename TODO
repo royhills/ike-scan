@@ -77,3 +77,7 @@ This would result in 16 transforms with all combinations of:
 DES/3DES, MD5/SHA1, PSK/RSA, DH 1/DH 2
 
 Replace MT19937 PRNG with SFMT19937.
+
+When specifying -2 to ike-scan for IKEv2 mode and sending VID payloads with -e,
+ike-scan uses payload type 13 instead of the correct 43 for IKEv2, which will
+cause the receiver to abort the connection with IKEV2_INVALID_SYNTAX.
