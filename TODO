@@ -81,3 +81,7 @@ Replace MT19937 PRNG with SFMT19937.
 When specifying -2 to ike-scan for IKEv2 mode and sending VID payloads with -e,
 ike-scan uses payload type 13 instead of the correct 43 for IKEv2, which will
 cause the receiver to abort the connection with IKEV2_INVALID_SYNTAX.
+
+gcc 4.6.3 on Ubuntu 12.04 amd64 gives several "set but not used" warnings, e.g.
+ike-scan.c:881:11: warning: variable ‘s_err’ set but not used [-Wunused-but-set-variable]
+
