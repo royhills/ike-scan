@@ -878,7 +878,6 @@ main(int argc, char *argv[]) {
    req_interval = interval;
    while (live_count ||
           (showbackoff_flag && sa_responders && (end_timediff < end_wait))) {
-      int s_err=0;	/* smoothed timing error */
 /*
  *	Obtain current time and calculate deltas since last packet and
  *	last packet to this host.
@@ -902,7 +901,6 @@ main(int argc, char *argv[]) {
          host_timediff = (IKE_UINT64)1000000*diff.tv_sec + diff.tv_usec;
          if (host_timediff >= (*cursor)->timeout && (*cursor)->live) {
             if (reset_cum_err) {
-               s_err = 0;
                cum_err = 0;
                req_interval = interval;
                reset_cum_err = 0;
@@ -971,9 +969,8 @@ main(int argc, char *argv[]) {
          select_timeout = req_interval - loop_timediff;
       } /* End If */
 #ifdef DEBUG_TIMINGS
-      printf("int=%d, loop_t=%llu, req_int=%d, sel=%d, err=%d, cum_err=%d\n",
-             interval, loop_timediff, req_interval, select_timeout, s_err,
-             cum_err);
+      printf("int=%d, loop_t=%llu, req_int=%d, sel=%d, cum_err=%d\n",
+             interval, loop_timediff, req_interval, select_timeout, cum_err);
 #endif
       n=recvfrom_wto(sockfd, packet_in, MAXUDP, (struct sockaddr *)&sa_peer,
                      select_timeout);
@@ -1108,24 +1105,21 @@ add_host_pattern(const char *pattern, unsigned timeout, unsigned *num_hosts,
       if ((result=regcomp(&iprange_pat, iprange_pat_str,
                           REG_EXTENDED|REG_NOSUB))) {
          char errbuf[MAXLINE];
-         size_t errlen;
-         errlen=regerror(result, &iprange_pat, errbuf, MAXLINE);
+         regerror(result, &iprange_pat, errbuf, MAXLINE);
          err_msg("ERROR: cannot compile regex pattern \"%s\": %s",
                  iprange_pat_str, errbuf);
       }
       if ((result=regcomp(&ipslash_pat, ipslash_pat_str,
                           REG_EXTENDED|REG_NOSUB))) {
          char errbuf[MAXLINE];
-         size_t errlen;
-         errlen=regerror(result, &ipslash_pat, errbuf, MAXLINE);
+         regerror(result, &ipslash_pat, errbuf, MAXLINE);
          err_msg("ERROR: cannot compile regex pattern \"%s\": %s",
                  ipslash_pat_str, errbuf);
       }
       if ((result=regcomp(&ipmask_pat, ipmask_pat_str,
                           REG_EXTENDED|REG_NOSUB))) {
          char errbuf[MAXLINE];
-         size_t errlen;
-         errlen=regerror(result, &ipmask_pat, errbuf, MAXLINE);
+         regerror(result, &ipmask_pat, errbuf, MAXLINE);
          err_msg("ERROR: cannot compile regex pattern \"%s\": %s",
                  ipmask_pat_str, errbuf);
       }
@@ -2692,8 +2686,7 @@ add_pattern(char *line, unsigned pattern_fuzz) {
       first_call = 0;
       if ((result=regcomp(&backoff_pat, backoff_pat_str, REG_EXTENDED))) {
          char errbuf[MAXLINE];
-         size_t errlen;
-         errlen=regerror(result, &backoff_pat, errbuf, MAXLINE);
+         regerror(result, &backoff_pat, errbuf, MAXLINE);
          err_msg("ERROR: cannot compile regex pattern \"%s\": %s",
                  backoff_pat_str, errbuf);
       }
@@ -2710,8 +2703,7 @@ add_pattern(char *line, unsigned pattern_fuzz) {
       return;
    } else if (result != 0) {
       char errbuf[MAXLINE];
-      size_t errlen;
-      errlen=regerror(result, &backoff_pat, errbuf, MAXLINE);
+      regerror(result, &backoff_pat, errbuf, MAXLINE);
       err_msg("ERROR: backoff pattern match regexec failed: %s", errbuf);
    }
    name_len = pmatch[1].rm_eo - pmatch[1].rm_so;
@@ -2906,8 +2898,7 @@ add_vid_pattern(char *line) {
       first_call = 0;
       if ((result=regcomp(&vid_pat, vid_pat_str, REG_EXTENDED))) {
          char errbuf[MAXLINE];
-         size_t errlen;
-         errlen=regerror(result, &vid_pat, errbuf, MAXLINE);
+         regerror(result, &vid_pat, errbuf, MAXLINE);
          err_msg("ERROR: cannot compile regex pattern \"%s\": %s",
                  vid_pat_str, errbuf);
       }
@@ -2921,8 +2912,7 @@ add_vid_pattern(char *line) {
       return;
    } else if (result != 0) {
       char errbuf[MAXLINE];
-      size_t errlen;
-      errlen=regerror(result, &vid_pat, errbuf, MAXLINE);
+      regerror(result, &vid_pat, errbuf, MAXLINE);
       err_msg("ERROR: vendor id pattern match regexec failed: %s", errbuf);
    }
    name_len = pmatch[1].rm_eo - pmatch[1].rm_so;
@@ -2947,8 +2937,7 @@ add_vid_pattern(char *line) {
    rep = Malloc(sizeof(regex_t));
    if ((result=regcomp(rep, pat, REG_EXTENDED|REG_ICASE|REG_NOSUB))) {
       char errbuf[MAXLINE];
-      size_t errlen;
-      errlen=regerror(result, rep, errbuf, MAXLINE);
+      regerror(result, rep, errbuf, MAXLINE);
       warn_msg("WARNING: Ignoring invalid Vendor ID pattern \"%s\": %s",
                pat, errbuf);
       free(rep);
