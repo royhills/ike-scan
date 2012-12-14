@@ -1,5 +1,12 @@
 $Id$
 
+2011-09-22 Roy Hills <Roy.Hills@nta-monitor.com>
+
+	* ike-scan.c: Removed most occurances of set but unused variables as
+	  reported by -Wunused-but-set-variable in gcc 4.6. There is one
+	  occuurance of this error remaining, because the --idstrings
+	  option has not been fully implemented.
+
 2011-04-04 Roy Hills <Roy.Hills@nta-monitor.com>
 
 	* configure.ac: incremented version number to 1.9.3
