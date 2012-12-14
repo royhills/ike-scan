@@ -1,5 +1,10 @@
 $Id$
 
+2012-12-14 Jesper Kückelhahn <(email withheld)>
+
+	* ike-vendor-ids: Added new vendor IDs from research while developing
+	  script for nmap.
+
 2011-09-22 Roy Hills <Roy.Hills@nta-monitor.com>
 
 	* ike-scan.c: Removed most occurances of set but unused variables as
