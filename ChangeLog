@@ -1,5 +1,9 @@
 $Id$
 
+2013-08-15 Roy Hills <Roy.Hills@nta-monitor.com>
+
+        * Final SVN revision before migration to git.
+
 2012-12-14 Jesper Kückelhahn <(email withheld)>
 
 	* ike-vendor-ids: Added new vendor IDs from research while developing
