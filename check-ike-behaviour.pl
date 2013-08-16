@@ -1,5 +1,4 @@
 #!/usr/bin/perl -w
-# $Id$
 # check-ike-behaviour.pl -- Check IPsec host's behaviour to various IKE packets
 #
 # Author: Roy Hills

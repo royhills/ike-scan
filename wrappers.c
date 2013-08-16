@@ -33,8 +33,6 @@
  * You are encouraged to send comments, improvements or suggestions to
  * me at ike-scan@nta-monitor.com.
  *
- * $Id$
- *
  * Author: Roy Hills
  * Date: 8 November 2003
  *
@@ -51,8 +49,6 @@
  */
 
 #include "ike-scan.h"
-
-static char rcsid[] = "$Id$";	/* RCS ID for ident(1) */
 
 /*
  * We omit the timezone arg from this wrapper since it's obsolete and we never
@@ -115,8 +111,4 @@ long int Strtol(const char *nptr, int base) {
       err_msg("ERROR: \"%s\" is not a valid numeric value", nptr);
 
    return result;
-}
-
-void wrappers_use_rcsid(void) {
-   fprintf(stderr, "%s\n", rcsid);	/* Use rcsid to stop compiler optimising away */
 }

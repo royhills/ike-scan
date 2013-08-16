@@ -33,8 +33,6 @@
  * You are encouraged to send comments, improvements or suggestions to
  * me at ike-scan@nta-monitor.com.
  *
- * $Id$
- *
  * psk-crack.c -- IKE Aggressive Mode Pre-Shared Key cracker for ike-scan
  *
  * Author: Roy Hills
@@ -46,8 +44,6 @@
  */
 #include "psk-crack.h"
 #include "hash_functions.h"
-
-static const char rcsid[] = "$Id$";	/* RCS ID for ident(1) */
 
 static const char *default_charset =
    "0123456789abcdefghijklmnopqrstuvwxyz"; /* default bruteforce charset */
@@ -106,11 +102,6 @@ main (int argc, char *argv[]) {
             fprintf(stderr, "General Public License.\n");
             fprintf(stderr, "For more information about these matters, see the file named COPYING.\n");
             fprintf(stderr, "\n");
-/* We use rcsid here to prevent it being optimised away */
-            fprintf(stderr, "%s\n", rcsid);
-            error_use_rcsid();
-            utils_use_rcsid();
-            wrappers_use_rcsid();
             exit(EXIT_SUCCESS);
             break;	/* NOTREACHED */
          case 'B':      /* --bruteforce */

@@ -33,8 +33,6 @@
  * You are encouraged to send comments, improvements or suggestions to
  * me at ike-scan@nta-monitor.com.
  *
- * $Id$
- *
  * hash_functions.h -- Header file for hash functions
  *
  * Author:	Roy Hills

@@ -1,5 +1,3 @@
-$Id$
-
 INTRODUCTION
 
 The Windows-32 version of ike-scan uses Cygwin to provide Posix compatibility.

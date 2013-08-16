@@ -1,5 +1,3 @@
-$Id$
-
 Write custom packet creation code.  This would allow an arbitrary IKE packet
 to be created and sent.  The generation rules would be some sort of
 specification file as command-line arguments are not flexible enough for this

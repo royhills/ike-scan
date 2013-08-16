@@ -33,8 +33,6 @@
  * You are encouraged to send comments, improvements or suggestions to
  * me at ike-scan@nta-monitor.com.
  *
- * $Id$
- *
  * check-sizes -- Check sizes of structures and types
  *
  * Author:	Roy Hills

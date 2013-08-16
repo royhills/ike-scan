@@ -33,8 +33,6 @@
  * You are encouraged to send comments, improvements or suggestions to
  * me at ike-scan@nta-monitor.com.
  *
- * $Id$
- *
  * ike-scan.h -- Header file for IKE Scanner (ike-scan)
  *
  * Author:	Roy Hills
@@ -459,10 +457,5 @@ double genrand_real1(void);
 double genrand_real2(void);
 double genrand_real3(void);
 double genrand_res53(void);
-/* The following functions are just to prevent rcsid being optimised away */
-void error_use_rcsid(void);
-void isakmp_use_rcsid(void);
-void wrappers_use_rcsid(void);
-void utils_use_rcsid(void);
 
 #endif	/* IKE_SCAN_H */

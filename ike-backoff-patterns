@@ -18,8 +18,6 @@
 # If this license is unacceptable to you, I may be willing to negotiate
 # alternative licenses (contact ike-scan@nta-monitor.com).
 #
-# $Id$
-#
 # ike-backoff-patterns -- Backoff patterns file for ike-scan
 #
 # Author: Roy Hills <Roy.Hills@nta-monitor.com>

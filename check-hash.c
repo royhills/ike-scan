@@ -33,8 +33,6 @@
  * You are encouraged to send comments, improvements or suggestions to
  * me at ike-scan@nta-monitor.com.
  *
- * $Id$
- *
  * check-hash -- Check message digest (HASH) functions
  *
  * Author:	Roy Hills

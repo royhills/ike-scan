@@ -33,8 +33,6 @@
  * You are encouraged to send comments, improvements or suggestions to
  * me at ike-scan@nta-monitor.com.
  *
- * $Id$
- *
  * psk-crack.h -- Header file for psk-crack
  *
  * Author:	Roy Hills
@@ -163,9 +161,5 @@ char *make_message(const char *, ...);
 char *numstr(unsigned);
 char *printable(const unsigned char*, size_t);
 char *hexstring(const unsigned char*, size_t);
-/* The following functions are just to prevent rcsid being optimised away */
-void error_use_rcsid(void);
-void wrappers_use_rcsid(void);
-void utils_use_rcsid(void);
 
 #endif	/* PSK_CRACK_H */

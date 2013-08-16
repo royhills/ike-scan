@@ -12,6 +12,9 @@
 
 	* ike-vendor-ids: Merged in vendor ID additions from Jonathan Claudius.
 
+	* Removed $Id$ keywords from all files, and associated rcsid variable
+	  from C sources.
+
 2013-08-15 Roy Hills <Roy.Hills@nta-monitor.com>
 
         * Final SVN revision before migration to git.

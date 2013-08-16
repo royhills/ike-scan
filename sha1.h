@@ -33,8 +33,6 @@
  * You are encouraged to send comments, improvements or suggestions to
  * me at ike-scan@nta-monitor.com.
  *
- * $Id$
- *
  * C Header file for Steve Reid's SHA1 implementation.
  *
  * Added for ike-scan by Roy Hills.

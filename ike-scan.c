@@ -33,8 +33,6 @@
  * You are encouraged to send comments, improvements or suggestions to
  * me at ike-scan@nta-monitor.com.
  *
- * $Id$
- *
  * ike-scan -- The IKE Scanner
  *
  * Author:	Roy Hills
@@ -58,8 +56,6 @@
 
 #include "ike-scan.h"
 #include "hash_functions.h"
-
-static const char rcsid[] = "$Id$";   /* RCS ID for ident(1) */
 
 /* Global variables */
 host_entry *helist = NULL;	/* Dynamic array of host entries */
@@ -369,12 +365,6 @@ main(int argc, char *argv[]) {
             fprintf(stderr, "General Public License.\n");
             fprintf(stderr, "For more information about these matters, see the file named COPYING.\n");
             fprintf(stderr, "\n");
-/* We use rcsid here to prevent it being optimised away */
-            fprintf(stderr, "%s\n", rcsid);
-            isakmp_use_rcsid();
-            error_use_rcsid();
-            utils_use_rcsid();
-            wrappers_use_rcsid();
             exit(EXIT_SUCCESS);	/* Doesn't return */
          case 'e':	/* --vendor */
             if (strlen(optarg) % 2)	/* Length is odd */

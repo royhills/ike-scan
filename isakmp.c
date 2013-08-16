@@ -33,8 +33,6 @@
  * You are encouraged to send comments, improvements or suggestions to
  * me at ike-scan@nta-monitor.com.
  *
- * $Id$
- *
  * Author: Roy Hills
  * Date: 7 November 2003
  *
@@ -43,8 +41,6 @@
  */
 
 #include "ike-scan.h"
-
-static char rcsid[] = "$Id$";	/* RCS ID for ident(1) */
 
 const id_name_map notification_map[] = { /* From RFC 2408 3.14.1 */
    {0, "UNSPECIFIED"},
@@ -2731,9 +2727,4 @@ clone_payload(const unsigned char *pkt_ptr, size_t bytes_left) {
    memcpy(clone_ptr, pkt_ptr, payload_len);
 
    return clone_ptr;
-}
-
-void
-isakmp_use_rcsid(void) {
-   fprintf(stderr, "%s\n", rcsid);	/* Use rcsid to stop compiler optimising away */
 }

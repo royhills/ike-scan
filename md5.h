@@ -21,7 +21,6 @@
   ghost@aladdin.com
 
  */
-/* $Id$ */
 /*
   Independent implementation of MD5 (RFC 1321).
 

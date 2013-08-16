@@ -1,5 +1,4 @@
 #!/bin/sh
-# $Id$
 #
 # make-win32-zipfile.sh -- Create Win32 distribution zip file
 #

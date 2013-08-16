@@ -1,5 +1,5 @@
 #!/bin/sh
-# $Id$
+#
 # rebuild.sh -- simple shell script to rebuild autoconf and automake
 #
 echo "aclocal"

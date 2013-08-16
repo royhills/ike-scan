@@ -33,8 +33,6 @@
  * You are encouraged to send comments, improvements or suggestions to
  * me at ike-scan@nta-monitor.com.
  *
- * $Id$
- *
  * error.c -- error routines for IKE Scanner (ike-scan)
  *
  * Author:	Roy Hills
@@ -42,8 +40,6 @@
  */
 
 #include "ike-scan.h"
-
-static char rcsid[] = "$Id$"; /* RCS ID for ident(1) */
 
 int daemon_proc;	/* Non-zero if process is a daemon */
 
@@ -118,9 +114,4 @@ err_print (int errnoflag, const char *fmt, va_list ap) {
    fflush(stdout);	/* In case stdout and stderr are the same */
    fputs(buf, stderr);
    fflush(stderr);
-}
-
-void
-error_use_rcsid(void) {
-   fprintf(stderr, "%s\n", rcsid);	/* Use rcsid to stop compiler optimising away */
 }

@@ -1,4 +1,3 @@
-dnl $Id$
 dnl Process this file with autoconf to produce a configure script.
 
 AC_INIT([ike-scan],[1.9.4],[ike-scan@nta-monitor.com])

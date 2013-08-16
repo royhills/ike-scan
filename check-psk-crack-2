@@ -16,10 +16,6 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #
-# $Id$
-#
-# check-psk-crack-2 -- Shell script to test psk-crack for MD5 and SHA1 hashes
-#
 # Author: Roy Hills
 # Date: 19 November 2004
 #

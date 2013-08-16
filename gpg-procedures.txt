@@ -1,5 +1,3 @@
-$Id$
-
 Using GPG to sign and verify ike-scan packages
 ----------------------------------------------
 
