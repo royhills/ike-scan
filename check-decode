@@ -93,7 +93,7 @@ cat >$EXAMPLEOUTPUT <<_EOF_
 	SA=(Enc=3DES Hash=SHA1 Group=2:modp1024 Auth=PSK LifeType=Seconds LifeDuration=28800)
 	VID=166f932d55eb64d8e4df4fd37e2313f0d0fd84510000000000000000 (Netscreen-15)
 	VID=afcad71368a1f1c96b8696fc77570100 (Dead Peer Detection v1.0)
-	VID=4865617274426561745f4e6f74696679386b0100 (Heartbeat Notify)
+	VID=4865617274426561745f4e6f74696679386b0100 (HeartBeat_Notify)
 	KeyExchange(128 bytes)
 	Nonce(20 bytes)
 	ID(Type=ID_IPV4_ADDR, Value=62.3.105.251)

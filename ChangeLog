@@ -1,4 +1,16 @@
-$Id$
+2013-08-16 Roy Hills <Roy.Hills@nta-monitor.com>
+
+	* .gitignore: New file listing patterns to exclude from the repository.
+
+	* COPYING: New file.
+
+	* check-decode: Modified so "make check" works with new
+	  HeartBeat_Notify VID name.
+
+	* configure.ac: Incremented version to 1.9.4 to distinguish new
+	  version under git revision control.
+
+	* ike-vendor-ids: Merged in vendor ID additions from Jonathan Claudius.
 
 2013-08-15 Roy Hills <Roy.Hills@nta-monitor.com>
 
