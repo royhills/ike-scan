@@ -16,9 +16,36 @@ depcomp
 install-sh
 missing
 stamp-h1
+test-driver
 # Compiler output files
 *.o
 ike-scan
 psk-crack
 check-hash
 check-sizes
+# make check output files
+check-decode.log
+check-decode.trs
+check-error.log
+check-error.trs
+check-hash.log
+check-hash.trs
+check-packet.log
+check-packet.trs
+check-psk-crack-1.log
+check-psk-crack-1.trs
+check-psk-crack-2.log
+check-psk-crack-2.trs
+check-psk-crack-3.log
+check-psk-crack-3.trs
+check-psk-crack-4.log
+check-psk-crack-4.trs
+check-run1.log
+check-run1.trs
+check-run2.log
+check-run2.trs
+check-run3.log
+check-run3.trs
+check-sizes.log
+check-sizes.trs
+test-suite.log
