@@ -2899,7 +2899,7 @@ add_vid_pattern(char *line) {
  */
    result = regexec(&vid_pat, line, 3, pmatch, 0);
    if (result == REG_NOMATCH || pmatch[1].rm_so < 0 || pmatch[2].rm_so < 0) {
-      warn_msg("WARNING: Could not parse vendor id pattern: %s", line);
+      err_msg("ERROR: Could not parse vendor id pattern: %s", line);
       return;
    } else if (result != 0) {
       char errbuf[MAXLINE];
