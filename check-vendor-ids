@@ -1,0 +1,47 @@
+#!/bin/sh
+# The IKE Scanner (ike-scan) is Copyright (C) 2003-2007 Roy Hills,
+# NTA Monitor Ltd.
+#
+# This file is part of ike-scan.
+#
+# ike-scan is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# ike-scan is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with ike-scan.  If not, see <http://www.gnu.org/licenses/>.
+#
+# check-vendor-ids -- Shell script to test ike-scan to localhost
+#
+# Author: Jonathan Claudius
+# Date: 17 August 2013
+#
+# This shell script runs ike-scan using the ike-vendor-ids file to
+# validate that all patterns are parsed correctly
+#
+TMPFILE=/tmp/ike-scan-test.$$.tmp
+#
+echo "Checking ike-scan vendor-ids ..."
+$srcdir/ike-scan -v -v -v --vidpatterns=ike-vendor-ids --sport=1024 --dport=1024 127.0.0.1 >$TMPFILE 2>&1
+if test $? -ne 0; then
+   rm -f $TMPFILE
+   echo "FAILED - ike-scan returned non-zero exit code"
+   exit 1
+fi
+
+grep 'WARNING: Could not parse vendor id pattern' $TMPFILE >/dev/null
+if test $? -eq 0; then
+   echo "FAILED - Could not parse a vendor id pattern"
+   grep 'WARNING: Could not parse vendor id pattern' $TMPFILE
+   rm -f $TMPFILE
+   exit 1
+fi
+echo "ok"
+#
+rm -f $TMPFILE

@@ -48,4 +48,6 @@ check-run3.log
 check-run3.trs
 check-sizes.log
 check-sizes.trs
+check-vendor-ids.log
+check-vendor-ids.trs
 test-suite.log
