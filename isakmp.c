@@ -1,5 +1,5 @@
 /*
- * The IKE Scanner (ike-scan) is Copyright (C) 2003-2007 Roy Hills,
+ * The IKE Scanner (ike-scan) is Copyright (C) 2003-2013 Roy Hills,
  * NTA Monitor Ltd.
  *
  * This file is part of ike-scan.
@@ -199,6 +199,9 @@ const id_name_map auth_map[] = {	/* From RFC 2409 App. A */
    {6, "ElGamel_Enc"},
    {7, "ElGamel_RevEnc"},
    {8, "ECDSA_Sig"},
+   {9, "ECDSA_SHA256"},		/* From RFC 4754 */
+   {10, "ECDSA_SHA384"},	/* From RFC 4754 */
+   {11, "ECDSA_SHA512"},	/* From RFC 4754 */
    {128, "CRACK"},	/* From draft-harkins-ipsra-crack-00 */
    {64221, "Hybrid"},
    {65001, "XAUTH_PSK"},
@@ -235,6 +238,9 @@ const id_name_map dh_map[] = {	/* From RFC 2409 App. A */
    {16, "16:modp4096"},
    {17, "17:modp6144"},
    {18, "18:modp8192"},
+   {19, "19:ecp256"},	/* From RFC 5903 */
+   {20, "20:ecp384"},	/* From RFC 5903 */
+   {21, "21:ecp521"},	/* From RFC 5903 */
    {-1, NULL}
 };
 const id_name_map life_map[] = {	/* From RFC 2409 App. A */
@@ -278,6 +284,7 @@ const id_name_map payload_map[] = {	/* Payload types from RFC 2408 3.1 */
 const id_name_map doi_map[] = {
    {0, "ISAKMP"},
    {1, "IPsec"},
+   {2, "GDOI"},		/* From RFC 6407 */
    {-1, NULL}
 };
 const id_name_map protocol_map[] = {
