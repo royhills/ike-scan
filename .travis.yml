@@ -11,4 +11,4 @@ before_install:
   - sudo apt-get update -qq
   - sudo apt-get install automake1.9
 script: 
-  - autoreconf --install && ./configure $BUILD_ARGS && make && make check && ./ike-scan -v -v -v --vidpatterns=ike-vendor-ids --sport=1024 --dport=1024 127.0.0.1
+  - autoreconf --install && ./configure $BUILD_ARGS && make && make check
