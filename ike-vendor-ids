@@ -1,4 +1,4 @@
-# The IKE Scanner (ike-scan) is Copyright (C) 2003-2007 Roy Hills,
+# The IKE Scanner (ike-scan) is Copyright (C) 2003-2013 Roy Hills,
 # NTA Monitor Ltd.
 #
 # This file is part of ike-scan.
@@ -56,8 +56,8 @@
 # implementations on the ike-scan wiki at
 # http://www.nta-monitor.com/wiki/index.php/Ike-scan_Documentation
 #
-# You are encouraged to send comments, improvements or suggestions to
-# me at ike-scan@nta-monitor.com.
+# You are encouraged to submit comments, improvements or suggestions
+# at the github repository https://github.com/royhills/ike-scan
 #
 
 # Microsoft/Cisco IPsec implementation for Win-2000 and above.

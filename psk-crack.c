@@ -624,7 +624,7 @@ psk_crack_usage(int status) {
    fprintf(stderr, "\n--charset=<s> or -c <s>\tSet bruteforce character set to <s>\n");
    fprintf(stderr, "\t\t\tDefault is \"%s\"\n", default_charset);
    fprintf(stderr, "\n");
-   fprintf(stderr, "Report bugs or send suggestions to %s\n", PACKAGE_BUGREPORT);
+   fprintf(stderr, "Report bugs or send suggestions at %s\n", PACKAGE_BUGREPORT);
    fprintf(stderr, "See the ike-scan homepage at http://www.nta-monitor.com/tools/ike-scan/\n");
    exit(status);
 }

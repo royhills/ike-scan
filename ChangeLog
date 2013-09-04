@@ -4,6 +4,9 @@
 	  in place of the ike-scan email address and the pattern submission
 	  URL.
 
+	* configure.ac: Change the bug-report string in AC_INIT from the
+	  ike-scan email address to the github URL.
+
 2013-08-17 Roy Hills <Roy.Hills@nta-monitor.com>
 
 	* check-vendor-ids, Makefile.am: New check script to validate the

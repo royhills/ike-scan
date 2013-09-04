@@ -3588,7 +3588,7 @@ usage(int status, int detailed) {
       fprintf(stderr, "use \"ike-scan --help\" for detailed information on the available options.\n");
    }
    fprintf(stderr, "\n");
-   fprintf(stderr, "Report bugs or send suggestions to %s\n", PACKAGE_BUGREPORT);
+   fprintf(stderr, "Report bugs or send suggestions at %s\n", PACKAGE_BUGREPORT);
    fprintf(stderr, "See the ike-scan homepage at http://www.nta-monitor.com/tools/ike-scan/\n");
    exit(status);
 }
