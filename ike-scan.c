@@ -31,8 +31,8 @@
  * If this license is unacceptable to you, I may be willing to negotiate
  * alternative licenses (contact ike-scan@nta-monitor.com).
  *
- * You are encouraged to send comments, improvements or suggestions to
- * me at ike-scan@nta-monitor.com.
+ * You are encouraged to submit comments, improvements or suggestions
+ * at the github repository https://github.com/royhills/ike-scan
  *
  * ike-scan -- The IKE Scanner
  *
@@ -2465,9 +2465,8 @@ dump_times(unsigned num_hosts) {
    if (unknown_patterns && patlist) {
       printf("Some IKE implementations found have unknown backoff fingerprints\n");
       printf("If you know the implementation name, and the pattern is reproducible, you\n");
-      printf("are encouraged to submit the pattern and implementation details for\n");
-      printf("inclusion in future versions of ike-scan.  See:\n");
-      printf("http://www.nta-monitor.com/tools/ike-scan/submit-patterns.html\n");
+      printf("are encouraged to submit the pattern and implementation details\n");
+      printf("through the github repository at https://github.com/royhills/ike-scan\n");
    }
 }
 

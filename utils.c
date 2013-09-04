@@ -31,8 +31,8 @@
  * If this license is unacceptable to you, I may be willing to negotiate
  * alternative licenses (contact ike-scan@nta-monitor.com).
  *
- * You are encouraged to send comments, improvements or suggestions to
- * me at ike-scan@nta-monitor.com.
+ * You are encouraged to submit comments, improvements or suggestions
+ * at the github repository https://github.com/royhills/ike-scan
  *
  * Author: Roy Hills
  * Date: 5 April 2004

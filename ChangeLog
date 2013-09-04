@@ -1,4 +1,17 @@
+2013-09-04 Roy Hills <Roy.Hills@nta-monitor.com>
+
+	* Added references to the github repository in README, *.c and *.h
+	  in place of the ike-scan email address and the pattern submission
+	  URL.
+
+2013-08-17 Roy Hills <Roy.Hills@nta-monitor.com>
+
+	* check-vendor-ids, Makefile.am: New check script to validate the
+	  vendor ID patterns as part of "make check" from Jonathan Claudius.
+
 2013-08-16 Roy Hills <Roy.Hills@nta-monitor.com>
+
+	* .travis.yaml: New file to enable autobuild on Travis CI.
 
 	* .gitignore: New file listing patterns to exclude from the repository.
 

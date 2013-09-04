@@ -778,11 +778,7 @@ a different value in seconds to the --showbackoff option.
 When all of the packets have been received, the backoff table is displayed,
 and the program attempts to match the backoff pattern against the known
 backoff patterns contained in the text file "ike-backoff-patterns".  It is
-possible to add new patterns to this file.  If you discover new backoff
-patterns, you are encouraged to submit them so that they can be included
-in future releases of ike-scan.  See:
-http://www.nta-monitor.com/tools/ike-scan/submit-patterns.html
-for details on how to submit new backoff patterns.
+possible to add new patterns to this file.
 
 Note that only hosts which respond with a handshake can be fingerprinted by
 backoff timings; hosts which respond with a notify message cannot.  This is
@@ -792,9 +788,7 @@ retransmission with backoff.
 If you discover IKE hosts with backoff patterns which are not recognised by
 ike-scan, then you are encouraged to submit the pattern and details of
 the IKE implementation to me so I can incorporate it into future versions of
-ike-scan.  See:
-http://www.nta-monitor.com/tools/ike-scan/submit-patterns.html
-For details of how to submit new backoff patterns.
+ike-scan.  You can do this by opening an issue, or a pull request on github.
 
 Note that any packet loss will prevent the backoff fingerprinting from working
 because the program needs to see all of the responses.
@@ -978,19 +972,10 @@ All of these RFCs can be obtained from: http://www.ietf.org/rfc
 
 9.  CONTACT ADDRESS
 
-Email:  ike-scan@nta-monitor.com
-
-Web:  http://www.nta-monitor.com/tools/ike-scan/
-
-Postal address:
-
-   Roy Hills
-   NTA Monitor Limited
-   14 Ashford House
-   Medway City Estate
-   Rochester
-   Kent ME2 4FA
-   UK
+Email: ike-scan@nta-monitor.com
+homepage: http://www.nta-monitor.com/tools-resources/security-tools/ike-scan
+github: https://github.com/royhills/ike-scan
+wiki: http://www.nta-monitor.com/wiki/index.php/Ike-scan_Documentation
 
 I would like to hear from you if you have any of the following:
 
@@ -1006,3 +991,4 @@ d) Any Vendor ID pattern that is not already in the ike-vendor-ids file; or
 
 e) Any comments or suggestions about the program.
 
+The best way to contact me is via the ike-scan repository on github.
