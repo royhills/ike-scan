@@ -1,3 +1,11 @@
+2013-10-26 Roy Hills <Roy.Hills@nta-monitor.com>
+
+	* ike-scan.c: Add support for sending key exchange payload for ECP
+	  Diffie-Hellman groups 19, 20 and 21 with --dhgroup=n. The Key
+	  Exchange payload length for these groups is as detailed in RFC 4753.
+	  DH groups 19 and 20 tested in aggressive mode with Checkpoint VPN-1
+	  R77.
+
 2013-09-04 Roy Hills <Roy.Hills@nta-monitor.com>
 
 	* Added references to the github repository in README, *.c and *.h

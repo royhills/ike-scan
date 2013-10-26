@@ -2026,9 +2026,18 @@ initialise_ike_packet(size_t *packet_out_len, ike_packet_params *params) {
          case 18:
             kx_data_len = 1024;	/* Group 18 - 8192 bits */
             break;
+         case 19:
+            kx_data_len = 64;	/* Group 19 - 256+256 bits */
+            break;
+         case 20:
+            kx_data_len = 96;	/* Group 20 - 384+384 bits */
+            break;
+         case 21:
+            kx_data_len = 132;	/* Group 21 - 528+528 bits */
+            break;
          default:
             err_msg("ERROR: Bad Diffie Hellman group: %u, "
-                    "should be 1,2,5,14,15,16,17 or 18",
+                    "should be 1,2,5,14,15,16,17,18,19,20 or 21",
                     params->dhgroup);	/* Doesn't return */
       }
       ke = make_ke(&ke_len, next_payload, kx_data_len);
@@ -2069,9 +2078,18 @@ initialise_ike_packet(size_t *packet_out_len, ike_packet_params *params) {
          case 18:
             kx_data_len = 1024;	/* Group 18 - 8192 bits */
             break;
+         case 19:
+            kx_data_len = 64;	/* Group 19 - 256+256 bits */
+            break;
+         case 20:
+            kx_data_len = 96;	/* Group 20 - 384+384 bits */
+            break;
+         case 21:
+            kx_data_len = 132;	/* Group 21 - 528+528 bits */
+            break;
          default:
             err_msg("ERROR: Bad Diffie Hellman group: %u, "
-                    "should be 1,2,5,14,15,16,17 or 18",
+                    "should be 1,2,5,14,15,16,17,18,19,20 or 21",
                     params->dhgroup);	/* Doesn't return */
       }
       ke = make_ke2(&ke_len, next_payload, params->dhgroup, kx_data_len);
@@ -3392,7 +3410,7 @@ usage(int status, int detailed) {
       fprintf(stderr, "\t\t\tIf you use Aggressive Mode with custom transforms, then\n");
       fprintf(stderr, "\t\t\tyou will normally need to use the --dhgroup option\n");
       fprintf(stderr, "\t\t\tunless you are using the default DH group.\n");
-      fprintf(stderr, "\t\t\tAcceptable values are 1,2,5,14,15,16,17,18 (MODP only).\n");
+      fprintf(stderr, "\t\t\tAcceptable values are 1,2,5,14,15,16,17,18,19,20,21.\n");
       fprintf(stderr, "\n--gssid=<n> or -G <n>\tUse GSS ID <n> where <n> is a hex string.\n");
       fprintf(stderr, "\t\t\tThis uses transform attribute type 16384 as specified\n");
       fprintf(stderr, "\t\t\tin draft-ietf-ipsec-isakmp-gss-auth-07.txt, although\n");

@@ -1,7 +1,13 @@
 This file gives a brief overview of the major changes between each ike-scan
-release.  For more details please read the ChangeLog file.
+release.  For more details please read the ChangeLog file or the git commit
+history.
 
-ike-scan v1.9.3:
+ike-scan v1.9.4 2013-09-04:
+
+* Moved ike-scan development from internal SVN repository to github at
+  https://github.com/royhills/ike-scan
+
+* Fixed most occurances of set but unused variables as reported by GCC 4.6.
 
 * Added support for IPnet:netmask format for target networks.
 
@@ -20,7 +26,8 @@ ike-scan v1.9.3:
 
 * New backoff patterns for Cisco PIX 7.0
 
-* New vendor ids for Windows 2008 server
+* New vendor ids for Windows 2008 server, plus contributions by
+  Jesper Kückelhahn and Jonathan Claudius.
 
 * ike-scan now uses the OpenBSD strlcat and strlcpy functions instead of
   the standard strcat, strncat, strcpy and strncpy functions.  This reduces
