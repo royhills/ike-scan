@@ -391,7 +391,7 @@ unsigned char* make_attr(size_t *, int, unsigned, size_t, unsigned, void *);
 unsigned char* add_attr(int, size_t *, int, unsigned, size_t, unsigned,
                         void *);
 unsigned char* make_vid(size_t *, unsigned, unsigned char *, size_t);
-unsigned char* add_vid(int, size_t *, unsigned char *, size_t, unsigned);
+unsigned char* add_vid(int, size_t *, unsigned char *, size_t, int, unsigned);
 unsigned char* make_ke(size_t *, unsigned, size_t);
 unsigned char* make_ke2(size_t *, unsigned, unsigned, size_t);
 unsigned char* make_nonce(size_t *, unsigned, size_t);

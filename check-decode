@@ -63,7 +63,7 @@ cat >$EXAMPLEOUTPUT <<_EOF_
 127.0.0.1	(0.0.0.0) Main Mode Handshake returned
 	HDR=(CKY-R=636fa075dcf8ba90)
 	SA=(Enc=3DES Hash=SHA1 Auth=RSA_Sig Group=2:modp1024 LifeType=Seconds LifeDuration(4)=0x00007080)
-	VID=f4ed19e0c114eb516faaac0ee37daf2807b4381f000000010000138d459becd70000000018000000 (Firewall-1 NGX)
+	VID=f4ed19e0c114eb516faaac0ee37daf2807b4381f000000010000138d459becd70000000018000000 (Firewall-1 NGX or later)
 
 _EOF_
 IKEARGS="-s 0 -r 1 -N -M -I $srcdir/ike-vendor-ids --cookie=deadbeefdeadbeef"
@@ -234,7 +234,7 @@ cat >$EXAMPLEOUTPUT <<_EOF_
 127.0.0.1	(0.0.0.0) Main Mode Handshake returned
 	HDR=(CKY-R=f92704e8a4245b38)
 	SA=(Enc=3DES Hash=SHA1 Auth=RSA_Sig Group=2:modp1024 LifeType=Seconds LifeDuration(4)=0x00007080)
-	VID=f4ed19e0c114eb516faaac0ee37daf2807b4381f000000010000138d459d15d80000000018000000 (Firewall-1 NGX)
+	VID=f4ed19e0c114eb516faaac0ee37daf2807b4381f000000010000138d459d15d80000000018000000 (Firewall-1 NGX or later)
 
 _EOF_
 IKEARGS="--nat-t -s 0 -r 1 -N -M -I $srcdir/ike-vendor-ids --cookie=deadbeefdeadbeef"

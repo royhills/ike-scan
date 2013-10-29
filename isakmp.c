@@ -82,7 +82,7 @@ const id_name_map notification_map[] = { /* From RFC 2408 3.14.1 */
    {24578, "INITIAL-CONTACT"},
    {-1, NULL}
 };
-const id_name_map notification_map2[] = { /* From RFC 4306 3.10.1 */
+const id_name_map notification_map2[] = { /* From RFC 5996 3.10.1 */
    {0, "RESERVED"},
    {1, "UNSUPPORTED_CRITICAL_PAYLOAD"},
    {4, "INVALID_IKE_SPI"},
@@ -99,6 +99,8 @@ const id_name_map notification_map2[] = { /* From RFC 4306 3.10.1 */
    {37, "FAILED_CP_REQUIRED"},
    {38, "TS_UNACCEPTABLE"},
    {39, "INVALID_SELECTORS"},
+   {43, "TEMPORARY_FAILURE"},
+   {44, "CHILD_SA_NOT_FOUND"},
    {9101, "Checkpoint-Firewall-1"},
    {9110, "Checkpoint-Firewall-1"},
    {16384, "INITIAL_CONTACT"},
@@ -135,7 +137,7 @@ const id_name_map attr_map[] = {	/* From RFC 2409 App. A and */
    {16384, "GSSIdentityName"},
    {-1, NULL}
 };
-const id_name_map trans_type_map[] = {	/* From RFC 4306 3.3.2 */
+const id_name_map trans_type_map[] = {	/* From RFC 5996 3.3.2 */
    {1, "Encr"},
    {2, "Prf"},
    {3, "Integ"},
@@ -159,7 +161,7 @@ const id_name_map enc_map[] = {	/* From RFC 2409 App. A */
    {65005, "Twofish"},	/* Defined in strongSwan constants.h */
    {-1, NULL}
 };
-const id_name_map encr_map[] = {	/* From RFC 4306 3.3.2 */
+const id_name_map encr_map[] = {	/* From RFC 5996 (IKEv2) 3.3.2 */
    {1, "DES_IV64"},
    {2, "DES"},
    {3, "3DES"},
@@ -172,6 +174,12 @@ const id_name_map encr_map[] = {	/* From RFC 4306 3.3.2 */
    {11, "NULL"},
    {12, "AES_CBC"},
    {13, "AES_CTR"},
+   {14, "AES_CCM_ICV8"},		/* RFC 5282 */
+   {15, "AES_CCM_ICV12"},		/* RFC 5282 */
+   {16, "AES_CCM_ICV16"},		/* RFC 5282 */
+   {18, "AES_GCM_ICV8"},		/* RFC 5282 */
+   {19, "AES_GCM_ICV12"},		/* RFC 5282 */
+   {20, "AES_GCM_ICV16"},		/* RFC 5282 */
    {-1, NULL}
 };
 const id_name_map hash_map[] = {	/* From RFC 2409 App. A */
@@ -183,7 +191,7 @@ const id_name_map hash_map[] = {	/* From RFC 2409 App. A */
    {6, "SHA2-512"},
    {-1, NULL}
 };
-const id_name_map prf_map[] = {		/* From RFC 4306 3.3.2 */
+const id_name_map prf_map[] = {		/* From RFC 5996 3.3.2 */
    {1, "HMAC_MD5"},
    {2, "HMAC_SHA1"},
    {3, "HMAC_TIGER"},
@@ -211,7 +219,7 @@ const id_name_map auth_map[] = {	/* From RFC 2409 App. A */
    {65009, "XAUTH_RSA_RevEnc"},
    {-1, NULL}
 };
-const id_name_map integ_map[] = {	/* From RFC 4306 3.3.2 */
+const id_name_map integ_map[] = {	/* From RFC 5996 3.3.2 */
    {1, "HMAC_MD5_96"},
    {2, "HMAC_SHA1_96"},
    {3, "DES_MAC"},
@@ -241,6 +249,11 @@ const id_name_map dh_map[] = {	/* From RFC 2409 App. A */
    {19, "19:ecp256"},	/* From RFC 5903 */
    {20, "20:ecp384"},	/* From RFC 5903 */
    {21, "21:ecp521"},	/* From RFC 5903 */
+   {22, "22:modp1024s160"},	/* From RFC 5114 */
+   {23, "23:modp2048s224"},	/* From RFC 5114 */
+   {24, "24:modp2048s256"},	/* From RFC 5114 */
+   {25, "25:ecp192"},	/* From RFC 5114 */
+   {26, "26:ecp224"},	/* From RFC 5114 */
    {-1, NULL}
 };
 const id_name_map life_map[] = {	/* From RFC 2409 App. A */
@@ -263,7 +276,7 @@ const id_name_map payload_map[] = {	/* Payload types from RFC 2408 3.1 */
    {12, "Delete"},
    {13, "VendorID"},
    {20, "NAT-D"},		/* RFC 3947 NAT Discovery */
-   {33, "SecurityAssociation"},
+   {33, "SecurityAssociation"},	/* Values 33-49 are from RFC 5996 IKEv2 */
    {34, "KeyExchange"},
    {35, "IDI"},
    {36, "IDR"},
@@ -279,6 +292,7 @@ const id_name_map payload_map[] = {	/* Payload types from RFC 2408 3.1 */
    {46, "Encrypted"},
    {47, "Configuration"},
    {48, "EAP"},
+   {49, "GSPM"},		/* RFC 6467 */
    {-1, NULL}
 };
 const id_name_map doi_map[] = {
@@ -909,7 +923,7 @@ add_transform(int finished, size_t *length, unsigned trans_id,
  *	Pointer to transform payload.
  *
  *	This constructs a single IKEv2 transform payload.
- *	Most of the values are defined in RFC 4306 Section 3.3.
+ *	Most of the values are defined in RFC 5996 Section 3.3.
  */
 unsigned char*
 make_transform2(size_t *length, unsigned next, unsigned trans_type,
@@ -1166,6 +1180,7 @@ make_vid(size_t *length, unsigned next, unsigned char *vid_data,
  *      length  (output) length of entire VID payload set.
  *      vid_data        Vendor ID data
  *      vid_data_len    Vendor ID data length
+ *	ike_version	IKE version
  *	next		Next payload type (only when finished == 1)
  *
  *	Returns:
@@ -1181,7 +1196,7 @@ make_vid(size_t *length, unsigned next, unsigned char *vid_data,
  */
 unsigned char*
 add_vid(int finished, size_t *length, unsigned char *vid_data,
-        size_t vid_data_len, unsigned next) {
+        size_t vid_data_len, int ike_version, unsigned next) {
    static int first_vid = 1;
    static unsigned char *vid_start=NULL;	/* Start of set of VIDs */
    static size_t cur_offset;			/* Start of current VID */
@@ -1192,7 +1207,11 @@ add_vid(int finished, size_t *length, unsigned char *vid_data,
  * Construct a VID if we are not finalising.
  */
    if (!finished) {
-      vid = make_vid(&len, ISAKMP_NEXT_VID, vid_data, vid_data_len);
+      if (ike_version == 1) {
+         vid = make_vid(&len, ISAKMP_NEXT_VID, vid_data, vid_data_len);
+      } else {
+         vid = make_vid(&len, ISAKMP_NEXT_V2_VID, vid_data, vid_data_len);
+      }
       if (first_vid) {
          cur_offset = 0;
          end_offset = len;

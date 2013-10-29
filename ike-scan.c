@@ -372,7 +372,7 @@ main(int argc, char *argv[]) {
                err_msg("ERROR: Length of --vendor argument must be even (multiple of 2).");
             ike_params.vendor_id_flag=1;
             vid_data=hex2data(optarg, &vid_data_len);
-            add_vid(0, NULL, vid_data, vid_data_len, 0);
+            add_vid(0, NULL, vid_data, vid_data_len, ike_params.ike_version, 0);
             free(vid_data);
             break;
          case 'a':	/* --trans */
@@ -1591,6 +1591,7 @@ display_packet(int n, unsigned char *packet_in, host_entry *he,
          msg2=msg;
          switch (next) {
             case ISAKMP_NEXT_VID:	/* Vendor ID */
+            case ISAKMP_NEXT_V2_VID:	/* IKEv2 Vendor ID */
                cp = process_vid(payload_ptr, bytes_left, vidlist);
                break;
             case ISAKMP_NEXT_ID:	/* ID */
@@ -1982,12 +1983,16 @@ initialise_ike_packet(size_t *packet_out_len, ike_packet_params *params) {
  *	Vendor ID Payload (Optional)
  */
    if (params->vendor_id_flag) {
-      vid = add_vid(1, &vid_len, NULL, 0, next_payload);
+      vid = add_vid(1, &vid_len, NULL, 0, params->ike_version, next_payload);
       *packet_out_len += vid_len;
-      next_payload = ISAKMP_NEXT_VID;
+      if (params->ike_version == 1) {
+         next_payload = ISAKMP_NEXT_VID;
+      } else {
+         next_payload = ISAKMP_NEXT_V2_VID;
+      }
    }
 /*
- *	Key Exchange, Nonce and ID for aggressive mode only.
+ *	IKEv1 Key Exchange, Nonce and ID for aggressive mode only.
  */
    if (params->exchange_type == ISAKMP_XCHG_AGGR) {
       id = make_id(&id_len, next_payload, params->idtype, params->id_data,

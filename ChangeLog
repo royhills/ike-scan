@@ -1,3 +1,16 @@
+2013-10-27 Roy Hills <Roy.Hills@nta-monitor.com>
+
+	* ike-scan.c, ike-scan.h, isakmp.c: Use payload type 43 instead of
+	  13 for vendor ID payloads with ikev2. This implementation requires
+	  that the --ikev2 or -2 option be specified before the --vendor or -e
+	  option to work correctly.
+
+	* isakmp.c: Updated maps from RFC 5996 (new IKEv2 RFC which replaces
+	  4306), RFC 5282, RFC 5114, and RFC 6467.
+
+	* ike-vendor-ids, check-deocde: Minor change to Firewall-1 NGX vendor
+	  id name.
+
 2013-10-26 Roy Hills <Roy.Hills@nta-monitor.com>
 
 	* ike-scan.c: Add support for sending key exchange payload for ECP

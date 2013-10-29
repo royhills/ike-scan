@@ -63,12 +63,10 @@ Integrate psk-crack patch from
 http://src.telindus.com/articles/pskcrack_patch.html
 
 Add Adam Bozanich's DH key patch linked from:
-http://labs.musecurity.com/2007/09/18/widespread-dh-implementation-weakness/
+http://blog.mudynamics.com/2007/09/18/widespread-dh-implementation-weakness/
+http://blog.mudynamics.com/wp-content/uploads/2007/09/ike-scanpatch.txt
 
-Support the EC Diffie-Hellman groups for the --dhgroup option.
-
-Add the vendor ID details from
-http://msdn.microsoft.com/en-us/library/cc206875.aspx
+Support the EC2N Diffie-Hellman groups for the --dhgroup option.
 
 Consider adding RSA_Sig as an auth method for the default transform set.
 This would result in 16 transforms with all combinations of:
