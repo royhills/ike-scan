@@ -338,17 +338,25 @@ MacOS 10.x-2	^4df37928e9fc4fd1b3262170d515c662
 # VID is MD5 hash of "strongSwan x.y.z" where x.y.z is version number
 # Originally obtained from strongSwan 4.0.5 pluto/vendor.c
 strongSwan	^882fe56d6fd20dbc2251613b2ebe5beb
+strongSwan 5.1.1	^9e10a0d4205edc6c90bd5381a53c2d2b
+strongSwan 5.1.1rc1	^a55a90de781611f70cbbae7045a225fc
+strongSwan 5.1.1dr4	^c90b020d043f1f050ba809e13dc8234e
+strongSwan 5.1.1dr3	^06f2f1b82256dce62c07cb4f71604035
+strongSwan 5.1.1dr2	^4f130d312ec92f50c02f2b0eb60d6ccc
+strongSwan 5.1.1dr1	^1a45d3bda55646016e998ac1c5590e59
+strongSwan 5.1.0	^b7d8e62184049fb21b088d4232d2549c
+strongSwan 5.1.0rc1	^02c49867060173c665ebce2b8110c7f7
 strongSwan 5.1.0dr2	^e069a583c5640257a8de2cf062461a4b
 strongSwan 5.1.0dr1	^22982eab040be7a4cb4177da312f2f1c
 strongSwan 5.0.4	^dc3afcdda0514da394b4b36f4cb1b9a7
+strongSwan 5.0.3	^d398476a43b9d6c56c4045ffcc9fffb9
 strongSwan 5.0.3rc1	^f2d4de999721c37fea51d4bcbc060120
 strongSwan 5.0.3dr3	^f4d68a2fb63e4390a959baa5c4bc7598
 strongSwan 5.0.3dr2	^7b3f3d21e4768e010fc7dd04ae369c61
 strongSwan 5.0.3dr1	^ca7d77d20794391df5a3cb90fbf5b72e
-strongSwan 5.0.3	^d398476a43b9d6c56c4045ffcc9fffb9
+strongSwan 5.0.2	^04d52cc5fd04aa971063b111917731d2
 strongSwan 5.0.2rc1	^80b8f4380b18f24f03ce5745fc3db56b
 strongSwan 5.0.2dr4	^a5f8ce0d6751c640e55bc41784f2e081
-strongSwan 5.0.2	^04d52cc5fd04aa971063b111917731d2
 strongSwan 5.0.1	^75aa8f69de2e44500dae842be21f5491
 strongSwan 5.0.0	^e154b11a96ee2b44d4954843cd3a40a3
 strongSwan 4.6.4	^a87680d00cbb939871eb680d18d052e2
