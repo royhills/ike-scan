@@ -153,7 +153,7 @@ const id_name_map enc_map[] = {	/* From RFC 2409 App. A */
    {5, "3DES"},
    {6, "CAST"},
    {7, "AES"},		/* RFC 3602 */
-   {8, "Camellia"},	/* draft-kato-ipsec-ciph-camellia-01.txt */
+   {8, "Camellia"},	/* RFC 4312 */
    {65001, "Mars"},	/* Defined in strongSwan constants.h */
    {65002, "RC6"},	/* Defined in strongSwan constants.h */
    {65003, "ID_65003"},	/* Defined in strongSwan constants.h */
@@ -180,6 +180,7 @@ const id_name_map encr_map[] = {	/* From RFC 5996 (IKEv2) 3.3.2 */
    {18, "AES_GCM_ICV8"},		/* RFC 5282 */
    {19, "AES_GCM_ICV12"},		/* RFC 5282 */
    {20, "AES_GCM_ICV16"},		/* RFC 5282 */
+   {23, "CAMELLIA_CBC"},		/* RFC 5996 */
    {-1, NULL}
 };
 const id_name_map hash_map[] = {	/* From RFC 2409 App. A */
@@ -195,7 +196,11 @@ const id_name_map prf_map[] = {		/* From RFC 5996 3.3.2 */
    {1, "HMAC_MD5"},
    {2, "HMAC_SHA1"},
    {3, "HMAC_TIGER"},
-   {4, "AES128_XCBC"},
+   {4, "AES128_XCBC"},		/* RFC 4434 */
+   {5, "HMAC_SHA2_256"},	/* RFC 4868 */
+   {6, "HMAC_SHA2_384"},	/* RFC 4868 */
+   {7, "HMAC_SHA2_512"},	/* RFC 4868 */
+   {8, "HMAC_AES128_CMAC"},	/* RFC 4615 */
    {-1, NULL}
 };
 const id_name_map auth_map[] = {	/* From RFC 2409 App. A */
@@ -207,16 +212,17 @@ const id_name_map auth_map[] = {	/* From RFC 2409 App. A */
    {6, "ElGamel_Enc"},
    {7, "ElGamel_RevEnc"},
    {8, "ECDSA_Sig"},
-   {9, "ECDSA_SHA256"},		/* From RFC 4754 */
-   {10, "ECDSA_SHA384"},	/* From RFC 4754 */
-   {11, "ECDSA_SHA512"},	/* From RFC 4754 */
-   {128, "CRACK"},	/* From draft-harkins-ipsra-crack-00 */
-   {64221, "Hybrid"},
-   {65001, "XAUTH_PSK"},
-   {65003, "XAUTH_DSS"},
-   {65005, "XAUTH_RSA"},
-   {65007, "XAUTH_RSA_Enc"},
-   {65009, "XAUTH_RSA_RevEnc"},
+   {9, "ECDSA_SHA256"},		/* RFC 4754 */
+   {10, "ECDSA_SHA384"},	/* RFC 4754 */
+   {11, "ECDSA_SHA512"},	/* RFC 4754 */
+   {128, "CRACK"},		/* draft-harkins-ipsra-crack-00 */
+   {64221, "Hybrid_RSA"},	/* draft-ietf-ipsec-isakmp-hybrid-auth-05 */
+   {64223, "Hybrid_DSS"},	/* draft-ietf-ipsec-isakmp-hybrid-auth-05 */
+   {65001, "XAUTH_PSK"},	/* draft-ietf-ipsec-isakmp-xauth-06 */
+   {65003, "XAUTH_DSS"},	/* draft-ietf-ipsec-isakmp-xauth-06 */
+   {65005, "XAUTH_RSA"},	/* draft-ietf-ipsec-isakmp-xauth-06 */
+   {65007, "XAUTH_RSA_Enc"},	/* draft-ietf-ipsec-isakmp-xauth-06 */
+   {65009, "XAUTH_RSA_RevEnc"},	/* draft-ietf-ipsec-isakmp-xauth-06 */
    {-1, NULL}
 };
 const id_name_map integ_map[] = {	/* From RFC 5996 3.3.2 */
@@ -225,14 +231,23 @@ const id_name_map integ_map[] = {	/* From RFC 5996 3.3.2 */
    {3, "DES_MAC"},
    {4, "KPDK_MD5"},
    {5, "AES_XCBC_96"},
+   {6, "HMAC_MD5_128"},		/* RFC 4595 */
+   {7, "HMAC_SHA1_160"},	/* RFC 4595 */
+   {8, "AES_CMAC_96"},		/* RFC 4494 */
+   {9, "AES_128_GMAC"},		/* RFC 4543 */
+   {10, "AES_192_GMAC"},	/* RFC 4543 */
+   {11, "AES_256_GMAC"},	/* RFC 4543 */
+   {12, "HMAC_SHA2_256_128"},	/* RFC 4868 */
+   {13, "HMAC_SHA2_384_192"},	/* RFC 4868 */
+   {14, "HMAC_SHA2_512_256"},	/* RFC 4868 */
    {-1, NULL}
 };
 const id_name_map dh_map[] = {	/* From RFC 2409 App. A */
-   {1, "1:modp768"},			/* and RFC 3526 */
+   {1, "1:modp768"},
    {2, "2:modp1024"},
    {3, "3:ec2n155"},
    {4, "4:ec2n185"},
-   {5, "5:modp1536"},
+   {5, "5:modp1536"},	/* RFC 3526 */
    {6, "6:ec2n163"},
    {7, "7:ec2n163"},
    {8, "8:ec2n283"},
@@ -241,19 +256,23 @@ const id_name_map dh_map[] = {	/* From RFC 2409 App. A */
    {11, "11:ec2n409"},
    {12, "12:ec2n571"},
    {13, "13:ec2n571"},
-   {14, "14:modp2048"},
-   {15, "15:modp3072"},
-   {16, "16:modp4096"},
-   {17, "17:modp6144"},
-   {18, "18:modp8192"},
-   {19, "19:ecp256"},	/* From RFC 5903 */
-   {20, "20:ecp384"},	/* From RFC 5903 */
-   {21, "21:ecp521"},	/* From RFC 5903 */
-   {22, "22:modp1024s160"},	/* From RFC 5114 */
-   {23, "23:modp2048s224"},	/* From RFC 5114 */
-   {24, "24:modp2048s256"},	/* From RFC 5114 */
-   {25, "25:ecp192"},	/* From RFC 5114 */
-   {26, "26:ecp224"},	/* From RFC 5114 */
+   {14, "14:modp2048"},	/* RFC 3526 */
+   {15, "15:modp3072"},	/* RFC 3526 */
+   {16, "16:modp4096"},	/* RFC 3526 */
+   {17, "17:modp6144"},	/* RFC 3526 */
+   {18, "18:modp8192"},	/* RFC 3526 */
+   {19, "19:ecp256"},	/* RFC 5903 */
+   {20, "20:ecp384"},	/* RFC 5903 */
+   {21, "21:ecp521"},	/* RFC 5903 */
+   {22, "22:modp1024s160"},	/* RFC 5114 */
+   {23, "23:modp2048s224"},	/* RFC 5114 */
+   {24, "24:modp2048s256"},	/* RFC 5114 */
+   {25, "25:ecp192"},	/* RFC 5114 */
+   {26, "26:ecp224"},	/* RFC 5114 */
+   {27, "27:brainpoolP224r1"},	/* RFC 6954 */
+   {28, "28:brainpoolP256r1"},	/* RFC 6954 */
+   {29, "29:brainpoolP384r1"},	/* RFC 6954 */
+   {30, "30:brainpoolP512r1"},	/* RFC 6954 */
    {-1, NULL}
 };
 const id_name_map life_map[] = {	/* From RFC 2409 App. A */
@@ -276,7 +295,7 @@ const id_name_map payload_map[] = {	/* Payload types from RFC 2408 3.1 */
    {12, "Delete"},
    {13, "VendorID"},
    {20, "NAT-D"},		/* RFC 3947 NAT Discovery */
-   {33, "SecurityAssociation"},	/* Values 33-49 are from RFC 5996 IKEv2 */
+   {33, "SecurityAssociation"},	/* Values 33-48 are from RFC 5996 IKEv2 */
    {34, "KeyExchange"},
    {35, "IDI"},
    {36, "IDR"},
@@ -298,7 +317,7 @@ const id_name_map payload_map[] = {	/* Payload types from RFC 2408 3.1 */
 const id_name_map doi_map[] = {
    {0, "ISAKMP"},
    {1, "IPsec"},
-   {2, "GDOI"},		/* From RFC 6407 */
+   {2, "GDOI"},		/* RFC 6407 */
    {-1, NULL}
 };
 const id_name_map protocol_map[] = {

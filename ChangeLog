@@ -1,3 +1,11 @@
+2013-11-10 Roy Hills <Roy.Hills@nta-monitor.com>
+
+	* isakmp.c: Updated attribute maps with new values and updated
+	  RFC references.
+
+	* TODO: Removed items that have been addressed or are no longer
+	  required.
+
 2013-10-27 Roy Hills <Roy.Hills@nta-monitor.com>
 
 	* ike-scan.c, ike-scan.h, isakmp.c: Use payload type 43 instead of
