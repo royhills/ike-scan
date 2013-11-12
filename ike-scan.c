@@ -798,6 +798,10 @@ main(int argc, char *argv[]) {
       err_msg("ERROR: You cannot specify both --bandwidth and --interval.");
    if (ike_params.trans_flag != 0 && ike_params.ike_version == 2)
       warn_msg("WARNING: IKEv2 does not support custom proposals.");
+   if (ike_params.ike_version == 2 &&
+       ike_params.exchange_type == ISAKMP_XCHG_AGGR)
+      err_msg("ERROR: You can not specify both aggressive mode and IKEv2.\n"
+              "       Aggressive mode is only applicable to IKEv1.");
 /*
  *      Create and initialise array of pointers to host entries.
  */

@@ -1,3 +1,8 @@
+2013-11-12 Roy Hills <Roy.Hills@nta-monitor.com>
+
+	* ike-scan.c: Disallow the use of both --aggressive and --ikev2 options.
+	  This fixes debian bug #512962.
+
 2013-11-10 Roy Hills <Roy.Hills@nta-monitor.com>
 
 	* isakmp.c: Updated attribute maps with new values and updated
