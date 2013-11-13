@@ -204,6 +204,14 @@ SideWinder G2 Firewall	0, 3, 4, 12, 36
 # Interestingly, this is different from the earlier sonicwall-pro entry.
 Sonic Wall	0, 5, 8, 18
 
+# Discovered by: RealRancor, September 2013
+# DELL SonicWALL appliance (version unknown)
+# There's quite a bit of variation in the timings, hence the per-entry fuzz
+# settings.
+# This may be the same patterm as "Sonic Wall" above, but we don't have
+# enough data points to be sure.
+DELL SonicWall	0, 5/1000, 10/2000, 20/3000
+
 # Discovered by: Roy Hills, December 2003
 # Observed on: Windows 2003 Server Enterprise Edition, Intel platform
 # Note: The 2nd packet delay has been observed to vary between 0.5 and 1.5 sec.
