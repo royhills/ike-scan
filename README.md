@@ -139,7 +139,7 @@ It is possible to specify a custom transform set with ```--trans=e[/l],h,a,g``` 
 For example: ```--trans=5,2,1,2``` specifies:
 ```Enc=5 (3DES-CBC), Hash=2 (SHA1), Auth=1 (shared key), DH Group=2 (modp 1024)```
 
-and "--trans=7/256,1,1,5" specifies:
+and ```--trans=7/256,1,1,5``` specifies:
 ```Enc=7 (AES), Keylen=256 bits, Hash=MD5, Auth=shared key, DH Group=5 (modp 1536)```
 
 You can use the ```--trans``` option more than once to send an arbitrary number of custom transforms in the proposal.
