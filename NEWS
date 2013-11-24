@@ -2,10 +2,16 @@ This file gives a brief overview of the major changes between each ike-scan
 release.  For more details please read the ChangeLog file or the git commit
 history.
 
-ike-scan v1.9.4 2013-09-04:
+ike-scan v1.9.4 2013-11-14:
+
+* Added support for key exchange payloads with diffie-hellman ECP groups 19,
+  20 and 21.
 
 * Moved ike-scan development from internal SVN repository to github at
-  https://github.com/royhills/ike-scan
+  https://github.com/royhills/ike-scan. The move to git means that the commit
+  object names are now SHA1 hashes instead of increasing integer values. So
+  they are longer suitable for internal file versions with rcsid variables.
+  Accordingly the rcsid varable have been removed.
 
 * Fixed most occurances of set but unused variables as reported by GCC 4.6.
 
@@ -24,7 +30,7 @@ ike-scan v1.9.4 2013-09-04:
   cases that previously gave no error, e.g. using "1=7/256" in an advanced
   transform specification.
 
-* New backoff patterns for Cisco PIX 7.0
+* New backoff patterns for Cisco PIX 7.0.
 
 * New vendor ids for Windows 2008 server, plus contributions by
   Jesper Kückelhahn and Jonathan Claudius.
@@ -32,6 +38,8 @@ ike-scan v1.9.4 2013-09-04:
 * ike-scan now uses the OpenBSD strlcat and strlcpy functions instead of
   the standard strcat, strncat, strcpy and strncpy functions.  This reduces
   the chance of buffer overflow bugs.
+
+* Various minor improvements and bugfixes.
 
 ike-scan v1.9:
 
