@@ -17,6 +17,7 @@ matrix:
 before_install:
   - sudo apt-get update -qq
   - sudo apt-get install automake1.9
+  - sudo pip install cpp-coveralls --use-mirrors
 script: 
   - autoreconf --install && ./configure $BUILD_ARGS && make && make check
 after_success: if [ $BUILD_ARGS == "--enable-gcov" ]; then coveralls --exclude lib --exclude tests; fi
