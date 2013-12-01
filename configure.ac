@@ -8,6 +8,24 @@ AM_INIT_AUTOMAKE
 
 AC_CONFIG_HEADERS([config.h])
 
+dnl Define the appropriate compiler flags if the user has enabled gcov
+dnl code coverage. We do this before calling AC_PROG_CC because we override
+dnl the default compiler options when running with gcov.
+AC_MSG_CHECKING([if gcov code coverage is enabled])
+AC_ARG_ENABLE(gcov,
+   AS_HELP_STRING([--enable-gcov],[enable gcov code coverage analysis]),
+   [
+      if test "x$enableval" != "xno" ; then
+         AC_MSG_RESULT(yes)
+         CFLAGS="-O0 -g -fno-inline -fprofile-arcs -ftest-coverage"
+      else
+         AC_MSG_RESULT(no)
+      fi
+   ],
+   [
+      AC_MSG_RESULT(no)
+   ] )
+
 dnl Check for programs.
 AC_PROG_CC
 if test -n "$GCC"; then

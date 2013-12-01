@@ -331,6 +331,7 @@ The following RFCs relate to IKE:
 - RFC 2408  Internet Security Association and Key Management Protocol (ISAKMP)
 - RFC 2409  The Internet Key Exchange (IKE)
 - RFC 2412  The OAKLEY Key Determination Protocol
+- RFC 5996  Internet Key Exchange Protocol Version 2 (IKEv2)
 
 All of these RFCs can be obtained from: http://www.ietf.org/rfc
 

@@ -1,3 +1,8 @@
+2013-12-01 Roy Hills <Roy.Hills@nta-monitor.com>
+
+	* configure.ac, .gitignore: Added configure option --enable-gcov to
+	  enable gcov code coverage.
+
 2013-11-12 Roy Hills <Roy.Hills@nta-monitor.com>
 
 	* ike-scan.c: Disallow the use of both --aggressive and --ikev2 options.

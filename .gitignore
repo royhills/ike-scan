@@ -19,6 +19,9 @@ stamp-h1
 test-driver
 # Compiler output files
 *.o
+*.gcno
+*.gcda
+*.gcov
 ike-scan
 psk-crack
 check-hash
