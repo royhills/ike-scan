@@ -1,6 +1,7 @@
 # ike-scan
 
 [![Build Status](https://secure.travis-ci.org/royhills/ike-scan.png)](http://travis-ci.org/royhills/ike-scan)
+[![Coverage Status](https://coveralls.io/repos/royhills/ike-scan/badge.png?branch=master)](https://coveralls.io/r/royhills/ike-scan?branch=master)
 
 Discover and fingerprint IKE hosts (IPsec VPN Servers)
 
