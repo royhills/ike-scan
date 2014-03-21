@@ -1,3 +1,8 @@
+2014-03-21 Roy Hills <Roy.Hills@nta-monitor.com>
+
+	* isakmp.c: Added fclose call to fix the potential file pointer
+	  resource leak in print_psk_crack_values().
+
 2013-12-01 Roy Hills <Roy.Hills@nta-monitor.com>
 
 	* configure.ac, .gitignore: Added configure option --enable-gcov to
