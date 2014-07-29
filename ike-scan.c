@@ -3506,7 +3506,7 @@ usage(int status, int detailed) {
       fprintf(stderr, "\t\t\tthe certificate type; the remaining bytes as the\n");
       fprintf(stderr, "\t\t\tcertificate authority as described in RFC 2408 3.10.\n");
       fprintf(stderr, "\t\t\tThe certificate types are listed in RFC 2408 sec 3.9.\n");
-      fprintf(stderr, "\t\t\tRFC 2048 states \"The Certificate Request payload MUST\n");
+      fprintf(stderr, "\t\t\tRFC 2408 states \"The Certificate Request payload MUST\n");
       fprintf(stderr, "\t\t\tbe accepted at any point during the exchange\"\n");
       fprintf(stderr, "\n--doi=<d> or -D <d>\tSet the SA DOI to <d>, default %u (%s).\n", DEFAULT_DOI, id_to_name(DEFAULT_DOI, doi_map));
       fprintf(stderr, "\t\t\tYou will not normally want to change this unless you\n");
