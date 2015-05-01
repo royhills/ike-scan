@@ -199,6 +199,7 @@
 #define OPT_NAT_T 267
 #define OPT_RCOOKIE 268
 #define OPT_READPKTFROMFILE 269
+#define OPT_BINDIP 270
 #undef DEBUG_TIMINGS			/* Define to 1 to debug timing code */
 /* #define WRITE_RECEIVED_IKE_PACKET "received-ike-packet.dat" */
 
