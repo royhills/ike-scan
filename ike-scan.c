@@ -85,6 +85,8 @@ int sourceip_flag=0;		/* Set source IP address flag */
 uint32_t src_ip_val;		/* Specified source IP */
 int shownum_flag=0;		/* Display packet number */
 int nat_t_flag=0;		/* RFC 3947 NAT Traversal */
+int bindip_flag=0;             /* Set bind IP address flag */
+uint32_t bind_ip_val;		/* IP address to bind to */
 
 extern const id_name_map notification_map[];
 extern const id_name_map attr_map[];
@@ -159,6 +161,7 @@ main(int argc, char *argv[]) {
       {"randomseed", required_argument, 0, OPT_RANDOMSEED},
       {"timestamp", no_argument, 0, OPT_TIMESTAMP},
       {"sourceip", required_argument, 0, OPT_SOURCEIP},
+      {"bindip", required_argument, 0, OPT_BINDIP},
       {"shownum", no_argument, 0, OPT_SHOWNUM},
       {"ikev2", no_argument, 0, '2'},
       {"nat-t", no_argument, 0, OPT_NAT_T},
@@ -307,6 +310,7 @@ main(int argc, char *argv[]) {
          unsigned trans_group;	/* Custom transform DH group */
          char trans_str[MAXLINE];	/* Custom transform string */
          struct in_addr src_ip_struct;
+         struct in_addr bind_ip_struct;
          case 'f':	/* --file */
             strlcpy(filename, optarg, sizeof(filename));
             filename_flag=1;
@@ -544,6 +548,12 @@ main(int argc, char *argv[]) {
                src_ip_val=src_ip_struct.s_addr;
             }
             break;
+         case OPT_BINDIP: /* --bindip */
+            bindip_flag = 1;
+	    if (!(inet_aton(optarg, &bind_ip_struct)))
+                  err_msg("ERROR: %s is not a valid IP address", optarg);
+               bind_ip_val=bind_ip_struct.s_addr;
+            break;
          case OPT_SHOWNUM: /* --shownum */
             shownum_flag = 1;
             break;
@@ -621,7 +631,10 @@ main(int argc, char *argv[]) {
 
    memset(&sa_local, '\0', sizeof(sa_local));
    sa_local.sin_family = AF_INET;
-   sa_local.sin_addr.s_addr = htonl(INADDR_ANY);
+   if (bindip_flag)
+     sa_local.sin_addr.s_addr = bind_ip_val;
+   else
+     sa_local.sin_addr.s_addr = htonl(INADDR_ANY);
    sa_local.sin_port = htons(source_port);
 
    if ((bind(sockfd, (struct sockaddr *)&sa_local, sizeof(sa_local))) < 0) {
@@ -3585,6 +3598,10 @@ usage(int status, int detailed) {
       fprintf(stderr, "\t\t\twill need superuser privileges to use this option,\n");
       fprintf(stderr, "\t\t\teven if you specify a high source port.\n");
       fprintf(stderr, "\t\t\tThis option does not work on all operating systems.\n");
+      fprintf(stderr, "\n--bindip=<s>\t\tSet the IP address to bind to.\n");
+      fprintf(stderr, "\t\t\tThis option causes the outgoing IKE packets to originate\n");
+      fprintf(stderr, "\t\t\tfrom <s>, and this address will also be used to receive\n");
+      fprintf(stderr, "\t\t\tresponses from the target.\n");
       fprintf(stderr, "\n--shownum\t\tDisplay the host number for received packets.\n");
       fprintf(stderr, "\t\t\tThis displays the ordinal host number of the\n");
       fprintf(stderr, "\t\t\tresponding host before the IP address. It can be useful\n");
