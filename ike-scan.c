@@ -1812,6 +1812,7 @@ send_packet(int s, unsigned char *packet_out, size_t packet_out_len,
       cp += 4;
       memcpy(cp, orig_packet_out, packet_out_len);
       packet_out_len += 4;
+      free(orig_packet_out);
    }
 /*
  *	Send the packet.
@@ -2211,11 +2212,9 @@ initialise_ike_packet(size_t *packet_out_len, ike_packet_params *params) {
       unsigned char *attr;
       size_t attr_len;
 
-      add_attr(0, NULL, 'B', OAKLEY_KEY_LENGTH, 0, 256, NULL);
       attr = add_attr(1, &attr_len, '\0', 0, 0, 0, NULL);
       add_transform2(0, NULL, IKEV2_TYPE_ENCR, IKEV2_ENCR_AES_CBC, attr, attr_len);
       free(attr);
-      add_attr(0, NULL, 'B', OAKLEY_KEY_LENGTH, 0, 128, NULL);
       attr = add_attr(1, &attr_len, '\0', 0, 0, 0, NULL);
       add_transform2(0, NULL, IKEV2_TYPE_ENCR, IKEV2_ENCR_AES_CBC, attr, attr_len);
       free(attr);
