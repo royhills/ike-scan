@@ -1325,7 +1325,7 @@ add_host(const char *name, unsigned timeout, unsigned *num_hosts,
    Gettimeofday(&now);
 
    he->n = *num_hosts;
-   if (no_dns_flag)
+   if (no_dns_flag || numeric_only)
       memcpy(&(he->addr), &inp, sizeof(struct in_addr));
    else
       memcpy(&(he->addr), hp->h_addr_list[0], sizeof(struct in_addr));
