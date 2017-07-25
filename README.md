@@ -149,8 +149,7 @@ Specifying a custom transform set overrides any authentication method specified 
 
 An example of a complex custom transform set is:
 
-```--trans=5,2,1,2 --lifetime=0 --trans=7/256,1,3,5 --lifetime=600
---trans=7/128,1,3,5```
+```--trans=5,2,1,2 --lifetime=0 --trans=7/256,1,3,5 --lifetime=600 --trans=7/128,1,3,5```
 
 This would specify the following three transforms:
 
