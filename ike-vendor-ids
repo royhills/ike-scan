@@ -290,11 +290,15 @@ Nortel Contivity	^424e4553000000..
 
 # Observed to be sent from SonicWall Firewalls
 SonicWall-1	^5b362bc820f60001
+SonicWall-2	^5b362bc820f60002
 SonicWall-3	^5b362bc820f60003
+SonicWall-5	^5b362bc820f60005
 SonicWall-6	^5b362bc820f60006
 SonicWall-7	^5b362bc820f60007
+SonicWall-8	^5b362bc820f60008
 SonicWall-a	^404bf439522ca3f6
 SonicWall-b	^da8e937880010000
+SonicWall-c	^5b362bc820f70001
 
 # SSH QuickSec
 # The VIDs are the MD5 hashes of "SSH Communications Security QuickSec x.y.z"
@@ -305,6 +309,10 @@ SSH QuickSec 1.1.1	^777fbf4c5af6d1cdd4b895a05bf82594
 SSH QuickSec 1.1.2	^2cdf08e712ede8a5978761267cd19b91
 SSH QuickSec 1.1.3	^59e454a8c2cf02a34959121f1890bc87
 SSH QuickSec 2.1.0	^8f9cc94e01248ecdf147594c284b213b
+
+# Netgear
+# The VID is the MD5 hash of "NETGEAR"
+Netgear	^dbfb81eb5760b0788562067da102d755
 
 # VIDs are MD5 hash of:
 # "IKE Challenge/Response for Authenticated Cryptographic Keys"
@@ -409,6 +417,8 @@ strongSwan 4.0.3	^b181b18e114fc209b3c6e26c3a80718e
 strongSwan 4.0.2	^77e8eea6f556a499de3ffe7f7f95661c
 strongSwan 4.0.1	^9dbbafcf1db0dd595ae065294003ad3e
 strongSwan 4.0.0	^2ce9c946a4c879bf11b50b76cc5692cb
+strongSwan 2.8.9	^0e9e820524932da199a498953afa8a7e
+strongSwan 2.8.8	^8c4a3bcb729b11f703d22a5b39640ca8
 strongSwan 2.8.7	^3a0d4e7ca4e492ed4dfe476d1ac6018b
 strongSwan 2.8.6	^fe3f49706e26a9fb36a87bfce9ea36ce
 strongSwan 2.8.5	^4c7efa31b39e510432a317570d97bbb9
@@ -450,7 +460,8 @@ strongSwan 2.2.0	^85b6cbec480d5c8cd9882c825ac2c244
 # Observed on several devices.  HTTP interface shows that they are XyWALL
 # I suspect that this VID is an SHA-1 hash of something because of the length
 ZyXEL ZyWALL Router	^b858d1addd08c1e8adafea150608aa4497aa6cc8
-ZyXEL ZyWall USG 100	^f758f22668750f03b08df6ebe1d0
+ZyXEL ZyWALL USG 100	^f758f22668750f03b08df6ebe1d0
+ZyXEL ZyWALL	^625027749d5ab97f5616c1602765cf480a3b7d0b
 
 
 # Microsoft Initial Contact
@@ -573,22 +584,47 @@ Openswan 2.1.2	^4f4555656771407e63636578
 Openswan 2.2.0	^4f4548724b6e5e68557c604f
 Openswan 2.3.0	^4f4572696f5c77557f746249
 Openswan 2.3.1	^4f45454355706e735d625c71
+Openswan 2.3.1 X.509-1.5.4 LDAP_V3 PLUTO_SENDS_VENDORID PLUTO_USES_KEYRR	^4f45436f586c544d46766f54
+Openswan 2.3.1 X.509-1.5.4 PLUTO_SENDS_VENDORID PLUTO_USES_KEYRR	^4f454578616c467b5f6f606d
 Openswan 2.4.0	^4f45785c567c6f61507e7864
+Openswan 2.4.0 X.509-1.5.4 PLUTO_SENDS_VENDORID PLUTO_USES_KEYRR	^4f457240604e7f585d6d5869
 Openswan 2.4.1	^4f456e5e4c737d7d62796c51
 Openswan 2.4.10	^4f456971726d54726e464a71
+Openswan 2.4.10 PLUTO_SENDS_VENDORID PLUTO_USES_KEYRR	^4f4574715e655577567a5f41
 Openswan 2.4.11	^4f4550484948576e64636f6b
+Openswan 2.4.11 PLUTO_SENDS_VENDORID PLUTO_USES_KEYRR	^4f457b64445e664a6355766b
 Openswan 2.4.12	^4f456c7c5b79725e4a6a5658
+Openswan 2.4.12 LDAP_V3 PLUTO_SENDS_VENDORID PLUTO_USES_KEYRR	^4f45606c50487c5662707575
+Openswan 2.4.12 PLUTO_SENDS_VENDORID PLUTO_USES_KEYRR	^4f454b427a64597b774d5d40
 Openswan 2.4.13	^4f45445e597f60634770436c
+Openswan 2.4.13 LDAP_V3 PLUTO_SENDS_VENDORID PLUTO_USES_KEYRR	^4f456b5a5d52605d7a7a6f4e
+Openswan 2.4.13 PLUTO_SENDS_VENDORID PLUTO_USES_KEYRR	^4f456066696a417566514d44
 Openswan 2.4.14	^4f454c4e767d475b775e6f56
+Openswan 2.4.14 PLUTO_SENDS_VENDORID PLUTO_USES_KEYRR	^4f455a526b5f4c686e534e63
 Openswan 2.4.15	^4f45675d5e5d7f664c604651
+Openswan 2.4.15 LDAP_V3 PLUTO_SENDS_VENDORID PLUTO_USES_KEYRR	^4f4540784e47627163627858
+Openswan 2.4.15 PLUTO_SENDS_VENDORID PLUTO_USES_KEYRR	^4f457d78546050757b707245
 Openswan 2.4.2	^4f45666a6343554b5f7a4062
 Openswan 2.4.3	^4f4547407c7673775449546e
+Openswan 2.4.3 X.509-1.5.4 LDAP_V3 PLUTO_SENDS_VENDORID PLUTO_USES_KEYRR	^4f455b7075417d5959587e46
 Openswan 2.4.4	^4f45565e6441545f4a664642
+Openswan 2.4.4 X.509-1.5.4 PLUTO_SENDS_VENDORID PLUTO_USES_KEYRR	^4f457a7d4646466667725f65
 Openswan 2.4.5	^4f45587d5d4b4b7c61487b7c
+Openswan 2.4.5 X.509-1.5.4 LDAP_V3 PLUTO_SENDS_VENDORID PLUTO_USES_KEYRR	^4f454766754a5b59657b4168
+Openswan 2.4.5 X.509-1.5.4 PLUTO_SENDS_VENDORID PLUTO_USES_KEYRR	^4f456e4d43757f784f704063
+Openswan 2.4.5dr3 X.509-1.5.4 PLUTO_SENDS_VENDORID PLUTO_USES_KEYRR	^4f45725c5b754061666c425f
 Openswan 2.4.6	^4f45636e6542785f6f6b7257
+Openswan 2.4.6 X.509-1.5.4 LDAP_V3 PLUTO_SENDS_VENDORID PLUTO_USES_KEYRR	^4f456c4c4f5d5264574e5244
+Openswan 2.4.6 X.509-1.5.4 PLUTO_SENDS_VENDORID PLUTO_USES_KEYRR	^4f454e7c454d716b5f4d6c67
+Openswan 2.4.6rc3 X.509-1.5.4 PLUTO_SENDS_VENDORID PLUTO_USES_KEYRR	^4f457a7d6d6c5e5441727070
 Openswan 2.4.7	^4f4552756a414d79434d4951
+Openswan 2.4.7 PLUTO_SENDS_VENDORID PLUTO_USES_KEYRR	^4f455a7e4261425d725c705f
 Openswan 2.4.8	^4f457a6d734b6f476273616c
+Openswan 2.4.8 LDAP_V3 PLUTO_SENDS_VENDORID PLUTO_USES_KEYRR	^4f455d62575860514272754c
+Openswan 2.4.8 PLUTO_SENDS_VENDORID PLUTO_USES_KEYRR	^4f4574514070784e717f5760
 Openswan 2.4.9	^4f45414c5d6a75516450457a
+Openswan 2.4.9 LDAP_V3 PLUTO_SENDS_VENDORID PLUTO_USES_KEYRR	^4f45534a496f60726b636462
+Openswan 2.4.9 PLUTO_SENDS_VENDORID PLUTO_USES_KEYRR	^4f455f5d7b764b67436f4f49
 Openswan 2.5.0	^4f4546477e5e4b5440606859
 Openswan 2.5.00	^4f45495c767449495c5a7350
 Openswan 2.5.01	^4f457260466858434c7e6a45
@@ -629,10 +665,14 @@ Openswan 2.6.17	^4f4554704245584355764571
 Openswan 2.6.18	^4f457d5a765a404d5b4f5744
 Openswan 2.6.19	^4f456b71484c42504f664d44
 Openswan 2.6.20	^4f4543714271574c644b7a41
+Openswan 2.6.20dr2	^4f454970424c6d5f4e5b6f59
+Openswan 2.6.20rc1	^4f4550544259485a67464e66
 Openswan 2.6.21	^4f457e717f6b5a4e727d576b
 Openswan 2.6.22	^4f456c6a405d72544d42754d
 Openswan 2.6.23	^4f456d406b6753464548407f
 Openswan 2.6.24	^4f45557d6068416e77737478
+Openswan 2.6.24rc3	^4f45694b5146645d6863434c
+Openswan 2.6.24rc5	^4f45445743787f6f78467b4d
 Openswan 2.6.25	^4f4543606e547b776f5e5848
 Openswan 2.6.26	^4f45504b7e7a764d4e645f57
 Openswan 2.6.27	^4f456e544e77494c76567e5c
@@ -647,16 +687,43 @@ Openswan 2.6.35	^4f457e487a746b6f69705842
 Openswan 2.6.36	^4f45716c74725d4b5a6c5d5f
 Openswan 2.6.37	^4f45755c645c6a795c5c6170
 Openswan 2.6.38	^4f4576795c6b677a57715c73
+Openswan 2.6.38dr2	^4f454b705270417f765b6b59
+Openswan 2.6.38rc2	^4f45414f75405b4e6b554a50
 Openswan 2.6.39	^4f456d6470475f6c477d767d
+Openswan 2.6.39dr3	^4f456c4e75416271485b7970
+
+# Openswan 2.6.40+ uses "OSW" instead of "OE" as prefix, and the same
+# truncated, "ASCIIfied" MD5 hash (only 9 bytes, to keep the same
+# total length)
+Openswan 2.6.40	^4f53577666617a6f6355505a
+Openswan 2.6.41	^4f535773786c6a4640545359
+Openswan 2.6.42	^4f535751624a50497c705f61
+Openswan 2.6.43	^4f53577b5547416f4c674b64
+
+# Openswan 2.6.44+, keeps the prefix "OSW", but the hashed name
+# changes from "Openswan" to "Linux Openswan"
+Linux Openswan 2.6.44	^4f53574745627352675b5a51
+Linux Openswan 2.6.45	^4f53577e7b6566787577466d
+Linux Openswan 2.6.46	^4f535771775064405e494145
+Linux Openswan 2.6.47	^4f5357584f7a6d66706e7052
+Linux Openswan 2.6.47.1	^4f53575353637b5979536b4c
+Linux Openswan 2.6.48	^4f53576d77657d7c497e6c7c
+Linux Openswan 2.6.49	^4f5357795f4472657a654753
+Linux Openswan 2.6.50dev1	^4f53575e5f45464d62615370
+
+Openswan Unknown Vsn	^4f5357[[:xdigit:]]{18}$
+
+# Libreswan was forked from Openswan 2.6.38, which was forked from
+# FreeS/WAN 1.99.  This signature was taken from Libreswan 3.3 running
+# on Fedora Core 19 x86_64. It appears like the same scheme as
+# openswan, using OEN as the prefix.
+Libreswan 3.3 LDAP_V3	^4f454e574547444b6865684a
+Libreswan 3.5	^4f454e5f52685050487b645e
+Libreswan 3.5 LDAP_V3	^4f454e756f6b706a71757d5c
 
 # General pattern, must come after specific FreeS/WAN and OpenSwan patterns.
+FreeS/WAN or OpenSWAN or Libreswan	^4f454e[[:xdigit:]]{18}$
 FreeS/WAN or OpenSWAN	^4f45[[:xdigit:]]{20}$
-
-#Libreswan was forked from Openswan 2.6.38, which was forked from
-#FreeS/WAN 1.99.  This signature was taken from Libreswan 3.3 running 
-#on Fedora Core 19 x86_64.  It appears like the same scheme as openswan, 
-#but I can't seem to tease out the source string syntax just yet.
-Libreswan 3.3	^4f454e574547444b6865684a
 
 # OpenPGP
 # VID starts with ASCII "OpenPGP".  This is generally followed by some extra
@@ -743,6 +810,9 @@ StoneGate-02	^baeb239037e17787d730eed9d95d48aa
 # 
 Symantec-Raptor-v8.1	^526170746f7220506f77657256706e20536572766572205b56382e315d
 Symantec-Raptor	^526170746f7220506f77657256706e20536572766572
+
+# First 9 bytes seem to be random, last six bytes are the string "Teldat"
+Teldat	^..................54656c646174
 
 # Other things I've seen but not fully classified yet.
 # If anyone can confirm any of these, please let me know.
