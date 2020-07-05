@@ -71,7 +71,7 @@ To see current usage information, run the ike-scan binary like so:
 
 ```ike-scan -h```
 
-Additional documentation is provided on the [NTA Monitor Wiki](http://www.nta-monitor.com/wiki/index.php/Ike-scan_Documentation)
+Additional documentation is provided on the [NTA Monitor Wiki](http://www.royhills.co.uk/wiki/index.php/Ike-scan_Documentation)
 
 To report bugs or suggest new features, please [create a GitHub issue](https://github.com/royhills/ike-scan/issues/new).
 

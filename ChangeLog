@@ -1,3 +1,8 @@
+2020-07-05 Roy Hills <Roy.Hills@nta-monitor.com>
+
+	* README.md, ike-backoff-patterns, ike-scan.1, ike-vendor-ids: Update
+	  wiki references to use new URL http://www.royhills.co.uk/wiki/
+
 2014-05-23 Richard Moore <rich@...>
 
 	* ika-scan.c, ike-scan.c: Added option to bind to a specific interface.
