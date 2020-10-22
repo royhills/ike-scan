@@ -2,6 +2,9 @@ language: c
 compiler:
   - gcc
   - clang
+arch:
+  - amd64
+  - ppc64le
 env:
   # Default build. Release.
   - BUILD_ARGS=""
@@ -14,6 +17,8 @@ matrix:
   exclude:
     - compiler: clang
       env: BUILD_ARGS="--enable-gcov"
+    - compiler: clang
+      arch: ppc64le
 before_install:
   - sudo apt-get update -qq
   - sudo pip install cpp-coveralls
