@@ -150,7 +150,6 @@ main(int argc, char *argv[]) {
       {"situation", required_argument, 0, 'S'},
       {"protocol", required_argument, 0, 'j'},
       {"transid", required_argument, 0, 'k'},
-      {"idfile", required_argument, 0, 'F'},
       {"spisize", required_argument, 0, OPT_SPISIZE},
       {"hdrflags", required_argument, 0, OPT_HDRFLAGS},
       {"hdrmsgid", required_argument, 0, OPT_HDRMSGID},
@@ -174,12 +173,12 @@ main(int argc, char *argv[]) {
  * available short option characters:
  *
  * lower:	-----------------------x--
- * UPPER:	-------H-JK-----Q---U-W-Y-
+ * UPPER:	-----F-H-JK-----Q---U-W-Y-
  * Digits:	01-3456789
  */
    const char *short_options =
       "f:hs:d:r:t:i:b:w:vl:z:m:Ve:a:o::u:n:y:g:p:AG:I:qMRT::P::O:Nc:B:"
-      "L:Z:E:C:D:S:j:k:F:2X:";
+      "L:Z:E:C:D:S:j:k:2X:";
    int arg;
    int options_index=0;
    char filename[MAXLINE];
@@ -253,7 +252,6 @@ main(int argc, char *argv[]) {
    double elapsed_seconds;	/* Elapsed time in seconds */
    char patfile[MAXLINE];	/* IKE Backoff pattern file name */
    char vidfile[MAXLINE];	/* IKE Vendor ID pattern file name */
-   char idfile[MAXLINE];	/* Aggressive Mode ID list */
    char psk_crack_file[MAXLINE];/* PSK crack data output file name */
    unsigned pass_no=0;
    int first_timeout=1;
@@ -273,7 +271,6 @@ main(int argc, char *argv[]) {
    unsigned bandwidth=DEFAULT_BANDWIDTH; /* Bandwidth in bits per sec */
    unsigned char *cookie_data=NULL;
    size_t cookie_data_len;
-   char **idstrings=NULL;
    unsigned int random_seed=0;
 /*
  *      Get program start time for statistics displayed on completion.
@@ -284,7 +281,6 @@ main(int argc, char *argv[]) {
  */
    patfile[0] = '\0';
    vidfile[0] = '\0';
-   idfile[0]  = '\0';
 /*
  *	Set lifetime and lifesize parameters to the default.
  */
@@ -317,6 +313,7 @@ main(int argc, char *argv[]) {
             break;
          case 'h':	/* --help */
             usage(EXIT_SUCCESS, 1);	/* Doesn't return */
+            break;	/* Not required but prevents fall through warning */
          case 's':	/* --sport */
             source_port=Strtoul(optarg, 10);
             break;
@@ -503,9 +500,6 @@ main(int argc, char *argv[]) {
          case 'k':	/* --transid */
             ike_params.trans_id = Strtoul(optarg, 0);
             break;
-         case 'F':	/* --idfile */
-            strlcpy(idfile, optarg, sizeof(idfile));
-            break;
          case OPT_SPISIZE:	/* --spisize */
             ike_params.spi_size=Strtoul(optarg, 0);
             break;
@@ -658,13 +652,6 @@ main(int argc, char *argv[]) {
    if (!filename_flag) 
       if ((argc - optind) < 1)
          usage(EXIT_FAILURE, 0);
-/*
- *	If an ID file was specified, create the ID list from the contents
- *	of this file.
- */
-   if (idfile[0] != '\0') {
-      idstrings=load_id_strings(idfile);
-   }
 /*
  *	Populate the list from the specified file if --file was specified, or
  *	otherwise from the remaining command line arguments.

@@ -1,5 +1,20 @@
 2020-07-05 Roy Hills <Roy.Hills@nta-monitor.com>
 
+	* ike-scan.c: Remove unused variables "idfile" and "idstrings", and
+	  the associated options -F and --idfile.  These were never used, and
+	  were causing warnings with GCC 10.2
+
+	* ike-scan.c: Add "break" statement after call to usage() in options
+	  switch statement.  This isn't required as usage() never returns,
+	  but it's harmless and prevents a "this statement may fall through"
+	  compiler warning with GCC 8.3.0.
+
+	* utils.c: Use labs() rather than abs() when computing time
+	  difference as time_t is normally "long" and using abs() generates
+	  a compiler warning with GCC 10.2
+
+2020-07-05 Roy Hills <Roy.Hills@nta-monitor.com>
+
 	* README.md, ike-backoff-patterns, ike-scan.1, ike-vendor-ids: Update
 	  wiki references to use new URL http://www.royhills.co.uk/wiki/
 

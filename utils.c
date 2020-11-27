@@ -101,7 +101,8 @@ struct timeval diff;
 unsigned diff_ms;
 
    timeval_diff(t1, t2, &diff);	/* diff = t1 - t2 */
-   diff_ms = abs(1000*diff.tv_sec + diff.tv_usec/1000);
+   /* Use labs() rather than abs() because time_t is normally "long" */
+   diff_ms = labs(1000*diff.tv_sec + diff.tv_usec/1000);
    if (diff_ms <= fuzz) {
       return 1;
    } else {
