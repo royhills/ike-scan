@@ -1013,7 +1013,7 @@ add_transform2(int finished, size_t *length, unsigned trans_type,
    size_t len;					/* Transform length */
 /*
  * Construct a transform if we are not finalising.
- * Set next to ISAKMP_NEXT_T (more transforms) 
+ * Set next to ISAKMP_NEXT_T (more transforms)
  */
    if (!finished) {
       trans = make_transform2(&len, ISAKMP_NEXT_T, trans_type, trans_id, attr,

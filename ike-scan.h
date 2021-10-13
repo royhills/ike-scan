@@ -219,7 +219,7 @@ typedef struct {
 
 typedef struct {
    time_list *recv_times; 	/* List of receive times */
-   misc_data *extra;		/* Extra data for this entry */ 
+   misc_data *extra;		/* Extra data for this entry */
    unsigned n;			/* Ordinal number for this entry */
    unsigned timeout;		/* Timeout for this host */
    uint32_t icookie[COOKIE_SIZE];	/* IKE Initiator cookie */

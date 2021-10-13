@@ -75,7 +75,7 @@ timeval_diff(const struct timeval *a, const struct timeval *b,
      temp.tv_usec += 1000000 * nsec;
      temp.tv_sec -= nsec;
    }
- 
+
    /* Compute the time difference
       tv_usec is certainly positive. */
    diff->tv_sec = a->tv_sec - temp.tv_sec;
@@ -273,7 +273,7 @@ hex_or_num(const char *string, size_t *data_len) {
       value_be = htonl(value);
       data = Malloc(len);
       memcpy(data, &value_be, len);
-      
+
       *data_len = len;
       return data;
    }
@@ -777,7 +777,7 @@ str_ccmp( const char *s1, const char *s2 ) {
       if( c1 < c2            )  return  -1;
       if( c1 == 0 && c2 == 0 )  return   0;
    }
-} 
+}
 
 /*
  *	name_or_number -- Calculate the numeric value of a string containing

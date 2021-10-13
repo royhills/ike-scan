@@ -45,14 +45,14 @@
  * Description:
  *
  * ike-scan - The IKE Scanner
- * 
+ *
  * ike-scan sends IKE Phase 1 requests to the specified hosts and displays
  * any responses that are received.  It handles retry and retransmission with
  * backoff to cope with packet loss.
- * 
+ *
  * Use ike-scan --help to display information on the usage and options.
  * See the README file for full details.
- * 
+ *
  */
 
 #include "ike-scan.h"
@@ -603,7 +603,7 @@ main(int argc, char *argv[]) {
          err_sys("ERROR: socket");
       if ((setsockopt(sockfd, IPPROTO_TCP, TCP_NODELAY, &on, sizeof(on))) < 0)
          err_sys("ERROR: setsockopt() failed");
-      if ((setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &on, sizeof(on))) < 0) 
+      if ((setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &on, sizeof(on))) < 0)
          err_sys("ERROR: setsockopt() failed");
    } else if (sourceip_flag) {	/* Raw IP socket */
       const int on = 1;	/* for setsockopt() */
@@ -649,7 +649,7 @@ main(int argc, char *argv[]) {
  *	If we're not reading from a file, then we must have some hosts
  *	given as command line arguments.
  */
-   if (!filename_flag) 
+   if (!filename_flag)
       if ((argc - optind) < 1)
          usage(EXIT_FAILURE, 0);
 /*
@@ -2193,7 +2193,7 @@ initialise_ike_packet(size_t *packet_out_len, ike_packet_params *params) {
       transforms = add_trans_simple(1, &trans_len, 0, 0, 0, 0, 0, NULL, 0,
                                     NULL, 0, 0, NULL, 0, 0);
    }
- 
+
    if (params->ike_version != 1) {	/* IKEv2 Transforms */
       unsigned char *attr;
       size_t attr_len;
@@ -2392,7 +2392,7 @@ dump_backoff(unsigned pattern_fuzz) {
             printf("\n");
          } else {
             printf(", ");
-         } 
+         }
       }
       pl = pl->next;
       i++;
@@ -2580,7 +2580,7 @@ add_recv_time(host_entry *he, struct timeval *last_recv_time) {
    time_list *te;	/* New timeentry pointer */
 /*
  *	Allocate and initialise new time structure
- */   
+ */
    te = Malloc(sizeof(time_list));
    Gettimeofday(&(te->time));
    last_recv_time->tv_sec = te->time.tv_sec;
@@ -2712,7 +2712,7 @@ add_pattern(char *line, unsigned pattern_fuzz) {
  *	Separate line from patterns file into "name" and "pat" using the
  *	regex pattern.
  *	Issue a warning if we cannot parse the line.  Die if we get a regex
- *	error. 
+ *	error.
  */
    result = regexec(&backoff_pat, line, 3, pmatch, 0);
    if (result == REG_NOMATCH || pmatch[1].rm_so < 0 || pmatch[2].rm_so < 0) {
