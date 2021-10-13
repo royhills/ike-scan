@@ -1,6 +1,6 @@
 dnl Process this file with autoconf to produce a configure script.
 
-AC_INIT([ike-scan],[1.9.4],[https://github.com/royhills/ike-scan])
+AC_INIT([ike-scan],[1.9.5],[https://github.com/royhills/ike-scan])
 AC_PREREQ(2.61)
 AC_REVISION($Revision$)
 AC_CONFIG_SRCDIR([ike-scan.c])
