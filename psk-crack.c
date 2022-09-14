@@ -425,7 +425,7 @@ load_psk_params(const char *filename, const char *nortel_user) {
          pe->hash_type=HASH_TYPE_SHA1;
          pe->hash_name=make_message("SHA1");
       } else {
-         err_msg("Cannot determine hash type from %u byte HASH_R",
+         err_msg("Cannot determine hash type from %zu byte HASH_R",
                  pe->hash_r_len);
       }
       pe->live = 1;

@@ -1278,7 +1278,7 @@ make_ke(size_t *length, unsigned next, size_t kx_data_len) {
    unsigned i;
 
    if (kx_data_len % 4)
-      err_msg("Key exchange data length %d is not a multiple of 4",
+      err_msg("Key exchange data length %zu is not a multiple of 4",
               kx_data_len);
 
    payload = Malloc(sizeof(struct isakmp_kx)+kx_data_len);
@@ -1322,7 +1322,7 @@ make_ke2(size_t *length, unsigned next, unsigned dh_group, size_t kx_data_len) {
    unsigned i;
 
    if (kx_data_len % 4)
-      err_msg("Key exchange data length %d is not a multiple of 4",
+      err_msg("Key exchange data length %zu is not a multiple of 4",
               kx_data_len);
 
    payload = Malloc(sizeof(struct isakmp_kx2)+kx_data_len);
@@ -1920,7 +1920,7 @@ process_attr(unsigned char **cp, size_t *len) {
    if (attr_type == 'B')
       msg = make_message("%s=%s", attr_class_str, attr_value_str);
    else
-      msg = make_message("%s(%u)=0x%s", attr_class_str, value_len,
+      msg = make_message("%s(%zu)=0x%s", attr_class_str, value_len,
                          attr_value_str);
 
    free(attr_class_str);
@@ -2394,7 +2394,7 @@ process_cert(unsigned char *cp, size_t len, unsigned next) {
    data_len = ntohs(hdr->isag_length) < len ? ntohs(hdr->isag_length) : len;
    data_len -= sizeof(struct isakmp_generic) + 1;
 
-   msg=make_message("%s(Type=%s, Length=%u bytes)",
+   msg=make_message("%s(Type=%s, Length=%zu bytes)",
                     id_to_name(next, payload_map),
                     id_to_name(cert_type, cert_map), data_len);
 

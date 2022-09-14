@@ -843,7 +843,7 @@ main(int argc, char *argv[]) {
       interval = ((IKE_UINT64)(packet_out_len+PACKET_OVERHEAD) * 8 * 1000000) /
                  bandwidth;
       if (verbose) {
-         warn_msg("DEBUG: pkt len=%u bytes, bandwidth=%u bps, int=%u us",
+         warn_msg("DEBUG: pkt len=%zu bytes, bandwidth=%u bps, int=%u us",
                   packet_out_len, bandwidth, interval);
       }
    }
@@ -1815,7 +1815,7 @@ send_packet(int s, unsigned char *packet_out, size_t packet_out_len,
    if (nsent < 0) {
       err_sys("ERROR: sendto");
    } else if ((unsigned)nsent != packet_out_len) {
-      warn_msg("WARNING: sendto: only %d bytes sent, but %u requested",
+      warn_msg("WARNING: sendto: only %d bytes sent, but %zu requested",
                nsent, packet_out_len);
    }
 /*
