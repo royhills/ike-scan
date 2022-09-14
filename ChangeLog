@@ -1,3 +1,10 @@
+2022-09-14 Roy Hills <Roy.Hills@nta-monitor.com>
+
+        * README.md, .github/workflows/*: Migrated from travis-ci to github
+          actions for CI/CD build check and code coverage report.
+
+        * .travis.yml: removed as no longer needed.
+
 2020-07-05 Roy Hills <Roy.Hills@nta-monitor.com>
 
 	* ike-scan.c: Remove unused variables "idfile" and "idstrings", and

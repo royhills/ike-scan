@@ -1,7 +1,7 @@
 # ike-scan
 
 [![Build](https://github.com/royhills/ike-scan/actions/workflows/c-cpp.yml/badge.svg)](https://github.com/royhills/ike-scan/actions/workflows/c-cpp.yml)
-[![Coverage Status](https://coveralls.io/repos/royhills/ike-scan/badge.png?branch=master)](https://coveralls.io/r/royhills/ike-scan?branch=master)
+[![Coverage Status](https://coveralls.io/repos/github/royhills/ike-scan/badge.svg?branch=master)](https://coveralls.io/github/royhills/ike-scan?branch=master)
 
 Discover and fingerprint IKE hosts (IPsec VPN Servers)
 
