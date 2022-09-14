@@ -1511,7 +1511,7 @@ display_packet(int n, unsigned char *packet_in, host_entry *he,
       clock_seconds = time_tv.tv_sec;
       time_tm = localtime(&clock_seconds);
       cp = msg;
-      msg = make_message("%s%02d:%02d:%02d.%06u ", cp,
+      msg = make_message("%s%02d:%02d:%02d.%06ld ", cp,
                          time_tm->tm_hour, time_tm->tm_min, time_tm->tm_sec,
                          time_tv.tv_usec);
       free(cp);
