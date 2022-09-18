@@ -70,7 +70,7 @@ echo "notthisone"  > $LONGDICTFILE
 echo "12345678901234567890123456789012345678901234567890123456789012345"  >> $LONGDICTFILE
 #
 echo "Checking psk-crack bruteforce with uncrackable MD5 and SHA1 hashes ..."
-$srcdir/psk-crack --verbose --bruteforce=6 --charset=abc123 $PSK >$TMPFILE
+./psk-crack --verbose --bruteforce=6 --charset=abc123 $PSK >$TMPFILE
 if test $? -ne 0; then
    rm -f $TMPFILE
    rm -f $DICTFILE
@@ -97,7 +97,7 @@ fi
 echo "ok"
 #
 echo "Checking psk-crack dictionary with uncrackable MD5 and SHA1 hashes ..."
-$srcdir/psk-crack --verbose --dictionary=$DICTFILE $PSK >$TMPFILE
+./psk-crack --verbose --dictionary=$DICTFILE $PSK >$TMPFILE
 if test $? -ne 0; then
    rm -f $TMPFILE
    rm -f $DICTFILE
@@ -124,7 +124,7 @@ fi
 echo "ok"
 #
 echo "Checking psk-crack dictionary with 65-character MD5 PSK ..."
-$srcdir/psk-crack --verbose --verbose --dictionary=$LONGDICTFILE $LONGMD5PSK >$TMPFILE
+./psk-crack --verbose --verbose --dictionary=$LONGDICTFILE $LONGMD5PSK >$TMPFILE
 if test $? -ne 0; then
    rm -f $TMPFILE
    rm -f $LONGDICTFILE
@@ -143,7 +143,7 @@ fi
 echo "ok"
 #
 echo "Checking psk-crack dictionary with 65-character SHA1 PSK ..."
-$srcdir/psk-crack --verbose --verbose --dictionary=$LONGDICTFILE $LONGSHA1PSK >$TMPFILE
+./psk-crack --verbose --verbose --dictionary=$LONGDICTFILE $LONGSHA1PSK >$TMPFILE
 if test $? -ne 0; then
    rm -f $TMPFILE
    rm -f $LONGDICTFILE

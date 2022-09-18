@@ -1,3 +1,13 @@
+2022-09-18 Roy Hills <Roy.Hills@nta-monitor.com>
+
+	* check-decode, check-error, check-packet, check-psk-crack-1,
+	  check-psk-crack-2, check-psk-crack-3, check-psk-crack-4,
+	  check-run1, check-run2, check-run3, check-vendor-ids: Changed
+	  "$srcdir/ike-scan" to "./ike-scan" in test scripts so
+	  "make distcheck" succeeds.
+
+	* .github/workflows/c-cpp.yml: Enable "make distcheck" step.
+
 2022-09-14 Roy Hills <Roy.Hills@nta-monitor.com>
 
         * README.md, .github/workflows/*: Migrated from travis-ci to github

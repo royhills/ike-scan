@@ -30,7 +30,7 @@
 TMPFILE=/tmp/ike-scan-test.$$.tmp
 #
 echo "Checking ike-scan internal lists ..."
-$srcdir/ike-scan --nodns --sport=0 --dport=33434 -v -v -v --showbackoff \
+./ike-scan --nodns --sport=0 --dport=33434 -v -v -v --showbackoff \
    --retry=1 --patterns=$srcdir/ike-backoff-patterns \
    --vidpatterns=$srcdir/ike-vendor-ids 127.0.0.1 >$TMPFILE 2>&1
 if test $? -ne 0; then

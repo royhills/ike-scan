@@ -29,7 +29,7 @@
 TMPFILE=/tmp/ike-scan-test.$$.tmp
 #
 echo "Checking psk-crack --help ..."
-$srcdir/psk-crack --help 2> $TMPFILE
+./psk-crack --help 2> $TMPFILE
 if test $? -ne 0; then
    rm -f $TMPFILE
    echo "FAILED"
@@ -44,7 +44,7 @@ fi
 echo "ok"
 #
 echo "Checking psk-crack --version ..."
-$srcdir/psk-crack --version 2> $TMPFILE
+./psk-crack --version 2> $TMPFILE
 if test $? -ne 0; then
    rm -f $TMPFILE
    echo "FAILED"

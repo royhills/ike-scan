@@ -28,7 +28,7 @@ TMPFILE=/tmp/ike-scan-test.$$.tmp
 #
 echo "Checking ike-scan --vendor odd hex data ..."
 IKEARGS="--sport=0 --retry=1 --nodns --vendor=deadbee"
-$srcdir/ike-scan $IKEARGS 127.0.0.1 >$TMPFILE 2>&1
+./ike-scan $IKEARGS 127.0.0.1 >$TMPFILE 2>&1
 if test $? -eq 0; then
    rm -f $TMPFILE
    echo "FAILED"
@@ -45,7 +45,7 @@ rm -f $TMPFILE
 #
 echo "Checking ike-scan --gssid odd hex data ..."
 IKEARGS="--sport=0 --retry=1 --nodns --gssid=deadbee"
-$srcdir/ike-scan $IKEARGS 127.0.0.1 >$TMPFILE 2>&1
+./ike-scan $IKEARGS 127.0.0.1 >$TMPFILE 2>&1
 if test $? -eq 0; then
    rm -f $TMPFILE
    echo "FAILED"
@@ -62,7 +62,7 @@ rm -f $TMPFILE
 #
 echo "Checking ike-scan --certreq odd hex data ..."
 IKEARGS="--sport=0 --retry=1 --nodns --certreq=deadbee"
-$srcdir/ike-scan $IKEARGS 127.0.0.1 >$TMPFILE 2>&1
+./ike-scan $IKEARGS 127.0.0.1 >$TMPFILE 2>&1
 if test $? -eq 0; then
    rm -f $TMPFILE
    echo "FAILED"
@@ -79,7 +79,7 @@ rm -f $TMPFILE
 #
 echo "Checking ike-scan --cookie odd hex data ..."
 IKEARGS="--sport=0 --retry=1 --nodns --cookie=deadbee"
-$srcdir/ike-scan $IKEARGS 127.0.0.1 >$TMPFILE 2>&1
+./ike-scan $IKEARGS 127.0.0.1 >$TMPFILE 2>&1
 if test $? -eq 0; then
    rm -f $TMPFILE
    echo "FAILED"
@@ -96,7 +96,7 @@ rm -f $TMPFILE
 #
 echo "Checking ike-scan --rcookie odd hex data ..."
 IKEARGS="--sport=0 --retry=1 --nodns --rcookie=deadbee"
-$srcdir/ike-scan $IKEARGS 127.0.0.1 >$TMPFILE 2>&1
+./ike-scan $IKEARGS 127.0.0.1 >$TMPFILE 2>&1
 if test $? -eq 0; then
    rm -f $TMPFILE
    echo "FAILED"
@@ -113,7 +113,7 @@ rm -f $TMPFILE
 #
 echo "Checking ike-scan invalid option ..."
 IKEARGS="--sport=0 --retry=1 --nodns --invalidoption"
-$srcdir/ike-scan $IKEARGS 127.0.0.1 >$TMPFILE 2>&1
+./ike-scan $IKEARGS 127.0.0.1 >$TMPFILE 2>&1
 if test $? -eq 0; then
    rm -f $TMPFILE
    echo "FAILED"
@@ -130,7 +130,7 @@ rm -f $TMPFILE
 #
 echo "Checking ike-scan invalid --sourceip value ..."
 IKEARGS="--sport=0 --retry=1 --nodns --sourceip=invalidipaddress"
-$srcdir/ike-scan $IKEARGS 127.0.0.1 >$TMPFILE 2>&1
+./ike-scan $IKEARGS 127.0.0.1 >$TMPFILE 2>&1
 if test $? -eq 0; then
    rm -f $TMPFILE
    echo "FAILED"
@@ -147,7 +147,7 @@ rm -f $TMPFILE
 #
 echo "Checking ike-scan invalid target address ..."
 IKEARGS="--sport=0 --retry=1 --nodns"
-$srcdir/ike-scan $IKEARGS invalidipaddress >$TMPFILE 2>&1
+./ike-scan $IKEARGS invalidipaddress >$TMPFILE 2>&1
 if test $? -eq 0; then
    rm -f $TMPFILE
    echo "FAILED"
@@ -164,7 +164,7 @@ rm -f $TMPFILE
 #
 echo "Checking ike-scan non-existant target filename  ..."
 IKEARGS="--sport=0 --retry=1 --nodns"
-$srcdir/ike-scan $IKEARGS --file=ike-scan-no-such-file >$TMPFILE 2>&1
+./ike-scan $IKEARGS --file=ike-scan-no-such-file >$TMPFILE 2>&1
 if test $? -eq 0; then
    rm -f $TMPFILE
    echo "FAILED"

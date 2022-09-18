@@ -28,7 +28,7 @@
 TMPFILE=/tmp/ike-scan-test.$$.tmp
 #
 echo "Checking ike-scan vendor-ids ..."
-$srcdir/ike-scan -v -v -v --vidpatterns=ike-vendor-ids --sport=1024 --dport=1024 127.0.0.1 >$TMPFILE 2>&1
+./ike-scan -v -v -v --vidpatterns=ike-vendor-ids --sport=1024 --dport=1024 127.0.0.1 >$TMPFILE 2>&1
 if test $? -ne 0; then
    rm -f $TMPFILE
    echo "FAILED - ike-scan returned non-zero exit code"

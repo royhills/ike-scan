@@ -41,7 +41,7 @@ SAMPLE06="$srcdir/pkt-single-trans.dat"
 #
 echo "Checking ike-scan default packet against $SAMPLE01 ..."
 IKEARGS="--sport=0 --retry=1 --nodns --cookie=deadbeefdeadbeef --file=- --timeout=100 --interval=50 --quiet --timestamp --shownum --backoff=2.0"
-echo "127.0.0.1" | $srcdir/ike-scan $IKEARGS --writepkttofile=$TMPFILE >/dev/null 2>&1
+echo "127.0.0.1" | ./ike-scan $IKEARGS --writepkttofile=$TMPFILE >/dev/null 2>&1
 if test $? -ne 0; then
    rm -f $TMPFILE
    echo "FAILED"
@@ -58,7 +58,7 @@ rm -f $TMPFILE
 #
 echo "Checking ike-scan custom packet (adv trans) against $SAMPLE02 ..."
 IKEARGS="--sport=0 --retry=1 --nodns --cookie=deadbeefdeadbeef --mbz=255 --trans=(1=1,2=1,3=1,4=1) --trans=(1=7,14=128,2=1,3=3,4=5) --trans=(1=5,2=2,3=3,4=2,11=1,12=0x00007080,11=2,12=0x00100000) --vendor=deadbeef --vendor=00010203 --bandwidth=64K"
-$srcdir/ike-scan $IKEARGS --writepkttofile=$TMPFILE 127.0.0.1 >/dev/null 2>&1
+./ike-scan $IKEARGS --writepkttofile=$TMPFILE 127.0.0.1 >/dev/null 2>&1
 if test $? -ne 0; then
    rm -f $TMPFILE
    echo "FAILED"
@@ -75,7 +75,7 @@ rm -f $TMPFILE
 #
 echo "Checking ike-scan aggressive mode packet against $SAMPLE03 ..."
 IKEARGS="--sport=0 --retry=1 --nodns --cookie=deadbeefdeadbeef --randomseed=1234 --aggressive --id=royhills@hotmail.com --idtype=3 --dhgroup=2 --noncelen=20"
-$srcdir/ike-scan $IKEARGS --writepkttofile=$TMPFILE 127.0.0.1 >/dev/null 2>&1
+./ike-scan $IKEARGS --writepkttofile=$TMPFILE 127.0.0.1 >/dev/null 2>&1
 if test $? -ne 0; then
    rm -f $TMPFILE
    echo "FAILED"
@@ -92,7 +92,7 @@ rm -f $TMPFILE
 #
 echo "Checking ike-scan malformed packet against $SAMPLE04 ..."
 IKEARGS="--sport=0 --retry=1 --nodns --cookie=deadbeefdeadbeef --randomseed=1234 --multiline --lifetime=32 --lifesize=64 --auth=3 --gssid=deadbeef --headerlen=+10 --headerver=0x32  --certreq=203040 --doi=2 --situation=3 --protocol=4 --transid=5 --spisize=4 --hdrflags=127 --hdrmsgid=1234 --exchange=6 --nextpayload=57 --rcookie=deadbeefdeadbeef"
-$srcdir/ike-scan $IKEARGS --writepkttofile=$TMPFILE 127.0.0.1 >/dev/null 2>&1
+./ike-scan $IKEARGS --writepkttofile=$TMPFILE 127.0.0.1 >/dev/null 2>&1
 if test $? -ne 0; then
    rm -f $TMPFILE
    echo "FAILED"
@@ -109,7 +109,7 @@ rm -f $TMPFILE
 #
 echo "Checking ike-scan IKEv2 packet against $SAMPLE05 ..."
 IKEARGS="--sport=0 --retry=1 --nodns --cookie=deadbeefdeadbeef --randomseed=1234 --ikev2"
-$srcdir/ike-scan $IKEARGS --writepkttofile=$TMPFILE 127.0.0.1 >/dev/null 2>&1
+./ike-scan $IKEARGS --writepkttofile=$TMPFILE 127.0.0.1 >/dev/null 2>&1
 if test $? -ne 0; then
    rm -f $TMPFILE
    echo "FAILED"
@@ -126,7 +126,7 @@ rm -f $TMPFILE
 #
 echo "Checking ike-scan single trans packet against $SAMPLE06 ..."
 IKEARGS="--sport=0 --retry=1 --nodns --cookie=deadbeefdeadbeef --lifetime=none --lifesize=none --trans=5,2,3,2"
-$srcdir/ike-scan $IKEARGS --writepkttofile=$TMPFILE 127.0.0.1 >/dev/null 2>&1
+./ike-scan $IKEARGS --writepkttofile=$TMPFILE 127.0.0.1 >/dev/null 2>&1
 if test $? -ne 0; then
    rm -f $TMPFILE
    echo "FAILED"

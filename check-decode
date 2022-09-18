@@ -67,7 +67,7 @@ cat >$EXAMPLEOUTPUT <<_EOF_
 
 _EOF_
 IKEARGS="-s 0 -r 1 -N -M -I $srcdir/ike-vendor-ids --cookie=deadbeefdeadbeef"
-$srcdir/ike-scan $IKEARGS --readpktfromfile=$SAMPLE01 127.0.0.1 | grep -v '^Starting ike-scan ' | grep -v '^Ending ike-scan ' >$IKESCANOUTPUT 2>&1
+./ike-scan $IKEARGS --readpktfromfile=$SAMPLE01 127.0.0.1 | grep -v '^Starting ike-scan ' | grep -v '^Ending ike-scan ' >$IKESCANOUTPUT 2>&1
 if test $? -ne 0; then
    rm -f $IKESCANOUTPUT
    rm -f $EXAMPLEOUTPUT
@@ -102,7 +102,7 @@ IKE PSK parameters (g_xr:g_xi:cky_r:cky_i:sai_b:idir_b:ni_b:nr_b:hash_r):
 9a1f1fce36808165e6b253df5845567aebe67bcbcfed3f3347ca6349926bbc9f9bdc2ce1a3297ae7ffaf0fe86b4ae05ae63e2bf084b7f78c19d154560067b9a1492259a203df7d3d286dc093e1ea64f0683fb7bc1bbdd98fd34cd6568a9547573a9933f0d44aab7b21499d5995797cf183392a3dac51cb320fa56c0c57cff1bd:745db39c98420dc9f9d777c58f7eacc7b1da54dc17a1c845e92490269a5cc6461e20d232ab7e47cd9e84aed0ec9e48f57c1fa8281a1f3de07635bb1dbae9995b78e84d0370374180dc1da17c456df7ae506dbd54c9a373b67fc979cdf6c0c85efe092719af8daa8f3296550ef00eca80fb5652714c5486032539ab0522f7d7c5:61a878367079dd35:deadbeefdeadbeef:00000001000000010000009801010004030000240101000080010005800200028003000180040002800b0001000c000400007080030000240201000080010005800200018003000180040002800b0001000c000400007080030000240301000080010001800200028003000180040002800b0001000c000400007080000000240401000080010001800200018003000180040002800b0001000c000400007080:011101f43e0369fb:2f6b0731d3e2667f2685429f35dc5dd1ccec0e70:8ffc97aebdf3ea384341f12392043badce30c230:950d8c8ea94a4af3d0b078372e81608890485b54
 _EOF_
 IKEARGS="-s 0 -r 1 -N -A -M --randomseed=1234 -I $srcdir/ike-vendor-ids --cookie=deadbeefdeadbeef --pskcrack"
-$srcdir/ike-scan $IKEARGS --readpktfromfile=$SAMPLE02 127.0.0.1 | grep -v '^Starting ike-scan ' | grep -v '^Ending ike-scan ' >$IKESCANOUTPUT 2>&1
+./ike-scan $IKEARGS --readpktfromfile=$SAMPLE02 127.0.0.1 | grep -v '^Starting ike-scan ' | grep -v '^Ending ike-scan ' >$IKESCANOUTPUT 2>&1
 if test $? -ne 0; then
    rm -f $IKESCANOUTPUT
    rm -f $EXAMPLEOUTPUT
@@ -127,7 +127,7 @@ cat >$EXAMPLEOUTPUT <<_EOF_
 
 _EOF_
 IKEARGS="-s 0 -r 1 -N -M -I $srcdir/ike-vendor-ids --cookie=deadbeefdeadbeef"
-$srcdir/ike-scan $IKEARGS --readpktfromfile=$SAMPLE03 127.0.0.1 | grep -v '^Starting ike-scan ' | grep -v '^Ending ike-scan ' >$IKESCANOUTPUT 2>&1
+./ike-scan $IKEARGS --readpktfromfile=$SAMPLE03 127.0.0.1 | grep -v '^Starting ike-scan ' | grep -v '^Ending ike-scan ' >$IKESCANOUTPUT 2>&1
 if test $? -ne 0; then
    rm -f $IKESCANOUTPUT
    rm -f $EXAMPLEOUTPUT
@@ -155,7 +155,7 @@ cat >$EXAMPLEOUTPUT <<_EOF_
 
 _EOF_
 IKEARGS="-s 0 -r 1 -N -M -I $srcdir/ike-vendor-ids --cookie=deadbeefdeadbeef"
-$srcdir/ike-scan $IKEARGS --readpktfromfile=$SAMPLE04 127.0.0.1 | grep -v '^Starting ike-scan ' | grep -v '^Ending ike-scan ' >$IKESCANOUTPUT 2>&1
+./ike-scan $IKEARGS --readpktfromfile=$SAMPLE04 127.0.0.1 | grep -v '^Starting ike-scan ' | grep -v '^Ending ike-scan ' >$IKESCANOUTPUT 2>&1
 if test $? -ne 0; then
    rm -f $IKESCANOUTPUT
    rm -f $EXAMPLEOUTPUT
@@ -180,7 +180,7 @@ cat >$EXAMPLEOUTPUT <<_EOF_
 
 _EOF_
 IKEARGS="-s 0 -r 1 -N -M -I $srcdir/ike-vendor-ids --cookie=deadbeefdeadbeef"
-$srcdir/ike-scan $IKEARGS --readpktfromfile=$SAMPLE05 127.0.0.1 | grep -v '^Starting ike-scan ' | grep -v '^Ending ike-scan ' >$IKESCANOUTPUT 2>&1
+./ike-scan $IKEARGS --readpktfromfile=$SAMPLE05 127.0.0.1 | grep -v '^Starting ike-scan ' | grep -v '^Ending ike-scan ' >$IKESCANOUTPUT 2>&1
 if test $? -ne 0; then
    rm -f $IKESCANOUTPUT
    rm -f $EXAMPLEOUTPUT
@@ -211,7 +211,7 @@ cat >$EXAMPLEOUTPUT <<_EOF_
 
 _EOF_
 IKEARGS="-s 0 -r 1 -N -A -M -I $srcdir/ike-vendor-ids --cookie=deadbeefdeadbeef"
-$srcdir/ike-scan $IKEARGS --readpktfromfile=$SAMPLE06 127.0.0.1 | grep -v '^Starting ike-scan ' | grep -v '^Ending ike-scan ' >$IKESCANOUTPUT 2>&1
+./ike-scan $IKEARGS --readpktfromfile=$SAMPLE06 127.0.0.1 | grep -v '^Starting ike-scan ' | grep -v '^Ending ike-scan ' >$IKESCANOUTPUT 2>&1
 if test $? -ne 0; then
    rm -f $IKESCANOUTPUT
    rm -f $EXAMPLEOUTPUT
@@ -238,7 +238,7 @@ cat >$EXAMPLEOUTPUT <<_EOF_
 
 _EOF_
 IKEARGS="--nat-t -s 0 -r 1 -N -M -I $srcdir/ike-vendor-ids --cookie=deadbeefdeadbeef"
-$srcdir/ike-scan $IKEARGS --readpktfromfile=$SAMPLE07 127.0.0.1 | grep -v '^Starting ike-scan ' | grep -v '^Ending ike-scan ' >$IKESCANOUTPUT 2>&1
+./ike-scan $IKEARGS --readpktfromfile=$SAMPLE07 127.0.0.1 | grep -v '^Starting ike-scan ' | grep -v '^Ending ike-scan ' >$IKESCANOUTPUT 2>&1
 if test $? -ne 0; then
    rm -f $IKESCANOUTPUT
    rm -f $EXAMPLEOUTPUT
@@ -263,7 +263,7 @@ cat >$EXAMPLEOUTPUT <<_EOF_
 
 _EOF_
 IKEARGS="-s 0 -r 1 -N -M -I $srcdir/ike-vendor-ids --cookie=deadbeefdeadbeef"
-$srcdir/ike-scan $IKEARGS --readpktfromfile=$SAMPLE08 127.0.0.1 | grep -v '^Starting ike-scan ' | grep -v '^Ending ike-scan ' >$IKESCANOUTPUT 2>&1
+./ike-scan $IKEARGS --readpktfromfile=$SAMPLE08 127.0.0.1 | grep -v '^Starting ike-scan ' | grep -v '^Ending ike-scan ' >$IKESCANOUTPUT 2>&1
 if test $? -ne 0; then
    rm -f $IKESCANOUTPUT
    rm -f $EXAMPLEOUTPUT

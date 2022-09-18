@@ -47,7 +47,7 @@ echo "abc123"     >> $DICTFILE
 echo "xyz123"     >> $DICTFILE
 #
 echo "Checking psk-crack bruteforce with Nortel Contivity MD5 hash ..."
-$srcdir/psk-crack --norteluser=test --bruteforce=6 --charset=abc123 $MD5PSK >$TMPFILE
+./psk-crack --norteluser=test --bruteforce=6 --charset=abc123 $MD5PSK >$TMPFILE
 if test $? -ne 0; then
    rm -f $TMPFILE
    rm -f $DICTFILE
@@ -68,7 +68,7 @@ fi
 echo "ok"
 #
 echo "Checking psk-crack bruteforce with Nortel Contivity SHA1 hash ..."
-$srcdir/psk-crack --norteluser=test --bruteforce=6 --charset=abc123 $SHA1PSK > $TMPFILE
+./psk-crack --norteluser=test --bruteforce=6 --charset=abc123 $SHA1PSK > $TMPFILE
 if test $? -ne 0; then
    rm -f $TMPFILE
    rm -f $DICTFILE
@@ -89,7 +89,7 @@ fi
 echo "ok"
 #
 echo "Checking psk-crack dictionary with Nortel Contivity MD5 hash ..."
-$srcdir/psk-crack --norteluser=test --dictionary=$DICTFILE $MD5PSK >$TMPFILE
+./psk-crack --norteluser=test --dictionary=$DICTFILE $MD5PSK >$TMPFILE
 if test $? -ne 0; then
    rm -f $TMPFILE
    rm -f $DICTFILE
@@ -110,7 +110,7 @@ fi
 echo "ok"
 #
 echo "Checking psk-crack dictionary with Nortel Contivity SHA1 hash ..."
-$srcdir/psk-crack --norteluser=test --dictionary=$DICTFILE $SHA1PSK > $TMPFILE
+./psk-crack --norteluser=test --dictionary=$DICTFILE $SHA1PSK > $TMPFILE
 if test $? -ne 0; then
    rm -f $TMPFILE
    rm -f $DICTFILE
