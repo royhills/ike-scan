@@ -144,7 +144,7 @@ int does_int64_work()
     return 0;
   return 1;
 }
-main() {
+int main() {
   return ! does_int64_work();
 }],
 [Ac_cachevar=yes],
@@ -200,7 +200,7 @@ int does_int64_snprintf_work()
     return 0;			/* either multiply or snprintf is busted */
   return 1;
 }
-main() {
+int main() {
   return ! does_int64_snprintf_work();
 }],
 [pgac_cv_snprintf_long_long_int_format=$pgac_format; break],
