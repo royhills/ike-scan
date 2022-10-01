@@ -144,7 +144,7 @@ int does_int64_work()
     return 0;
   return 1;
 }
-main() {
+int main() {
   return ! does_int64_work();
 }],
 [Ac_cachevar=yes],
@@ -200,7 +200,7 @@ int does_int64_snprintf_work()
     return 0;			/* either multiply or snprintf is busted */
   return 1;
 }
-main() {
+int main() {
   return ! does_int64_snprintf_work();
 }],
 [pgac_cv_snprintf_long_long_int_format=$pgac_format; break],
@@ -278,7 +278,7 @@ dnl in <features.h>. We don't use __GNUC_PREREQ directly because <features.h>
 dnl is not present on all the operating systems that we support, e.g. OpenBSD.
 dnl
 AC_DEFUN([GCC_FORTIFY_SOURCE],[
-   if test "x$CC" != "X"; then
+   if test "X$CC" != "X"; then
       AC_MSG_CHECKING([whether ${CC} accepts -D_FORTIFY_SOURCE])
       AC_TRY_COMPILE(,[
          #define GNUC_PREREQ(maj, min) ((__GNUC__ << 16) + __GNUC_MINOR__ >= ((maj) << 16) + (min))
@@ -311,7 +311,7 @@ dnl If it is not supported, then the test program will compile without
 dnl warnings.
 dnl
 AC_DEFUN([GCC_FORMAT_SECURITY],[
-   if test "x$CC" != "X"; then
+   if test "X$CC" != "X"; then
       AC_MSG_CHECKING([whether ${CC} accepts -Wformat-security])
       wfs_old_cflags="$CFLAGS"
       CFLAGS="$CFLAGS -Wall -Werror -Wformat -Wformat-security"
