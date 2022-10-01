@@ -34,8 +34,8 @@ if test -n "$GCC"; then
    CFLAGS="$CFLAGS -Wall -Wshadow -Wwrite-strings"
    GCC_WEXTRA
    GCC_STACK_PROTECT_CC
-   GCC_FORTIFY_SOURCE
    GCC_FORMAT_SECURITY
+   GCC_FORTIFY_SOURCE
 dnl Uncomment the lines below for testing with stricter warnings.
 dnl CFLAGS="$CFLAGS -pedantic -Wpointer-arith -Wcast-qual -Wcast-align -Wconversion -Wstrict-prototypes -Wmissing-prototypes -Wmissing-declarations -Wnested-externs -Winline "
 dnl Uncomment the line below to check malloc/free with electric fence
