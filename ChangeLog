@@ -1,3 +1,24 @@
+2022-10-02 Roy Hills <Roy.Hills@hotmail.com>
+
+	* acinclude.m4: Replaced obsolete autoconf macros AC_TRY_COMPILE with
+          AC_COMPILE_IFELSE. This macro was obsoleted in autoconf 2.70.
+
+	* configure.ac: Remove obsolescent autoconf macros: AC_HEADER_STDC,
+	  AC_C_CONST, AC_HEADER_TIME - all modern systems have an ANSI C
+	  compiler with working const and time headers. Incremented version
+	  number to reflect recent changes.
+
+	* ike-scan.h: Include ASNI C headers unconditionally. Include
+	  <sys/time.h> if HAVE_SYS_TIME_H is defined.
+
+2022-10-01 Sam James <sam@gentoo.org>
+
+	* configure.ac: Fix recognising -Wformat-security with Clang
+
+	* acinclude.m4: fix typo in 'x' if check (was using lowercase 'x'
+	  on one side of comparison and uppercase 'X' on the other side).
+	  Declare main() as int to fix -Wimplicit-int errors.
+
 2022-09-18 Roy Hills <Roy.Hills@nta-monitor.com>
 
 	* check-decode, check-error, check-packet, check-psk-crack-1,

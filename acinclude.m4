@@ -8,7 +8,7 @@ dnl
 AC_DEFUN([AC_NTA_CHECK_TYPE],
    [AC_MSG_CHECKING([for $1 using $CC])
    AC_CACHE_VAL(ac_cv_nta_have_$1,
-	AC_TRY_COMPILE([
+	AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
 #	include "confdefs.h"
 #	include <stdio.h>
 #	if HAVE_SYS_TYPES_H
@@ -43,10 +43,7 @@ AC_DEFUN([AC_NTA_CHECK_TYPE],
 #	ifdef SYS_SOCKET_H
 #	 include <sys/socket.h>
 #	endif
-	],
-	[$1 i],
-	ac_cv_nta_have_$1=yes,
-	ac_cv_nta_have_$1=no))
+	]], [[$1 i]])],[ac_cv_nta_have_$1=yes],[ac_cv_nta_have_$1=no]))
    AC_MSG_RESULT($ac_cv_nta_have_$1)
    if test $ac_cv_nta_have_$1 = no ; then
 	   AC_DEFINE($1, $2, [Define to required type if we don't have $1])
@@ -60,45 +57,39 @@ dnl
 AC_DEFUN([AC_NTA_NET_SIZE_T],
    [AC_MSG_CHECKING([for socklen_t or equivalent using $CC])
    ac_nta_net_size_t=no
-   AC_TRY_COMPILE([
+   AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
 #	include "confdefs.h"
 #	include <sys/types.h>
 #	ifdef HAVE_SYS_SOCKET_H
 #	include <sys/socket.h>
-#	endif],
-	[int s;
+#	endif]], [[int s;
 	struct sockaddr addr;
 	socklen_t addrlen;
 	int result;
-	result=accept(s, &addr, &addrlen)],
-	   ac_nta_net_size_t=socklen_t,ac_nta_net_size_t=no)
+	result=accept(s, &addr, &addrlen)]])],[ac_nta_net_size_t=socklen_t],[ac_nta_net_size_t=no])
    if test $ac_nta_net_size_t = no; then
-   AC_TRY_COMPILE([
+   AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
 #	include "confdefs.h"
 #	include <sys/types.h>
 #	ifdef HAVE_SYS_SOCKET_H
 #	include <sys/socket.h>
-#	endif],
-	[int s;
+#	endif]], [[int s;
 	struct sockaddr addr;
 	int addrlen;
 	int result;
-	result=accept(s, &addr, &addrlen)],
-	ac_nta_net_size_t=int,ac_nta_net_size_t=no)
+	result=accept(s, &addr, &addrlen)]])],[ac_nta_net_size_t=int],[ac_nta_net_size_t=no])
    fi
    if test $ac_nta_net_size_t = no; then
-   AC_TRY_COMPILE([
+   AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
 #	include "confdefs.h"
 #	include <sys/types.h>
 #	ifdef HAVE_SYS_SOCKET_H
 #	include <sys/socket.h>
-#	endif],
-	[int s;
+#	endif]], [[int s;
 	struct sockaddr addr;
 	size_t addrlen;
 	int result;
-	result=accept(s, &addr, &addrlen)],
-	ac_nta_net_size_t=size_t,ac_nta_net_size_t=no)
+	result=accept(s, &addr, &addrlen)]])],[ac_nta_net_size_t=size_t],[ac_nta_net_size_t=no])
    fi
    if test $ac_nta_net_size_t = no; then
       AC_MSG_ERROR([Cannot find acceptable type for 3rd arg to accept()])
@@ -120,8 +111,7 @@ AC_DEFUN([PGAC_TYPE_64BIT_INT],
 [define([Ac_define], [translit([have_$1_64], [a-z *], [A-Z_P])])dnl
 define([Ac_cachevar], [translit([pgac_cv_type_$1_64], [ *], [_p])])dnl
 AC_CACHE_CHECK([whether $1 is 64 bits], [Ac_cachevar],
-[AC_TRY_RUN(
-[typedef $1 int64;
+[AC_RUN_IFELSE([AC_LANG_SOURCE([[typedef $1 int64;
 
 /*
  * These are globals to discourage the compiler from folding all the
@@ -146,10 +136,7 @@ int does_int64_work()
 }
 int main() {
   return ! does_int64_work();
-}],
-[Ac_cachevar=yes],
-[Ac_cachevar=no],
-[# If cross-compiling, check the size reported by the compiler and
+}]])],[Ac_cachevar=yes],[Ac_cachevar=no],[# If cross-compiling, check the size reported by the compiler and
 # trust that the arithmetic works.
 AC_COMPILE_IFELSE([AC_LANG_BOOL_COMPILE_TRY([], [sizeof($1) == 8])],
                   Ac_cachevar=yes,
@@ -179,7 +166,7 @@ AC_DEFUN([PGAC_FUNC_SNPRINTF_LONG_LONG_INT_FORMAT],
 [AC_MSG_CHECKING([snprintf format for long long int])
 AC_CACHE_VAL(pgac_cv_snprintf_long_long_int_format,
 [for pgac_format in '%lld' '%qd' '%I64d'; do
-AC_TRY_RUN([#include <stdio.h>
+AC_RUN_IFELSE([AC_LANG_SOURCE([[#include <stdio.h>
 typedef long long int int64;
 #define INT64_FORMAT "$pgac_format"
 
@@ -202,10 +189,7 @@ int does_int64_snprintf_work()
 }
 int main() {
   return ! does_int64_snprintf_work();
-}],
-[pgac_cv_snprintf_long_long_int_format=$pgac_format; break],
-[],
-[pgac_cv_snprintf_long_long_int_format=cross; break])
+}]])],[pgac_cv_snprintf_long_long_int_format=$pgac_format; break],[],[pgac_cv_snprintf_long_long_int_format=cross; break])
 done])dnl AC_CACHE_VAL
 
 LONG_LONG_INT_FORMAT=''
@@ -242,7 +226,7 @@ AC_DEFUN([GCC_STACK_PROTECT_CC],[
     AC_MSG_CHECKING([whether ${CC} accepts -fstack-protector])
     ssp_old_cflags="$CFLAGS"
     CFLAGS="$CFLAGS -fstack-protector"
-    AC_TRY_COMPILE(,,, ssp_cc=no)
+    AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[]], [[]])],[],[ssp_cc=no])
     echo $ssp_cc
     if test "X$ssp_cc" = "Xno"; then
       CFLAGS="$ssp_old_cflags"
@@ -258,7 +242,7 @@ AC_DEFUN([GCC_STACK_PROTECT_CXX],[
     AC_MSG_CHECKING([whether ${CXX} accepts -fstack-protector])
     ssp_old_cxxflags="$CXXFLAGS"
     CXXFLAGS="$CXXFLAGS -fstack-protector"
-    AC_TRY_COMPILE(,,, ssp_cxx=no)
+    AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[]], [[]])],[],[ssp_cxx=no])
     echo $ssp_cxx
     if test "X$ssp_cxx" = "Xno"; then
         CXXFLAGS="$ssp_old_cxxflags"
@@ -280,7 +264,7 @@ dnl
 AC_DEFUN([GCC_FORTIFY_SOURCE],[
    if test "X$CC" != "X"; then
       AC_MSG_CHECKING([whether ${CC} accepts -D_FORTIFY_SOURCE])
-      AC_TRY_COMPILE(,[
+      AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[]], [[
          #define GNUC_PREREQ(maj, min) ((__GNUC__ << 16) + __GNUC_MINOR__ >= ((maj) << 16) + (min))
          #if !(GNUC_PREREQ (4, 1) \
             || (defined __GNUC_RH_RELEASE__ && GNUC_PREREQ (4, 0)) \
@@ -290,10 +274,10 @@ AC_DEFUN([GCC_FORTIFY_SOURCE],[
                   || (__GNUC_PATCHLEVEL__ == 2 && __GNUC_RH_RELEASE__ >= 8))))
          #error No FORTIFY_SOURCE support
          #endif
-      ], [
+      ]])],[
          AC_MSG_RESULT(yes)
          CFLAGS="$CFLAGS -D_FORTIFY_SOURCE=2"
-      ], [
+      ],[
          AC_MSG_RESULT(no)
       ])
    fi
@@ -315,14 +299,14 @@ AC_DEFUN([GCC_FORMAT_SECURITY],[
       AC_MSG_CHECKING([whether ${CC} accepts -Wformat-security])
       wfs_old_cflags="$CFLAGS"
       CFLAGS="$CFLAGS -Wall -Werror -Wformat -Wformat-security"
-      AC_TRY_COMPILE([#include <stdio.h>], [
+      AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#include <stdio.h>]], [[
          char *fmt=NULL;
          printf(fmt);
          return 0;
-      ], [
+      ]])],[
          AC_MSG_RESULT(no)
          CFLAGS="$wfs_old_cflags"
-      ], [
+      ],[
          AC_MSG_RESULT(yes)
          CFLAGS="$wfs_old_cflags -Wformat -Wformat-security"
       ])
@@ -338,7 +322,7 @@ AC_DEFUN([GCC_WEXTRA],[
     AC_MSG_CHECKING([whether ${CC} accepts -Wextra])
     gcc_old_cflags="$CFLAGS"
     CFLAGS="$CFLAGS -Wextra"
-    AC_TRY_COMPILE(,,[
+    AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[]], [[]])],[
        AC_MSG_RESULT(yes)
     ],[
        AC_MSG_RESULT(no)

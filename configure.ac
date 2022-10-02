@@ -1,6 +1,6 @@
 dnl Process this file with autoconf to produce a configure script.
 
-AC_INIT([ike-scan],[1.9.5],[https://github.com/royhills/ike-scan])
+AC_INIT([ike-scan],[1.9.6],[https://github.com/royhills/ike-scan])
 AC_PREREQ(2.61)
 AC_REVISION($Revision$)
 AC_CONFIG_SRCDIR([ike-scan.c])
@@ -58,13 +58,10 @@ AC_SEARCH_LIBS([gethostbyname], [nsl])
 AC_SEARCH_LIBS([socket], [socket])
 
 dnl Checks for header files.
-AC_HEADER_STDC
 AC_CHECK_HEADERS([inttypes.h stdint.h arpa/inet.h netdb.h netinet/in.h netinet/tcp.h sys/socket.h sys/time.h unistd.h getopt.h signal.h sys/stat.h fcntl.h])
 
 dnl Checks for typedefs, structures, and compiler characteristics.
-AC_C_CONST
 AC_TYPE_SIZE_T
-AC_HEADER_TIME
 
 dnl Check for the uint{8,16,32}_t types and, if we don't have them, define
 dnl them using types which will work on most systems.

@@ -48,7 +48,7 @@
 #include "config.h"
 #endif
 
-#ifdef STDC_HEADERS
+/* C89 standard headers */
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -56,9 +56,7 @@
 #include <stdarg.h>
 #include <errno.h>
 #include <limits.h>
-#else
-#error This program requires the ANSI C Headers
-#endif
+#include <time.h>
 
 #include <sys/types.h>  /* FreeBSD needs explicit include for sys/types.h */
 
@@ -102,15 +100,8 @@
 #include <netinet/tcp.h>
 #endif
 
-#ifdef TIME_WITH_SYS_TIME
-# include <sys/time.h>
-# include <time.h>
-#else
-# ifdef HAVE_SYS_TIME_H
-#  include <sys/time.h>
-# else
-#  include <time.h>
-# endif
+#ifdef HAVE_SYS_TIME_H
+#include <sys/time.h>
 #endif
 
 #ifdef HAVE_SYS_SOCKET_H
