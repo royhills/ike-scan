@@ -167,6 +167,7 @@ AC_DEFUN([PGAC_FUNC_SNPRINTF_LONG_LONG_INT_FORMAT],
 AC_CACHE_VAL(pgac_cv_snprintf_long_long_int_format,
 [for pgac_format in '%lld' '%qd' '%I64d'; do
 AC_RUN_IFELSE([AC_LANG_SOURCE([[#include <stdio.h>
+#include <string.h>
 typedef long long int int64;
 #define INT64_FORMAT "$pgac_format"
 
