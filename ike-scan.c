@@ -2219,8 +2219,10 @@ initialise_ike_packet(size_t *packet_out_len, ike_packet_params *params) {
       add_transform2(0, NULL, IKEV2_TYPE_DH, 2, NULL, 0);
       add_transform2(0, NULL, IKEV2_TYPE_DH, 5, NULL, 0);
       add_transform2(0, NULL, IKEV2_TYPE_DH, 14, NULL, 0);
+      add_transform2(0, NULL, IKEV2_TYPE_DH, 20, NULL, 0);
+      add_transform2(0, NULL, IKEV2_TYPE_DH, 21, NULL, 0);
       transforms = add_transform2(1, &trans_len, 0, 0, NULL, 0);
-      no_trans=15;
+      no_trans=17;
    }
 /*
  *	Proposal payload
