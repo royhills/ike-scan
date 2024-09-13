@@ -108,13 +108,6 @@ dnl If we don't have it, then use Russ Allbery's implementation as a
 dnl replacement function.
 AC_CHECK_FUNC(inet_aton, , [ AC_LIBOBJ(inet_aton) ])
 
-dnl Do we want to disable the initial gethostbyname() call?
-dnl The default is for it to be enabled.
-AC_ARG_ENABLE(lookup,
-   AS_HELP_STRING([--enable-lookup],[Legacy option, present for compatibility]),
-   AC_MSG_NOTICE([The --enable-lookup option is depreciated])
-)
-
 dnl The big OpenSSL hunt.
 dnl
 dnl Check for OpenSSL headers and libraries if the --with-openssl[=PATH]
