@@ -62,8 +62,6 @@
 /* C99 standard headers */
 #include <stdint.h>
 
-#include <sys/types.h>  /* FreeBSD needs explicit include for sys/types.h */
-
 #ifdef __CYGWIN__
 #include <windows.h>	/* Include windows.h if compiling under Cygwin */
 #endif
