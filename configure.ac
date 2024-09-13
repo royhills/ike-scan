@@ -39,10 +39,8 @@ fi
 if test -n "$GCC"; then
    AC_DEFINE([ATTRIBUTE_UNUSED], [__attribute__ ((__unused__))],
              [Define to the compiler's unused pragma])
-   CFLAGS="$CFLAGS -Wall -Wshadow -Wwrite-strings"
-   GCC_WEXTRA
+   CFLAGS="$CFLAGS -Wall -Wextra -Wformat-security -Wshadow -Wwrite-strings"
    GCC_STACK_PROTECT_CC
-   GCC_FORMAT_SECURITY
    GCC_FORTIFY_SOURCE
 dnl Uncomment the lines below for testing with stricter warnings.
 dnl CFLAGS="$CFLAGS -pedantic -Wpointer-arith -Wcast-qual -Wcast-align -Wconversion -Wstrict-prototypes -Wmissing-prototypes -Wmissing-declarations -Wnested-externs -Winline "
