@@ -57,29 +57,63 @@
 #include <errno.h>
 #include <limits.h>
 #include <time.h>
+#include <signal.h>	/* For TCP connect() timeout using alarm */
+
+/* C99 standard headers */
+#include <stdint.h>
 
 #include <sys/types.h>  /* FreeBSD needs explicit include for sys/types.h */
-
-/* Integer types */
-#ifdef HAVE_INTTYPES_H
-#include <inttypes.h>
-#else
-#ifdef HAVE_STDINT_H
-#include <stdint.h>
-#endif
-#endif
 
 #ifdef __CYGWIN__
 #include <windows.h>	/* Include windows.h if compiling under Cygwin */
 #endif
 
+/* headers first defined in POSIX-1 issue 1 */
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif
 
+#ifdef HAVE_FCNTL_H
+#include <fcntl.h>
+#endif
+
+#ifdef HAVE_SYS_STAT_H
+#include <sys/stat.h>
+#endif
+
+/* headers first defined in POSIX.1 issue 4 */
+
+#ifdef HAVE_REGEX_H
+#include <regex.h>	/* Posix regular expression support */
+#endif
+
+#ifdef HAVE_SYS_TIME_H
+#include <sys/time.h>
+#endif
+
+/* headers first defined in POSIX.1 issue 6 */
+
 #ifdef HAVE_NETDB_H
 #include <netdb.h>
 #endif
+
+#ifdef HAVE_NETINET_IN_H
+#include <netinet/in.h>
+#endif
+
+#ifdef HAVE_ARPA_INET_H
+#include <arpa/inet.h>
+#endif
+
+#ifdef HAVE_NETINET_TCP_H
+#include <netinet/tcp.h>
+#endif
+
+#ifdef HAVE_SYS_SOCKET_H
+#include <sys/socket.h>	/* For struct sockaddr */
+#endif
+
+/* Other system headers */
 
 #ifdef HAVE_GETOPT_H
 #include <getopt.h>
@@ -90,42 +124,6 @@
 #define getopt getopt_loser
 #include "getopt.h"
 #undef getopt
-#endif
-
-#ifdef HAVE_NETINET_IN_H
-#include <netinet/in.h>
-#endif
-
-#ifdef HAVE_NETINET_TCP_H
-#include <netinet/tcp.h>
-#endif
-
-#ifdef HAVE_SYS_TIME_H
-#include <sys/time.h>
-#endif
-
-#ifdef HAVE_SYS_SOCKET_H
-#include <sys/socket.h>	/* For struct sockaddr */
-#endif
-
-#ifdef HAVE_ARPA_INET_H
-#include <arpa/inet.h>
-#endif
-
-#ifdef HAVE_SIGNAL_H
-#include <signal.h>	/* For TCP connect() timeout using alarm */
-#endif
-
-#ifdef HAVE_REGEX_H
-#include <regex.h>	/* Posix regular expression support */
-#endif
-
-#ifdef HAVE_SYS_STAT_H
-#include <sys/stat.h>
-#endif
-
-#ifdef HAVE_FCNTL_H
-#include <fcntl.h>
 #endif
 
 #ifdef HAVE_OPENSSL

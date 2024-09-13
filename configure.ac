@@ -64,8 +64,10 @@ dnl We should only include these libraries if they are actually needed.
 AC_SEARCH_LIBS([gethostbyname], [nsl])
 AC_SEARCH_LIBS([socket], [socket])
 
-dnl Checks for header files.
-AC_CHECK_HEADERS([inttypes.h stdint.h arpa/inet.h netdb.h netinet/in.h netinet/tcp.h sys/socket.h sys/time.h unistd.h getopt.h signal.h sys/stat.h fcntl.h])
+# Check for C POSIX library header files
+AC_CHECK_HEADERS([arpa/inet.h netdb.h netinet/in.h netinet/tcp.h sys/socket.h sys/time.h unistd.h sys/stat.h fcntl.h])
+# Check for other required header files
+AC_CHECK_HEADERS([getopt.h])
 
 dnl Checks for typedefs, structures, and compiler characteristics.
 AC_TYPE_SIZE_T
