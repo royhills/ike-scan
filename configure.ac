@@ -1,10 +1,11 @@
 dnl Process this file with autoconf to produce a configure script.
 
 AC_INIT([ike-scan],[1.9.6],[https://github.com/royhills/ike-scan])
-AC_PREREQ(2.69)
+AC_PREREQ(2.70)
 AC_REVISION($Revision$)
 AC_CONFIG_SRCDIR([ike-scan.c])
 AC_CONFIG_AUX_DIR([build-aux])
+AC_CONFIG_MACRO_DIRS([m4])
 AM_INIT_AUTOMAKE
 
 AC_CONFIG_HEADERS([config.h])
