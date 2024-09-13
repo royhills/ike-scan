@@ -154,13 +154,12 @@ else
    AC_DEFINE(HAVE_REGEX_H, 1, [Define to 1 if you have posix regex support])
 fi
 
-dnl GNU systems e.g. Linux have getopt_long_only, but many other systems
-dnl e.g. FreeBSD 4.3 and Solaris 8 do not.  For systems that don't have it,
-dnl use the GNU getopt sources (obtained from glibc).
-AC_CHECK_FUNC([getopt_long_only], ,
-  [ AC_LIBOBJ(getopt)
-    AC_LIBOBJ(getopt1)
-    AC_LIBSOURCE(getopt.h) ])
+# Linux and most BSD systems have getopt_long_only, but NetBSD doesn't (as of v9.3).
+# Use the my_getopt.c implementation for systems that don't have it.
+AC_CHECK_FUNC([getopt_long_only],
+              [AC_DEFINE(HAVE_GETOPT_LONG_ONLY, 1, [Define to 1 if the C library includes getopt_long_only])],
+              [ AC_LIBOBJ([my_getopt])
+                AC_LIBSOURCE([my_getopt.h]) ])
 
 dnl Do we have inet_aton?  Most systems do, but some e.g. Solaris don't
 dnl If we don't have it, then use Russ Allbery's implementation as a
