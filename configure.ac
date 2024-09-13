@@ -27,8 +27,14 @@ AC_ARG_ENABLE(gcov,
       AC_MSG_RESULT(no)
    ] )
 
-dnl Check for programs.
+# Checks for programs.
 AC_PROG_CC
+# Ensure the C compiler supports the C99 standard.
+if test "x$ac_cv_prog_cc_c99" = "xno"; then
+   AC_MSG_ERROR([C compiler does not support C99 standard])
+fi
+# Add additional options if the C compiler identifies as GCC.
+# This applies to Clang/LLVM in addition to GCC.
 if test -n "$GCC"; then
    AC_DEFINE([ATTRIBUTE_UNUSED], [__attribute__ ((__unused__))],
              [Define to the compiler's unused pragma])
