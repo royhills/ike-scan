@@ -1,9 +1,9 @@
-dnl	AC_NTA_NET_SIZE_T -- Determine type of 3rd argument to accept
+dnl	IKE_NET_SIZE_T -- Determine type of 3rd argument to accept
 dnl
 dnl	This type is normally socklen_t but is sometimes size_t or int instead.
 dnl	We try, in order: socklen_t, int, size_t until we find one that compiles
 dnl
-AC_DEFUN([AC_NTA_NET_SIZE_T],
+AC_DEFUN([IKE_NET_SIZE_T],
    [AC_MSG_CHECKING([for socklen_t or equivalent using $CC])
    ac_nta_net_size_t=no
    AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[

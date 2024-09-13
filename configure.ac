@@ -78,7 +78,7 @@ AC_CHECK_FUNCS([malloc gethostbyname gettimeofday inet_ntoa memset select socket
 
 dnl Determine type for 3rd arg to accept()
 dnl This is normally socklen_t, but can sometimes be size_t or int.
-AC_NTA_NET_SIZE_T
+IKE_NET_SIZE_T
 
 dnl Check if the Posix regular expression functions "regcomp" and "regexec"
 dnl and the header file "regex.h" are present.
