@@ -72,64 +72,6 @@ AC_CHECK_HEADERS([getopt.h])
 dnl Checks for typedefs, structures, and compiler characteristics.
 AC_TYPE_SIZE_T
 
-dnl Check for the uint{8,16,32}_t types and, if we don't have them, define
-dnl them using types which will work on most systems.
-dnl We use these fixed-width types for constructing the IKE packet payloads.
-AC_NTA_CHECK_TYPE(uint8_t, unsigned char)
-AC_NTA_CHECK_TYPE(uint16_t, unsigned short)
-AC_NTA_CHECK_TYPE(uint32_t, unsigned int)
-
-dnl Checks for 64-bit integer types.  These checks are from postgresql.
-dnl Check to see if we have a working 64-bit integer type.
-dnl This breaks down into two steps:
-dnl (1) figure out if the compiler has a 64-bit int type with working
-dnl arithmetic, and if so
-dnl (2) see whether snprintf() can format the type correctly.
-
-PGAC_TYPE_64BIT_INT([long int])
-
-if test x"$HAVE_LONG_INT_64" = x"yes" ; then
-  INT64_TYPE="long int"
-  UINT64_TYPE="unsigned long int"
-else
-  PGAC_TYPE_64BIT_INT([long long int])
-    if test x"$HAVE_LONG_LONG_INT_64" = x"yes" ; then
-      INT64_TYPE="long long int"
-      UINT64_TYPE="unsigned long long int"
-    else
-      AC_MSG_ERROR([cannot determine 64-bit integer type])
-    fi
-fi
-
-AC_DEFINE_UNQUOTED(IKE_INT64, $INT64_TYPE,
-                   [Define to the appropriate type for 64-bit ints.])
-AC_DEFINE_UNQUOTED(IKE_UINT64, $UINT64_TYPE,
-                   [Define to the appropriate type for unsigned 64-bit ints.])
-
-dnl If we found "long int" is 64 bits, assume snprintf handles it.  If
-dnl we found we need to use "long long int", better check.  We cope with
-dnl snprintfs that use %lld, %qd, or %I64d as the format.
-dnl
-if test "$HAVE_LONG_LONG_INT_64" = yes ; then
-  PGAC_FUNC_SNPRINTF_LONG_LONG_INT_FORMAT
-  if test "$LONG_LONG_INT_FORMAT" = ""; then
-    AC_MSG_ERROR([cannot determine snprintf format string for long long int])
-  fi
-  LONG_LONG_UINT_FORMAT=`echo "$LONG_LONG_INT_FORMAT" | sed 's/d$/u/'`
-  INT64_FORMAT="\"$LONG_LONG_INT_FORMAT\""
-  UINT64_FORMAT="\"$LONG_LONG_UINT_FORMAT\""
-else
-  # Here if we are not using 'long long int' at all
-  INT64_FORMAT='"%ld"'
-  UINT64_FORMAT='"%lu"'
-fi
-
-AC_DEFINE_UNQUOTED(IKE_INT64_FORMAT, $INT64_FORMAT,
-                   [Define to the appropriate snprintf format for 64-bit ints.])
-
-AC_DEFINE_UNQUOTED(IKE_UINT64_FORMAT, $UINT64_FORMAT,
-                   [Define to the appropriate snprintf format for unsigned 64-bit ints.])
-
 dnl Checks for library functions.
 AC_CHECK_FUNCS([malloc gethostbyname gettimeofday inet_ntoa memset select socket strerror])
 

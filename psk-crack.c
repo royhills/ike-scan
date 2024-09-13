@@ -72,7 +72,7 @@ main (int argc, char *argv[]) {
    char dict_file_name[MAXLINE];	/* Dictionary file name */
    char *nortel_user = NULL; /* For cracking Nortel Contivity passwords only */
    FILE *dictionary_file=NULL;	/* Dictionary file */
-   IKE_UINT64 iterations=0;
+   uint64_t iterations=0;
    struct timeval start_time;	/* Program start time */
    struct timeval end_time;	/* Program end time */
    struct timeval elapsed_time; /* Elapsed time as timeval */
@@ -167,19 +167,19 @@ main (int argc, char *argv[]) {
  */
    psk_uncracked = psk_count;
    if (brute_len) {	/* Brute force cracking */
-      IKE_UINT64 max;
+      uint64_t max;
       unsigned base;
       unsigned i;
-      IKE_UINT64 loop;
-      IKE_UINT64 val;
+      uint64_t loop;
+      uint64_t val;
       unsigned digit;
 
       base = strlen(charset);
       max = base;
       for (i=1; i<brute_len; i++)
          max *= base;	/* max = base^brute_len without using pow() */
-      printf("Brute force with %u chars up to length %u will take up to "
-             IKE_UINT64_FORMAT " iterations\n", base, brute_len, max);
+      printf("Brute force with %u chars up to length %u will take up to %"
+             PRIu64 " iterations\n", base, brute_len, max);
 
       for (loop=0; psk_uncracked && loop<max; loop++) {
          char *line_p;
@@ -252,7 +252,7 @@ main (int argc, char *argv[]) {
                       elapsed_time.tv_usec/1000.0) / 1000.0;
    if (elapsed_seconds < 0.000001)
       elapsed_seconds = 0.000001;	/* Avoid div by zero */
-   printf("Ending psk-crack: " IKE_UINT64_FORMAT
+   printf("Ending psk-crack: %" PRIu64
           " iterations in %.3f seconds (%.2f iterations/sec)\n",
           iterations, elapsed_seconds, iterations/elapsed_seconds);
   
