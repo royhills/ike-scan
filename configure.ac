@@ -1,9 +1,11 @@
 dnl Process this file with autoconf to produce a configure script.
 
 AC_INIT([ike-scan],[1.9.6],[https://github.com/royhills/ike-scan])
-AC_PREREQ(2.61)
+AC_PREREQ(2.70)
 AC_REVISION($Revision$)
 AC_CONFIG_SRCDIR([ike-scan.c])
+AC_CONFIG_AUX_DIR([build-aux])
+AC_CONFIG_MACRO_DIRS([m4])
 AM_INIT_AUTOMAKE
 
 AC_CONFIG_HEADERS([config.h])
@@ -26,15 +28,19 @@ AC_ARG_ENABLE(gcov,
       AC_MSG_RESULT(no)
    ] )
 
-dnl Check for programs.
+# Checks for programs.
 AC_PROG_CC
+# Ensure the C compiler supports the C99 standard.
+if test "x$ac_cv_prog_cc_c99" = "xno"; then
+   AC_MSG_ERROR([C compiler does not support C99 standard])
+fi
+# Add additional options if the C compiler identifies as GCC.
+# This applies to Clang/LLVM in addition to GCC.
 if test -n "$GCC"; then
    AC_DEFINE([ATTRIBUTE_UNUSED], [__attribute__ ((__unused__))],
              [Define to the compiler's unused pragma])
-   CFLAGS="$CFLAGS -Wall -Wshadow -Wwrite-strings"
-   GCC_WEXTRA
+   CFLAGS="$CFLAGS -Wall -Wextra -Wformat-security -Wshadow -Wwrite-strings"
    GCC_STACK_PROTECT_CC
-   GCC_FORMAT_SECURITY
    GCC_FORTIFY_SOURCE
 dnl Uncomment the lines below for testing with stricter warnings.
 dnl CFLAGS="$CFLAGS -pedantic -Wpointer-arith -Wcast-qual -Wcast-align -Wconversion -Wstrict-prototypes -Wmissing-prototypes -Wmissing-declarations -Wnested-externs -Winline "
@@ -57,76 +63,20 @@ dnl We should only include these libraries if they are actually needed.
 AC_SEARCH_LIBS([gethostbyname], [nsl])
 AC_SEARCH_LIBS([socket], [socket])
 
-dnl Checks for header files.
-AC_CHECK_HEADERS([inttypes.h stdint.h arpa/inet.h netdb.h netinet/in.h netinet/tcp.h sys/socket.h sys/time.h unistd.h getopt.h signal.h sys/stat.h fcntl.h])
+# Check for C POSIX library header files
+AC_CHECK_HEADERS([arpa/inet.h netdb.h netinet/in.h netinet/tcp.h sys/socket.h sys/time.h unistd.h sys/stat.h fcntl.h])
+# Check for other required header files
+AC_CHECK_HEADERS([getopt.h])
 
 dnl Checks for typedefs, structures, and compiler characteristics.
 AC_TYPE_SIZE_T
-
-dnl Check for the uint{8,16,32}_t types and, if we don't have them, define
-dnl them using types which will work on most systems.
-dnl We use these fixed-width types for constructing the IKE packet payloads.
-AC_NTA_CHECK_TYPE(uint8_t, unsigned char)
-AC_NTA_CHECK_TYPE(uint16_t, unsigned short)
-AC_NTA_CHECK_TYPE(uint32_t, unsigned int)
-
-dnl Checks for 64-bit integer types.  These checks are from postgresql.
-dnl Check to see if we have a working 64-bit integer type.
-dnl This breaks down into two steps:
-dnl (1) figure out if the compiler has a 64-bit int type with working
-dnl arithmetic, and if so
-dnl (2) see whether snprintf() can format the type correctly.
-
-PGAC_TYPE_64BIT_INT([long int])
-
-if test x"$HAVE_LONG_INT_64" = x"yes" ; then
-  INT64_TYPE="long int"
-  UINT64_TYPE="unsigned long int"
-else
-  PGAC_TYPE_64BIT_INT([long long int])
-    if test x"$HAVE_LONG_LONG_INT_64" = x"yes" ; then
-      INT64_TYPE="long long int"
-      UINT64_TYPE="unsigned long long int"
-    else
-      AC_MSG_ERROR([cannot determine 64-bit integer type])
-    fi
-fi
-
-AC_DEFINE_UNQUOTED(IKE_INT64, $INT64_TYPE,
-                   [Define to the appropriate type for 64-bit ints.])
-AC_DEFINE_UNQUOTED(IKE_UINT64, $UINT64_TYPE,
-                   [Define to the appropriate type for unsigned 64-bit ints.])
-
-dnl If we found "long int" is 64 bits, assume snprintf handles it.  If
-dnl we found we need to use "long long int", better check.  We cope with
-dnl snprintfs that use %lld, %qd, or %I64d as the format.
-dnl
-if test "$HAVE_LONG_LONG_INT_64" = yes ; then
-  PGAC_FUNC_SNPRINTF_LONG_LONG_INT_FORMAT
-  if test "$LONG_LONG_INT_FORMAT" = ""; then
-    AC_MSG_ERROR([cannot determine snprintf format string for long long int])
-  fi
-  LONG_LONG_UINT_FORMAT=`echo "$LONG_LONG_INT_FORMAT" | sed 's/d$/u/'`
-  INT64_FORMAT="\"$LONG_LONG_INT_FORMAT\""
-  UINT64_FORMAT="\"$LONG_LONG_UINT_FORMAT\""
-else
-  # Here if we are not using 'long long int' at all
-  INT64_FORMAT='"%ld"'
-  UINT64_FORMAT='"%lu"'
-fi
-
-AC_DEFINE_UNQUOTED(IKE_INT64_FORMAT, $INT64_FORMAT,
-                   [Define to the appropriate snprintf format for 64-bit ints.])
-
-AC_DEFINE_UNQUOTED(IKE_UINT64_FORMAT, $UINT64_FORMAT,
-                   [Define to the appropriate snprintf format for unsigned 64-bit ints.])
 
 dnl Checks for library functions.
 AC_CHECK_FUNCS([malloc gethostbyname gettimeofday inet_ntoa memset select socket strerror])
 
 dnl Determine type for 3rd arg to accept()
 dnl This is normally socklen_t, but can sometimes be size_t or int.
-AC_NTA_NET_SIZE_T
+IKE_NET_SIZE_T
 
 dnl Check if the Posix regular expression functions "regcomp" and "regexec"
 dnl and the header file "regex.h" are present.
@@ -145,25 +95,17 @@ else
    AC_DEFINE(HAVE_REGEX_H, 1, [Define to 1 if you have posix regex support])
 fi
 
-dnl GNU systems e.g. Linux have getopt_long_only, but many other systems
-dnl e.g. FreeBSD 4.3 and Solaris 8 do not.  For systems that don't have it,
-dnl use the GNU getopt sources (obtained from glibc).
-AC_CHECK_FUNC([getopt_long_only], ,
-  [ AC_LIBOBJ(getopt)
-    AC_LIBOBJ(getopt1)
-    AC_LIBSOURCE(getopt.h) ])
+# Linux and most BSD systems have getopt_long_only, but NetBSD doesn't (as of v9.3).
+# Use the my_getopt.c implementation for systems that don't have it.
+AC_CHECK_FUNC([getopt_long_only],
+              [AC_DEFINE(HAVE_GETOPT_LONG_ONLY, 1, [Define to 1 if the C library includes getopt_long_only])],
+              [ AC_LIBOBJ([my_getopt])
+                AC_LIBSOURCE([my_getopt.h]) ])
 
 dnl Do we have inet_aton?  Most systems do, but some e.g. Solaris don't
 dnl If we don't have it, then use Russ Allbery's implementation as a
 dnl replacement function.
 AC_CHECK_FUNC(inet_aton, , [ AC_LIBOBJ(inet_aton) ])
-
-dnl Do we want to disable the initial gethostbyname() call?
-dnl The default is for it to be enabled.
-AC_ARG_ENABLE(lookup,
-   AS_HELP_STRING([--enable-lookup],[Legacy option, present for compatibility]),
-   AC_MSG_NOTICE([The --enable-lookup option is depreciated])
-)
 
 dnl The big OpenSSL hunt.
 dnl

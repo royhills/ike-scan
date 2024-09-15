@@ -238,8 +238,8 @@ main(int argc, char *argv[]) {
    int n;
    host_entry *temp_cursor;
    struct timeval diff;		/* Difference between two timevals */
-   IKE_UINT64 loop_timediff;	/* Time since last packet sent in us */
-   IKE_UINT64 host_timediff;	/* Time since last packet sent to this host */
+   uint64_t loop_timediff;	/* Time since last packet sent in us */
+   uint64_t host_timediff;	/* Time since last packet sent to this host */
    unsigned long end_timediff=0; /* Time since last packet received in ms */
    int req_interval;		/* Requested per-packet interval */
    int select_timeout;		/* Select timeout */
@@ -840,7 +840,7 @@ main(int argc, char *argv[]) {
  *	bandwidth unless an interval was specified.
  */
    if (!interval) {
-      interval = ((IKE_UINT64)(packet_out_len+PACKET_OVERHEAD) * 8 * 1000000) /
+      interval = ((uint64_t)(packet_out_len+PACKET_OVERHEAD) * 8 * 1000000) /
                  bandwidth;
       if (verbose) {
          warn_msg("DEBUG: pkt len=%zu bytes, bandwidth=%u bps, int=%u us",
@@ -885,7 +885,7 @@ main(int argc, char *argv[]) {
  *	potentially send a packet to the current host.
  */
       timeval_diff(&now, &last_packet_time, &diff);
-      loop_timediff = (IKE_UINT64)1000000*diff.tv_sec + diff.tv_usec;
+      loop_timediff = (uint64_t)1000000*diff.tv_sec + diff.tv_usec;
       if (loop_timediff >= (unsigned)req_interval) {
 /*
  *	If the last packet to this host was sent more than the current
@@ -893,7 +893,7 @@ main(int argc, char *argv[]) {
  *	to it.
  */
          timeval_diff(&now, &((*cursor)->last_send_time), &diff);
-         host_timediff = (IKE_UINT64)1000000*diff.tv_sec + diff.tv_usec;
+         host_timediff = (uint64_t)1000000*diff.tv_sec + diff.tv_usec;
          if (host_timediff >= (*cursor)->timeout && (*cursor)->live) {
             if (reset_cum_err) {
                cum_err = 0;
@@ -924,7 +924,7 @@ main(int argc, char *argv[]) {
                remove_host(cursor, &live_count, num_hosts);	/* Automatically calls advance_cursor() */
                if (first_timeout) {
                   timeval_diff(&now, &((*cursor)->last_send_time), &diff);
-                  host_timediff = (IKE_UINT64)1000000*diff.tv_sec +
+                  host_timediff = (uint64_t)1000000*diff.tv_sec +
                                   diff.tv_usec;
                   while (host_timediff >= (*cursor)->timeout && live_count) {
                      if ((*cursor)->live) {
@@ -936,7 +936,7 @@ main(int argc, char *argv[]) {
                         advance_cursor(live_count, num_hosts);
                      }
                      timeval_diff(&now, &((*cursor)->last_send_time), &diff);
-                     host_timediff = (IKE_UINT64)1000000*diff.tv_sec +
+                     host_timediff = (uint64_t)1000000*diff.tv_sec +
                                      diff.tv_usec;
                   }
                   first_timeout=0;
