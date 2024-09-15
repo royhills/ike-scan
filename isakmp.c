@@ -488,6 +488,7 @@ make_sa2(size_t *outlen, unsigned next,
    cp = payload;
 
    memcpy(cp, hdr, sizeof(struct isakmp_sa2));
+   free(hdr);
    cp += sizeof(struct isakmp_sa2);
    memcpy(cp, proposals, proposal_len);
 
