@@ -1,3 +1,12 @@
+2024-09-15 Roy Hills <Roy.Hills@hotmail.com>
+
+	* check-error: Change invalid option test string from
+	  "ike-scan: unrecognized option", to "^Usage: ike-scan".
+	  This fixes a test failure on cygwin because it's newlib based C
+	  library outputs "ike-scan: unknown option" instead of
+	  "ike-scan: unrecognized option" that is used by glibc and BSD libc.
+	  https://github.com/royhills/ike-scan/pull/45
+
 2022-10-02 Roy Hills <Roy.Hills@hotmail.com>
 
 	* acinclude.m4: Replaced obsolete autoconf macros AC_TRY_COMPILE with
