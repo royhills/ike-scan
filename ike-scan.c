@@ -2208,15 +2208,21 @@ initialise_ike_packet(size_t *packet_out_len, ike_packet_params *params) {
       free(attr);
       add_transform2(0, NULL, IKEV2_TYPE_ENCR, IKEV2_ENCR_3DES, NULL, 0);
       add_transform2(0, NULL, IKEV2_TYPE_ENCR, IKEV2_ENCR_DES, NULL, 0);
+      add_transform2(0, NULL, IKEV2_TYPE_PRF, IKEV2_PRF_HMAC_SHA2_512, NULL, 0);
+      add_transform2(0, NULL, IKEV2_TYPE_PRF, IKEV2_PRF_HMAC_SHA2_256, NULL, 0);
       add_transform2(0, NULL, IKEV2_TYPE_PRF, IKEV2_PRF_HMAC_SHA1, NULL, 0);
       add_transform2(0, NULL, IKEV2_TYPE_PRF, IKEV2_PRF_HMAC_MD5, NULL, 0);
+      add_transform2(0, NULL, IKEV2_TYPE_INTEG, IKEV2_AUTH_HMAC_SHA2_512_256, NULL, 0);
+      add_transform2(0, NULL, IKEV2_TYPE_INTEG, IKEV2_AUTH_HMAC_SHA2_256_128, NULL, 0);
       add_transform2(0, NULL, IKEV2_TYPE_INTEG, IKEV2_AUTH_HMAC_SHA1_96, NULL, 0);
       add_transform2(0, NULL, IKEV2_TYPE_INTEG, IKEV2_AUTH_HMAC_MD5_96, NULL, 0);
       add_transform2(0, NULL, IKEV2_TYPE_DH, 2, NULL, 0);
       add_transform2(0, NULL, IKEV2_TYPE_DH, 5, NULL, 0);
       add_transform2(0, NULL, IKEV2_TYPE_DH, 14, NULL, 0);
+      add_transform2(0, NULL, IKEV2_TYPE_DH, 20, NULL, 0);
+      add_transform2(0, NULL, IKEV2_TYPE_DH, 21, NULL, 0);
       transforms = add_transform2(1, &trans_len, 0, 0, NULL, 0);
-      no_trans=11;
+      no_trans=17;
    }
 /*
  *	Proposal payload
