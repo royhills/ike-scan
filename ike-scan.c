@@ -187,6 +187,7 @@ main(int argc, char *argv[]) {
    int pkt_filename_flag=0;
    int pkt_read_filename_flag=0;
    int random_flag=0;		/* Should we randomise the list? */
+   int dhgroup_flag=0;		/* Was --dhgroup explicitly supplied? */
    int sockfd;			/* UDP socket file descriptor */
    unsigned source_port = DEFAULT_SOURCE_PORT;	/* UDP source port */
    unsigned dest_port = DEFAULT_DEST_PORT;	/* UDP destination port */
@@ -421,6 +422,7 @@ main(int argc, char *argv[]) {
             break;
          case 'g':	/* --dhgroup */
             ike_params.dhgroup = Strtoul(optarg, 10);
+            dhgroup_flag = 1;
             break;
          case 'p':	/* --patterns */
             strlcpy(patfile, optarg, sizeof(patfile));
@@ -757,6 +759,10 @@ main(int argc, char *argv[]) {
       if (read_pkt_from_file == -1)
          err_sys("open %s", pkt_filename);
    }
+/* Use ECP group 19 for the modern IKEv2 proposal unless the caller selected
+ * another group explicitly. Keep the historical group 2 default for IKEv1. */
+    if (ike_params.ike_version == 2 && !dhgroup_flag)
+         ike_params.dhgroup = 19;
 /*
  *	Check that the combination of specified options and arguments is
  *	valid.
@@ -2198,6 +2204,30 @@ initialise_ike_packet(size_t *packet_out_len, ike_packet_params *params) {
       unsigned char *attr;
       size_t attr_len;
 
+      /* Proposal 1: modern AEAD algorithms. AEAD proposals intentionally do
+       * not contain an integrity transform (RFC 7296 section 3.3.2). */
+      add_attr(0, NULL, 'B', OAKLEY_KEY_LENGTH, 0, 256, NULL);
+      attr = add_attr(1, &attr_len, '\0', 0, 0, 0, NULL);
+      add_transform2(0, NULL, IKEV2_TYPE_ENCR, IKEV2_ENCR_AES_GCM_16, attr, attr_len);
+      free(attr);
+      add_attr(0, NULL, 'B', OAKLEY_KEY_LENGTH, 0, 128, NULL);
+      attr = add_attr(1, &attr_len, '\0', 0, 0, 0, NULL);
+      add_transform2(0, NULL, IKEV2_TYPE_ENCR, IKEV2_ENCR_AES_GCM_16, attr, attr_len);
+      free(attr);
+      add_transform2(0, NULL, IKEV2_TYPE_ENCR, IKEV2_ENCR_CHACHA20_POLY1305, NULL, 0);
+      add_transform2(0, NULL, IKEV2_TYPE_PRF, IKEV2_PRF_HMAC_SHA2_256, NULL, 0);
+      add_transform2(0, NULL, IKEV2_TYPE_PRF, IKEV2_PRF_HMAC_SHA2_384, NULL, 0);
+      add_transform2(0, NULL, IKEV2_TYPE_PRF, IKEV2_PRF_HMAC_SHA2_512, NULL, 0);
+      add_transform2(0, NULL, IKEV2_TYPE_DH, 14, NULL, 0);
+      add_transform2(0, NULL, IKEV2_TYPE_DH, 19, NULL, 0);
+      add_transform2(0, NULL, IKEV2_TYPE_DH, 20, NULL, 0);
+      add_transform2(0, NULL, IKEV2_TYPE_DH, 21, NULL, 0);
+      transforms = add_transform2(1, &trans_len, 0, 0, NULL, 0);
+      add_prop(0, NULL, 10, params->protocol, params->spi_size, transforms,
+               trans_len);
+      free(transforms);
+
+      /* Proposal 2: modern non-AEAD fallback using AES-CBC and SHA-2. */
       add_attr(0, NULL, 'B', OAKLEY_KEY_LENGTH, 0, 256, NULL);
       attr = add_attr(1, &attr_len, '\0', 0, 0, 0, NULL);
       add_transform2(0, NULL, IKEV2_TYPE_ENCR, IKEV2_ENCR_AES_CBC, attr, attr_len);
@@ -2206,25 +2236,30 @@ initialise_ike_packet(size_t *packet_out_len, ike_packet_params *params) {
       attr = add_attr(1, &attr_len, '\0', 0, 0, 0, NULL);
       add_transform2(0, NULL, IKEV2_TYPE_ENCR, IKEV2_ENCR_AES_CBC, attr, attr_len);
       free(attr);
-      add_transform2(0, NULL, IKEV2_TYPE_ENCR, IKEV2_ENCR_3DES, NULL, 0);
-      add_transform2(0, NULL, IKEV2_TYPE_ENCR, IKEV2_ENCR_DES, NULL, 0);
-      add_transform2(0, NULL, IKEV2_TYPE_PRF, IKEV2_PRF_HMAC_SHA1, NULL, 0);
-      add_transform2(0, NULL, IKEV2_TYPE_PRF, IKEV2_PRF_HMAC_MD5, NULL, 0);
-      add_transform2(0, NULL, IKEV2_TYPE_INTEG, IKEV2_AUTH_HMAC_SHA1_96, NULL, 0);
-      add_transform2(0, NULL, IKEV2_TYPE_INTEG, IKEV2_AUTH_HMAC_MD5_96, NULL, 0);
-      add_transform2(0, NULL, IKEV2_TYPE_DH, 2, NULL, 0);
-      add_transform2(0, NULL, IKEV2_TYPE_DH, 5, NULL, 0);
+      add_transform2(0, NULL, IKEV2_TYPE_PRF, IKEV2_PRF_HMAC_SHA2_256, NULL, 0);
+      add_transform2(0, NULL, IKEV2_TYPE_PRF, IKEV2_PRF_HMAC_SHA2_384, NULL, 0);
+      add_transform2(0, NULL, IKEV2_TYPE_PRF, IKEV2_PRF_HMAC_SHA2_512, NULL, 0);
+      add_transform2(0, NULL, IKEV2_TYPE_INTEG, IKEV2_AUTH_HMAC_SHA2_256_128, NULL, 0);
+      add_transform2(0, NULL, IKEV2_TYPE_INTEG, IKEV2_AUTH_HMAC_SHA2_384_192, NULL, 0);
+      add_transform2(0, NULL, IKEV2_TYPE_INTEG, IKEV2_AUTH_HMAC_SHA2_512_256, NULL, 0);
       add_transform2(0, NULL, IKEV2_TYPE_DH, 14, NULL, 0);
+      add_transform2(0, NULL, IKEV2_TYPE_DH, 19, NULL, 0);
+      add_transform2(0, NULL, IKEV2_TYPE_DH, 20, NULL, 0);
+      add_transform2(0, NULL, IKEV2_TYPE_DH, 21, NULL, 0);
       transforms = add_transform2(1, &trans_len, 0, 0, NULL, 0);
-      no_trans=11;
+      add_prop(0, NULL, 12, params->protocol, params->spi_size, transforms,
+               trans_len);
+      free(transforms);
    }
 /*
  *	Proposal payload
  */
-   add_prop(0, NULL, no_trans, params->protocol, params->spi_size, transforms,
-            trans_len);
+   if (params->ike_version == 1) {
+      add_prop(0, NULL, no_trans, params->protocol, params->spi_size, transforms,
+               trans_len);
+      free(transforms);
+   }
    prop = add_prop(1, &prop_len, 0, 0, 0, NULL, 0);
-   free(transforms);
 /*
  *	SA payload
  */

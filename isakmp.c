@@ -181,6 +181,7 @@ const id_name_map encr_map[] = {	/* From RFC 5996 (IKEv2) 3.3.2 */
    {19, "AES_GCM_ICV12"},		/* RFC 5282 */
    {20, "AES_GCM_ICV16"},		/* RFC 5282 */
    {23, "CAMELLIA_CBC"},		/* RFC 5996 */
+   {28, "CHACHA20_POLY1305"},		/* RFC 7634 */
    {-1, NULL}
 };
 const id_name_map hash_map[] = {	/* From RFC 2409 App. A */
